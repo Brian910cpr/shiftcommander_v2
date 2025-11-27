@@ -1,0 +1,40 @@
+{
+  "id": "adr-fr",
+  "name": "ADR Fire-Rescue",
+  "self_scheduling_enabled": true,
+  "ft_default_range": {
+    "min": 36,
+    "max": 40
+  },
+  "pt_default_range": {
+    "min": 8,
+    "max": 24
+  },
+  "vol_default_range": {
+    "min": 0,
+    "max": 100
+  },
+  "rotation_order": [
+    "u120",
+    "u121",
+    "u131"
+  ],
+  "display_templates": {
+    "public": {
+      "pattern": "INITIALS_NUMBER",
+      "show_badges": true
+    },
+    "member": {
+      "pattern": "FIRST_LAST_NUMBER",
+      "show_badges": true
+    },
+    "manager": {
+      "pattern": "FIRST_LAST_NUMBER",
+      "show_badges": true
+    },
+    "admin": {
+      "pattern": "FIRST_LAST_NUMBER",
+      "show_badges": true
+    }
+  }
+}

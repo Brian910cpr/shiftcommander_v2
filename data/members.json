@@ -1,0 +1,55 @@
+[
+  {
+    "id": "m1001",
+    "first_name": "Gordon",
+    "last_name": "Smith",
+    "member_number": "1001",
+    "position_type": "FT",
+    "expected_min_hours": 36,
+    "expected_max_hours": 40,
+    "qualifications": [
+      "ALS",
+      "Driver"
+    ],
+    "groups": [
+      "Fire",
+      "EMS"
+    ],
+    "active": true,
+    "points_balance": 12.0
+  },
+  {
+    "id": "m1002",
+    "first_name": "Lynnsey",
+    "last_name": "Jones",
+    "member_number": "1002",
+    "position_type": "PT",
+    "expected_min_hours": 8,
+    "expected_max_hours": 24,
+    "qualifications": [
+      "EMT"
+    ],
+    "groups": [
+      "Fire"
+    ],
+    "active": true,
+    "points_balance": 5.0
+  },
+  {
+    "id": "m1003",
+    "first_name": "AJ",
+    "last_name": "Brown",
+    "member_number": "1003",
+    "position_type": "VOL",
+    "expected_min_hours": 0,
+    "expected_max_hours": 100,
+    "qualifications": [
+      "EMT"
+    ],
+    "groups": [
+      "EMS"
+    ],
+    "active": true,
+    "points_balance": 20.0
+  }
+]

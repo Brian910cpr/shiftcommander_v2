@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ShiftCommander v2</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>ShiftCommander v2</h1>
+    <p>ADR Fire-Rescue Scheduling Demo – Four Views</p>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="public" class="active">Public Wallboard</button>
+    <button data-tab="member">Member Scheduling</button>
+    <button data-tab="manager">Manager View</button>
+    <button data-tab="admin">Admin Setup</button>
+  </nav>
+
+  <main>
+    <section id="tab-public" class="tab active">
+      <h2>Public Wallboard</h2>
+      <p>This view shows who is on which unit using the public display template.</p>
+      <table id="public-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Unit</th>
+            <th>Member</th>
+            <th>First-Out</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="tab-member" class="tab">
+      <h2>Member Scheduling</h2>
+      <label>Select Member:
+        <select id="member-select"></select>
+      </label>
+      <div id="member-info"></div>
+      <table id="member-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Unit</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="tab-manager" class="tab">
+      <h2>Manager View</h2>
+      <p>Coverage overview and first-out override control.</p>
+      <table id="manager-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Unit</th>
+            <th>Assigned</th>
+            <th>Override First-Out</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="manager-override">
+        <h3>Set First-Out Override</h3>
+        <label>Shift ID:
+          <input type="text" id="override-shift-id" placeholder="e.g. s1">
+        </label>
+        <label>Unit ID (blank to clear):
+          <input type="text" id="override-unit-id" placeholder="e.g. u121">
+        </label>
+        <button id="override-save">Save Override</button>
+        <div id="override-status"></div>
+      </div>
+    </section>
+
+    <section id="tab-admin" class="tab">
+      <h2>Admin Setup</h2>
+      <p>Configure display templates and self-scheduling mode.</p>
+      <div id="admin-settings"></div>
+      <button id="admin-save">Save Settings</button>
+      <div id="admin-status"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
