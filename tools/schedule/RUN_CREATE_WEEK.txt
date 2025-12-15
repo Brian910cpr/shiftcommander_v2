@@ -1,0 +1,24 @@
+CREATE FIRST WEEK (Thu->Wed)
+
+Your DB:
+D:\Users\ten77\Downloads\shiftcommander_sync\ShiftCommander\live\shiftcommander.db
+
+You requested:
+"last Thursday in December 2025" = 2025-12-25
+Week range: Thu 2025-12-25 through Wed 2025-12-31
+(14 shifts: DAY + NIGHT)
+
+1) Put create_week.py somewhere NOT in the sync folder (example):
+D:\shiftcommander\tools\schedule\create_week.py
+
+2) Open PowerShell in the folder containing create_week.py
+
+3) Run:
+python .\create_week.py --db "D:\Users\ten77\Downloads\shiftcommander_sync\ShiftCommander\live\shiftcommander.db" --start 2025-12-25 --first-out AMB121
+
+You can change first-out to AMB120 or AMB131 if you want.
+
+After this, we'll add:
+- Supervisor per-shift first-out override toggles
+- Salary-only shift flags
+- "Fragility radar" preview (if locked now)

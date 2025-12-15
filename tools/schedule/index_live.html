@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Member Entry (Live)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#111a2e; --muted:#7f91b3; --text:#e7eefc;
+      --line:rgba(255,255,255,.10); --accent:#3b82f6;
+    }
+    html,body{height:100%}
+    body{
+      margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(1200px 600px at 20% 0%, #142246 0%, var(--bg) 45%);
+      color:var(--text);
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:14px 14px 60px}
+    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:10px 0 12px;margin-bottom:14px}
+    .top h1{margin:0;font-size:18px}
+    .top .sub{color:var(--muted);font-size:12px;margin-top:4px}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(255,255,255,.04);padding:8px 10px;border-radius:999px;color:var(--muted);font-size:12px;white-space:nowrap}
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--accent);display:inline-block}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
+    .card h2{margin:0 0 10px;font-size:14px}
+    .tiny{font-size:11px;color:var(--muted);line-height:1.35}
+    .hr{height:1px;background:var(--line);margin:12px 0}
+    .row{display:grid;grid-template-columns:180px 1fr;gap:10px;margin:10px 0;align-items:center}
+    .row label{color:var(--muted);font-size:12px}
+    input,select,textarea{width:100%;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--text);padding:10px 10px;font-size:14px;outline:none}
+    textarea{min-height:70px;resize:vertical}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:620px){.two{grid-template-columns:1fr}}
+    .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    button{border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);padding:10px 12px;font-weight:600;cursor:pointer}
+    button.primary{background:rgba(59,130,246,.22);border-color:rgba(59,130,246,.45)}
+    button.danger{background:rgba(243,18,96,.16);border-color:rgba(243,18,96,.35)}
+    .list{max-height:360px;overflow:auto;border-radius:14px;border:1px solid var(--line);padding:8px;background:rgba(0,0,0,.18)}
+    .item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 8px;border-bottom:1px dashed rgba(255,255,255,.08);font-size:13px}
+    .item:last-child{border-bottom:none}
+    code{color:#b7c9ff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>ShiftCommander — Member Entry (Live)</h1>
+        <div class="sub">This one can add “official” people into the DB and refresh dropdowns instantly.</div>
+      </div>
+      <div class="pill" id="statusPill"><span class="dot"></span><span id="statusText">connecting…</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Enter availability / preferences</h2>
+        <div class="tiny">Saved locally in this browser; export as <code>entries.json</code> for the scheduler.</div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <label>Person (DB-backed)</label>
+          <select id="personSelect"></select>
+        </div>
+
+        <div class="two">
+          <div class="row">
+            <label>Week ID</label>
+            <input id="weekId" placeholder="WEEK_YYYY-MM-DD_to_YYYY-MM-DD" />
+          </div>
+          <div class="row">
+            <label>Day index (0..6)</label>
+            <select id="dayIndex">
+              <option value="0">0 (Thu)</option><option value="1">1 (Fri)</option><option value="2">2 (Sat)</option>
+              <option value="3">3 (Sun)</option><option value="4">4 (Mon)</option><option value="5">5 (Tue)</option><option value="6">6 (Wed)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="row">
+            <label>Slot</label>
+            <select id="slot">
+              <option value="DAY">DAY (06–18)</option>
+              <option value="NIGHT">NIGHT (18–06)</option>
+              <option value="BOTH">BOTH</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Role preference</label>
+            <select id="rolePref">
+              <option value="ANY">Any</option>
+              <option value="ATTENDANT">Attendant</option>
+              <option value="DRIVER">Driver</option>
+              <option value="RIDEALONG">Ride-along</option>
+              <option value="NO_DRIVER">Avoid Driver</option>
+              <option value="NO_NIGHT">Avoid Night</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Availability</label>
+          <select id="availability">
+            <option value="AVAILABLE">Available</option>
+            <option value="UNAVAILABLE">Unavailable</option>
+            <option value="PREFERRED">Preferred</option>
+            <option value="AVOID">Avoid</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>Notes (optional)</label>
+          <textarea id="notes" placeholder="e.g., can start at 08:00, needs off by 16:00, etc."></textarea>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="saveBtn">Save Entry</button>
+          <button id="exportBtn">Export entries.json</button>
+          <button class="danger" id="clearBtn">Clear local entries</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <h2>Add person (OFFICIAL — writes to DB)</h2>
+        <div class="tiny">This immediately updates the dropdown. Use simple display names (e.g., <code>Jonah</code>, <code>Sherman</code>, <code>Brian</code>).</div>
+
+        <div class="two" style="margin-top:10px;">
+          <div class="row">
+            <label>Display name</label>
+            <input id="newPersonName" placeholder="e.g., Jonah" />
+          </div>
+          <div class="row">
+            <label></label>
+            <button class="primary" id="addPersonBtn">Add to DB + Refresh</button>
+          </div>
+        </div>
+
+        <div class="tiny" id="addResult" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>Known people (from DB)</h2>
+        <div class="tiny">This is your “acceptable names” list. No typos, no duplicates.</div>
+        <div class="hr"></div>
+        <div class="list" id="knownList"></div>
+
+        <div class="hr"></div>
+
+        <h2>Local saved entries</h2>
+        <div class="tiny">Export and hand to the scheduler later.</div>
+        <div class="hr"></div>
+        <div class="list" id="entryList"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API = location.origin; // http://127.0.0.1:8765
+
+  const STORAGE_KEY_ENTRIES = "sc_beta_entries_v1";
+  let PEOPLE = [];
+
+  function loadJSON(key, fallback) {
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch { return fallback; }
+  }
+  function saveJSON(key, value) { localStorage.setItem(key, JSON.stringify(value, null, 2)); }
+  function download(filename, obj) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  function setStatus(ok, text) {
+    document.getElementById("statusText").textContent = text;
+  }
+
+  function populatePeopleDropdown() {
+    const sel = document.getElementById("personSelect");
+    sel.innerHTML = "";
+    for (const p of PEOPLE) {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.label;
+      sel.appendChild(opt);
+    }
+  }
+
+  function renderKnown() {
+    const knownList = document.getElementById("knownList");
+    knownList.innerHTML = "";
+    for (const p of PEOPLE) {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `<span>${p.label}</span><span class="tiny"><code>${p.id}</code></span>`;
+      knownList.appendChild(div);
+    }
+  }
+
+  function renderEntries() {
+    const list = document.getElementById("entryList");
+    const entries = loadJSON(STORAGE_KEY_ENTRIES, []);
+    list.innerHTML = "";
+    if (!entries.length) { list.innerHTML = `<div class="tiny">No entries saved yet.</div>`; return; }
+    for (const e of entries.slice().reverse()) {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div>
+          <div><strong>${e.person_label}</strong> <span class="tiny">(<code>${e.person_id}</code>)</span></div>
+          <div class="tiny">${e.week_id} • D${e.day_index} • ${e.slot} • ${e.availability} • pref: ${e.role_pref}</div>
+          ${e.notes ? `<div class="tiny">“${e.notes}”</div>` : ""}
+        </div>
+        <div class="tiny">${e.saved_at}</div>
+      `;
+      list.appendChild(div);
+    }
+  }
+
+  function personLabelById(id) {
+    return (PEOPLE.find(p => p.id === id) || { label: id }).label;
+  }
+
+  async function refreshPeople() {
+    const r = await fetch(`${API}/api/people`);
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || "Failed to load people");
+    PEOPLE = j.people || [];
+    populatePeopleDropdown();
+    renderKnown();
+    setStatus(true, `connected • people: ${PEOPLE.length}`);
+  }
+
+  document.getElementById("addPersonBtn").addEventListener("click", async () => {
+    const name = document.getElementById("newPersonName").value.trim();
+    if (!name) return alert("Enter a name first.");
+
+    const resEl = document.getElementById("addResult");
+    resEl.textContent = "adding…";
+
+    try {
+      const r = await fetch(`${API}/api/add_person`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ display_name: name })
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || "Add failed");
+      PEOPLE = j.people || PEOPLE;
+      populatePeopleDropdown();
+      renderKnown();
+      document.getElementById("personSelect").value = j.added.id;
+      document.getElementById("newPersonName").value = "";
+      resEl.innerHTML = `Added: <code>${j.added.id}</code> (${j.added.label})`;
+    } catch (e) {
+      resEl.textContent = `ERROR: ${e.message}`;
+    }
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    const person_id = document.getElementById("personSelect").value;
+    const week_id = document.getElementById("weekId").value.trim();
+    const day_index = Number(document.getElementById("dayIndex").value);
+    const slot = document.getElementById("slot").value;
+    const role_pref = document.getElementById("rolePref").value;
+    const availability = document.getElementById("availability").value;
+    const notes = document.getElementById("notes").value.trim();
+
+    if (!week_id) return alert("Week ID is required.");
+
+    const entries = loadJSON(STORAGE_KEY_ENTRIES, []);
+    entries.push({
+      saved_at: new Date().toISOString(),
+      person_id,
+      person_label: personLabelById(person_id),
+      week_id,
+      day_index,
+      slot,
+      role_pref,
+      availability,
+      notes
+    });
+    saveJSON(STORAGE_KEY_ENTRIES, entries);
+    document.getElementById("notes").value = "";
+    renderEntries();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const entries = loadJSON(STORAGE_KEY_ENTRIES, []);
+    download("entries.json", { exported_at: new Date().toISOString(), entries });
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    if (!confirm("Clear all local entries in this browser?")) return;
+    localStorage.removeItem(STORAGE_KEY_ENTRIES);
+    renderEntries();
+  });
+
+  // init
+  (async () => {
+    try {
+      await refreshPeople();
+      renderEntries();
+    } catch (e) {
+      setStatus(false, `NOT CONNECTED — start server (member_entry_server.py)`);
+    }
+  })();
+</script>
+</body>
+</html>

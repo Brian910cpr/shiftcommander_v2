@@ -1,0 +1,18 @@
+
+--- sc_weeks ---
+week_id                      TEXT                  PK
+start_date                   TEXT         NOT NULL 
+end_date                     TEXT         NOT NULL 
+lock_dt                      TEXT         NOT NULL 
+first_out_default_unit_id    TEXT         NOT NULL 
+status                       TEXT         NOT NULL 
+
+--- schedule_weeks ---
+week_id                      TEXT                  PK
+week_start_dt                TEXT         NOT NULL 
+week_end_dt                  TEXT         NOT NULL 
+lock_dt                      TEXT         NOT NULL 
+status                       TEXT         NOT NULL 
+first_out_default_unit_id    TEXT         NOT NULL 
+created_at                   TEXT         NOT NULL 
+updated_at                   TEXT         NOT NULL 

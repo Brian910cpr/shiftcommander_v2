@@ -1,0 +1,3 @@
+person_id,display_name,active,employment_type,default_pay_type,medical_cert,willing_attend,target_hours_week,ot_pref,ops_units,staffing_classes,notes
+,Nick Tripp,TRUE,FT,HOURLY,ALS,TRUE,0,NO_LIMIT,AMB120;AMB121;AMB131,EMS_HOURLY;EMS_SUPERVISOR,Example row. Replace/delete.
+,Cliff,TRUE,VOL,VOLUNTEER,NONE,FALSE,0,MINIMIZE,AMB120,VOLUNTEER_GENERAL,Driver-only. No medical cert.

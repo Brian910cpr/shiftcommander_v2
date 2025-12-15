@@ -1,0 +1,38 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs/temp
+*.log
+*.tmp
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# node/build
+node_modules/
+dist/
+build/
+
+# secrets
+.env
+.env.*
+
+# generated / operational data
+tools/schedule/out/
+tools/schedule/**/out/
+tools/schedule/history_*.csv
+data/
+exports/
+scans/
+archive/
+*.sqlite
+*.db
+
+# zip artifacts (keep in Drive)
+*.zip

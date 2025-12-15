@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Member Availability Entry (Me-Only)</title>
+  <style>
+    :root{
+      --bg:#08131d;
+      --card:#0d1b28;
+      --ink:#e9f1ff;
+      --muted:#a7b6cc;
+      --line:rgba(255,255,255,.12);
+      --good:#28d17c;
+      --warn:#f2c94c;
+      --bad:#ff5a67;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(900px 600px at 25% 10%, rgba(58,160,255,.12), transparent 55%),
+                  radial-gradient(900px 600px at 75% 20%, rgba(40,209,124,.10), transparent 60%),
+                  linear-gradient(180deg, #070f17, var(--bg));
+      color:var(--ink);
+      font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    h1{margin:0 0 8px;font-size:18px;letter-spacing:.02em}
+    .sub{color:var(--muted);margin:0 0 14px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      align-items:start;
+    }
+    @media (max-width:980px){ .grid{grid-template-columns:1fr;} }
+
+    .card{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius:16px;
+      padding:14px;
+    }
+    .row{display:grid;grid-template-columns: 150px 1fr; gap:10px; align-items:center; margin:10px 0}
+    .row label{color:var(--muted);font-weight:900;letter-spacing:.02em}
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 10px;
+      outline:none;
+      font-weight:700;
+    }
+    textarea{min-height: 90px; resize: vertical;}
+    .pillRow{display:flex; gap:10px; flex-wrap:wrap}
+    .pill{
+      display:flex; gap:8px; align-items:center;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      padding:8px 10px; border-radius:999px;
+      font-weight:900;
+    }
+    .btnRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+    button{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:1000;
+    }
+    button:hover{background: rgba(255,255,255,.10)}
+    button.good{border-color: rgba(40,209,124,.45)}
+    button.bad{border-color: rgba(255,90,103,.45)}
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:10px;
+    }
+    .item{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      border-radius:14px;
+      padding:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .item .name{font-weight:1000}
+    .item .meta{color:var(--muted);font-size:12px;margin-top:2px}
+    .tiny{font-size:12px;color:var(--muted)}
+    .wkgrid{
+      display:grid;
+      grid-template-columns: repeat(7, minmax(120px,1fr));
+      gap:8px;
+    }
+    .daybox{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      border-radius:14px;
+      padding:10px;
+    }
+    .daybox h3{margin:0 0 8px;font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+    .checks{display:flex;flex-direction:column;gap:8px}
+    .checks label{display:flex;gap:8px;align-items:center;font-weight:900}
+    .checks input{transform:scale(1.1)}
+    .hr{
+      height:1px;background: rgba(255,255,255,.10); margin:12px 0;
+    }
+    code{background: rgba(0,0,0,.28); padding:2px 6px; border-radius:8px; border:1px solid rgba(255,255,255,.12)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ShiftCommander — Member Availability Entry (Me-Only)</h1>
+  <p class="sub">
+    Enter member preferences for the upcoming run (ex: January). This exports <code>member_prefs.json</code> we can feed into the week-4 calculation.
+    It’s intentionally “ask too much” so we don’t break later.
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="row">
+        <label>Member name</label>
+        <input id="name" type="text" placeholder="First Last (or First)" />
+      </div>
+
+      <div class="row">
+        <label>Roles</label>
+        <div class="pillRow">
+          <label class="pill"><input id="role_att" type="checkbox" checked> Attendant</label>
+          <label class="pill"><input id="role_drv" type="checkbox"> Driver</label>
+          <label class="pill"><input id="role_als" type="checkbox"> ALS</label>
+          <label class="pill"><input id="role_trainee" type="checkbox"> Trainee/Ride-along</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Desired hrs/wk</label>
+        <input id="want_hours" type="number" min="0" step="1" value="12" />
+      </div>
+
+      <div class="row">
+        <label>Max hrs/wk</label>
+        <input id="max_hours" type="number" min="0" step="1" value="24" />
+      </div>
+
+      <div class="row">
+        <label>Max shifts/wk</label>
+        <input id="max_shifts" type="number" min="0" step="1" value="2" />
+      </div>
+
+      <div class="row">
+        <label>Allow partials?</label>
+        <div class="pillRow">
+          <label class="pill"><input id="partials_ok" type="checkbox"> Yes (partials OK)</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Partial notes</label>
+        <textarea id="partial_notes" placeholder="Examples: 'can start 08:00', 'needs off by 16:00', '6-4', etc."></textarea>
+      </div>
+
+      <div class="row">
+        <label>Unit preference</label>
+        <select id="unit_pref">
+          <option value="ANY">Any (no preference)</option>
+          <option value="AMB120_FIRST">Prefer 120</option>
+          <option value="AMB121_FIRST">Prefer 121</option>
+          <option value="AMB131_FIRST">Prefer 131</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Avoid days?</label>
+        <div class="pillRow">
+          <label class="pill"><input id="avoid_day" type="checkbox"> Avoid DAY shifts</label>
+          <label class="pill"><input id="avoid_night" type="checkbox"> Avoid NIGHT shifts</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>General notes</label>
+        <textarea id="notes" placeholder="Anything else that matters for assignment / fairness / reality."></textarea>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="tiny"><b>Availability (recurring weekly)</b>: check what they are willing to work.</div>
+      <div class="wkgrid" id="availGrid"></div>
+
+      <div class="btnRow">
+        <button class="good" id="btnAdd" type="button">Add / Update Member</button>
+        <button id="btnClear" type="button">Clear Form</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <div>
+          <div style="font-weight:1000;">Saved members</div>
+          <div class="tiny">Click a member to edit. Export when ready.</div>
+        </div>
+        <div class="btnRow" style="margin:0;">
+          <button class="good" id="btnExport" type="button">Export JSON</button>
+          <button class="bad" id="btnWipe" type="button">Wipe All</button>
+        </div>
+      </div>
+
+      <div class="list" id="memberList"></div>
+
+      <div class="hr"></div>
+      <div class="tiny">
+        Output file format is stable and explicit. It contains:
+        <ul>
+          <li>member id + name</li>
+          <li>roles (attendant/driver/als/trainee)</li>
+          <li>desired/max hours + max shifts</li>
+          <li>weekly availability by weekday + AM/PM</li>
+          <li>partial shift notes (free text)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const STORE_KEY = "sc_member_prefs_v1";
+
+function uidFromName(name){
+  return name.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,40) || ("m_" + Date.now());
+}
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return {version:1, updated_at: new Date().toISOString(), members:[]};
+    const j = JSON.parse(raw);
+    if(!j || !Array.isArray(j.members)) throw new Error("bad store");
+    return j;
+  }catch{
+    return {version:1, updated_at: new Date().toISOString(), members:[]};
+  }
+}
+function saveStore(store){
+  store.updated_at = new Date().toISOString();
+  localStorage.setItem(STORE_KEY, JSON.stringify(store, null, 2));
+}
+
+const UI = {
+  name: document.getElementById("name"),
+  role_att: document.getElementById("role_att"),
+  role_drv: document.getElementById("role_drv"),
+  role_als: document.getElementById("role_als"),
+  role_trainee: document.getElementById("role_trainee"),
+  want_hours: document.getElementById("want_hours"),
+  max_hours: document.getElementById("max_hours"),
+  max_shifts: document.getElementById("max_shifts"),
+  partials_ok: document.getElementById("partials_ok"),
+  partial_notes: document.getElementById("partial_notes"),
+  unit_pref: document.getElementById("unit_pref"),
+  avoid_day: document.getElementById("avoid_day"),
+  avoid_night: document.getElementById("avoid_night"),
+  notes: document.getElementById("notes"),
+  availGrid: document.getElementById("availGrid"),
+  memberList: document.getElementById("memberList"),
+  btnAdd: document.getElementById("btnAdd"),
+  btnClear: document.getElementById("btnClear"),
+  btnExport: document.getElementById("btnExport"),
+  btnWipe: document.getElementById("btnWipe"),
+};
+
+let store = loadStore();
+let editingId = null;
+let avail = defaultAvail();
+
+function defaultAvail(){
+  // Default: available both shifts all days (you can uncheck)
+  const o = {};
+  for(const d of DAYS){
+    o[d] = { AM:true, PM:true };
+  }
+  return o;
+}
+
+function buildAvailUI(){
+  UI.availGrid.innerHTML = "";
+  for(const d of DAYS){
+    const box = document.createElement("div");
+    box.className = "daybox";
+    box.innerHTML = `
+      <h3>${d}</h3>
+      <div class="checks">
+        <label><input type="checkbox" data-day="${d}" data-slot="AM"> AM</label>
+        <label><input type="checkbox" data-day="${d}" data-slot="PM"> PM</label>
+      </div>
+    `;
+    UI.availGrid.appendChild(box);
+  }
+  UI.availGrid.addEventListener("change", (e) => {
+    const el = e.target;
+    if(!(el instanceof HTMLInputElement)) return;
+    const day = el.getAttribute("data-day");
+    const slot = el.getAttribute("data-slot");
+    if(!day || !slot) return;
+    avail[day][slot] = el.checked;
+  });
+}
+
+function syncAvailUI(){
+  const inputs = UI.availGrid.querySelectorAll("input[type=checkbox][data-day]");
+  inputs.forEach(inp => {
+    const day = inp.getAttribute("data-day");
+    const slot = inp.getAttribute("data-slot");
+    inp.checked = !!avail?.[day]?.[slot];
+  });
+}
+
+function clearForm(){
+  editingId = null;
+  UI.name.value = "";
+  UI.role_att.checked = true;
+  UI.role_drv.checked = false;
+  UI.role_als.checked = false;
+  UI.role_trainee.checked = false;
+  UI.want_hours.value = 12;
+  UI.max_hours.value = 24;
+  UI.max_shifts.value = 2;
+  UI.partials_ok.checked = false;
+  UI.partial_notes.value = "";
+  UI.unit_pref.value = "ANY";
+  UI.avoid_day.checked = false;
+  UI.avoid_night.checked = false;
+  UI.notes.value = "";
+  avail = defaultAvail();
+  syncAvailUI();
+  renderList();
+}
+
+function gatherMember(){
+  const name = UI.name.value.trim();
+  if(!name) throw new Error("Member name is required.");
+  const id = editingId || uidFromName(name);
+
+  const roles = {
+    attendant: !!UI.role_att.checked,
+    driver: !!UI.role_drv.checked,
+    als: !!UI.role_als.checked,
+    trainee: !!UI.role_trainee.checked,
+  };
+
+  return {
+    id,
+    name,
+    roles,
+    desired_hours_per_week: Number(UI.want_hours.value || 0),
+    max_hours_per_week: Number(UI.max_hours.value || 0),
+    max_shifts_per_week: Number(UI.max_shifts.value || 0),
+
+    avoid: {
+      day: !!UI.avoid_day.checked,
+      night: !!UI.avoid_night.checked,
+    },
+
+    unit_preference: UI.unit_pref.value,
+
+    partials: {
+      ok: !!UI.partials_ok.checked,
+      notes: UI.partial_notes.value.trim(),
+    },
+
+    availability_weekly: JSON.parse(JSON.stringify(avail)),
+    notes: UI.notes.value.trim(),
+
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function upsertMember(m){
+  const idx = store.members.findIndex(x => x.id === m.id);
+  if(idx >= 0) store.members[idx] = m;
+  else store.members.push(m);
+
+  // stable sort by name
+  store.members.sort((a,b) => (a.name||"").localeCompare(b.name||""));
+  saveStore(store);
+  renderList();
+}
+
+function renderList(){
+  UI.memberList.innerHTML = "";
+  if(store.members.length === 0){
+    UI.memberList.innerHTML = `<div class="tiny">No members saved yet.</div>`;
+    return;
+  }
+  for(const m of store.members){
+    const roles = [];
+    if(m.roles?.attendant) roles.push("Att");
+    if(m.roles?.driver) roles.push("Drv");
+    if(m.roles?.als) roles.push("ALS");
+    if(m.roles?.trainee) roles.push("Trn");
+
+    const availSummary = DAYS.map(d => {
+      const a = m.availability_weekly?.[d]?.AM ? "A" : "-";
+      const p = m.availability_weekly?.[d]?.PM ? "P" : "-";
+      return `${d}:${a}${p}`;
+    }).join("  ");
+
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div>
+        <div class="name">${m.name}</div>
+        <div class="meta">
+          Roles: ${roles.join(", ") || "—"} • Want ${m.desired_hours_per_week}h/wk • Max ${m.max_hours_per_week}h • Max shifts ${m.max_shifts_per_week}
+        </div>
+        <div class="meta">${availSummary}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+        <button type="button" data-edit="${m.id}">Edit</button>
+        <button type="button" class="bad" data-del="${m.id}">Delete</button>
+      </div>
+    `;
+    UI.memberList.appendChild(div);
+  }
+
+  UI.memberList.querySelectorAll("button[data-edit]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-edit");
+      const m = store.members.find(x => x.id === id);
+      if(!m) return;
+      editingId = m.id;
+      UI.name.value = m.name || "";
+      UI.role_att.checked = !!m.roles?.attendant;
+      UI.role_drv.checked = !!m.roles?.driver;
+      UI.role_als.checked = !!m.roles?.als;
+      UI.role_trainee.checked = !!m.roles?.trainee;
+      UI.want_hours.value = m.desired_hours_per_week ?? 0;
+      UI.max_hours.value = m.max_hours_per_week ?? 0;
+      UI.max_shifts.value = m.max_shifts_per_week ?? 0;
+      UI.avoid_day.checked = !!m.avoid?.day;
+      UI.avoid_night.checked = !!m.avoid?.night;
+      UI.unit_pref.value = m.unit_preference || "ANY";
+      UI.partials_ok.checked = !!m.partials?.ok;
+      UI.partial_notes.value = m.partials?.notes || "";
+      UI.notes.value = m.notes || "";
+      avail = JSON.parse(JSON.stringify(m.availability_weekly || defaultAvail()));
+      syncAvailUI();
+      window.scrollTo({top:0, behavior:"smooth"});
+    });
+  });
+
+  UI.memberList.querySelectorAll("button[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-del");
+      if(!confirm("Delete this member?")) return;
+      store.members = store.members.filter(x => x.id !== id);
+      saveStore(store);
+      renderList();
+    });
+  });
+}
+
+function downloadJson(filename, obj){
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* Buttons */
+UI.btnAdd.addEventListener("click", () => {
+  try{
+    const m = gatherMember();
+    upsertMember(m);
+    alert("Saved.");
+  }catch(e){
+    alert(e.message || String(e));
+  }
+});
+UI.btnClear.addEventListener("click", clearForm);
+
+UI.btnExport.addEventListener("click", () => {
+  // Stable export envelope
+  const out = {
+    schema: "ShiftCommander.MemberPrefs.v1",
+    exported_at: new Date().toISOString(),
+    members: store.members
+  };
+  downloadJson("member_prefs.json", out);
+});
+
+UI.btnWipe.addEventListener("click", () => {
+  if(!confirm("Wipe ALL saved members?")) return;
+  store = {version:1, updated_at: new Date().toISOString(), members:[]};
+  saveStore(store);
+  clearForm();
+});
+
+/* Init */
+buildAvailUI();
+syncAvailUI();
+renderList();
+</script>
+</body>
+</html>

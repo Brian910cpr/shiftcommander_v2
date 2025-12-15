@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ShiftCommander — Wallboard</title>
+  <style>
+    :root{
+      --bg0:#050b12;
+      --bg1:#071019;
+      --panel:#0b1723;
+      --panel2:#0e2031;
+
+      --stroke:rgba(255,255,255,.10);
+      --stroke2:rgba(255,255,255,.14);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --muted2:rgba(255,255,255,.45);
+
+      --good:#2bd673;     /* green */
+      --warn:#ffd24a;     /* yellow */
+      --bad:#ff4d6d;      /* red */
+
+      --att:#2bd673;      /* attendant name */
+      --drv:#4aa3ff;      /* driver name */
+      --ral:#c9c9c9;      /* ride-along name */
+
+      --tileW: 205px;     /* desktop tile width hint */
+      --tileH: 520px;     /* overall tile height target */
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      color:var(--text);
+      font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 800px at 20% -10%, #0f2a3f 0%, rgba(15,42,63,0) 60%),
+        radial-gradient(1000px 700px at 90% 10%, #13283a 0%, rgba(19,40,58,0) 55%),
+        linear-gradient(180deg, #06101a, #050b12 70%);
+      min-height:100vh;
+    }
+
+    /* Header: greatly reduced */
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      padding:6px 8px;
+      display:flex; gap:8px; align-items:center;
+      background:rgba(5,11,18,.72);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--stroke);
+    }
+    .title{
+      font-weight:800;
+      letter-spacing:.2px;
+      padding:4px 6px;
+      border-radius:10px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .pill{
+      border:1px solid var(--stroke2);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border-radius:999px;
+      padding:6px 10px;
+      display:flex; gap:8px; align-items:center;
+      color:var(--text);
+      user-select:none;
+      min-height:34px;
+    }
+    .pill small{color:var(--muted)}
+    .grow{flex:1}
+    .search{
+      flex:1;
+      max-width:520px;
+      min-width:220px;
+      background:rgba(0,0,0,.18);
+      border:1px solid var(--stroke2);
+      border-radius:999px;
+      padding:8px 12px;
+      color:var(--text);
+      outline:none;
+    }
+    .btn{
+      cursor:pointer;
+      border:1px solid var(--stroke2);
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+      color:var(--text);
+      border-radius:10px;
+      padding:8px 10px;
+      font-weight:700;
+      min-height:34px;
+    }
+    .btn:active{transform:translateY(1px)}
+
+    /* Week row: force 7 columns */
+    .wrap{
+      padding:10px 10px 16px;
+    }
+    .weekRow{
+      display:grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap:10px;
+      align-items:stretch;
+      /* If screen is narrow, allow horizontal scroll instead of dropping to 6 */
+      overflow-x:auto;
+      padding-bottom:6px;
+    }
+    @media (max-width: 1100px){
+      .weekRow{
+        grid-template-columns: repeat(7, minmax(190px, 1fr));
+      }
+    }
+
+    .dayTile{
+      border:1px solid var(--stroke);
+      border-radius:18px;
+      background:rgba(0,0,0,.12);
+      box-shadow: 0 10px 40px rgba(0,0,0,.35);
+      overflow:hidden;
+      min-height:var(--tileH);
+      position:relative;
+      display:flex;
+      flex-direction:column;
+    }
+    .dayTile::before{
+      content:"";
+      position:absolute;
+      top:0; bottom:0; left:0;
+      width:6px;
+      background: var(--good); /* replaced by JS */
+      opacity:.95;
+    }
+
+    /* Top area: date + notes (NO divider line below per request) */
+    .topArea{
+      display:flex;
+      gap:10px;
+      padding:10px 10px 8px 10px;
+      align-items:flex-start;
+    }
+    .dateBlock{
+      width:74px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      padding:8px 8px 10px;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:4px;
+      position:relative;
+    }
+    .monthTiny{
+      font-size:10px;
+      letter-spacing:.7px;
+      font-weight:900;
+      color:var(--muted);
+      text-transform:uppercase;
+      line-height:1;
+    }
+    .dayNum{
+      font-size:30px;
+      font-weight:900;
+      line-height:1;
+    }
+    .dow{
+      font-size:11px;
+      letter-spacing:.6px;
+      font-weight:900;
+      text-transform:uppercase;
+      color:var(--muted);
+      line-height:1.1;
+    }
+
+    /* status dots for shadow units beside date */
+    .dots{
+      position:absolute;
+      top:8px;
+      right:8px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.20);
+      background:rgba(255,255,255,.08);
+      box-shadow: 0 0 0 2px rgba(0,0,0,.18) inset;
+    }
+    .dot.good{background:var(--good)}
+    .dot.warn{background:var(--warn)}
+    .dot.bad{background:var(--bad)}
+    .dot[title]{cursor:default}
+
+    .notesBox{
+      flex:1;
+      min-height:64px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.14);
+      background:rgba(0,0,0,.10);
+      padding:8px 10px;
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      align-items:flex-start;
+      white-space:pre-wrap;
+    }
+    .notesBox.empty{
+      border-color: rgba(255,255,255,.08);
+      color:rgba(255,255,255,.26);
+    }
+
+    /* AM/PM pills (inside tile) */
+    .shiftWrap{
+      padding:0 10px 10px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex:1;
+    }
+    .shiftPill{
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background:rgba(0,0,0,.10);
+      overflow:hidden;
+      position:relative;
+      padding:8px 10px 10px 10px;
+      display:grid;
+      grid-template-columns: 44px 1fr;
+      gap:10px;
+      min-height:168px;
+    }
+    /* colored edge for shift health (and AM/PM label sits inside it) */
+    .shiftPill::before{
+      content:"";
+      position:absolute;
+      top:0; bottom:0; left:0;
+      width:6px;
+      background:var(--good); /* overridden by JS */
+    }
+    .ampm{
+      writing-mode:vertical-rl;
+      transform:rotate(180deg);
+      text-align:center;
+      font-weight:950;
+      letter-spacing:.7px;
+      font-size:12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+      padding:8px 0;
+      align-self:stretch;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:rgba(255,255,255,.92);
+      user-select:none;
+    }
+
+    .shiftBody{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+    }
+    .hours{
+      font-size:10px; /* tiny, per request */
+      color:rgba(255,255,255,.44);
+      font-weight:800;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+      line-height:1;
+    }
+    .healthLine{
+      font-size:12px;
+      color:rgba(255,255,255,.76);
+      font-weight:800;
+      line-height:1.1;
+    }
+    .crew{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:2px;
+    }
+    .person{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.14);
+      border-radius:12px;
+      padding:8px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-width:0;
+    }
+    .pname{
+      font-weight:950;
+      letter-spacing:.1px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pname.att{color:var(--att)}
+    .pname.drv{color:var(--drv)}
+    .pname.ral{color:var(--ral)}
+    .pnote{
+      font-size:12px;
+      font-weight:900;
+      color:rgba(255,255,255,.78);
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:999px;
+      padding:4px 8px;
+      white-space:nowrap;
+    }
+    .pnote.empty{opacity:.18}
+
+    /* Bottom: no “inactive truck pills” text — we are using dots instead */
+    .bottomPad{height:6px}
+
+    /* Muted tiny info under the row (optional) */
+    .hint{
+      margin-top:6px;
+      color:rgba(255,255,255,.45);
+      font-size:12px;
+      padding:0 2px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">Wallboard</div>
+    <div class="pill" id="wkPill"><small>Week</small><span id="wkText">—</span></div>
+    <input class="search" id="q" placeholder="Search name / placeholder / note..." />
+    <button class="btn" id="btnRefresh">Refresh</button>
+    <button class="btn" id="btnLoad">Load JSON…</button>
+    <input type="file" id="file" accept=".json" style="display:none"/>
+  </div>
+
+  <div class="wrap">
+    <div class="weekRow" id="row"></div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+<script>
+(() => {
+  // ---------------------------
+  // CONFIG (adjust as needed)
+  // ---------------------------
+  const ACTIVE_UNIT_ID_DEFAULT = "AMB120";
+  const SHADOW_UNITS = ["AMB121","AMB131"]; // dots only
+  // "weak but legal" rule: allow an OPS-only driver or EMR-only attendant? You said: DO NOT show those labels.
+  // So we treat "legal" as: at least one Attendant and one Driver present (filled).
+  // "weak" = missing one of those, but any seat filled.
+  // "unfilled" = none filled.
+  const HEALTH = { GOOD:"good", WARN:"warn", BAD:"bad" };
+
+  const stateColor = {
+    good: getCss("--good"),
+    warn: getCss("--warn"),
+    bad:  getCss("--bad")
+  };
+
+  // ---------------------------
+  // Utilities
+  // ---------------------------
+  function getCss(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+  function parseISODate(s){
+    // expect YYYY-MM-DD
+    const [y,m,d] = s.split("-").map(Number);
+    return new Date(y, m-1, d);
+  }
+
+  function fmtDow(d){
+    return d.toLocaleString(undefined,{weekday:"short"}).toUpperCase();
+  }
+  function fmtMonthTiny(d){
+    return d.toLocaleString(undefined,{month:"short"}).toUpperCase();
+  }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+
+  function toDateISO(dt){
+    // dt may be ISO datetime string
+    const d = new Date(dt);
+    const y = d.getFullYear();
+    const m = pad2(d.getMonth()+1);
+    const day = pad2(d.getDate());
+    return `${y}-${m}-${day}`;
+  }
+
+  function timeHHMM(dt){
+    const d = new Date(dt);
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+
+  function normalizeName(raw){
+    if(!raw) return "";
+    // remove PLACEHOLDER:PH_ noise for public wallboard
+    // Examples: "PLACEHOLDER:PH_NIKKI" -> "Nikki"
+    let s = String(raw);
+    s = s.replace(/^PLACEHOLDER:/i,"");
+    s = s.replace(/^PH_/i,"");
+    s = s.replaceAll("_"," ");
+    // title-case-ish
+    s = s.split(" ").map(w => w ? (w[0].toUpperCase()+w.slice(1).toLowerCase()) : "").join(" ").trim();
+    return s;
+  }
+
+  function seatRoleClass(seatType){
+    const t = String(seatType||"").toUpperCase();
+    if(t.includes("DRIVER")) return "drv";
+    if(t.includes("RIDE")) return "ral";
+    return "att"; // attendant default
+  }
+
+  function pickActiveUnitForShift(shift){
+    // IMPORTANT: do NOT assume TOW/first-out = active for every shift.
+    // Use staffed_unit_id if present, else unit_id, else ACTIVE_UNIT_ID_DEFAULT.
+    return shift.staffed_unit_id || shift.unit_id || shift.active_unit_id || ACTIVE_UNIT_ID_DEFAULT;
+  }
+
+  function bestHealthFrom(healthA, healthB){
+    // worst wins: bad > warn > good
+    const rank = { bad:3, warn:2, good:1 };
+    return (rank[healthA] >= rank[healthB]) ? healthA : healthB;
+  }
+
+  // ---------------------------
+  // JSON input handling
+  // ---------------------------
+  let DATA = null;
+
+  async function loadDefaultFetch(){
+    // Try week.json in same folder (typical local preview)
+    // If file:// blocks fetch, user can use Load JSON…
+    const candidates = ["week.json","seats.json","out/week.json"];
+    for(const path of candidates){
+      try{
+        const res = await fetch(path, {cache:"no-store"});
+        if(!res.ok) continue;
+        const json = await res.json();
+        return json;
+      }catch(e){}
+    }
+    throw new Error("Failed to fetch default JSON (file:// often blocks fetch). Use “Load JSON…”");
+  }
+
+  function parseAnyShape(json){
+    // Accept:
+    // A) { week_id, days:[...]}  (custom)
+    // B) { week_id, shifts:[...], seats:[...] }
+    // C) export seats.json as array of seat rows, plus maybe separate shifts.json not present
+    //
+    // For THIS wallboard we’ll support best-effort:
+    // - If json.shifts exists: use it.
+    // - Else if json is array of seat rows: synthesize shifts by grouping seat rows by (shift_start, shift_end, staffed_unit_id)
+    // - Seats: json.seats OR array itself.
+    const out = { week_id:null, shifts:[], seats:[], week_meta:{} };
+
+    if(Array.isArray(json)){
+      out.seats = json;
+      out.week_id = json[0]?.week_id || null;
+      // synthesize shifts
+      const map = new Map();
+      for(const r of json){
+        const k = `${r.shift_start}|${r.shift_end}|${r.staffed_unit_id || r.unit_id || r.seat_unit_id || ""}`;
+        if(!map.has(k)){
+          map.set(k, {
+            week_id: r.week_id,
+            shift_start: r.shift_start,
+            shift_end: r.shift_end,
+            staffed_unit_id: r.staffed_unit_id || r.unit_id || r.seat_unit_id || null,
+            active: r.shift_active ?? true,
+          });
+        }
+      }
+      out.shifts = Array.from(map.values()).sort((a,b)=>new Date(a.shift_start)-new Date(b.shift_start));
+      return out;
+    }
+
+    out.week_id = json.week_id || json.week?.week_id || null;
+    out.week_meta = json.week || json.week_meta || {};
+    if(Array.isArray(json.shifts)) out.shifts = json.shifts;
+    if(Array.isArray(json.seats)) out.seats = json.seats;
+
+    // Some exports name them differently:
+    if(!out.seats.length && Array.isArray(json.rows)) out.seats = json.rows;
+
+    // if shifts missing but seats exist
+    if(!out.shifts.length && out.seats.length){
+      return parseAnyShape(out.seats);
+    }
+
+    return out;
+  }
+
+  // ---------------------------
+  // Group into days + AM/PM shifts
+  // ---------------------------
+  function buildWeekModel(parsed){
+    const shifts = parsed.shifts || [];
+    const seats = parsed.seats || [];
+
+    // Build shift->seats lookup
+    const seatsByShiftKey = new Map();
+    for(const s of shifts){
+      const key = `${s.shift_start}|${s.shift_end}|${pickActiveUnitForShift(s)}`;
+      seatsByShiftKey.set(key, []);
+    }
+
+    for(const r of seats){
+      // Try to match to a shift using same start/end & staffed unit (or r's unit)
+      const unit = r.staffed_unit_id || r.unit_id || r.seat_unit_id || r.unit || ACTIVE_UNIT_ID_DEFAULT;
+      const key = `${r.shift_start}|${r.shift_end}|${unit}`;
+      if(!seatsByShiftKey.has(key)){
+        // fallback: ignore unit dimension if mismatched
+        const key2 = `${r.shift_start}|${r.shift_end}|${ACTIVE_UNIT_ID_DEFAULT}`;
+        if(!seatsByShiftKey.has(key2)) seatsByShiftKey.set(key, []);
+      }
+      const targetKey = seatsByShiftKey.has(key) ? key : `${r.shift_start}|${r.shift_end}|${ACTIVE_UNIT_ID_DEFAULT}`;
+      if(!seatsByShiftKey.has(targetKey)) seatsByShiftKey.set(targetKey, []);
+      seatsByShiftKey.get(targetKey).push(r);
+    }
+
+    // Group shifts by day
+    const dayMap = new Map(); // dateISO -> {dateISO, shifts:[]}
+    for(const s of shifts){
+      const dateISO = toDateISO(s.shift_start);
+      if(!dayMap.has(dateISO)) dayMap.set(dateISO, {dateISO, shifts:[]});
+      dayMap.get(dateISO).shifts.push(s);
+    }
+
+    // Sort shifts, and pick AM vs PM by start hour (06=AM, 18=PM)
+    const days = Array.from(dayMap.values()).sort((a,b)=>parseISODate(a.dateISO)-parseISODate(b.dateISO));
+    for(const d of days){
+      d.shifts.sort((a,b)=>new Date(a.shift_start)-new Date(b.shift_start));
+      d.am = null;
+      d.pm = null;
+      for(const s of d.shifts){
+        const hr = new Date(s.shift_start).getHours();
+        if(hr < 12 && !d.am) d.am = s;
+        else if(hr >= 12 && !d.pm) d.pm = s;
+        else {
+          // if odd shift times, still place by start hour:
+          if(hr < 12 && !d.am) d.am = s;
+          if(hr >= 12 && !d.pm) d.pm = s;
+        }
+      }
+      // seat lists
+      d.amSeats = d.am ? (seatsByShiftKey.get(`${d.am.shift_start}|${d.am.shift_end}|${pickActiveUnitForShift(d.am)}`) || []) : [];
+      d.pmSeats = d.pm ? (seatsByShiftKey.get(`${d.pm.shift_start}|${d.pm.shift_end}|${pickActiveUnitForShift(d.pm)}`) || []) : [];
+    }
+
+    return { week_id: parsed.week_id, days };
+  }
+
+  // ---------------------------
+  // Health calc (AM/PM + day)
+  // ---------------------------
+  function healthForSeats(seats){
+    // Determine if Attendant & Driver are filled (in active unit seats only)
+    let hasAtt = false, hasDrv = false;
+    let any = false;
+
+    for(const r of seats){
+      const seatType = (r.seat_type || r.seat || "").toUpperCase();
+      const assignee = r.assignee || r.assignee_display || r.person_name || r.member_name || r.placeholder || r.value;
+      const filled = !!(r.filled ?? (assignee && String(assignee).toUpperCase() !== "UNASSIGNED"));
+
+      if(!filled) continue;
+      any = true;
+      if(seatType.includes("ATTEND")) hasAtt = true;
+      if(seatType.includes("DRIVER")) hasDrv = true;
+
+      // if schema uses role field:
+      if(!seatType && (r.role||"").toUpperCase().includes("ATTEND")) hasAtt = true;
+      if(!seatType && (r.role||"").toUpperCase().includes("DRIVER")) hasDrv = true;
+    }
+
+    if(hasAtt && hasDrv) return {health:HEALTH.GOOD, note:""};
+    if(any) return {health:HEALTH.WARN, note:"Needs crew"};
+    return {health:HEALTH.BAD, note:"Needs crew"};
+  }
+
+  function dayHealth(amHealth, pmHealth){
+    return bestHealthFrom(amHealth, pmHealth);
+  }
+
+  // Shadow dots: summarize per-day readiness for those units
+  function shadowHealthForDayUnit(day, unitId){
+    // We only have seats for active unit in some exports.
+    // If seats include unit info, try filter; else assume unfilled.
+    const allSeats = [...(day.amSeats||[]), ...(day.pmSeats||[])];
+    const unitSeats = allSeats.filter(r => (r.unit_id||r.staffed_unit_id||r.seat_unit_id||"") === unitId);
+    if(!unitSeats.length) return HEALTH.BAD;
+    return healthForSeats(unitSeats).health;
+  }
+
+  // ---------------------------
+  // Render
+  // ---------------------------
+  const rowEl = document.getElementById("row");
+  const wkText = document.getElementById("wkText");
+  const hintEl = document.getElementById("hint");
+  const qEl = document.getElementById("q");
+
+  function render(model){
+    wkText.textContent = model.week_id || "—";
+    rowEl.innerHTML = "";
+    hintEl.textContent = "";
+
+    // Force exactly 7 days for display:
+    // If model.days has 7: use it. If fewer/more, we still show the first 7 in order.
+    const days = (model.days || []).slice(0,7);
+
+    const query = qEl.value.trim().toLowerCase();
+
+    for(const day of days){
+      const dateObj = parseISODate(day.dateISO);
+      const month = fmtMonthTiny(dateObj);
+      const dow = fmtDow(dateObj);
+      const dayNum = dateObj.getDate();
+
+      const amSeats = filterForQuery(day.amSeats||[], query);
+      const pmSeats = filterForQuery(day.pmSeats||[], query);
+
+      const amH = healthForSeats(day.amSeats||[]);
+      const pmH = healthForSeats(day.pmSeats||[]);
+      const dayH = dayHealth(amH.health, pmH.health);
+
+      // Notes: prefer day-level notes if present in input, else blank
+      const dayNote =
+        day.day_note ||
+        day.note ||
+        day.notes ||
+        "";
+
+      const tile = document.createElement("div");
+      tile.className = "dayTile";
+      tile.style.setProperty("--dayEdge", stateColor[dayH]);
+      tile.style.setProperty("border-color", "rgba(255,255,255,.10)");
+      tile.style.setProperty("--localDayColor", stateColor[dayH]);
+      tile.style.setProperty("--localAmColor", stateColor[amH.health]);
+      tile.style.setProperty("--localPmColor", stateColor[pmH.health]);
+
+      tile.style.setProperty("box-shadow", "0 10px 40px rgba(0,0,0,.35)");
+      tile.style.setProperty("background", "rgba(0,0,0,.12)");
+
+      // left day border
+      tile.style.setProperty("--good", stateColor.good);
+      tile.style.setProperty("--warn", stateColor.warn);
+      tile.style.setProperty("--bad", stateColor.bad);
+
+      tile.innerHTML = `
+        <div class="topArea">
+          <div class="dateBlock">
+            <div class="dots">
+              ${SHADOW_UNITS.map(u=>{
+                const h = shadowHealthForDayUnit(day,u);
+                const cls = h==="good"?"good":(h==="warn"?"warn":"bad");
+                return `<span class="dot ${cls}" title="${u}: ${h.toUpperCase()}"></span>`;
+              }).join("")}
+            </div>
+            <div class="monthTiny">${month}</div>
+            <div class="dayNum">${dayNum}</div>
+            <div class="dow">${dow}</div>
+          </div>
+
+          <div class="notesBox ${dayNote? "":"empty"}">${escapeHtml(dayNote || "—")}</div>
+        </div>
+
+        <div class="shiftWrap">
+          ${renderShiftPill("AM", day.am, day.amSeats||[], amH)}
+          ${renderShiftPill("PM", day.pm, day.pmSeats||[], pmH)}
+          <div class="bottomPad"></div>
+        </div>
+      `;
+
+      // Apply left border colors
+      tile.style.setProperty("--dayEdgeColor", stateColor[dayH]);
+      tile.style.setProperty("--amEdgeColor", stateColor[amH.health]);
+      tile.style.setProperty("--pmEdgeColor", stateColor[pmH.health]);
+
+      // Actually set pseudo colors via inline style on ::before by setting element style and using CSS variables
+      tile.style.position = "relative";
+      tile.style.setProperty("--dayEdgeVar", stateColor[dayH]);
+
+      // Inject CSS var usage (simple: override ::before background via style tag trick)
+      tile.style.setProperty("--DAY_EDGE", stateColor[dayH]);
+
+      // Set actual left edge on tile via inline style using background on ::before? can't directly.
+      // So: we set it by adding a real child overlay:
+      const edge = document.createElement("div");
+      edge.style.position = "absolute";
+      edge.style.left = "0";
+      edge.style.top = "0";
+      edge.style.bottom = "0";
+      edge.style.width = "6px";
+      edge.style.background = stateColor[dayH];
+      edge.style.opacity = ".95";
+      edge.style.pointerEvents = "none";
+      tile.appendChild(edge);
+
+      // Fix shift edges
+      const shiftEls = tile.querySelectorAll(".shiftPill");
+      shiftEls.forEach(el=>{
+        const kind = el.getAttribute("data-kind");
+        const col = kind==="AM" ? stateColor[amH.health] : stateColor[pmH.health];
+        // Replace pseudo with a real edge:
+        const sedge = document.createElement("div");
+        sedge.style.position="absolute";
+        sedge.style.left="0";
+        sedge.style.top="0";
+        sedge.style.bottom="0";
+        sedge.style.width="6px";
+        sedge.style.background=col;
+        sedge.style.pointerEvents="none";
+        el.appendChild(sedge);
+      });
+
+      rowEl.appendChild(tile);
+    }
+
+    if(!days.length){
+      hintEl.textContent = "No days found in JSON. Load a week bundle/seats.json.";
+    }else{
+      hintEl.textContent = "Public wallboard: no PH_ noise • day border = worst of AM/PM • shift edge = shift health • dots = shadow units health.";
+    }
+  }
+
+  function renderShiftPill(label, shift, seats, healthObj){
+    const start = shift?.shift_start ? timeHHMM(shift.shift_start) : "—";
+    const end   = shift?.shift_end   ? timeHHMM(shift.shift_end)   : "—";
+    const hours = (shift?.shift_start && shift?.shift_end) ? `${start}–${end}` : "—";
+
+    // Only show names, no “Attendant/Driver tags”
+    // Color names by seat type: attendant green, driver blue, ride-along gray
+    const people = extractPeopleList(seats);
+
+    return `
+      <div class="shiftPill" data-kind="${label}">
+        <div class="ampm">${label}</div>
+        <div class="shiftBody">
+          <div class="hours">${hours}</div>
+          <div class="healthLine">${healthObj.health===HEALTH.GOOD ? "" : "Needs crew"}</div>
+          <div class="crew">
+            ${
+              people.length
+                ? people.map(p => `
+                    <div class="person">
+                      <div class="pname ${p.cls}">${escapeHtml(p.name)}</div>
+                      <div class="pnote ${p.note? "" : "empty"}">${escapeHtml(p.note || " ")}</div>
+                    </div>
+                  `).join("")
+                : `
+                  <div class="person">
+                    <div class="pname att">—</div>
+                    <div class="pnote empty"> </div>
+                  </div>
+                `
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function extractPeopleList(seats){
+    // Keep order: Attendant, Driver, Ride-along (if present)
+    const out = [];
+    const norm = seats.map(r=>{
+      const seatType = (r.seat_type || r.seat || r.role || "").toUpperCase();
+      const raw = r.assignee || r.assignee_display || r.person_name || r.member_name || r.placeholder || r.value || "";
+      const name = normalizeName(raw);
+      const filled = name && name !== "Unassigned" && name !== "—";
+      const note = r.note || r.seat_note || r.member_note || "";
+      return {seatType, name, filled, note};
+    }).filter(x=>x.filled);
+
+    // If your export includes BOTH shifts worth of seats, this will still work as long as seats passed are per shift.
+    const pick = (pred)=> norm.find(pred);
+
+    const a = pick(x=>x.seatType.includes("ATTEND"));
+    const d = pick(x=>x.seatType.includes("DRIVER"));
+    const r = pick(x=>x.seatType.includes("RIDE") || x.seatType.includes("TRAINEE"));
+
+    if(a) out.push({name:a.name, cls:"att", note:a.note});
+    if(d) out.push({name:d.name, cls:"drv", note:d.note});
+    if(r) out.push({name:r.name, cls:"ral", note:r.note});
+
+    // If seat types are missing, fall back to first two:
+    if(!out.length && norm.length){
+      norm.slice(0,2).forEach((x,i)=> out.push({name:x.name, cls: i===0?"att":"drv", note:x.note}));
+    }
+    return out;
+  }
+
+  function filterForQuery(seats, q){
+    if(!q) return seats;
+    const hits = seats.filter(r=>{
+      const raw = r.assignee || r.assignee_display || r.person_name || r.member_name || r.placeholder || r.value || "";
+      const note = r.note || r.seat_note || "";
+      return String(raw).toLowerCase().includes(q) || String(note).toLowerCase().includes(q);
+    });
+    return hits.length ? hits : seats;
+  }
+
+  function escapeHtml(s){
+    return (s??"").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  // ---------------------------
+  // UI actions
+  // ---------------------------
+  document.getElementById("btnLoad").addEventListener("click", ()=> document.getElementById("file").click());
+  document.getElementById("file").addEventListener("change", async (e)=>{
+    const f = e.target.files?.[0];
+    if(!f) return;
+    const txt = await f.text();
+    const json = JSON.parse(txt);
+    DATA = parseAnyShape(json);
+    const model = buildWeekModel(DATA);
+    render(model);
+  });
+
+  document.getElementById("btnRefresh").addEventListener("click", async ()=>{
+    try{
+      const json = await loadDefaultFetch();
+      DATA = parseAnyShape(json);
+      const model = buildWeekModel(DATA);
+      render(model);
+    }catch(err){
+      alert(err.message);
+    }
+  });
+
+  document.getElementById("q").addEventListener("input", ()=>{
+    if(!DATA) return;
+    const model = buildWeekModel(DATA);
+    render(model);
+  });
+
+  // Boot: attempt default fetch, else rely on Load JSON
+  (async ()=>{
+    try{
+      const json = await loadDefaultFetch();
+      DATA = parseAnyShape(json);
+      const model = buildWeekModel(DATA);
+      render(model);
+    }catch(e){
+      // expected with file://
+      document.getElementById("hint").textContent =
+        "Tip: file:// blocks fetch. Click “Load JSON…” and pick your week/seats JSON.";
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>

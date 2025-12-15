@@ -1,0 +1,28 @@
+ROSTER LOADER (WINDOWS)
+
+FILES
+- load_roster.py
+- roster_template.csv
+
+DB PATH (yours)
+C:\Users\ten77\Google Drive\ShiftCommander\live\shiftcommander.db
+
+STEP 1) Make your roster CSV
+Copy roster_template.csv to somewhere like:
+C:\ShiftCommanderData\roster.csv
+
+STEP 2) DRY RUN (recommended first)
+Open PowerShell in the folder that contains load_roster.py and run:
+
+python .\load_roster.py --db "C:\Users\ten77\Google Drive\ShiftCommander\live\shiftcommander.db" --csv "C:\ShiftCommanderData\roster.csv" --dry-run
+
+STEP 3) REAL RUN
+python .\load_roster.py --db "C:\Users\ten77\Google Drive\ShiftCommander\live\shiftcommander.db" --csv "C:\ShiftCommanderData\roster.csv"
+
+NOTES
+- Safe to run multiple times (upserts).
+- ops_units accepts AMB120/AMB121/AMB131 separated by ; or ,
+- staffing_classes accepts: EMS_HOURLY, FIRE_DIVISION, EMS_SUPERVISOR, VOLUNTEER_DUTY, VOLUNTEER_GENERAL
+
+NEXT AFTER THIS
+We generate the next Thu→Wed schedule week (14 shifts) + PRIMARY seat_records as UNFILLED.

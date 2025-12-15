@@ -1,0 +1,19 @@
+YOU HIT A SCHEMA COLLISION.
+
+Your DB already has a table named schedule_weeks, but with different columns.
+So this v2 script writes to new namespaced tables:
+
+- sc_weeks
+- sc_shifts
+- sc_shift_config
+- sc_seat_records
+
+This avoids breaking anything in your existing DB.
+
+Run:
+
+python .\create_week_v2.py --db "D:\Users\ten77\Downloads\shiftcommander_sync\ShiftCommander\live\shiftcommander.db" --start 2025-12-25 --first-out AMB121
+
+Expected:
+Week created (v2).
+week_id: WEEK_2025-12-25_to_2025-12-31

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ShiftCommander — Schedule Entry (Beta)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#0e1117; color:#e6edf3; margin:0; padding:16px; }
+h1 { font-size:20px; margin:0 0 6px 0; }
+.sub { font-size:12px; opacity:.7; margin:0 0 16px 0; }
+.panel { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:12px; margin-bottom:16px; }
+label { font-size:12px; opacity:.8; display:block; margin-top:8px; }
+select,input,textarea,button { width:100%; margin-top:4px; background:#0d1117; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:6px; font-size:13px; }
+textarea { resize:vertical; }
+button { margin-top:12px; cursor:pointer; }
+button.primary { background:#238636; border-color:#2ea043; }
+button.warn { background:#8b1d1d; border-color:#b62324; }
+button.ghost { background:#0d1117; border-color:#30363d; }
+.grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; }
+.entry { border-bottom:1px dashed #30363d; padding:6px 0; font-size:12px; }
+.entry span { opacity:.7; }
+.footer { font-size:11px; opacity:.6; margin-top:24px; }
+.kv { font-size:11px; opacity:.75; margin-top:8px; }
+code { background:#0d1117; border:1px solid #30363d; padding:2px 5px; border-radius:6px; }
+</style>
+</head>
+
+<body>
+
+<h1>ShiftCommander — Schedule Entry</h1>
+<div class="sub">
+Supervisor hack page · local only · no auth · beta
+</div>
+
+<div class="panel">
+  <div class="grid">
+    <div>
+      <label>Week ID</label>
+      <input id="weekId" placeholder="WEEK_2025-01-02_to_2025-01-08">
+    </div>
+
+    <div>
+      <label>Day</label>
+      <select id="day">
+        <option>Sun</option><option>Mon</option><option>Tue</option>
+        <option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Shift</label>
+      <select id="slot">
+        <option value="DAY">AM</option>
+        <option value="NIGHT">PM</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Unit</label>
+      <select id="unit">
+        <option>AMB120</option>
+        <option>AMB121</option>
+        <option>AMB131</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Seat</label>
+      <select id="seat">
+        <option>ATTENDANT</option>
+        <option>DRIVER</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Person (first name)</label>
+      <select id="person"></select>
+      <input id="personNew" placeholder="or type new name">
+      <div class="kv" id="nameSources"></div>
+    </div>
+  </div>
+
+  <label>Note (optional)</label>
+  <textarea id="note" rows="2"></textarea>
+
+  <button class="primary" onclick="addEntry()">Add / Update Seat</button>
+  <button class="ghost" onclick="rebuildNamesFromStorage()">Rebuild dropdown from local storage</button>
+</div>
+
+<div class="panel">
+  <h3 style="margin:0 0 8px 0;font-size:14px;">Current Entries</h3>
+  <div id="entries"></div>
+
+  <button onclick="exportJSON()">Export JSON</button>
+  <button class="warn" onclick="clearWeek()">Clear This Week</button>
+</div>
+
+<div class="footer">
+Data stored in browser localStorage · names auto-canonicalized · first name only
+</div>
+
+<script>
+const NAME_KEY = "sc_known_names";
+const DATA_KEY = "sc_schedule_entries";
+
+/** First-name canonicalization (keeps your DB placeholders sane) */
+function canonical(name) {
+  if (!name) return "";
+  const first = String(name).trim().split(/\s+/)[0] || "";
+  const cleaned = first.replace(/[^a-zA-Z]/g, "");
+  if (!cleaned) return "";
+  return cleaned.toLowerCase().replace(/^./, c => c.toUpperCase());
+}
+
+function uniqSorted(arr) {
+  return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+}
+
+function loadNames() {
+  try { return JSON.parse(localStorage.getItem(NAME_KEY) || "[]"); }
+  catch { return []; }
+}
+
+function saveNames(names) {
+  localStorage.setItem(NAME_KEY, JSON.stringify(uniqSorted(names)));
+}
+
+/**
+ * NEW: Pull names from ANY existing localStorage that looks like:
+ * - ["Nikki","Brian"]
+ * - [{name:"Nikki"}, {display_name:"Brian"}]
+ * - {members:[{name:"Nikki"}]}
+ */
+function discoverNamesFromLocalStorage() {
+  const found = [];
+  const sources = [];
+
+  const nameFields = ["name","first_name","firstName","display_name","displayName","person","member","full_name","fullName"];
+
+  function extractFromValue(val) {
+    if (!val) return;
+
+    // array of strings
+    if (Array.isArray(val) && val.every(v => typeof v === "string")) {
+      val.forEach(s => found.push(canonical(s)));
+      return;
+    }
+
+    // array of objects
+    if (Array.isArray(val) && val.every(v => v && typeof v === "object")) {
+      val.forEach(obj => {
+        nameFields.forEach(f => {
+          if (obj[f]) found.push(canonical(obj[f]));
+        });
+      });
+      return;
+    }
+
+    // object with members array
+    if (val && typeof val === "object") {
+      if (Array.isArray(val.members)) extractFromValue(val.members);
+      if (Array.isArray(val.people)) extractFromValue(val.people);
+      if (Array.isArray(val.users)) extractFromValue(val.users);
+    }
+  }
+
+  for (let i=0; i<localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k) continue;
+
+    // skip our own schedule entries blob (not a name source)
+    if (k === DATA_KEY) continue;
+
+    const raw = localStorage.getItem(k);
+    if (!raw) continue;
+
+    // Only attempt JSON parse if it looks like JSON.
+    const trimmed = raw.trim();
+    if (!(trimmed.startsWith("[") || trimmed.startsWith("{"))) continue;
+
+    try {
+      const parsed = JSON.parse(raw);
+      const before = found.length;
+      extractFromValue(parsed);
+      const after = found.length;
+      if (after > before) sources.push(k);
+    } catch {
+      // ignore parse errors
+    }
+  }
+
+  return { names: uniqSorted(found), sources: uniqSorted(sources) };
+}
+
+function refreshNames() {
+  const sel = document.getElementById("person");
+  sel.innerHTML = "";
+
+  const base = loadNames().map(canonical);
+  const discovered = discoverNamesFromLocalStorage();
+
+  const merged = uniqSorted([...base, ...discovered.names]);
+
+  // persist merged so future loads are instant
+  saveNames(merged);
+
+  merged.forEach(n => {
+    const o = document.createElement("option");
+    o.textContent = n;
+    sel.appendChild(o);
+  });
+
+  const src = document.getElementById("nameSources");
+  src.innerHTML = merged.length
+    ? `Loaded <b>${merged.length}</b> names. Sources: <code>${[NAME_KEY, ...discovered.sources].join("</code> <code>")}</code>`
+    : `No names detected yet. Add one below.`;
+}
+
+function rebuildNamesFromStorage() {
+  // Force a refresh + persist the discovered list
+  refreshNames();
+  alert("Dropdown rebuilt from localStorage.");
+}
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(DATA_KEY) || "[]"); }
+  catch { return []; }
+}
+
+function saveEntries(entries) {
+  localStorage.setItem(DATA_KEY, JSON.stringify(entries, null, 2));
+}
+
+function addEntry() {
+  const week = weekId.value.trim();
+  if (!week) return alert("Week ID required");
+
+  let name = personNew.value || person.value;
+  name = canonical(name);
+  if (!name) return alert("Name required");
+
+  // Update known names
+  const names = loadNames();
+  names.push(name);
+  saveNames(names);
+
+  // clear typed
+  personNew.value = "";
+
+  const entry = {
+    week,
+    day: day.value,
+    slot: slot.value,
+    unit: unit.value,
+    seat: seat.value,
+    name,
+    note: note.value || ""
+  };
+
+  let entries = loadEntries();
+
+  // replace seat assignment for that seat-key
+  entries = entries.filter(e =>
+    !(e.week===entry.week &&
+      e.day===entry.day &&
+      e.slot===entry.slot &&
+      e.unit===entry.unit &&
+      e.seat===entry.seat)
+  );
+
+  entries.push(entry);
+  saveEntries(entries);
+
+  refreshNames();
+  render();
+}
+
+function render() {
+  const out = document.getElementById("entries");
+  out.innerHTML = "";
+
+  const entries = loadEntries();
+  if (!entries.length) {
+    out.innerHTML = `<div class="kv">No entries yet.</div>`;
+    return;
+  }
+
+  entries.forEach(e => {
+    const d = document.createElement("div");
+    d.className = "entry";
+    d.innerHTML =
+      `<b>${e.week}</b><br>
+       <b>${e.day} ${e.slot}</b> · ${e.unit} · ${e.seat}<br>
+       ${e.name} <span>${(e.note||"")}</span>`;
+    out.appendChild(d);
+  });
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(loadEntries(), null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "schedule_entries.json";
+  a.click();
+}
+
+function clearWeek() {
+  if (!confirm("Clear all schedule entries?")) return;
+  localStorage.removeItem(DATA_KEY);
+  render();
+}
+
+// boot
+refreshNames();
+render();
+</script>
+
+</body>
+</html>

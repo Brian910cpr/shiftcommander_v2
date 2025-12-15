@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Member Entry (Beta)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f1b33; --muted:#93a4c7; --text:#e7eefc;
+      --line:rgba(255,255,255,.10);
+      --good:#2ee59d; --warn:#ffd166; --bad:#ff5c77;
+      --btn:#1f6feb;
+      --pill:#16284a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font:14px/1.35 system-ui,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text);}
+    .wrap{max-width:1100px; margin:24px auto; padding:0 14px;}
+    .top{display:flex; gap:12px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;}
+    h1{margin:0; font-size:18px; letter-spacing:.2px;}
+    .sub{color:var(--muted); margin-top:6px; max-width:820px;}
+    .grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:12px; margin-top:14px;}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+    .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px;}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    label{display:block; color:var(--muted); font-size:12px; margin-bottom:6px;}
+    select,input,textarea{
+      width:100%;
+      background:#0b1630;
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px 10px;
+      outline:none;
+    }
+    textarea{min-height:74px; resize:vertical}
+    .col{flex:1 1 220px;}
+    .btn{
+      appearance:none; border:0; cursor:pointer;
+      background:var(--btn); color:white;
+      border-radius:10px; padding:10px 12px; font-weight:600;
+    }
+    .btn.secondary{background:#223455; color:var(--text); border:1px solid var(--line);}
+    .btn.danger{background:#7a1930;}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      background:var(--pill); border:1px solid var(--line);
+      border-radius:999px; padding:6px 10px; color:var(--text);
+      white-space:nowrap;
+    }
+    .dot{width:10px; height:10px; border-radius:50%;}
+    .dot.good{background:var(--good);}
+    .dot.warn{background:var(--warn);}
+    .dot.bad{background:var(--bad);}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px;}
+    .list{margin:10px 0 0; padding:0; list-style:none;}
+    .list li{padding:8px 10px; border:1px solid var(--line); border-radius:10px; margin-top:8px; background:#0b1630;}
+    .small{font-size:12px; color:var(--muted);}
+    .hr{height:1px; background:var(--line); margin:12px 0;}
+    .warnbox{border:1px solid rgba(255,209,102,.35); background:rgba(255,209,102,.06); padding:10px 12px; border-radius:12px;}
+    .okbox{border:1px solid rgba(46,229,157,.30); background:rgba(46,229,157,.06); padding:10px 12px; border-radius:12px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>ShiftCommander — Member Entry (Beta)</h1>
+        <div class="sub">
+          This page enforces <b>FIRST NAME ONLY</b> for people (beta speed + no junk duplicates).
+          New names can be added on-the-fly and will appear in the dropdown.
+        </div>
+      </div>
+      <div class="pill">
+        <span class="dot good"></span>
+        <span>First-name-only enabled</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: Entry -->
+      <div class="card">
+        <div class="warnbox small">
+          <b>Rule:</b> If you type “Nikki S” it will be stored as “Nikki”. Same for punctuation/caps.
+          This keeps scheduling clean until we build real auth + admin.
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <div class="col">
+            <label>Week ID (optional for now)</label>
+            <input id="weekId" placeholder="WEEK_2026-01-01_to_2026-01-07" />
+          </div>
+          <div class="col">
+            <label>Day (optional for now)</label>
+            <input id="day" placeholder="Sun / Mon / 2025-12-14" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <div class="col">
+            <label>Person (dropdown)</label>
+            <select id="personSelect"></select>
+          </div>
+          <div class="col">
+            <label>Or add new person (first name only)</label>
+            <input id="newPerson" placeholder="e.g., Nick" />
+          </div>
+          <div class="col" style="flex:0 0 auto;">
+            <label>&nbsp;</label>
+            <button class="btn secondary" id="addPersonBtn">Add</button>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <div class="col">
+            <label>Role (beta label only)</label>
+            <select id="role">
+              <option value="ATTENDANT">Attendant</option>
+              <option value="DRIVER">Driver</option>
+              <option value="RIDEALONG">Ride-along</option>
+            </select>
+          </div>
+          <div class="col">
+            <label>Shift</label>
+            <select id="shift">
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </div>
+          <div class="col">
+            <label>Notes (optional)</label>
+            <input id="note" placeholder="e.g., in @ 8 / leaves @ 4 / swap requested" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <div class="col">
+            <label>Quick sanity preview</label>
+            <div class="pill mono" id="previewPill">—</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+          <button class="btn" id="saveEntryBtn">Save entry</button>
+          <button class="btn secondary" id="exportBtn">Export JSON</button>
+          <button class="btn danger" id="wipeBtn" title="Clears saved entries + names (local browser only)">Wipe local</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <label>Export output (copy/paste)</label>
+        <textarea id="exportBox" class="mono" readonly placeholder="Click Export JSON…"></textarea>
+
+        <div class="small" style="margin-top:8px;">
+          Storage: browser localStorage (beta). Next step is wiring this into the DB via a tiny API or import script.
+        </div>
+      </div>
+
+      <!-- RIGHT: What you have so far -->
+      <div class="card">
+        <div class="okbox small">
+          <b>Known names</b> are maintained locally for now. This prevents misspell-created “new people” unless you explicitly add them.
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <div class="pill"><span class="dot warn"></span><span>Entries saved (local)</span></div>
+          <div class="pill mono" id="countPill">0</div>
+        </div>
+
+        <ul class="list" id="entriesList"></ul>
+
+        <div class="hr"></div>
+
+        <div class="small">
+          <b>Next (when you’re ready):</b> export this JSON and I’ll give you a script that imports it into
+          <span class="mono">sc_seat_records</span> (or into a “preferences” table if that’s what you’re collecting).
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // -----------------------------
+  // FIRST-NAME-ONLY NORMALIZATION
+  // -----------------------------
+  function normalizeFirstName(raw){
+    if(!raw) return "";
+    // take only first token before space/comma/slash
+    let s = String(raw).trim();
+    s = s.split(/[,\s\/]+/)[0] || "";
+    // strip punctuation
+    s = s.replace(/[^a-zA-Z0-9\-']/g, "");
+    if(!s) return "";
+    // Title-case: first letter upper, rest lower (simple)
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  }
+
+  // -----------------------------
+  // LOCAL STORAGE KEYS
+  // -----------------------------
+  const KEY_NAMES   = "sc_beta_known_names_v1";
+  const KEY_ENTRIES = "sc_beta_entries_v1";
+
+  // Seed names (edit freely)
+  const DEFAULT_NAMES = [
+    "Nikki","Sherman","Jonah","Lisa","Brian","Gordon","Shane","Anna","Brett","Lynnsey","Serenity","Nick"
+  ];
+
+  function loadNames(){
+    const raw = localStorage.getItem(KEY_NAMES);
+    let names = [];
+    if(raw){
+      try{ names = JSON.parse(raw) || []; } catch(e){ names = []; }
+    }
+    if(!Array.isArray(names) || names.length === 0){
+      names = DEFAULT_NAMES.slice();
+      saveNames(names);
+    }
+    // normalize + de-dupe
+    names = Array.from(new Set(names.map(normalizeFirstName).filter(Boolean))).sort();
+    saveNames(names);
+    return names;
+  }
+  function saveNames(names){
+    localStorage.setItem(KEY_NAMES, JSON.stringify(names));
+  }
+
+  function loadEntries(){
+    const raw = localStorage.getItem(KEY_ENTRIES);
+    if(!raw) return [];
+    try{
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){
+      return [];
+    }
+  }
+  function saveEntries(entries){
+    localStorage.setItem(KEY_ENTRIES, JSON.stringify(entries));
+  }
+
+  // -----------------------------
+  // UI WIRING
+  // -----------------------------
+  const el = (id)=>document.getElementById(id);
+
+  const personSelect = el("personSelect");
+  const newPerson    = el("newPerson");
+  const addPersonBtn = el("addPersonBtn");
+  const saveEntryBtn = el("saveEntryBtn");
+  const exportBtn    = el("exportBtn");
+  const exportBox    = el("exportBox");
+  const wipeBtn      = el("wipeBtn");
+
+  const weekId       = el("weekId");
+  const day          = el("day");
+  const role         = el("role");
+  const shift        = el("shift");
+  const note         = el("note");
+
+  const previewPill  = el("previewPill");
+  const entriesList  = el("entriesList");
+  const countPill    = el("countPill");
+
+  function rebuildPeopleDropdown(){
+    const names = loadNames();
+    personSelect.innerHTML = "";
+    for(const n of names){
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n;
+      personSelect.appendChild(opt);
+    }
+  }
+
+  function refreshPreview(){
+    const name = personSelect.value || "";
+    const r = role.value;
+    const s = shift.value;
+    const n = (note.value || "").trim();
+    const w = (weekId.value || "").trim();
+    const d = (day.value || "").trim();
+
+    previewPill.textContent =
+      `${w || "(week?)"} | ${d || "(day?)"} | ${s} | ${name} | ${r}${n ? " | " + n : ""}`;
+  }
+
+  function renderEntries(){
+    const entries = loadEntries();
+    countPill.textContent = String(entries.length);
+    entriesList.innerHTML = "";
+    // newest first
+    const show = entries.slice().reverse();
+    for(const e of show){
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <span class="pill mono">${escapeHtml(e.week_id || "(week?)")}</span>
+          <span class="pill mono">${escapeHtml(e.day || "(day?)")}</span>
+          <span class="pill">${escapeHtml(e.shift)}</span>
+          <span class="pill">${escapeHtml(e.person)}</span>
+          <span class="pill">${escapeHtml(e.role)}</span>
+        </div>
+        ${e.note ? `<div class="small" style="margin-top:8px;">${escapeHtml(e.note)}</div>` : ""}
+        <div class="small" style="margin-top:8px;">saved_at: <span class="mono">${escapeHtml(e.saved_at)}</span></div>
+      `;
+      entriesList.appendChild(li);
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  addPersonBtn.addEventListener("click", ()=>{
+    const n = normalizeFirstName(newPerson.value);
+    if(!n){
+      alert("Type a first name to add.");
+      return;
+    }
+    const names = loadNames();
+    if(!names.includes(n)){
+      names.push(n);
+      names.sort();
+      saveNames(names);
+      rebuildPeopleDropdown();
+    }
+    personSelect.value = n;
+    newPerson.value = "";
+    refreshPreview();
+  });
+
+  newPerson.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){ addPersonBtn.click(); }
+  });
+
+  saveEntryBtn.addEventListener("click", ()=>{
+    const chosen = normalizeFirstName(personSelect.value);
+    if(!chosen){
+      alert("Pick a person.");
+      return;
+    }
+
+    // enforce first-name-only everywhere
+    const entry = {
+      week_id: (weekId.value || "").trim(),
+      day: (day.value || "").trim(),
+      shift: shift.value,
+      role: role.value,
+      person: chosen,
+      note: (note.value || "").trim(),
+      saved_at: new Date().toISOString()
+    };
+
+    const entries = loadEntries();
+    entries.push(entry);
+    saveEntries(entries);
+    renderEntries();
+    refreshPreview();
+  });
+
+  exportBtn.addEventListener("click", ()=>{
+    const names = loadNames();
+    const entries = loadEntries();
+    const payload = {
+      exported_at: new Date().toISOString(),
+      beta_mode: "first_name_only",
+      known_names: names,
+      entries: entries
+    };
+    exportBox.value = JSON.stringify(payload, null, 2);
+    exportBox.focus();
+    exportBox.select();
+  });
+
+  wipeBtn.addEventListener("click", ()=>{
+    if(!confirm("Wipe local saved names + entries? (This only affects this browser)")) return;
+    localStorage.removeItem(KEY_NAMES);
+    localStorage.removeItem(KEY_ENTRIES);
+    rebuildPeopleDropdown();
+    renderEntries();
+    exportBox.value = "";
+    refreshPreview();
+  });
+
+  // initial load
+  rebuildPeopleDropdown();
+  renderEntries();
+
+  // live preview listeners
+  [weekId, day, role, shift, note, personSelect].forEach(x=>{
+    x.addEventListener("input", refreshPreview);
+    x.addEventListener("change", refreshPreview);
+  });
+  refreshPreview();
+
+})();
+</script>
+</body>
+</html>
