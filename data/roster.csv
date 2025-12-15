@@ -1,0 +1,16 @@
+id,first_name,last_name,member_number,position_type,expected_min_hours,expected_max_hours,qualifications,groups,active,points_balance
+1001,Gordon,Grant,1001,PT,24,48,Driver;ALS,EMS,Yes,0
+1002,Lynnsey,Benson,1002,FT,36,48,EMT,EMS,Yes,0
+1003,AJ,Smith,1003,PT,0,12,Fire;EMT;Officer,EMS,Yes,0
+1004,Nikki,Meeks,1004,PT,24,48,ALS,EMS,Yes,0
+1005,Shane,,1005,PT,24,48,EMT,EMS,Yes,0
+1006,Brian,Ennis,1006,FT,36,48,EMT,EMS,Yes,0
+1007,Cliff,W,1007,VOL,0,100,Driver,Fire,Yes,0
+1008,Steve,Camlin,1008,VOL,0,100,ALS,EMS,Yes,0
+1009,Roger,Toney,1009,VOL,0,100,EMT,EMS,Yes,0
+1010,Anna,,1010,PT,24,48,ALS,EMS,Yes,0
+1011,Nick,Tripp,1011,FT,36,56,ALS,EMS,Yes,0
+1012,Lisa,,1012,PT,24,48,ALS,EMS,Yes,0
+1013,Sheman,Huff,1013,VOL,0,100,Driver,Fire,Yes,0
+1014,Brett,Toney,1014,VOL,0,100,Driver,Fire,Yes,0
+1015,Serenity,,1015,PT,12,48,ALS,EMS,Yes,0

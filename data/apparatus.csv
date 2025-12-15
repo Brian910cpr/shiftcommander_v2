@@ -1,0 +1,27 @@
+Unit,Apparatus Type,Station,MinStaff,MaxStaff,MinimumStaff,IdealStaff,UnitDetail,Notes
+120,Ambulance,1,2,3,"EMT, Driver","ALS,EMT",2018 Ford Transit,
+121,Ambulance,1,2,3,"EMT, Driver","ALS,EMT",2016 Ram 4500,
+122,Heavy Rescue ,1,3,5,"Driver, FF","Driver, ALS, EMT, FF, FF",,
+125,Ladder,1,2,5,"Driver, FF","Driver, FF, FF, FF, FF",,
+126,Engine,1,1,4,Driver,"Driver, FF, FF, FF",,
+127,Brush,1,1,4,Driver,"Driver, FF, FF, FF, FF",,"""Banshee"" "
+129,Engine Tanker,2,2,4,Driver,"Driver, FF, FF, FF, FF",2014 Kenworth / KME ,
+130,Tanker,3,1,2,Driver,"Driver, FF",,
+131,Ambulance,2,2,3,"EMT, Driver","ALS,EMT",,
+135,High Water ,2,1,2,Driver,"Driver, FF",,"""General"""
+138,Tanker,1,1,2,Driver,"Driver, FF",2008 Freightliner M2, 
+139,High Water ,2,1,2,Driver,"Driver, FF",,"""GI Joe"" "
+124,Engine ,3,2,3,Driver,"Driver, FF, FF, FF",,
+Gator 1 ,ATV,2,1,2,Driver,"Driver, FF",,
+ATV 1 ,ATV,2,1,1,Driver,Driver,,
+Command Trailer,Trailer,1,1,6,Driver,Driver,,
+Pumper 1 ,Engine ,2,1,2,Driver,"Driver, FF",,"""Da Pump"" "
+Van 1 ,Support,3,1,5,Driver,Driver,,"""Casper"""
+LDH Hose Trailer,Trailer,2,1,2,Driver,Driver,,
+Light Tower,Trailer,2,1,2,Driver,Driver,,
+Boat 3 ,Boat,2,1,3,Driver,"Driver, FF, FF",,
+Foam 1 ,Special Service Apparatus - Foam Unit,1,1,2,Driver,"Driver, FF",,
+QRV102,QRV,1,1,3,ALS,"ALS, EMT",,
+Sub-Station 3,Station - Sandyfield,3,1,25,FF,,"1745 Woodyard Rd, Riegelwood, NC 28456",Sandyfield
+Sub-Station 2,Station - Delco,2,1,25,FF,,"4328 Livingston Chapel Rd, Delco, NC 28436",Delco
+Station 1,Station - Riegelwood,1,1,25,FF,,"100 John L Reigel Rd, Reigelwood, NC",HQ
