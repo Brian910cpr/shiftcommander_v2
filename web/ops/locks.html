@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ShiftCommander Ops — Locks & Archive</title>
+  <style>
+    :root{
+      --bg:#07111a; --ink:#e9f1ff; --muted:#a7b6cc; --line:rgba(255,255,255,.12);
+      --card: rgba(0,0,0,.18);
+      --ok:#28d17c; --warn:#f2c94c; --bad:#ff5a67; --info:#5dade2;
+
+      /* NEW: form colors so dropdowns are readable */
+      --fieldBg: rgba(0,0,0,.22);
+      --fieldBd: rgba(255,255,255,.16);
+      --optBg: #0b1622;
+      --optBd: rgba(255,255,255,.10);
+      --optHover: #12304a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; color:var(--ink);
+      font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(900px 600px at 25% 10%, rgba(58,160,255,.12), transparent 55%),
+                  linear-gradient(180deg, #060c12, var(--bg));
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    h1{margin:0 0 6px;font-size:18px}
+    .sub{color:var(--muted);margin:0 0 12px}
+    .card{
+      border:1px solid var(--line);
+      background: var(--card);
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:12px;
+    }
+
+    /* ---------- FIX: dropdown readability ---------- */
+    input, select, textarea{
+      width:100%;
+      border:1px solid var(--fieldBd);
+      background: var(--fieldBg);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px;
+      outline:none;
+      font-weight:800;
+      color-scheme: dark; /* helps date pickers + native controls render correctly */
+    }
+    select{
+      -webkit-appearance: none;
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
+    }
+    /* NOTE: option styling is browser-limited but this improves most Chromium builds */
+    option{
+      background: var(--optBg);
+      color: var(--ink);
+    }
+    optgroup{
+      background: var(--optBg);
+      color: var(--muted);
+    }
+    textarea{min-height:70px;font-weight:700}
+
+    .row{display:grid;grid-template-columns: 1fr 1fr; gap:10px}
+    @media(max-width:800px){ .row{grid-template-columns:1fr} }
+    .btn{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:1000;
+    }
+    .btn:hover{background: rgba(255,255,255,.10)}
+    .btn.ok{border-color: rgba(40,209,124,.45)}
+    .btn.bad{border-color: rgba(255,90,103,.45)}
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      font-weight:900;
+      color: var(--muted);
+    }
+    .table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius:12px;
+    }
+    .table th,.table td{
+      border-bottom:1px solid rgba(255,255,255,.10);
+      padding:10px;
+      vertical-align:top;
+      text-align:left;
+      color: var(--ink);
+    }
+    .table th{color: var(--muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
+    .tiny{color:var(--muted); font-size:12px}
+    .k{font-weight:1100}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ShiftCommander Ops — Locks & Archive</h1>
+  <div class="sub">This writes local overrides (for now). Later these will be stored in the API so everyone sees them.</div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="tiny">Supervisor name</div>
+        <input id="by" placeholder="e.g., Captain Smith"/>
+      </div>
+      <div>
+        <div class="tiny">Preview a date</div>
+        <input id="previewDate" type="date"/>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <div class="tiny">Scope</div>
+        <select id="scope">
+          <option value="date">Date</option>
+          <option value="week">Week (Thu→Wed)</option>
+        </select>
+      </div>
+      <div id="dateFields">
+        <div class="tiny">Date + slot</div>
+        <div class="row" style="grid-template-columns: 1fr 1fr; gap:10px">
+          <input id="date" type="date"/>
+          <select id="slot">
+            <option value="ALL">ALL</option>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
+      </div>
+      <div id="weekFields" style="display:none;">
+        <div class="tiny">Week start (Thu)</div>
+        <input id="weekStart" type="date"/>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <div class="tiny">Mode</div>
+        <select id="mode">
+          <option value="open">Open</option>
+          <option value="discouraged">Open (discouraged)</option>
+          <option value="member_locked">Locked (member)</option>
+          <option value="supervisor_locked">Locked (supervisor)</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+      <div>
+        <div class="tiny">Reason (required)</div>
+        <textarea id="reason" placeholder="Why are we overriding the base policy?"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap; margin-top:10px;">
+      <button class="btn ok" id="add">Add override</button>
+      <button class="btn" id="refresh">Refresh list</button>
+      <button class="btn bad" id="clearAll">Clear ALL overrides</button>
+    </div>
+
+    <div class="tiny" style="margin-top:10px;">
+      Base policy: two+ weeks ago archived; last week member-locked; this week member-locked; next week discouraged; 2+ weeks out open.
+    </div>
+  </div>
+
+  <div class="card" id="previewCard">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+      <div>
+        <div class="k">Preview</div>
+        <div class="tiny" id="previewText">Pick a date to preview lock status.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="pill" id="pillWeek">Week: —</span>
+        <span class="pill" id="pillMode">Mode: —</span>
+        <span class="pill" id="pillOffset">Offset: —</span>
+      </div>
+    </div>
+    <div class="tiny" style="margin-top:10px;" id="previewReasons"></div>
+  </div>
+
+  <div class="card">
+    <div class="k" style="margin-bottom:8px;">Overrides</div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Scope</th>
+          <th>Mode</th>
+          <th>Reason</th>
+          <th>By</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="tiny" style="margin-top:10px;">
+      Tip: Use “week” overrides for your “this week locked / last week locked / archive” corrections.
+    </div>
+  </div>
+
+</div>
+
+<script src="../lock-policy.js"></script>
+<script>
+  const P = window.ShiftCommanderLockPolicy;
+
+  const UI = {
+    by: document.getElementById("by"),
+    previewDate: document.getElementById("previewDate"),
+
+    scope: document.getElementById("scope"),
+    dateFields: document.getElementById("dateFields"),
+    weekFields: document.getElementById("weekFields"),
+    date: document.getElementById("date"),
+    slot: document.getElementById("slot"),
+    weekStart: document.getElementById("weekStart"),
+
+    mode: document.getElementById("mode"),
+    reason: document.getElementById("reason"),
+
+    add: document.getElementById("add"),
+    refresh: document.getElementById("refresh"),
+    clearAll: document.getElementById("clearAll"),
+
+    rows: document.getElementById("rows"),
+
+    previewText: document.getElementById("previewText"),
+    pillWeek: document.getElementById("pillWeek"),
+    pillMode: document.getElementById("pillMode"),
+    pillOffset: document.getElementById("pillOffset"),
+    previewReasons: document.getElementById("previewReasons"),
+  };
+
+  function setDefaults(){
+    const today = new Date();
+    const iso = today.toISOString().slice(0,10);
+    UI.previewDate.value = iso;
+    UI.date.value = iso;
+    UI.weekStart.value = P.getCurrentWeekStartISO(P.POLICY.week_start_dow);
+  }
+
+  function renderOverrides(){
+    const list = P.listOverrides();
+    UI.rows.innerHTML = "";
+    for(const o of list){
+      const when = (o.scope === "date")
+        ? `${o.date} ${o.slot || "ALL"}`
+        : `week ${o.week_start}`;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(when)}<div class="tiny">${escapeHtml(o.at || "")}</div></td>
+        <td>${escapeHtml(o.scope)}</td>
+        <td>${escapeHtml(o.mode)}</td>
+        <td>${escapeHtml(o.reason || "")}</td>
+        <td>${escapeHtml(o.by || "")}</td>
+        <td><button class="btn bad" data-id="${o.id}">Remove</button></td>
+      `;
+      tr.querySelector("button").addEventListener("click", () => {
+        if(confirm("Remove this override?")) {
+          P.removeOverride(o.id);
+          renderOverrides();
+          renderPreview();
+        }
+      });
+      UI.rows.appendChild(tr);
+    }
+  }
+
+  function renderPreview(){
+    const iso = UI.previewDate.value;
+    if(!iso){
+      UI.previewText.textContent = "Pick a date to preview lock status.";
+      UI.previewReasons.textContent = "";
+      return;
+    }
+
+    const am = P.evaluateLock(iso, "AM", "supervisor");
+    const wr = am.flags;
+
+    UI.previewText.textContent = `Date: ${iso} (AM/PM will match unless you set a date+slot override)`;
+    UI.pillWeek.textContent = `Week: ${wr.week_start} → ${wr.week_end}`;
+    UI.pillMode.textContent = `Mode: ${wr.mode_label}`;
+    UI.pillOffset.textContent = `Offset: ${wr.week_offset}`;
+
+    const lines = am.reasons.map(r => {
+      if(r.source === "base") return `• base → ${r.mode} (${r.note})`;
+      return `• override → ${r.mode} (${r.scope} ${r.ref}) by ${r.by} @ ${r.at} — ${r.reason}`;
+    });
+    UI.previewReasons.textContent = lines.join("\n");
+    UI.previewReasons.style.whiteSpace = "pre-wrap";
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+
+  function onScopeChange(){
+    const v = UI.scope.value;
+    UI.dateFields.style.display = (v === "date") ? "" : "none";
+    UI.weekFields.style.display = (v === "week") ? "" : "none";
+  }
+
+  UI.scope.addEventListener("change", onScopeChange);
+  UI.previewDate.addEventListener("change", renderPreview);
+
+  UI.add.addEventListener("click", () => {
+    const by = UI.by.value.trim();
+    const scope = UI.scope.value;
+    const mode = UI.mode.value;
+    const reason = UI.reason.value.trim();
+
+    if(!by){ alert("Supervisor name required."); return; }
+    if(!reason){ alert("Reason required."); return; }
+
+    if(scope === "date"){
+      const date = UI.date.value;
+      const slot = UI.slot.value;
+      if(!date){ alert("Date required."); return; }
+      P.addOverride({ scope:"date", date, slot, mode, reason, by });
+    } else {
+      const week_start = UI.weekStart.value;
+      if(!week_start){ alert("Week start date required."); return; }
+      P.addOverride({ scope:"week", week_start, mode, reason, by });
+    }
+
+    UI.reason.value = "";
+    renderOverrides();
+    renderPreview();
+    alert("Override added.");
+  });
+
+  UI.refresh.addEventListener("click", () => {
+    renderOverrides();
+    renderPreview();
+  });
+
+  UI.clearAll.addEventListener("click", () => {
+    if(confirm("Clear ALL overrides?")){
+      P.clearOverrides();
+      renderOverrides();
+      renderPreview();
+    }
+  });
+
+  setDefaults();
+  onScopeChange();
+  renderOverrides();
+  renderPreview();
+</script>
+</body>
+</html>
