@@ -1,0 +1,1683 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Member / Wallboard / Supervisor (HTML Skeleton)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1731;
+      --panel2:#0c1329;
+      --text:#e7ecff;
+      --muted:#a9b3d6;
+      --line:rgba(255,255,255,.09);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+
+      /* Health states */
+      --ok:#2ee59d;
+      --warn:#ffd166;
+      --bad:#ff4d6d;
+      --idle:#95a3c7;
+
+      /* Member availability states */
+      --pref:#58a6ff;   /* Preferred */
+      --avail:#2ee59d;  /* Available */
+      --nosched:#ff4d6d;/* Do not schedule */
+
+      --chip:#111a3a;
+      --chip2:#0a1130;
+      --focus:#7c5cff;
+      --radius:18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 25% -20%, rgba(124,92,255,.35), transparent 55%),
+                  radial-gradient(900px 600px at 90% 0%, rgba(88,166,255,.25), transparent 52%),
+                  linear-gradient(180deg, #060a18, var(--bg));
+      color:var(--text);
+      overflow:hidden; /* wallboard requirement: no scroll */
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    button, input, select{ font:inherit; color:inherit; }
+
+    /* Layout */
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background: rgba(8,12,28,.55);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex; gap:12px; align-items:center;
+      font-weight:800; letter-spacing:.3px;
+    }
+    .brand .dot{
+      width:14px; height:14px; border-radius:50%;
+      background: linear-gradient(135deg, var(--focus), #00d4ff);
+      box-shadow: 0 0 0 6px rgba(124,92,255,.12);
+    }
+    .subbrand{
+      font-weight:600;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+
+    .viewtabs{
+      display:flex; gap:10px; align-items:center;
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      padding:6px;
+      border-radius: 999px;
+    }
+
+    .tabbtn{
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid transparent;
+      background:transparent;
+      cursor:pointer;
+      font-weight:700;
+      color:var(--muted);
+    }
+    .tabbtn[aria-selected="true"]{
+      background: rgba(124,92,255,.22);
+      border-color: rgba(124,92,255,.45);
+      color:var(--text);
+    }
+
+    .clock{
+      display:flex; gap:10px; align-items:center;
+      color:var(--muted);
+      font-weight:650;
+      font-variant-numeric: tabular-nums;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+
+    /* Views */
+    .view{
+      display:none;
+      height:100%;
+      padding:14px;
+    }
+    .view.is-active{ display:block; }
+
+    .grid{
+      height:100%;
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:14px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size:1.05rem;
+      letter-spacing:.2px;
+    }
+    .cardHeader .meta{
+      display:flex; align-items:center; gap:10px;
+      color:var(--muted);
+      font-weight:650;
+      font-size:.92rem;
+      white-space:nowrap;
+    }
+    .cardBody{
+      padding:16px;
+    }
+
+    .hint{
+      color:var(--muted);
+      line-height:1.35;
+      font-size:.95rem;
+    }
+
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .spacer{ flex:1; }
+
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding:10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:750;
+      transition: transform .06s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: rgba(124,92,255,.22);
+      border-color: rgba(124,92,255,.45);
+    }
+    .btn.danger{
+      background: rgba(255,77,109,.14);
+      border-color: rgba(255,77,109,.34);
+    }
+    .btn.ghost{
+      background: transparent;
+    }
+
+    .seg{
+      display:flex;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      overflow:hidden;
+      background: rgba(0,0,0,.16);
+    }
+    .seg button{
+      border:0;
+      padding:10px 12px;
+      background:transparent;
+      cursor:pointer;
+      color:var(--muted);
+      font-weight:800;
+      min-width: 120px;
+    }
+    .seg button[aria-pressed="true"]{
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+    }
+
+    /* Chips & badges */
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-weight:700;
+      font-size:.9rem;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--idle);
+      box-shadow: 0 0 0 4px rgba(149,163,199,.12);
+    }
+    .dot.ok{ background: var(--ok); box-shadow: 0 0 0 4px rgba(46,229,157,.12); }
+    .dot.warn{ background: var(--warn); box-shadow: 0 0 0 4px rgba(255,209,102,.14); }
+    .dot.bad{ background: var(--bad); box-shadow: 0 0 0 4px rgba(255,77,109,.14); }
+    .dot.idle{ background: var(--idle); box-shadow: 0 0 0 4px rgba(149,163,199,.12); }
+
+    /* Member UI */
+    .memberLayout{
+      height:100%;
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:14px;
+    }
+
+    .calendarScroller{
+      height: calc(100% - 0px);
+      display:grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .scrollArea{
+      overflow:auto; /* member UI can scroll inside */
+      padding: 12px;
+      background: rgba(0,0,0,.10);
+    }
+
+    .dayCard{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding:12px;
+      background: rgba(255,255,255,.03);
+      margin-bottom:10px;
+    }
+    .dayTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .dayTitle{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .dayTitle .dow{
+      font-weight:900;
+      font-size:1.02rem;
+      letter-spacing:.2px;
+    }
+    .dayTitle .date{
+      color:var(--muted);
+      font-weight:650;
+      font-size:.92rem;
+    }
+
+    .shiftPick{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .shiftTile{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      border-radius: 16px;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .shiftTileHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .shiftLabel{
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .pref24{
+      display:flex; align-items:center; gap:8px;
+      color:var(--muted);
+      font-weight:750;
+      font-size:.9rem;
+      user-select:none;
+    }
+    .pref24 input{ width:18px; height:18px; }
+
+    .triState{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:8px;
+    }
+    .triState input{ display:none; }
+    .triState label{
+      cursor:pointer;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding:10px 10px;
+      border-radius: 14px;
+      font-weight:900;
+      text-align:center;
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    /* Availability color fill */
+    .triState input:checked + label{
+      color: var(--text);
+      border-color: rgba(255,255,255,.22);
+      background: rgba(255,255,255,.06);
+    }
+    .triState input[value="preferred"]:checked + label{
+      background: rgba(88,166,255,.20);
+      border-color: rgba(88,166,255,.42);
+    }
+    .triState input[value="available"]:checked + label{
+      background: rgba(46,229,157,.14);
+      border-color: rgba(46,229,157,.34);
+    }
+    .triState input[value="noschedule"]:checked + label{
+      background: rgba(255,77,109,.14);
+      border-color: rgba(255,77,109,.34);
+    }
+
+    .currentSel{
+      display:flex; gap:8px; flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .selBadge{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-weight:800;
+      font-size:.86rem;
+    }
+    .selBadge.pref{ border-color: rgba(88,166,255,.45); color:#cfe6ff; }
+    .selBadge.avail{ border-color: rgba(46,229,157,.40); color:#c9ffe8; }
+    .selBadge.no{ border-color: rgba(255,77,109,.45); color:#ffd0d9; }
+
+    /* Wallboard */
+    .wallboard{
+      height:100%;
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      gap:12px;
+    }
+
+    .wbHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .wbTitle{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .wbTitle h1{
+      margin:0;
+      font-size:1.3rem;
+      letter-spacing:.3px;
+    }
+    .wbTitle .sub{
+      color:var(--muted);
+      font-weight:650;
+    }
+
+    .legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .wbGrid{
+      display:grid;
+      grid-template-columns: 190px repeat(7, 1fr);
+      grid-template-rows: 62px 1fr 1fr;
+      gap:10px;
+      height:100%;
+      min-height: 0;
+    }
+
+    .cell{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      overflow:hidden;
+      box-shadow: 0 8px 18px rgba(0,0,0,.20);
+      min-height: 0;
+    }
+
+    .cell.header{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      letter-spacing:.3px;
+      color:var(--muted);
+      background: rgba(0,0,0,.14);
+    }
+
+    .rowLabel{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:950;
+      letter-spacing:.3px;
+      background: rgba(0,0,0,.20);
+    }
+
+    .shiftCell{
+      display:grid;
+      grid-template-rows: auto 1fr;
+      min-height:0;
+    }
+    .shiftCellTop{
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+    }
+    .healthPill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      font-weight:900;
+      font-size:.86rem;
+      color:var(--muted);
+      background: rgba(0,0,0,.18);
+      white-space:nowrap;
+    }
+    .healthPill.ok{ border-color: rgba(46,229,157,.45); color:#c9ffe8; }
+    .healthPill.warn{ border-color: rgba(255,209,102,.55); color:#ffe9b4; }
+    .healthPill.bad{ border-color: rgba(255,77,109,.55); color:#ffd0d9; }
+    .healthPill.idle{ border-color: rgba(149,163,199,.40); color:#d7dfff; }
+
+    .crewList{
+      padding:10px 12px;
+      overflow:hidden; /* wallboard: no scroll */
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-height:0;
+    }
+    .crewRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      min-height: 0;
+    }
+    .nameTag{
+      padding:7px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      font-weight:900;
+      font-size:.9rem;
+      white-space:nowrap;
+      max-width: 100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Position-based coloring for filled seats (names carry the color) */
+    .pos-driver{ border-color: rgba(88,166,255,.55); color:#cfe6ff; }
+    .pos-als{ border-color: rgba(46,229,157,.55); color:#c9ffe8; }
+    .pos-emt{ border-color: rgba(255,209,102,.55); color:#ffe9b4; }
+    .pos-open{ border-color: rgba(255,77,109,.55); color:#ffd0d9; background: rgba(255,77,109,.10); }
+
+    .wbFooter{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      color:var(--muted);
+      font-weight:650;
+      font-size:.92rem;
+    }
+
+    /* Supervisor */
+    .superLayout{
+      height:100%;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+    }
+
+    .sidenav{
+      height:100%;
+      display:grid;
+      grid-template-rows: auto auto 1fr auto;
+    }
+
+    .navGroup{
+      padding:12px 12px 0 12px;
+    }
+
+    .navItem{
+      width:100%;
+      text-align:left;
+      border:1px solid transparent;
+      background: transparent;
+      padding:12px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      color:var(--muted);
+      font-weight:900;
+      margin-bottom:8px;
+    }
+    .navItem[aria-selected="true"]{
+      background: rgba(124,92,255,.20);
+      border-color: rgba(124,92,255,.45);
+      color: var(--text);
+    }
+
+    .panel{
+      height:100%;
+      display:grid;
+      grid-template-rows: auto 1fr;
+      min-height:0;
+    }
+
+    .panelBody{
+      padding:12px;
+      overflow:auto;
+      background: rgba(0,0,0,.10);
+    }
+
+    .shiftList{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .shiftRow{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+    }
+    .shiftRowTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+    }
+    .shiftRowTop .left{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .shiftRowTop .title{
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .shiftRowTop .sub{
+      color:var(--muted);
+      font-weight:650;
+      font-size:.92rem;
+    }
+    .shiftRowMid{
+      padding:12px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    /* Audit log panel scaffold */
+    .audit{
+      border-top:1px solid var(--line);
+      padding:10px 12px;
+      background: rgba(0,0,0,.12);
+      color:var(--muted);
+      font-size:.9rem;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+    .audit strong{ color:var(--text); }
+
+    /* Modal */
+    .modalBackdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+    .modalBackdrop.is-open{ display:flex; }
+    .modal{
+      width:min(860px, 96vw);
+      border-radius: 20px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modalHeader{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      background: rgba(0,0,0,.16);
+    }
+    .modalHeader h3{ margin:0; font-size:1.05rem; }
+    .modalBody{
+      padding:16px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    .field{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      border-radius: 16px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .field label{
+      color:var(--muted);
+      font-weight:800;
+      font-size:.92rem;
+    }
+    .field select, .field input{
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      outline:none;
+    }
+    .modalFooter{
+      padding:14px 16px;
+      border-top:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      background: rgba(0,0,0,.14);
+    }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      body{ overflow:auto; }
+      .memberLayout, .superLayout{ grid-template-columns: 1fr; }
+      .wbGrid{ grid-template-columns: 140px repeat(7, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app" data-app="shiftcommander">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="brand" aria-label="ShiftCommander header">
+        <span class="dot" aria-hidden="true"></span>
+        <div>
+          <div>ShiftCommander</div>
+          <div class="subbrand">Member • Wallboard • Supervisor (HTML skeleton)</div>
+        </div>
+      </div>
+
+      <nav class="viewtabs" aria-label="View selector">
+        <button class="tabbtn" data-viewbtn="member" aria-selected="true">Member</button>
+        <button class="tabbtn" data-viewbtn="wallboard" aria-selected="false">Wallboard</button>
+        <button class="tabbtn" data-viewbtn="supervisor" aria-selected="false">Supervisor</button>
+      </nav>
+
+      <div class="clock" aria-label="Clock">
+        <span class="pill">Week <strong id="weekLabel">—</strong></span>
+        <span class="pill" id="clockLabel">—</span>
+      </div>
+    </header>
+
+    <!-- MEMBER VIEW -->
+    <main class="view is-active" id="view-member" data-view="member">
+      <div class="memberLayout">
+        <!-- LEFT: Member picker -->
+        <section class="card" aria-label="Member availability controls">
+          <div class="cardHeader">
+            <h2>Set your availability</h2>
+            <div class="meta">
+              <span class="chip"><span class="dot idle"></span> Per shift</span>
+              <span class="chip"><span class="dot ok"></span> Frictionless</span>
+            </div>
+          </div>
+
+          <div class="cardBody">
+            <p class="hint" style="margin-top:0;">
+              Choose one state per shift: <strong>Preferred</strong>, <strong>Available</strong>, or <strong>Do not schedule</strong>.
+              Your selections show up in your scrolling calendar on the right.
+            </p>
+
+            <div class="card" style="border-radius:16px; box-shadow:none; margin-top:12px;">
+              <div class="cardHeader">
+                <h2 style="font-size:1rem;">Quick set (today)</h2>
+                <div class="meta">
+                  <span class="chip">AM</span>
+                  <span class="chip">PM</span>
+                  <span class="chip">24hr pref</span>
+                </div>
+              </div>
+              <div class="cardBody" style="padding:12px;">
+                <div class="shiftPick" data-member-quickset>
+                  <!-- AM -->
+                  <div class="shiftTile" data-shift="AM" data-date="today">
+                    <div class="shiftTileHeader">
+                      <div class="shiftLabel">AM</div>
+                      <div class="pref24" title="Prefer 24-hour scheduling">
+                        <input type="checkbox" data-pref24="true" />
+                        <span>Prefer 24hr</span>
+                      </div>
+                    </div>
+
+                    <div class="triState" role="radiogroup" aria-label="AM availability">
+                      <input id="qs-am-pref" type="radio" name="qs-am" value="preferred" />
+                      <label for="qs-am-pref">Preferred</label>
+
+                      <input id="qs-am-avail" type="radio" name="qs-am" value="available" />
+                      <label for="qs-am-avail">Available</label>
+
+                      <input id="qs-am-no" type="radio" name="qs-am" value="noschedule" />
+                      <label for="qs-am-no">No</label>
+                    </div>
+                  </div>
+
+                  <!-- PM -->
+                  <div class="shiftTile" data-shift="PM" data-date="today">
+                    <div class="shiftTileHeader">
+                      <div class="shiftLabel">PM</div>
+                      <div class="pref24" title="Prefer 24-hour scheduling">
+                        <input type="checkbox" data-pref24="true" />
+                        <span>Prefer 24hr</span>
+                      </div>
+                    </div>
+
+                    <div class="triState" role="radiogroup" aria-label="PM availability">
+                      <input id="qs-pm-pref" type="radio" name="qs-pm" value="preferred" />
+                      <label for="qs-pm-pref">Preferred</label>
+
+                      <input id="qs-pm-avail" type="radio" name="qs-pm" value="available" />
+                      <label for="qs-pm-avail">Available</label>
+
+                      <input id="qs-pm-no" type="radio" name="qs-pm" value="noschedule" />
+                      <label for="qs-pm-no">No</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row" style="margin-top:12px;">
+                  <button class="btn primary" data-action="saveMemberSelections">Save selections</button>
+                  <button class="btn ghost" data-action="clearToday">Clear today</button>
+                  <span class="spacer"></span>
+                  <span class="chip" title="Hook this to your API later">
+                    <span class="dot idle"></span> data-hook: <code style="opacity:.9;">data-member-selection</code>
+                  </span>
+                </div>
+
+                <p class="hint" style="margin:10px 0 0;">
+                  Implementation note: keep the UI simple; the rules engine enforces things like “avoid 2 ALS on same truck unless needed.”
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT: Scrolling calendar showing current selections -->
+        <section class="card calendarScroller" aria-label="Member scrolling calendar">
+          <div class="cardHeader">
+            <h2>Your selections (scrolling)</h2>
+            <div class="meta">
+              <span class="chip">Rolling</span>
+              <span class="chip">AM/PM</span>
+              <span class="chip">Shows current picks</span>
+            </div>
+          </div>
+
+          <div class="scrollArea" id="memberCalendar" data-member-calendar>
+            <!-- Populated by JS. Data hooks below. -->
+            <!-- Each day uses:
+              data-day-card
+              data-date="YYYY-MM-DD"
+              data-shift="AM|PM"
+              data-member-selection (preferred|available|noschedule)
+              data-pref24 (boolean)
+            -->
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- WALLBOARD VIEW -->
+    <main class="view" id="view-wallboard" data-view="wallboard">
+      <section class="wallboard" aria-label="Wallboard weekly coverage">
+        <div class="wbHeader">
+          <div class="wbTitle">
+            <h1>Wallboard — Current Week</h1>
+            <div class="sub">Auto-advancing • AM/PM • Full-screen • No scrolling</div>
+          </div>
+
+          <div class="legend" aria-label="Legend">
+            <span class="chip"><span class="dot ok"></span> Green = Filled</span>
+            <span class="chip"><span class="dot warn"></span> Yellow = Legal / fragile</span>
+            <span class="chip"><span class="dot bad"></span> Red = Unfilled requirements</span>
+            <span class="chip"><span class="dot idle"></span> Gray = Not evaluated</span>
+          </div>
+        </div>
+
+        <!-- 7-day grid: header row + AM row + PM row -->
+        <div class="wbGrid" id="wbGrid" data-wallboard-grid>
+          <div class="cell header" aria-hidden="true"></div>
+
+          <!-- Day headers (JS) -->
+          <!-- Row labels -->
+          <div class="cell rowLabel">AM</div>
+          <div class="cell rowLabel">PM</div>
+        </div>
+
+        <div class="wbFooter">
+          <div>
+            <span class="chip" title="Auto-advance interval">
+              <span class="dot idle"></span> Auto-advance: <strong id="wbAdvanceLabel">15s</strong>
+            </span>
+            <span class="chip" title="Data binding hook">
+              <span class="dot idle"></span> data-hook: <code style="opacity:.9;">data-shift-health</code>
+            </span>
+          </div>
+          <div>
+            <span class="chip"><span class="dot idle"></span> Week rotates: <strong id="wbWeekRange">—</strong></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- SUPERVISOR VIEW -->
+    <main class="view" id="view-supervisor" data-view="supervisor">
+      <div class="superLayout">
+
+        <!-- Left Nav -->
+        <aside class="card sidenav" aria-label="Supervisor navigation">
+          <div class="cardHeader">
+            <h2>Supervisor</h2>
+            <div class="meta">
+              <span class="chip"><span class="dot idle"></span> v1</span>
+            </div>
+          </div>
+
+          <div class="navGroup">
+            <button class="navItem" data-super-tab="schedule" aria-selected="true">
+              Schedule
+              <span class="chip">Assign / Lock</span>
+            </button>
+            <button class="navItem" data-super-tab="overrides" aria-selected="false">
+              Overrides
+              <span class="chip">Prefs</span>
+            </button>
+            <button class="navItem" data-super-tab="reports" aria-selected="false">
+              Reports
+              <span class="chip">Gaps / Fairness</span>
+            </button>
+          </div>
+
+          <div style="padding: 0 12px;">
+            <div class="card" style="border-radius:16px; box-shadow:none;">
+              <div class="cardHeader">
+                <h2 style="font-size:1rem;">Filters</h2>
+                <div class="meta"><span class="chip">AM/PM</span></div>
+              </div>
+              <div class="cardBody" style="padding:12px;">
+                <div class="row">
+                  <div class="seg" role="group" aria-label="Shift filter">
+                    <button aria-pressed="true" data-filter-shift="AM">AM</button>
+                    <button aria-pressed="false" data-filter-shift="PM">PM</button>
+                  </div>
+                  <span class="spacer"></span>
+                  <button class="btn" data-action="jumpToday">Today</button>
+                </div>
+                <p class="hint" style="margin:10px 0 0;">
+                  Admin configuration comes later. Supervisor tools focus on action: force assign, lock, override preference.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="navGroup" style="padding-bottom:12px;">
+            <button class="btn danger" style="width:100%;" data-action="openForceAssign">
+              Force Assign (modal)
+            </button>
+          </div>
+        </aside>
+
+        <!-- Right Panel -->
+        <section class="card panel" aria-label="Supervisor panel">
+          <div class="cardHeader">
+            <h2 id="superTitle">Schedule</h2>
+            <div class="meta">
+              <span class="chip"><span class="dot warn"></span> Actions enabled</span>
+              <span class="chip"><span class="dot idle"></span> Audit panel scaffold</span>
+            </div>
+          </div>
+
+          <div class="panelBody" id="superPanelBody">
+            <!-- Tab content injected by JS -->
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- MODAL: Force Assign / Lock / Override Preference -->
+    <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal">
+        <div class="modalHeader">
+          <h3 id="modalTitle">Force Assign / Override</h3>
+          <button class="btn ghost" data-action="closeModal">Close</button>
+        </div>
+
+        <div class="modalBody">
+          <div class="field">
+            <label for="mDate">Date</label>
+            <input id="mDate" type="date" />
+          </div>
+
+          <div class="field">
+            <label for="mShift">Shift</label>
+            <select id="mShift">
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="mAction">Action</label>
+            <select id="mAction">
+              <option value="force_assign">Force assign member</option>
+              <option value="lock_shift">Lock shift</option>
+              <option value="override_preference">Override member preference</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="mMember">Member</label>
+            <select id="mMember">
+              <option value="">Select member…</option>
+            </select>
+          </div>
+
+          <div class="field" style="grid-column:1 / -1;">
+            <label for="mSeat">Seat / Role (optional)</label>
+            <select id="mSeat">
+              <option value="">Auto / Any</option>
+              <option value="driver">Driver</option>
+              <option value="als">ALS</option>
+              <option value="emt">EMT</option>
+              <option value="officer">Officer</option>
+            </select>
+            <div class="hint" style="margin:0;">
+              Rules engine note: avoid 2 ALS providers on the same truck unless needed to fill.
+            </div>
+          </div>
+        </div>
+
+        <div class="modalFooter">
+          <button class="btn ghost" data-action="closeModal">Cancel</button>
+          <button class="btn primary" data-action="applyModal">Apply</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ============================================================
+       Demo-only JS
+       - This is *structure + hooks* so you can wire real JSON later.
+       - Cloudflare/GitHub friendly.
+       ============================================================ */
+
+    const state = {
+      view: "member",
+      wb: {
+        currentWeekOffset: 0,
+        advanceMs: 15000,
+        timer: null
+      },
+      demo: {
+        members: [
+          "Amy A.", "Lynn N.", "Brian E.", "Nick T.", "Jordan R.",
+          "Taylor S.", "Chris M.", "Morgan P."
+        ]
+      },
+      // Member selections keyed by date -> shift -> {state, pref24}
+      selections: {},
+      // Wallboard coverage keyed by weekOffset -> dayIndex -> shift -> data
+      wallboard: {}
+    };
+
+    // Utilities
+    const pad = (n)=> String(n).padStart(2,"0");
+    const ymd = (d)=> `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const startOfWeekMon = (d)=>{
+      const x = new Date(d);
+      const day = (x.getDay() + 6) % 7; // Mon=0..Sun=6
+      x.setDate(x.getDate() - day);
+      x.setHours(0,0,0,0);
+      return x;
+    };
+    const addDays = (d, days)=>{
+      const x = new Date(d);
+      x.setDate(x.getDate()+days);
+      return x;
+    };
+    const fmtDow = (d)=> d.toLocaleDateString(undefined, {weekday:"short"});
+    const fmtMD = (d)=> d.toLocaleDateString(undefined, {month:"short", day:"numeric"});
+    const fmtFull = (d)=> d.toLocaleDateString(undefined, {weekday:"long", month:"short", day:"numeric", year:"numeric"});
+    const weekRangeLabel = (weekStart)=>{
+      const end = addDays(weekStart, 6);
+      return `${fmtMD(weekStart)} – ${fmtMD(end)}`;
+    };
+
+    // Clock
+    function tickClock(){
+      const now = new Date();
+      document.getElementById("clockLabel").textContent =
+        now.toLocaleString(undefined, {weekday:"short"}) + " • " +
+        now.toLocaleTimeString(undefined, {hour:"2-digit", minute:"2-digit"});
+      const ws = startOfWeekMon(now);
+      document.getElementById("weekLabel").textContent = weekRangeLabel(ws);
+    }
+
+    // View switching
+    function setView(v){
+      state.view = v;
+      document.querySelectorAll(".tabbtn").forEach(b=>{
+        b.setAttribute("aria-selected", b.dataset.viewbtn === v ? "true":"false");
+      });
+      document.querySelectorAll(".view").forEach(el=>{
+        el.classList.toggle("is-active", el.dataset.view === v);
+      });
+
+      if(v === "wallboard"){
+        startWallboardAutoAdvance();
+      } else {
+        stopWallboardAutoAdvance();
+      }
+    }
+
+    // MEMBER: build scrolling calendar (7 weeks)
+    function ensureSelection(dateStr, shift){
+      state.selections[dateStr] ||= {};
+      state.selections[dateStr][shift] ||= { value: null, pref24: false };
+      return state.selections[dateStr][shift];
+    }
+
+    function setSelection(dateStr, shift, value){
+      const s = ensureSelection(dateStr, shift);
+      s.value = value; // preferred|available|noschedule|null
+    }
+    function setPref24(dateStr, shift, flag){
+      const s = ensureSelection(dateStr, shift);
+      s.pref24 = !!flag;
+    }
+
+    function renderMemberCalendar(){
+      const wrap = document.getElementById("memberCalendar");
+      wrap.innerHTML = "";
+
+      const today = new Date();
+      const start = startOfWeekMon(today); // start from this week Monday
+      const days = 7 * 7; // 7 weeks
+
+      for(let i=0;i<days;i++){
+        const d = addDays(start, i);
+        const dateStr = ymd(d);
+
+        const day = document.createElement("div");
+        day.className = "dayCard";
+        day.setAttribute("data-day-card","");
+        day.setAttribute("data-date", dateStr);
+
+        const am = ensureSelection(dateStr, "AM");
+        const pm = ensureSelection(dateStr, "PM");
+
+        const top = document.createElement("div");
+        top.className = "dayTop";
+        top.innerHTML = `
+          <div class="dayTitle">
+            <div class="dow">${fmtDow(d)} <span style="opacity:.6;">•</span> ${fmtMD(d)}</div>
+            <div class="date">${fmtFull(d)}</div>
+          </div>
+          <div class="chip"><span class="dot idle"></span>${dateStr}</div>
+        `;
+
+        const picks = document.createElement("div");
+        picks.className = "shiftPick";
+
+        picks.appendChild(buildShiftPicker(dateStr, "AM", am));
+        picks.appendChild(buildShiftPicker(dateStr, "PM", pm));
+
+        const current = document.createElement("div");
+        current.className = "currentSel";
+        current.innerHTML = `
+          ${renderSelBadge("AM", am)}
+          ${renderSelBadge("PM", pm)}
+        `;
+
+        day.appendChild(top);
+        day.appendChild(picks);
+        day.appendChild(current);
+        wrap.appendChild(day);
+      }
+    }
+
+    function renderSelBadge(shift, sel){
+      const v = sel.value;
+      const label = v === "preferred" ? "Preferred" : v === "available" ? "Available" : v === "noschedule" ? "Do not schedule" : "Not set";
+      const cls = v === "preferred" ? "pref" : v === "available" ? "avail" : v === "noschedule" ? "no" : "";
+      const extra = sel.pref24 ? " • 24hr pref" : "";
+      return `<span class="selBadge ${cls}">${shift}: ${label}${extra}</span>`;
+    }
+
+    function buildShiftPicker(dateStr, shift, sel){
+      const tile = document.createElement("div");
+      tile.className = "shiftTile";
+      tile.setAttribute("data-shift", shift);
+      tile.setAttribute("data-date", dateStr);
+      tile.setAttribute("data-member-selection", sel.value || "");
+      tile.setAttribute("data-pref24", String(!!sel.pref24));
+
+      const rgName = `rg-${dateStr}-${shift}`;
+      tile.innerHTML = `
+        <div class="shiftTileHeader">
+          <div class="shiftLabel">${shift}</div>
+          <label class="pref24" title="Prefer 24-hour scheduling">
+            <input type="checkbox" ${sel.pref24 ? "checked":""} data-pref24="true" />
+            <span>Prefer 24hr</span>
+          </label>
+        </div>
+
+        <div class="triState" role="radiogroup" aria-label="${shift} availability">
+          <input id="${rgName}-pref" type="radio" name="${rgName}" value="preferred" ${sel.value==="preferred"?"checked":""}/>
+          <label for="${rgName}-pref">Preferred</label>
+
+          <input id="${rgName}-avail" type="radio" name="${rgName}" value="available" ${sel.value==="available"?"checked":""}/>
+          <label for="${rgName}-avail">Available</label>
+
+          <input id="${rgName}-no" type="radio" name="${rgName}" value="noschedule" ${sel.value==="noschedule"?"checked":""}/>
+          <label for="${rgName}-no">No</label>
+        </div>
+      `;
+
+      // Events
+      const cb = tile.querySelector('input[type="checkbox"][data-pref24="true"]');
+      cb.addEventListener("change", (e)=>{
+        setPref24(dateStr, shift, e.target.checked);
+        renderMemberCalendar(); // quick refresh
+      });
+
+      tile.querySelectorAll('input[type="radio"]').forEach(r=>{
+        r.addEventListener("change", (e)=>{
+          setSelection(dateStr, shift, e.target.value);
+          renderMemberCalendar();
+        });
+      });
+
+      return tile;
+    }
+
+    function bindMemberQuickSet(){
+      // Quickset is "today" only and mirrors the big calendar model.
+      const today = ymd(new Date());
+
+      const qsAm = document.querySelectorAll('input[name="qs-am"]');
+      const qsPm = document.querySelectorAll('input[name="qs-pm"]');
+
+      qsAm.forEach(r=> r.addEventListener("change", (e)=>{
+        setSelection(today, "AM", e.target.value);
+        renderMemberCalendar();
+      }));
+      qsPm.forEach(r=> r.addEventListener("change", (e)=>{
+        setSelection(today, "PM", e.target.value);
+        renderMemberCalendar();
+      }));
+
+      // Pref24 checkboxes in quick set: apply to both shifts independently
+      document.querySelectorAll('[data-member-quickset] [data-shift="AM"] input[data-pref24="true"]').forEach(cb=>{
+        cb.addEventListener("change",(e)=>{ setPref24(today, "AM", e.target.checked); renderMemberCalendar(); });
+      });
+      document.querySelectorAll('[data-member-quickset] [data-shift="PM"] input[data-pref24="true"]').forEach(cb=>{
+        cb.addEventListener("change",(e)=>{ setPref24(today, "PM", e.target.checked); renderMemberCalendar(); });
+      });
+
+      // Buttons
+      document.querySelector('[data-action="clearToday"]').addEventListener("click", ()=>{
+        ensureSelection(today, "AM").value = null; ensureSelection(today, "AM").pref24=false;
+        ensureSelection(today, "PM").value = null; ensureSelection(today, "PM").pref24=false;
+        // clear quick radios too
+        qsAm.forEach(r=> r.checked=false);
+        qsPm.forEach(r=> r.checked=false);
+        document.querySelectorAll('[data-member-quickset] input[data-pref24="true"]').forEach(cb=> cb.checked=false);
+        renderMemberCalendar();
+      });
+
+      document.querySelector('[data-action="saveMemberSelections"]').addEventListener("click", ()=>{
+        // Hook: send state.selections to API
+        console.log("SAVE selections:", state.selections);
+        alert("Demo: selections saved (check console). Wire this to your backend.");
+      });
+    }
+
+    // WALLBOARD: build fixed 7-day grid + auto-advance week
+    function seedDemoWallboardForWeek(weekOffset){
+      // Create some reasonable demo coverage.
+      // Real system will bind actual assignments + seat health.
+      const now = new Date();
+      const ws = startOfWeekMon(addDays(now, weekOffset*7));
+      state.wallboard[weekOffset] ||= {};
+
+      for(let day=0; day<7; day++){
+        state.wallboard[weekOffset][day] ||= { AM: null, PM: null };
+
+        // Helper to build shift
+        const makeShift = (shift)=>{
+          // Demo health distribution
+          const r = Math.random();
+          const health = r < 0.62 ? "ok" : r < 0.82 ? "warn" : r < 0.96 ? "bad" : "idle";
+
+          // Demo crew list
+          const crew = [];
+          const pick = ()=> state.demo.members[Math.floor(Math.random()*state.demo.members.length)];
+
+          // "bad" shows open seats
+          if(health === "bad"){
+            crew.push({ name:"OPEN: Driver", role:"open" });
+            crew.push({ name:"OPEN: ALS", role:"open" });
+            crew.push({ name: pick(), role:"emt" });
+          } else {
+            crew.push({ name: pick(), role:"driver" });
+            crew.push({ name: pick(), role:"als" });
+            crew.push({ name: pick(), role:"emt" });
+            // Sometimes a second ALS (rules engine should avoid if possible)
+            if(Math.random() < 0.25) crew.push({ name: pick(), role:"als" });
+          }
+
+          return {
+            date: ymd(addDays(ws, day)),
+            shift,
+            health, // ok|warn|bad|idle
+            crew
+          };
+        };
+
+        state.wallboard[weekOffset][day].AM = makeShift("AM");
+        state.wallboard[weekOffset][day].PM = makeShift("PM");
+      }
+    }
+
+    function renderWallboard(){
+      const grid = document.getElementById("wbGrid");
+      // Clear day headers + shift cells, keep first corner + row labels.
+      grid.innerHTML = "";
+      grid.appendChild(Object.assign(document.createElement("div"), { className:"cell header" }));
+
+      const now = new Date();
+      const ws = startOfWeekMon(addDays(now, state.wb.currentWeekOffset * 7));
+      document.getElementById("wbWeekRange").textContent = weekRangeLabel(ws);
+
+      // Day headers
+      for(let i=0;i<7;i++){
+        const d = addDays(ws, i);
+        const h = document.createElement("div");
+        h.className = "cell header";
+        h.textContent = `${fmtDow(d)} • ${fmtMD(d)}`;
+        h.setAttribute("data-day-header", String(i));
+        grid.appendChild(h);
+      }
+
+      // Row label AM
+      const amLabel = document.createElement("div");
+      amLabel.className = "cell rowLabel";
+      amLabel.textContent = "AM";
+      grid.appendChild(amLabel);
+
+      // AM cells
+      for(let i=0;i<7;i++){
+        const cell = buildShiftHealthCell(i, "AM");
+        grid.appendChild(cell);
+      }
+
+      // Row label PM
+      const pmLabel = document.createElement("div");
+      pmLabel.className = "cell rowLabel";
+      pmLabel.textContent = "PM";
+      grid.appendChild(pmLabel);
+
+      // PM cells
+      for(let i=0;i<7;i++){
+        const cell = buildShiftHealthCell(i, "PM");
+        grid.appendChild(cell);
+      }
+    }
+
+    function buildShiftHealthCell(dayIndex, shift){
+      seedDemoWallboardForWeek(state.wb.currentWeekOffset);
+
+      const data = state.wallboard[state.wb.currentWeekOffset][dayIndex][shift];
+
+      const cell = document.createElement("div");
+      cell.className = "cell shiftCell";
+      cell.setAttribute("data-shift-health", "");
+      cell.setAttribute("data-day-index", String(dayIndex));
+      cell.setAttribute("data-shift", shift);
+      cell.setAttribute("data-health", data.health);
+
+      const hp = document.createElement("div");
+      hp.className = "shiftCellTop";
+      const pillClass = data.health === "ok" ? "ok" : data.health === "warn" ? "warn" : data.health === "bad" ? "bad" : "idle";
+      const pillLabel = data.health === "ok" ? "Green" : data.health === "warn" ? "Yellow" : data.health === "bad" ? "Red" : "Gray";
+      hp.innerHTML = `
+        <div class="chip">${shift}</div>
+        <div class="healthPill ${pillClass}">
+          <span class="dot ${pillClass}"></span>
+          ${pillLabel}
+        </div>
+      `;
+
+      const list = document.createElement("div");
+      list.className = "crewList";
+      list.setAttribute("data-crew-list", "");
+
+      // Names color-coded by role
+      const row = document.createElement("div");
+      row.className = "crewRow";
+      data.crew.slice(0, 6).forEach(p=>{
+        const tag = document.createElement("div");
+        tag.className = "nameTag " + (p.role === "driver" ? "pos-driver" :
+                                     p.role === "als" ? "pos-als" :
+                                     p.role === "emt" ? "pos-emt" : "pos-open");
+        tag.textContent = p.name;
+        tag.setAttribute("data-role", p.role);
+        row.appendChild(tag);
+      });
+
+      // If too many names, show a +N chip rather than scroll
+      if(data.crew.length > 6){
+        const extra = document.createElement("div");
+        extra.className = "nameTag";
+        extra.style.opacity = ".85";
+        extra.textContent = `+${data.crew.length - 6} more`;
+        row.appendChild(extra);
+      }
+
+      list.appendChild(row);
+
+      cell.appendChild(hp);
+      cell.appendChild(list);
+      return cell;
+    }
+
+    function startWallboardAutoAdvance(){
+      stopWallboardAutoAdvance();
+      document.getElementById("wbAdvanceLabel").textContent = `${Math.round(state.wb.advanceMs/1000)}s`;
+      renderWallboard();
+
+      state.wb.timer = setInterval(()=>{
+        state.wb.currentWeekOffset = (state.wb.currentWeekOffset + 1) % 7; // rotates across 7 weeks window
+        renderWallboard();
+      }, state.wb.advanceMs);
+    }
+    function stopWallboardAutoAdvance(){
+      if(state.wb.timer){
+        clearInterval(state.wb.timer);
+        state.wb.timer = null;
+      }
+    }
+
+    // SUPERVISOR: tab content scaffolds (Schedule / Overrides / Reports)
+    function renderSupervisor(){
+      const body = document.getElementById("superPanelBody");
+      const active = document.querySelector('.navItem[aria-selected="true"]').dataset.superTab;
+      const title = document.getElementById("superTitle");
+
+      if(active === "schedule"){
+        title.textContent = "Schedule";
+        body.innerHTML = `
+          <div class="shiftList" data-super-schedule>
+            ${demoSupervisorShiftRow("Today • AM", "Force assign • Lock shift • View crew", "warn")}
+            ${demoSupervisorShiftRow("Today • PM", "Override preference • Lock shift", "ok")}
+            ${demoSupervisorShiftRow("Tomorrow • AM", "Coverage risk: driver thin", "bad")}
+          </div>
+        `;
+        bindSupervisorRowActions();
+        return;
+      }
+
+      if(active === "overrides"){
+        title.textContent = "Overrides";
+        body.innerHTML = `
+          <div class="card" style="border-radius:16px; box-shadow:none;">
+            <div class="cardHeader">
+              <h2 style="font-size:1rem;">Member preference overrides</h2>
+              <div class="meta"><span class="chip">Supervisor</span></div>
+            </div>
+            <div class="cardBody">
+              <p class="hint" style="margin-top:0;">
+                This tab is for exceptions: force scheduling despite "Available" (or even despite "Do not schedule"),
+                and documenting it in the audit log panel on the shift row.
+              </p>
+
+              <div class="row">
+                <button class="btn primary" data-action="openForceAssign">Open override modal</button>
+                <button class="btn" data-action="seedOverride">Seed a demo override</button>
+              </div>
+
+              <div style="margin-top:12px;" class="shiftList" data-super-overrides>
+                ${demoSupervisorShiftRow("Override: 2026-01-02 • AM", "Override preference applied to Jordan R.", "warn")}
+              </div>
+            </div>
+          </div>
+        `;
+        bindSupervisorRowActions();
+        return;
+      }
+
+      // Reports
+      title.textContent = "Reports";
+      body.innerHTML = `
+        <div class="card" style="border-radius:16px; box-shadow:none;">
+          <div class="cardHeader">
+            <h2 style="font-size:1rem;">Reports (v1)</h2>
+            <div class="meta"><span class="chip">Coverage • Fairness • Seat shortages</span></div>
+          </div>
+          <div class="cardBody">
+            <div class="row" style="margin-bottom:10px;">
+              <span class="chip"><span class="dot bad"></span> Coverage gaps</span>
+              <span class="chip"><span class="dot warn"></span> Utilization / fairness</span>
+              <span class="chip"><span class="dot ok"></span> Seat-type shortages</span>
+            </div>
+
+            <p class="hint" style="margin-top:0;">
+              This is just HTML scaffolding. Wire these panels to your real data later.
+            </p>
+
+            <div class="shiftList">
+              ${demoReportRow("Coverage gaps", "Top 3 recurring gaps: Driver (PM), ALS (AM), Officer (PM)")}
+              ${demoReportRow("Utilization / fairness", "Members with highest load: Amy A., Lynn N. • Members underutilized: Morgan P.")}
+              ${demoReportRow("Seat-type shortages", "Driver pool thin on weekends • ALS conflicts on Tue/Thu")}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function demoSupervisorShiftRow(title, subtitle, health){
+      const dotClass = health === "ok" ? "ok" : health === "warn" ? "warn" : "bad";
+      return `
+        <div class="shiftRow" data-shift-row data-health="${health}">
+          <div class="shiftRowTop">
+            <div class="left">
+              <div class="title">${title}</div>
+              <div class="sub">${subtitle}</div>
+            </div>
+            <div class="row">
+              <span class="chip"><span class="dot ${dotClass}"></span>${health.toUpperCase()}</span>
+              <button class="btn primary" data-action="openForceAssign">Force/Override</button>
+              <button class="btn" data-action="lockShift">Lock</button>
+            </div>
+          </div>
+          <div class="shiftRowMid">
+            <span class="nameTag pos-driver">Driver: Amy A.</span>
+            <span class="nameTag pos-als">ALS: Lynn N.</span>
+            <span class="nameTag pos-emt">EMT: Chris M.</span>
+            <span class="nameTag pos-open">OPEN: ALS</span>
+          </div>
+          <div class="audit" data-audit-panel>
+            <div><strong>Audit:</strong> <span data-audit-text>— none yet —</span></div>
+            <div class="row">
+              <button class="btn ghost" data-action="addAudit">Add log</button>
+              <button class="btn ghost" data-action="viewAudit">View</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function demoReportRow(title, subtitle){
+      return `
+        <div class="shiftRow">
+          <div class="shiftRowTop">
+            <div class="left">
+              <div class="title">${title}</div>
+              <div class="sub">${subtitle}</div>
+            </div>
+            <div class="row">
+              <button class="btn">Export</button>
+              <button class="btn">Details</button>
+            </div>
+          </div>
+          <div class="shiftRowMid">
+            <span class="chip">data-hook: <code style="opacity:.9;">reports.${title.toLowerCase().replace(/\\s+/g,'_')}</code></span>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindSupervisorRowActions(){
+      document.querySelectorAll('[data-action="lockShift"]').forEach(btn=>{
+        btn.onclick = (e)=>{
+          const row = e.target.closest("[data-shift-row]");
+          const audit = row.querySelector("[data-audit-text]");
+          audit.textContent = `Shift locked by Supervisor at ${new Date().toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})}`;
+          alert("Demo: shift locked (audit updated).");
+        };
+      });
+
+      document.querySelectorAll('[data-action="addAudit"]').forEach(btn=>{
+        btn.onclick = (e)=>{
+          const row = e.target.closest("[data-shift-row]");
+          const audit = row.querySelector("[data-audit-text]");
+          audit.textContent = `Override note: justified due to coverage risk (${new Date().toLocaleString()})`;
+        };
+      });
+
+      document.querySelectorAll('[data-action="viewAudit"]').forEach(btn=>{
+        btn.onclick = ()=> alert("Demo: open audit log viewer (future).");
+      });
+
+      document.querySelectorAll('[data-action="openForceAssign"]').forEach(btn=>{
+        btn.onclick = ()=> openModal();
+      });
+
+      const seed = document.querySelector('[data-action="seedOverride"]');
+      if(seed){
+        seed.onclick = ()=> alert("Demo: seeded override (wire to backend later).");
+      }
+    }
+
+    // Supervisor nav
+    function bindSupervisorNav(){
+      document.querySelectorAll(".navItem").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          document.querySelectorAll(".navItem").forEach(x=> x.setAttribute("aria-selected","false"));
+          btn.setAttribute("aria-selected","true");
+          renderSupervisor();
+        });
+      });
+
+      // Shift filter seg buttons (demo)
+      document.querySelectorAll('[data-filter-shift]').forEach(b=>{
+        b.addEventListener("click", ()=>{
+          document.querySelectorAll('[data-filter-shift]').forEach(x=> x.setAttribute("aria-pressed","false"));
+          b.setAttribute("aria-pressed","true");
+          // Hook: re-render schedule list based on AM/PM filter
+          renderSupervisor();
+        });
+      });
+
+      document.querySelector('[data-action="jumpToday"]').addEventListener("click", ()=>{
+        alert("Demo: jump to today in supervisor schedule (wire later).");
+      });
+    }
+
+    // Modal
+    function openModal(){
+      const mb = document.getElementById("modalBackdrop");
+      mb.classList.add("is-open");
+      mb.setAttribute("aria-hidden","false");
+
+      // Populate member list
+      const mSel = document.getElementById("mMember");
+      mSel.innerHTML = `<option value="">Select member…</option>` + state.demo.members.map(m=>`<option value="${m}">${m}</option>`).join("");
+
+      // Default date = today
+      document.getElementById("mDate").value = ymd(new Date());
+    }
+    function closeModal(){
+      const mb = document.getElementById("modalBackdrop");
+      mb.classList.remove("is-open");
+      mb.setAttribute("aria-hidden","true");
+    }
+    function bindModal(){
+      document.querySelectorAll('[data-action="closeModal"]').forEach(b=> b.addEventListener("click", closeModal));
+      document.querySelector('[data-action="applyModal"]').addEventListener("click", ()=>{
+        const payload = {
+          date: document.getElementById("mDate").value,
+          shift: document.getElementById("mShift").value,
+          action: document.getElementById("mAction").value,
+          member: document.getElementById("mMember").value,
+          seat: document.getElementById("mSeat").value
+        };
+        console.log("APPLY modal:", payload);
+        alert("Demo: applied action (check console). Wire to backend + audit log.");
+        closeModal();
+      });
+
+      // Click outside modal closes
+      document.getElementById("modalBackdrop").addEventListener("click", (e)=>{
+        if(e.target.id === "modalBackdrop") closeModal();
+      });
+      document.addEventListener("keydown",(e)=>{
+        if(e.key === "Escape") closeModal();
+      });
+    }
+
+    // Global events
+    function bindViewTabs(){
+      document.querySelectorAll(".tabbtn").forEach(b=>{
+        b.addEventListener("click", ()=> setView(b.dataset.viewbtn));
+      });
+    }
+
+    // Init
+    (function init(){
+      tickClock();
+      setInterval(tickClock, 1000 * 10);
+
+      bindViewTabs();
+      bindMemberQuickSet();
+      bindSupervisorNav();
+      bindModal();
+
+      // Seed initial selections container
+      renderMemberCalendar();
+      renderSupervisor();
+      // Wallboard only when selected (to respect "no scroll" mode)
+    })();
+  </script>
+</body>
+</html>
