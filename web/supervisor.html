@@ -68,7 +68,7 @@
     .slot{padding:10px;border-radius:12px;border:1px solid rgba(37,50,84,.8);background:rgba(16,26,48,.6);
       display:flex;flex-direction:column;gap:6px;min-height:66px;}
     .slot .lbl{font-size:11px;color:var(--muted)}
-    .slot .val{font-weight:800;font-size:13px;line-height:1.15}
+    .slot .val{font-weight:800;font-size:13px;line-height:1.15;min-height:16px}
     .slot .meta{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
     .riders{display:flex;flex-direction:column;gap:8px;min-width:260px;}
     .riders .line{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
@@ -109,7 +109,7 @@
       <div class="left">
         <div class="k">Week View</div>
         <div class="s">
-          Data paths are relative to <code>/web/</code> so this works on GitHub Pages/Cloudflare and locally (when served).
+          “Needs …” is suppressed until within <b>21 days</b> (3-week lead). Far-out shifts show names only.
         </div>
       </div>
       <div class="weekbar">
@@ -143,13 +143,7 @@
 </div>
 
 <script>
-/**
- * IMPORTANT:
- * - Use RELATIVE paths so it works under any host base path.
- * - When opening as file://, fetch() may be blocked; serve locally (one command).
- */
 const PATHS = {
-  // relative to /web/
   org: "./data/org_settings.json",
   members: "./data/members.json",
   historyIndex: "./data/history/history.index.json",
@@ -177,6 +171,18 @@ function startOfWeekThursday(anyDate){
   return addDays(d,-delta);
 }
 
+// ===== Config =====
+const LEAD_DAYS = 21;
+
+// ===== Date helpers =====
+function isWithinLead(dateISO){
+  const today = new Date();
+  const d = new Date(dateISO + "T00:00:00");
+  const ms = d.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const daysOut = Math.floor(ms / (1000*60*60*24));
+  return daysOut <= LEAD_DAYS;
+}
+
 async function fetchJSON(url){
   const r=await fetch(url,{cache:"no-store"});
   if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
@@ -187,6 +193,22 @@ async function tryFetchJSON(url){
 }
 
 function safeText(x){ return (x===undefined||x===null) ? "" : String(x); }
+function isOpenName(name){ return !name || String(name).trim()==="" || String(name).toLowerCase()==="open"; }
+
+function displaySeatName(name, withinLead){
+  // Far-out = keep it clean: don’t shout “Open” everywhere.
+  if(isOpenName(name)) return withinLead ? "Open" : "";
+  return String(name);
+}
+
+function displaySeatMeta(level, token, withinLead){
+  // Meta is only meaningful when a seat has someone assigned.
+  if(!withinLead && (!level && !token)) return "";
+  const parts=[];
+  if(level) parts.push(level);
+  if(token) parts.push(token);
+  return parts.join(" • ");
+}
 
 function computeHealth(shiftObj){
   const medical=shiftObj?.medical||null;
@@ -335,8 +357,11 @@ function removeRider(dateISO, shift, idx){
 }
 
 function shiftRow(dateISO, dowLabel, shift){
+  const withinLead = isWithinLead(dateISO);
   const view=mergeShiftView(dateISO, shift);
-  const health=computeHealth(view);
+
+  // Only compute/show “health” inside lead window.
+  const health = withinLead ? computeHealth(view) : null;
 
   const tr=document.createElement("tr");
 
@@ -352,26 +377,36 @@ function shiftRow(dateISO, dowLabel, shift){
   td0.appendChild(head);
 
   const td1=document.createElement("td");
-  const h=document.createElement("div"); h.className="health";
-  const dot=document.createElement("span"); dot.className="dot "+health.state;
-  const msg=document.createElement("span"); msg.textContent=health.msg;
-  h.appendChild(dot); h.appendChild(msg);
-  td1.appendChild(h);
+  if(withinLead){
+    const h=document.createElement("div"); h.className="health";
+    const dot=document.createElement("span"); dot.className="dot "+health.state;
+    const msg=document.createElement("span"); msg.textContent=health.msg;
+    h.appendChild(dot); h.appendChild(msg);
+    td1.appendChild(h);
+  } else {
+    td1.innerHTML = `<span class="muted">—</span>`;
+  }
 
   const td2=document.createElement("td");
   const slots=document.createElement("div"); slots.className="slots";
 
+  const medName = displaySeatName(view.medical?.name, withinLead);
+  const drvName = displaySeatName(view.driver_emt?.name, withinLead);
+
+  const medMeta = displaySeatMeta(view.medical?.level, view.medical?.from_token, withinLead);
+  const drvMeta = displaySeatMeta(view.driver_emt?.level, view.driver_emt?.from_token, withinLead);
+
   const slotA=document.createElement("div"); slotA.className="slot";
   slotA.innerHTML=`
     <div class="lbl">Medical</div>
-    <div class="val">${safeText(view.medical?.name||"Open")}</div>
-    <div class="meta"><span>${safeText(view.medical?.level||"")}</span><span class="muted">${safeText(view.medical?.from_token||"")}</span></div>
+    <div class="val">${safeText(medName)}</div>
+    <div class="meta">${safeText(medMeta)}</div>
   `;
   const slotB=document.createElement("div"); slotB.className="slot";
   slotB.innerHTML=`
     <div class="lbl">Driver/EMT</div>
-    <div class="val">${safeText(view.driver_emt?.name||"Open")}</div>
-    <div class="meta"><span>${safeText(view.driver_emt?.level||"")}</span><span class="muted">${safeText(view.driver_emt?.from_token||"")}</span></div>
+    <div class="val">${safeText(drvName)}</div>
+    <div class="meta">${safeText(drvMeta)}</div>
   `;
   slots.appendChild(slotA); slots.appendChild(slotB);
   td2.appendChild(slots);
@@ -475,8 +510,6 @@ async function loadAll(){
     const index = await fetchJSON(PATHS.historyIndex);
     const files = index?.files || [];
 
-    // base_path in manifest is web-root style; when using relative hosting, prefer local relative:
-    // We'll load month files relative to the manifest location by using "./data/history/<filename>" if present.
     const merged = { days:{} };
 
     for(const f of files){
@@ -527,7 +560,7 @@ async function loadAll(){
   }catch(err){
     console.error(err);
     setStatus("ERROR: " + err.message);
-    alert("Supervisor page failed to load required data:\n\n" + err.message + "\n\nTip: Use a local server instead of file://");
+    alert("Supervisor page failed to load required data:\n\n" + err.message);
   }
 }
 
