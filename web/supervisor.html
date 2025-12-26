@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Supervisor</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#101a30;
+      --card2:#0f1730;
+      --text:#e8eefc;
+      --muted:#a7b3d6;
+      --line:#253254;
+      --accent:#7aa2ff;
+      --good:#19c37d;
+      --warn:#f7b955;
+      --bad:#ff5c5c;
+      --gray:#6b7aa7;
+      --chip:#162047;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:14px;
+      font-synthesis-weight:none;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 800px at 15% 10%, #12224c 0%, var(--bg) 55%);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      background: rgba(11,18,32,.72);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(37,50,84,.75);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:16px 16px 22px;}
+    .topbar{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .title h1{margin:0; font-size:18px; letter-spacing:.2px}
+    .title .sub{color:var(--muted); font-size:12px}
+    .controls{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
+    }
+    button, select, input{
+      border-radius:12px;
+      border:1px solid rgba(37,50,84,.9);
+      background: rgba(16,26,48,.9);
+      color:var(--text);
+      padding:10px 12px;
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+      outline:none;
+    }
+    button{cursor:pointer}
+    button.primary{border-color: rgba(122,162,255,.8); box-shadow: 0 0 0 1px rgba(122,162,255,.1) inset;}
+    button.danger{border-color: rgba(255,92,92,.7)}
+    button:disabled{opacity:.55; cursor:not-allowed}
+    .pill{
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(22,32,71,.65);
+      border:1px solid rgba(37,50,84,.85);
+      color:var(--muted);
+      font-size:12px;
+      display:flex; align-items:center; gap:8px;
+      max-width: 100%;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+      padding:16px;
+    }
+    .panel{
+      background: linear-gradient(180deg, rgba(16,26,48,.92), rgba(10,16,32,.92));
+      border: 1px solid rgba(37,50,84,.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel .hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(37,50,84,.7);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      background: rgba(15,23,48,.55);
+    }
+    .panel .hd .left{display:flex; flex-direction:column; gap:4px;}
+    .panel .hd .left .k{font-size:14px; font-weight:700}
+    .panel .hd .left .s{font-size:12px; color:var(--muted)}
+    .panel .bd{padding:14px}
+    .weekbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    .weekbar .nav{display:flex; gap:8px; align-items:center;}
+    .weekbar input[type="date"]{padding:9px 10px}
+    .table{
+      width:100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .table th, .table td{
+      border-top: 1px solid rgba(37,50,84,.65);
+      padding:10px 8px;
+      vertical-align: top;
+    }
+    .table th{
+      text-align:left;
+      color: var(--muted);
+      font-weight:600;
+      font-size:12px;
+      border-top:none;
+      padding-top:0;
+    }
+    .rowhead{
+      display:flex; gap:10px; align-items:center;
+    }
+    .dow{
+      width:120px;
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .dow .d{font-weight:800; font-size:13px}
+    .dow .dt{color:var(--muted); font-size:12px}
+    .shiftchip{
+      width:64px; flex:none;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(22,32,71,.7);
+      border:1px solid rgba(37,50,84,.8);
+      font-size:12px;
+      text-align:center;
+      color:var(--muted);
+    }
+    .health{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(37,50,84,.85);
+      background: rgba(22,32,71,.55);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .dot{width:10px; height:10px; border-radius:50%;}
+    .dot.green{background:var(--good)}
+    .dot.yellow{background:var(--warn)}
+    .dot.red{background:var(--bad)}
+    .dot.gray{background:var(--gray)}
+
+    .slots{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      min-width: 260px;
+    }
+    .slot{
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(37,50,84,.8);
+      background: rgba(16,26,48,.6);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-height: 66px;
+    }
+    .slot .lbl{font-size:11px; color:var(--muted)}
+    .slot .val{font-weight:800; font-size:13px; line-height:1.15}
+    .slot .meta{font-size:11px; color:var(--muted); display:flex; gap:8px; flex-wrap:wrap}
+
+    .riders{
+      display:flex; flex-direction:column; gap:8px;
+      min-width: 260px;
+    }
+    .riders .line{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(22,32,71,.55);
+      border:1px solid rgba(37,50,84,.85);
+      font-size:12px;
+    }
+    .tag button{
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(37,50,84,.9);
+      background: rgba(16,26,48,.85);
+    }
+    .toggle{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(37,50,84,.85);
+      background: rgba(16,26,48,.6);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .toggle input{transform: scale(1.2);}
+    .muted{color:var(--muted)}
+    .footnote{font-size:12px; color:var(--muted); margin-top:10px}
+
+    @media (max-width: 980px){
+      .slots{grid-template-columns: 1fr}
+      .dow{width:100px}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>ShiftCommander — Supervisor</h1>
+        <div class="sub" id="subline">Loading org settings…</div>
+      </div>
+      <div class="controls">
+        <div class="pill" id="p_org">Org: …</div>
+        <div class="pill" id="p_week">Week: …</div>
+        <button class="primary" id="btn_download_patch" disabled>Download Supervisor Patch</button>
+        <button id="btn_reset_patch" class="danger" disabled>Reset Patch</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="grid wrap">
+  <section class="panel">
+    <div class="hd">
+      <div class="left">
+        <div class="k">Week View</div>
+        <div class="s">AM/PM, two required seats, optional riders. History loads read-only from manifest.</div>
+      </div>
+      <div class="weekbar">
+        <div class="nav">
+          <button id="btn_prev">◀</button>
+          <button id="btn_today">Today</button>
+          <button id="btn_next">▶</button>
+        </div>
+        <div class="muted">Week start (Thu):</div>
+        <input type="date" id="week_start_picker" />
+      </div>
+    </div>
+    <div class="bd">
+      <table class="table" id="week_table">
+        <thead>
+          <tr>
+            <th style="width:210px">Day / Shift</th>
+            <th style="width:140px">Health</th>
+            <th>Required Seats</th>
+            <th>3rd Rider</th>
+          </tr>
+        </thead>
+        <tbody id="week_body"></tbody>
+      </table>
+      <div class="footnote">
+        v1 writes a <b>patch file</b> (JSON) you commit into repo (no backend writes yet).
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/**
+ * Supervisor v1 storage model:
+ * - History is read-only: /web/data/history/history.index.json + month files.
+ * - Supervisor patch is write-only: downloadable JSON of per-shift overrides:
+ *    { "overrides": { "YYYY-MM-DD": { "AM": {riders_allowed, riders_max, riders:[...]}, "PM": {...}}}}
+ */
+
+const PATHS = {
+  org: "/web/data/org_settings.json",
+  members: "/web/data/members.json",                 // optional, if you add it later
+  historyIndex: "/web/data/history/history.index.json",
+};
+
+let ORG = null;
+let MEMBERS = null; // optional
+let HISTORY = { days: {} }; // merged month history (read-only)
+let PATCH = { generated_at: null, overrides: {} };
+
+function $(id){ return document.getElementById(id); }
+
+function fmtISO(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const da = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+function parseISO(s){
+  const [y,m,d] = s.split("-").map(Number);
+  return new Date(y, m-1, d);
+}
+function addDays(d, n){
+  const x = new Date(d.getTime());
+  x.setDate(x.getDate()+n);
+  return x;
+}
+function startOfWeekThursday(anyDate){
+  // week_start_dow=4 (Thu). JS: Sun=0..Sat=6
+  const target = 4;
+  const d = new Date(anyDate.getFullYear(), anyDate.getMonth(), anyDate.getDate());
+  const dow = d.getDay();
+  const delta = (dow - target + 7) % 7; // how many days since last Thu
+  return addDays(d, -delta);
+}
+
+function safeText(x){
+  return (x===undefined || x===null) ? "" : String(x);
+}
+
+async function fetchJSON(url){
+  const r = await fetch(url, { cache: "no-store" });
+  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
+  return await r.json();
+}
+
+function setStatus(msg){
+  $("subline").textContent = msg;
+}
+
+function normalizeNameToken(token){
+  // Light cleanup for history tokens that are already normalized elsewhere
+  return token.trim();
+}
+
+function computeHealth(shiftObj){
+  // shiftObj expects:
+  // { medical: {level}, driver_emt: {level} } OR may be missing.
+  // Apply your v1 logic:
+  // - green: medical filled + driver_emt filled AND not double ALS
+  // - yellow: double ALS but both required filled
+  // - red: any required open OR missing ALS (medical not ALS)
+  // - gray: not evaluated
+  const medical = shiftObj?.medical || null;
+  const driver = shiftObj?.driver_emt || null;
+
+  const medicalFilled = !!medical && !!medical.name;
+  const driverFilled  = !!driver && !!driver.name;
+
+  if(!medicalFilled || !driverFilled){
+    return { state:"red", msg:"Open seat" };
+  }
+
+  const medLevel = (medical.level || "").toUpperCase();
+  const drvLevel = (driver.level || "").toUpperCase();
+
+  // Missing ALS if medical isn't ALS (EMT/DRIVER)
+  if(medLevel !== "ALS"){
+    return { state:"red", msg:"Needs ALS" };
+  }
+
+  // Double ALS if driver slot filled by ALS too
+  if(drvLevel === "ALS"){
+    return { state:"yellow", msg:"Needs EMT" };
+  }
+
+  return { state:"green", msg:"Staffed" };
+}
+
+function getHistoryShift(dateISO, shift){
+  const day = HISTORY.days?.[dateISO];
+  if(!day) return null;
+  return day?.[shift] || null;
+}
+
+function getPatchShift(dateISO, shift){
+  const d = PATCH.overrides?.[dateISO];
+  return d?.[shift] || null;
+}
+
+function ensurePatchShift(dateISO, shift){
+  PATCH.overrides[dateISO] = PATCH.overrides[dateISO] || {};
+  PATCH.overrides[dateISO][shift] = PATCH.overrides[dateISO][shift] || {
+    riders_allowed: true,
+    riders_max: ORG?.riders?.default_max_per_shift ?? 1,
+    riders: []
+  };
+  return PATCH.overrides[dateISO][shift];
+}
+
+function mergeShiftView(dateISO, shift){
+  // Base from history if present, otherwise empty placeholders
+  const base = getHistoryShift(dateISO, shift) || {
+    medical: { name: "Open", level: "" },
+    driver_emt: { name: "Open", level: "" },
+    riders: []
+  };
+
+  // Then apply patch overlay for rider controls only (v1)
+  const p = getPatchShift(dateISO, shift);
+  const ridersAllowed = (p && typeof p.riders_allowed === "boolean") ? p.riders_allowed
+                     : (base.riders_allowed ?? true);
+  const ridersMax = (p && typeof p.riders_max === "number") ? p.riders_max
+                 : (base.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1));
+  const riders = (p && Array.isArray(p.riders)) ? p.riders
+              : (Array.isArray(base.riders) ? base.riders : []);
+
+  return {
+    ...base,
+    riders_allowed: ridersAllowed,
+    riders_max: ridersMax,
+    riders
+  };
+}
+
+function rosterOptions(){
+  // If you have /web/data/members.json, we use it.
+  // Otherwise we fall back to unique names observed in history.
+  if(MEMBERS?.members?.length){
+    return MEMBERS.members
+      .filter(m => m.active !== false)
+      .map(m => ({ id: String(m.member_id), label: `${m.last_name}, ${m.first_name} #${m.member_id}`, name: `${m.first_name} ${m.last_name}` }));
+  }
+  // fallback: build from history names
+  const seen = new Set();
+  const opts = [];
+  for(const ds of Object.keys(HISTORY.days || {})){
+    for(const sh of ["AM","PM"]){
+      const s = HISTORY.days?.[ds]?.[sh];
+      if(!s) continue;
+      const names = [s.medical?.name, s.driver_emt?.name]
+        .concat((s.riders||[]).map(r=>r.name))
+        .filter(Boolean);
+      for(const nm of names){
+        const n = nm.trim();
+        if(!n || n.toLowerCase()==="open") continue;
+        if(seen.has(n)) continue;
+        seen.add(n);
+        opts.push({ id: n, label: n, name: n });
+      }
+    }
+  }
+  opts.sort((a,b)=>a.label.localeCompare(b.label));
+  return opts;
+}
+
+function buildRiderSelect(dateISO, shift){
+  const sel = document.createElement("select");
+  const opts = rosterOptions();
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Add rider…";
+  sel.appendChild(placeholder);
+
+  for(const o of opts){
+    const opt = document.createElement("option");
+    opt.value = o.id;
+    opt.textContent = o.label;
+    sel.appendChild(opt);
+  }
+
+  sel.addEventListener("change", () => {
+    const val = sel.value;
+    if(!val) return;
+
+    const view = mergeShiftView(dateISO, shift);
+    const ps = ensurePatchShift(dateISO, shift);
+
+    // Respect riders_allowed unless supervisor wants otherwise — for v1, block if off.
+    if(view.riders_allowed === false){
+      alert("Riders are disabled for this shift. Turn on ‘Allow riders’ first.");
+      sel.value = "";
+      return;
+    }
+
+    // Enforce max
+    const current = ps.riders || [];
+    if(current.length >= (view.riders_max ?? 1)){
+      alert("Max riders reached for this shift.");
+      sel.value = "";
+      return;
+    }
+
+    // Add rider
+    const picked = opts.find(o => o.id === val) || { id: val, name: val };
+    ps.riders = ps.riders || [];
+    // Prevent duplicates
+    const exists = ps.riders.some(r => (r.member_id && String(r.member_id)===String(picked.id)) || r.name===picked.name);
+    if(!exists){
+      if(MEMBERS?.members?.length){
+        ps.riders.push({ member_id: String(picked.id), name: picked.name, role: "rider" });
+      }else{
+        ps.riders.push({ name: picked.name, role: "rider" });
+      }
+    }
+
+    touchPatch();
+    sel.value = "";
+    renderWeek();
+  });
+
+  return sel;
+}
+
+function removeRider(dateISO, shift, idx){
+  const ps = ensurePatchShift(dateISO, shift);
+  ps.riders = ps.riders || [];
+  ps.riders.splice(idx, 1);
+  touchPatch();
+  renderWeek();
+}
+
+function touchPatch(){
+  PATCH.generated_at = new Date().toISOString();
+  $("btn_download_patch").disabled = false;
+  $("btn_reset_patch").disabled = false;
+}
+
+function resetPatch(){
+  PATCH = { generated_at: null, overrides: {} };
+  $("btn_download_patch").disabled = true;
+  $("btn_reset_patch").disabled = true;
+  renderWeek();
+}
+
+function downloadPatch(){
+  const blob = new Blob([JSON.stringify(PATCH, null, 2)], { type:"application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const d = new Date();
+  a.href = url;
+  a.download = `supervisor_patch_${fmtISO(d)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function shiftRow(dateISO, labelDow, labelDate, shift){
+  const view = mergeShiftView(dateISO, shift);
+  const health = computeHealth(view);
+
+  const tr = document.createElement("tr");
+
+  // Day/shift
+  const td0 = document.createElement("td");
+  const head = document.createElement("div");
+  head.className = "rowhead";
+  const dow = document.createElement("div");
+  dow.className = "dow";
+  dow.innerHTML = `<div class="d">${labelDow}</div><div class="dt">${labelDate}</div>`;
+  const chip = document.createElement("div");
+  chip.className = "shiftchip";
+  chip.textContent = shift;
+  head.appendChild(dow);
+  head.appendChild(chip);
+  td0.appendChild(head);
+
+  // Health
+  const td1 = document.createElement("td");
+  const h = document.createElement("div");
+  h.className = "health";
+  const dot = document.createElement("span");
+  dot.className = "dot " + health.state;
+  const msg = document.createElement("span");
+  msg.textContent = health.msg;
+  h.appendChild(dot); h.appendChild(msg);
+  td1.appendChild(h);
+
+  // Required seats
+  const td2 = document.createElement("td");
+  const slots = document.createElement("div");
+  slots.className = "slots";
+
+  const slotA = document.createElement("div");
+  slotA.className = "slot";
+  slotA.innerHTML = `
+    <div class="lbl">Medical</div>
+    <div class="val">${safeText(view.medical?.name || "Open")}</div>
+    <div class="meta"><span>${safeText(view.medical?.level || "")}</span><span class="muted">${safeText(view.medical?.from_token || "")}</span></div>
+  `;
+
+  const slotB = document.createElement("div");
+  slotB.className = "slot";
+  slotB.innerHTML = `
+    <div class="lbl">Driver/EMT</div>
+    <div class="val">${safeText(view.driver_emt?.name || "Open")}</div>
+    <div class="meta"><span>${safeText(view.driver_emt?.level || "")}</span><span class="muted">${safeText(view.driver_emt?.from_token || "")}</span></div>
+  `;
+
+  slots.appendChild(slotA);
+  slots.appendChild(slotB);
+  td2.appendChild(slots);
+
+  // Riders controls
+  const td3 = document.createElement("td");
+  const riders = document.createElement("div");
+  riders.className = "riders";
+
+  // Toggle allow riders
+  const line0 = document.createElement("div");
+  line0.className = "line";
+
+  const tog = document.createElement("label");
+  tog.className = "toggle";
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.checked = !!view.riders_allowed;
+  cb.addEventListener("change", () => {
+    const ps = ensurePatchShift(dateISO, shift);
+    ps.riders_allowed = cb.checked;
+    if(!cb.checked){
+      // optional: keep riders but blocked; for now keep them (supervisor may re-enable)
+      // If you want “off means remove”, we can change this.
+    }
+    touchPatch();
+    renderWeek();
+  });
+  const txt = document.createElement("span");
+  txt.textContent = "Allow riders";
+  tog.appendChild(cb); tog.appendChild(txt);
+
+  const maxSel = document.createElement("select");
+  const maxDefault = ORG?.riders?.default_max_per_shift ?? 1;
+  const currentMax = view.riders_max ?? maxDefault;
+  [0,1,2].forEach(n => {
+    const opt = document.createElement("option");
+    opt.value = String(n);
+    opt.textContent = `Max: ${n}`;
+    if(n === currentMax) opt.selected = true;
+    maxSel.appendChild(opt);
+  });
+  maxSel.addEventListener("change", () => {
+    const ps = ensurePatchShift(dateISO, shift);
+    ps.riders_max = Number(maxSel.value);
+    // trim riders if needed
+    ps.riders = ps.riders || [];
+    if(ps.riders.length > ps.riders_max){
+      ps.riders = ps.riders.slice(0, ps.riders_max);
+    }
+    touchPatch();
+    renderWeek();
+  });
+
+  line0.appendChild(tog);
+  line0.appendChild(maxSel);
+  riders.appendChild(line0);
+
+  // Add rider select
+  const line1 = document.createElement("div");
+  line1.className = "line";
+  line1.appendChild(buildRiderSelect(dateISO, shift));
+  riders.appendChild(line1);
+
+  // Current riders tags
+  const list = document.createElement("div");
+  list.className = "line";
+  const riderList = view.riders || [];
+  if(riderList.length === 0){
+    const empty = document.createElement("span");
+    empty.className = "muted";
+    empty.textContent = "No riders";
+    list.appendChild(empty);
+  }else{
+    riderList.forEach((r, idx) => {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = r.name || ("Member " + r.member_id);
+      const x = document.createElement("button");
+      x.title = "Remove rider";
+      x.textContent = "×";
+      x.addEventListener("click", () => removeRider(dateISO, shift, idx));
+      tag.appendChild(x);
+      list.appendChild(tag);
+    });
+  }
+  riders.appendChild(list);
+
+  td3.appendChild(riders);
+
+  tr.appendChild(td0);
+  tr.appendChild(td1);
+  tr.appendChild(td2);
+  tr.appendChild(td3);
+  return tr;
+}
+
+let CURRENT_WEEK_START = startOfWeekThursday(new Date());
+
+function renderWeek(){
+  $("p_week").textContent = `Week: ${fmtISO(CURRENT_WEEK_START)} (Thu)`;
+  $("week_start_picker").value = fmtISO(CURRENT_WEEK_START);
+
+  const tbody = $("week_body");
+  tbody.innerHTML = "";
+
+  const dowNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  for(let i=0; i<7; i++){
+    const d = addDays(CURRENT_WEEK_START, i);
+    const ds = fmtISO(d);
+    const dow = dowNames[d.getDay()];
+    const labelDate = ds;
+
+    tbody.appendChild(shiftRow(ds, dow, labelDate, "AM"));
+    tbody.appendChild(shiftRow(ds, dow, labelDate, "PM"));
+  }
+}
+
+function shiftWeek(deltaWeeks){
+  CURRENT_WEEK_START = addDays(CURRENT_WEEK_START, deltaWeeks*7);
+  renderWeek();
+}
+
+async function loadAll(){
+  try{
+    setStatus("Loading org settings…");
+    ORG = await fetchJSON(PATHS.org);
+
+    $("p_org").textContent = `Org: ${ORG?.org?.name || "Unknown"} (${ORG?.org?.timezone || ""})`;
+    setStatus("Loading history manifest…");
+
+    // Members is optional; ignore if missing.
+    try{
+      MEMBERS = await fetchJSON(PATHS.members);
+    }catch(e){
+      MEMBERS = null;
+    }
+
+    const index = await fetchJSON(PATHS.historyIndex);
+    const files = index?.files || [];
+
+    // Merge month files
+    const merged = { days: {} };
+    for(const f of files){
+      const monthUrl = f.path || (index.base_path + f.filename);
+      const monthObj = await fetchJSON(monthUrl);
+      // monthObj is expected to have: { days: { "YYYY-MM-DD": {AM:{...},PM:{...}}}}
+      if(monthObj?.days){
+        for(const [ds, dayObj] of Object.entries(monthObj.days)){
+          merged.days[ds] = merged.days[ds] || {};
+          if(dayObj.AM) merged.days[ds].AM = dayObj.AM;
+          if(dayObj.PM) merged.days[ds].PM = dayObj.PM;
+        }
+      }
+    }
+    HISTORY = merged;
+
+    setStatus("Ready. (History loaded; supervisor patch writes are local/downloadable.)");
+
+    // Wire buttons
+    $("btn_prev").addEventListener("click", ()=>shiftWeek(-1));
+    $("btn_next").addEventListener("click", ()=>shiftWeek(1));
+    $("btn_today").addEventListener("click", ()=>{
+      CURRENT_WEEK_START = startOfWeekThursday(new Date());
+      renderWeek();
+    });
+    $("week_start_picker").addEventListener("change", (e)=>{
+      const d = parseISO(e.target.value);
+      CURRENT_WEEK_START = startOfWeekThursday(d);
+      renderWeek();
+    });
+
+    $("btn_download_patch").addEventListener("click", downloadPatch);
+    $("btn_reset_patch").addEventListener("click", resetPatch);
+
+    // initial render
+    CURRENT_WEEK_START = startOfWeekThursday(new Date());
+    renderWeek();
+
+  }catch(err){
+    console.error(err);
+    setStatus("ERROR: " + err.message);
+    alert("Supervisor page failed to load required data. Check console for details.\n\n" + err.message);
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>
