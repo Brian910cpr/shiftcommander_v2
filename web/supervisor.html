@@ -6,8 +6,7 @@
   <title>ShiftCommander — Supervisor</title>
   <style>
     :root{
-      --bg:#0b1220; --card:#101a30; --text:#e8eefc; --muted:#a7b3d6; --line:#253254;
-      --accent:#7aa2ff; --good:#19c37d; --warn:#f7b955; --bad:#ff5c5c; --gray:#6b7aa7;
+      --bg:#0b1220; --text:#e8eefc; --muted:#a7b3d6; --good:#19c37d; --warn:#f7b955; --bad:#ff5c5c; --gray:#6b7aa7;
       --shadow: 0 10px 30px rgba(0,0,0,.35); --radius:14px;
     }
     *{box-sizing:border-box}
@@ -81,6 +80,7 @@
     .toggle input{transform:scale(1.2);}
     .muted{color:var(--muted)}
     .footnote{font-size:12px;color:var(--muted);margin-top:10px}
+    code{color:#cfe0ff}
     @media (max-width:980px){ .slots{grid-template-columns:1fr} .dow{width:100px} }
   </style>
 </head>
@@ -108,7 +108,9 @@
     <div class="hd">
       <div class="left">
         <div class="k">Week View</div>
-        <div class="s">Reads history + loads existing supervisor_patch.json if present. You edit riders per shift here.</div>
+        <div class="s">
+          Data paths are relative to <code>/web/</code> so this works on GitHub Pages/Cloudflare and locally (when served).
+        </div>
       </div>
       <div class="weekbar">
         <div class="nav">
@@ -121,7 +123,7 @@
       </div>
     </div>
     <div class="bd">
-      <table class="table" id="week_table">
+      <table class="table">
         <thead>
           <tr>
             <th style="width:210px">Day / Shift</th>
@@ -133,44 +135,50 @@
         <tbody id="week_body"></tbody>
       </table>
       <div class="footnote">
-        Persisting changes: <b>Copy Patch JSON</b> → paste into <code>/web/data/overrides/supervisor_patch.json</code> on GitHub → commit.
+        Persisting changes: <b>Copy Patch JSON</b> → paste into
+        <code>web/data/overrides/supervisor_patch.json</code> → commit.
       </div>
     </div>
   </section>
 </div>
 
 <script>
+/**
+ * IMPORTANT:
+ * - Use RELATIVE paths so it works under any host base path.
+ * - When opening as file://, fetch() may be blocked; serve locally (one command).
+ */
 const PATHS = {
-  org: "/web/data/org_settings.json",
-  members: "/web/data/members.json",
-  historyIndex: "/web/data/history/history.index.json",
-  supervisorPatch: "/web/data/overrides/supervisor_patch.json"
+  // relative to /web/
+  org: "./data/org_settings.json",
+  members: "./data/members.json",
+  historyIndex: "./data/history/history.index.json",
+  supervisorPatch: "./data/overrides/supervisor_patch.json"
 };
 
-let ORG = null;
-let MEMBERS = null;
-let HISTORY = { days: {} };   // merged normalized history
-let PATCH  = { generated_at: null, overrides: {} };
+let ORG=null, MEMBERS=null;
+let HISTORY={ days:{} };
+let PATCH={ generated_at:null, overrides:{} };
 
-function $(id){ return document.getElementById(id); }
-function setStatus(msg){ $("subline").textContent = msg; }
+function $(id){return document.getElementById(id);}
+function setStatus(msg){$("subline").textContent=msg;}
 
 function fmtISO(d){
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${da}`;
 }
-function parseISO(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
-function addDays(d,n){ const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
+function parseISO(s){const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d);}
+function addDays(d,n){const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x;}
 function startOfWeekThursday(anyDate){
-  const target = 4; // Thu
-  const d = new Date(anyDate.getFullYear(), anyDate.getMonth(), anyDate.getDate());
-  const dow = d.getDay();
-  const delta = (dow - target + 7) % 7;
-  return addDays(d, -delta);
+  const target=4; // Thu
+  const d=new Date(anyDate.getFullYear(), anyDate.getMonth(), anyDate.getDate());
+  const dow=d.getDay();
+  const delta=(dow-target+7)%7;
+  return addDays(d,-delta);
 }
 
 async function fetchJSON(url){
-  const r = await fetch(url, { cache:"no-store" });
+  const r=await fetch(url,{cache:"no-store"});
   if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
   return await r.json();
 }
@@ -178,293 +186,246 @@ async function tryFetchJSON(url){
   try{ return await fetchJSON(url); }catch(e){ return null; }
 }
 
-function safeText(x){ return (x===undefined || x===null) ? "" : String(x); }
+function safeText(x){ return (x===undefined||x===null) ? "" : String(x); }
 
 function computeHealth(shiftObj){
-  const medical = shiftObj?.medical || null;
-  const driver  = shiftObj?.driver_emt || null;
+  const medical=shiftObj?.medical||null;
+  const driver=shiftObj?.driver_emt||null;
 
-  const medicalFilled = !!medical && !!medical.name && medical.name.toLowerCase() !== "open";
-  const driverFilled  = !!driver  && !!driver.name  && driver.name.toLowerCase()  !== "open";
+  const medicalFilled=!!medical?.name && medical.name.toLowerCase()!=="open";
+  const driverFilled=!!driver?.name && driver.name.toLowerCase()!=="open";
 
-  if(!medicalFilled || !driverFilled){
-    return { state:"red", msg:"Open seat" };
-  }
-  const medLevel = (medical.level || "").toUpperCase();
-  const drvLevel = (driver.level  || "").toUpperCase();
+  if(!medicalFilled || !driverFilled) return {state:"red", msg:"Open seat"};
 
-  if(medLevel !== "ALS"){
-    return { state:"red", msg:"Needs ALS" };
-  }
-  if(drvLevel === "ALS"){
-    return { state:"yellow", msg:"Needs EMT" };
-  }
-  return { state:"green", msg:"Staffed" };
+  const medLevel=(medical.level||"").toUpperCase();
+  const drvLevel=(driver.level||"").toUpperCase();
+
+  if(medLevel!=="ALS") return {state:"red", msg:"Needs ALS"};
+  if(drvLevel==="ALS") return {state:"yellow", msg:"Needs EMT"};
+  return {state:"green", msg:"Staffed"};
 }
 
 function getHistoryShift(dateISO, shift){
-  const day = HISTORY.days?.[dateISO];
-  if(!day) return null;
-  return day?.[shift] || null;
+  return HISTORY.days?.[dateISO]?.[shift] || null;
 }
 function getPatchShift(dateISO, shift){
-  const d = PATCH.overrides?.[dateISO];
-  return d?.[shift] || null;
+  return PATCH.overrides?.[dateISO]?.[shift] || null;
 }
 function ensurePatchShift(dateISO, shift){
-  PATCH.overrides[dateISO] = PATCH.overrides[dateISO] || {};
-  PATCH.overrides[dateISO][shift] = PATCH.overrides[dateISO][shift] || {
-    riders_allowed: true,
+  PATCH.overrides[dateISO]=PATCH.overrides[dateISO]||{};
+  PATCH.overrides[dateISO][shift]=PATCH.overrides[dateISO][shift]||{
+    riders_allowed:true,
     riders_max: ORG?.riders?.default_max_per_shift ?? 1,
-    riders: []
+    riders:[]
   };
   return PATCH.overrides[dateISO][shift];
 }
 
 function mergeShiftView(dateISO, shift){
-  const base = getHistoryShift(dateISO, shift) || {
-    medical: { name: "Open", level: "" },
-    driver_emt: { name: "Open", level: "" },
-    riders: []
+  const base=getHistoryShift(dateISO, shift) || {
+    medical:{name:"Open", level:""},
+    driver_emt:{name:"Open", level:""},
+    riders:[]
   };
+  const p=getPatchShift(dateISO, shift);
 
-  const p = getPatchShift(dateISO, shift);
+  const riders_allowed = (p && typeof p.riders_allowed==="boolean") ? p.riders_allowed : (base.riders_allowed ?? true);
+  const riders_max     = (p && typeof p.riders_max==="number") ? p.riders_max : (base.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1));
+  const riders         = (p && Array.isArray(p.riders)) ? p.riders : (Array.isArray(base.riders) ? base.riders : []);
 
-  const ridersAllowed = (p && typeof p.riders_allowed === "boolean") ? p.riders_allowed : (base.riders_allowed ?? true);
-  const ridersMax     = (p && typeof p.riders_max === "number") ? p.riders_max : (base.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1));
-  const riders        = (p && Array.isArray(p.riders)) ? p.riders : (Array.isArray(base.riders) ? base.riders : []);
-
-  return { ...base, riders_allowed: ridersAllowed, riders_max: ridersMax, riders };
+  return {...base, riders_allowed, riders_max, riders};
 }
 
 function rosterOptions(){
   if(MEMBERS?.members?.length){
     return MEMBERS.members
-      .filter(m => m.active !== false && m.can_ride !== false)
+      .filter(m => m.active!==false && m.can_ride!==false)
       .map(m => ({
-        id: String(m.member_id),
-        label: `${m.last_name}, ${m.first_name} #${m.member_id}`,
-        name: `${m.first_name} ${m.last_name}`
+        id:String(m.member_id),
+        label:`${m.last_name}, ${m.first_name} #${m.member_id}`,
+        name:`${m.first_name} ${m.last_name}`
       }))
       .sort((a,b)=>a.label.localeCompare(b.label));
   }
   return [];
 }
 
-function buildRiderSelect(dateISO, shift){
-  const sel = document.createElement("select");
-  const opts = rosterOptions();
+function touchPatch(){
+  PATCH.generated_at = new Date().toISOString();
+  $("btn_copy_patch").disabled=false;
+  $("btn_download_patch").disabled=false;
+  $("btn_reset_patch").disabled=false;
+}
 
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = "Add rider…";
-  sel.appendChild(placeholder);
+async function copyPatch(){
+  const txt=JSON.stringify(PATCH,null,2);
+  await navigator.clipboard.writeText(txt);
+  alert("Patch JSON copied. Paste into web/data/overrides/supervisor_patch.json and commit.");
+}
+function downloadPatch(){
+  const blob=new Blob([JSON.stringify(PATCH,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=`supervisor_patch_${fmtISO(new Date())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function resetPatch(){
+  PATCH={generated_at:null, overrides:{}};
+  $("btn_copy_patch").disabled=true;
+  $("btn_download_patch").disabled=true;
+  $("btn_reset_patch").disabled=true;
+  renderWeek();
+}
+
+function buildRiderSelect(dateISO, shift){
+  const sel=document.createElement("select");
+  const opts=rosterOptions();
+
+  const ph=document.createElement("option");
+  ph.value=""; ph.textContent="Add rider…";
+  sel.appendChild(ph);
 
   for(const o of opts){
-    const opt = document.createElement("option");
-    opt.value = o.id;
-    opt.textContent = o.label;
+    const opt=document.createElement("option");
+    opt.value=o.id; opt.textContent=o.label;
     sel.appendChild(opt);
   }
 
-  sel.addEventListener("change", () => {
-    const val = sel.value;
+  sel.addEventListener("change", ()=>{
+    const val=sel.value;
     if(!val) return;
 
-    const view = mergeShiftView(dateISO, shift);
-    const ps = ensurePatchShift(dateISO, shift);
-
-    if(view.riders_allowed === false){
+    const view=mergeShiftView(dateISO, shift);
+    if(view.riders_allowed===false){
       alert("Riders are disabled for this shift. Turn on ‘Allow riders’ first.");
-      sel.value = "";
-      return;
+      sel.value=""; return;
     }
 
-    const current = ps.riders || [];
-    if(current.length >= (view.riders_max ?? 1)){
+    const ps=ensurePatchShift(dateISO, shift);
+    ps.riders = ps.riders || [];
+
+    if(ps.riders.length >= (view.riders_max ?? 1)){
       alert("Max riders reached for this shift.");
-      sel.value = "";
-      return;
+      sel.value=""; return;
     }
 
-    const picked = opts.find(o => o.id === val);
+    const picked=opts.find(o=>o.id===val);
     if(!picked){ sel.value=""; return; }
 
-    ps.riders = ps.riders || [];
-    const exists = ps.riders.some(r => String(r.member_id) === String(picked.id));
+    const exists=ps.riders.some(r=>String(r.member_id)===String(picked.id));
     if(!exists){
-      ps.riders.push({ member_id: String(picked.id), name: picked.name, role: "rider" });
+      ps.riders.push({member_id:String(picked.id), name:picked.name, role:"rider"});
+      touchPatch();
+      renderWeek();
     }
 
-    touchPatch();
-    sel.value = "";
-    renderWeek();
+    sel.value="";
   });
 
   return sel;
 }
 
 function removeRider(dateISO, shift, idx){
-  const ps = ensurePatchShift(dateISO, shift);
-  ps.riders = ps.riders || [];
-  ps.riders.splice(idx, 1);
+  const ps=ensurePatchShift(dateISO, shift);
+  ps.riders=ps.riders||[];
+  ps.riders.splice(idx,1);
   touchPatch();
   renderWeek();
 }
 
-function touchPatch(){
-  PATCH.generated_at = new Date().toISOString();
-  $("btn_copy_patch").disabled = false;
-  $("btn_download_patch").disabled = false;
-  $("btn_reset_patch").disabled = false;
-}
+function shiftRow(dateISO, dowLabel, shift){
+  const view=mergeShiftView(dateISO, shift);
+  const health=computeHealth(view);
 
-function resetPatch(){
-  PATCH = { generated_at: null, overrides: {} };
-  $("btn_copy_patch").disabled = true;
-  $("btn_download_patch").disabled = true;
-  $("btn_reset_patch").disabled = true;
-  renderWeek();
-}
+  const tr=document.createElement("tr");
 
-async function copyPatch(){
-  const txt = JSON.stringify(PATCH, null, 2);
-  await navigator.clipboard.writeText(txt);
-  alert("Patch JSON copied. Paste into /web/data/overrides/supervisor_patch.json and commit.");
-}
-
-function downloadPatch(){
-  const blob = new Blob([JSON.stringify(PATCH, null, 2)], { type:"application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `supervisor_patch_${fmtISO(new Date())}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function shiftRow(dateISO, labelDow, labelDate, shift){
-  const view = mergeShiftView(dateISO, shift);
-  const health = computeHealth(view);
-
-  const tr = document.createElement("tr");
-
-  const td0 = document.createElement("td");
-  const head = document.createElement("div");
-  head.className = "rowhead";
-  const dow = document.createElement("div");
-  dow.className = "dow";
-  dow.innerHTML = `<div class="d">${labelDow}</div><div class="dt">${labelDate}</div>`;
-  const chip = document.createElement("div");
-  chip.className = "shiftchip";
-  chip.textContent = shift;
+  const td0=document.createElement("td");
+  const head=document.createElement("div");
+  head.className="rowhead";
+  const dow=document.createElement("div");
+  dow.className="dow";
+  dow.innerHTML=`<div class="d">${dowLabel}</div><div class="dt">${dateISO}</div>`;
+  const chip=document.createElement("div");
+  chip.className="shiftchip"; chip.textContent=shift;
   head.appendChild(dow); head.appendChild(chip);
   td0.appendChild(head);
 
-  const td1 = document.createElement("td");
-  const h = document.createElement("div");
-  h.className = "health";
-  const dot = document.createElement("span");
-  dot.className = "dot " + health.state;
-  const msg = document.createElement("span");
-  msg.textContent = health.msg;
+  const td1=document.createElement("td");
+  const h=document.createElement("div"); h.className="health";
+  const dot=document.createElement("span"); dot.className="dot "+health.state;
+  const msg=document.createElement("span"); msg.textContent=health.msg;
   h.appendChild(dot); h.appendChild(msg);
   td1.appendChild(h);
 
-  const td2 = document.createElement("td");
-  const slots = document.createElement("div");
-  slots.className = "slots";
+  const td2=document.createElement("td");
+  const slots=document.createElement("div"); slots.className="slots";
 
-  const slotA = document.createElement("div");
-  slotA.className = "slot";
-  slotA.innerHTML = `
+  const slotA=document.createElement("div"); slotA.className="slot";
+  slotA.innerHTML=`
     <div class="lbl">Medical</div>
-    <div class="val">${safeText(view.medical?.name || "Open")}</div>
-    <div class="meta"><span>${safeText(view.medical?.level || "")}</span><span class="muted">${safeText(view.medical?.from_token || "")}</span></div>
+    <div class="val">${safeText(view.medical?.name||"Open")}</div>
+    <div class="meta"><span>${safeText(view.medical?.level||"")}</span><span class="muted">${safeText(view.medical?.from_token||"")}</span></div>
   `;
-
-  const slotB = document.createElement("div");
-  slotB.className = "slot";
-  slotB.innerHTML = `
+  const slotB=document.createElement("div"); slotB.className="slot";
+  slotB.innerHTML=`
     <div class="lbl">Driver/EMT</div>
-    <div class="val">${safeText(view.driver_emt?.name || "Open")}</div>
-    <div class="meta"><span>${safeText(view.driver_emt?.level || "")}</span><span class="muted">${safeText(view.driver_emt?.from_token || "")}</span></div>
+    <div class="val">${safeText(view.driver_emt?.name||"Open")}</div>
+    <div class="meta"><span>${safeText(view.driver_emt?.level||"")}</span><span class="muted">${safeText(view.driver_emt?.from_token||"")}</span></div>
   `;
-
   slots.appendChild(slotA); slots.appendChild(slotB);
   td2.appendChild(slots);
 
-  const td3 = document.createElement("td");
-  const riders = document.createElement("div");
-  riders.className = "riders";
+  const td3=document.createElement("td");
+  const riders=document.createElement("div"); riders.className="riders";
 
-  const line0 = document.createElement("div");
-  line0.className = "line";
+  const line0=document.createElement("div"); line0.className="line";
 
-  const tog = document.createElement("label");
-  tog.className = "toggle";
-  const cb = document.createElement("input");
-  cb.type = "checkbox";
-  cb.checked = !!view.riders_allowed;
-  cb.addEventListener("change", () => {
-    const ps = ensurePatchShift(dateISO, shift);
-    ps.riders_allowed = cb.checked;
-    touchPatch();
-    renderWeek();
+  const tog=document.createElement("label"); tog.className="toggle";
+  const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!view.riders_allowed;
+  cb.addEventListener("change", ()=>{
+    const ps=ensurePatchShift(dateISO, shift);
+    ps.riders_allowed=cb.checked;
+    touchPatch(); renderWeek();
   });
-  const txt = document.createElement("span");
-  txt.textContent = "Allow riders";
-  tog.appendChild(cb); tog.appendChild(txt);
+  const t=document.createElement("span"); t.textContent="Allow riders";
+  tog.appendChild(cb); tog.appendChild(t);
 
-  const maxSel = document.createElement("select");
-  const currentMax = view.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1);
-  [0,1,2].forEach(n => {
-    const opt = document.createElement("option");
-    opt.value = String(n);
-    opt.textContent = `Max: ${n}`;
-    if(n === currentMax) opt.selected = true;
+  const maxSel=document.createElement("select");
+  const currentMax=view.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1);
+  [0,1,2].forEach(n=>{
+    const opt=document.createElement("option");
+    opt.value=String(n); opt.textContent=`Max: ${n}`;
+    if(n===currentMax) opt.selected=true;
     maxSel.appendChild(opt);
   });
-  maxSel.addEventListener("change", () => {
-    const ps = ensurePatchShift(dateISO, shift);
-    ps.riders_max = Number(maxSel.value);
-    ps.riders = ps.riders || [];
-    if(ps.riders.length > ps.riders_max){
-      ps.riders = ps.riders.slice(0, ps.riders_max);
-    }
-    touchPatch();
-    renderWeek();
+  maxSel.addEventListener("change", ()=>{
+    const ps=ensurePatchShift(dateISO, shift);
+    ps.riders_max=Number(maxSel.value);
+    ps.riders=ps.riders||[];
+    if(ps.riders.length>ps.riders_max) ps.riders=ps.riders.slice(0,ps.riders_max);
+    touchPatch(); renderWeek();
   });
 
   line0.appendChild(tog);
   line0.appendChild(maxSel);
   riders.appendChild(line0);
 
-  const line1 = document.createElement("div");
-  line1.className = "line";
+  const line1=document.createElement("div"); line1.className="line";
   line1.appendChild(buildRiderSelect(dateISO, shift));
   riders.appendChild(line1);
 
-  const list = document.createElement("div");
-  list.className = "line";
-
-  const riderList = view.riders || [];
-  if(riderList.length === 0){
-    const empty = document.createElement("span");
-    empty.className = "muted";
-    empty.textContent = "No riders";
+  const list=document.createElement("div"); list.className="line";
+  const riderList=view.riders||[];
+  if(riderList.length===0){
+    const empty=document.createElement("span"); empty.className="muted"; empty.textContent="No riders";
     list.appendChild(empty);
   }else{
-    riderList.forEach((r, idx) => {
-      const tag = document.createElement("span");
-      tag.className = "tag";
-      tag.textContent = r.name || ("Member " + r.member_id);
-      const x = document.createElement("button");
-      x.title = "Remove rider";
-      x.textContent = "×";
-      x.addEventListener("click", () => removeRider(dateISO, shift, idx));
+    riderList.forEach((r,idx)=>{
+      const tag=document.createElement("span"); tag.className="tag";
+      tag.textContent=r.name || ("Member "+r.member_id);
+      const x=document.createElement("button"); x.textContent="×"; x.title="Remove rider";
+      x.addEventListener("click", ()=>removeRider(dateISO, shift, idx));
       tag.appendChild(x);
       list.appendChild(tag);
     });
@@ -483,16 +444,16 @@ function renderWeek(){
   $("p_week").textContent = `Week: ${fmtISO(CURRENT_WEEK_START)} (Thu)`;
   $("week_start_picker").value = fmtISO(CURRENT_WEEK_START);
 
-  const tbody = $("week_body");
-  tbody.innerHTML = "";
+  const tbody=$("week_body");
+  tbody.innerHTML="";
 
-  const dowNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const dowNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   for(let i=0;i<7;i++){
-    const d = addDays(CURRENT_WEEK_START, i);
-    const ds = fmtISO(d);
-    const dow = dowNames[d.getDay()];
-    tbody.appendChild(shiftRow(ds, dow, ds, "AM"));
-    tbody.appendChild(shiftRow(ds, dow, ds, "PM"));
+    const d=addDays(CURRENT_WEEK_START,i);
+    const ds=fmtISO(d);
+    const dow=dowNames[d.getDay()];
+    tbody.appendChild(shiftRow(ds, dow, "AM"));
+    tbody.appendChild(shiftRow(ds, dow, "PM"));
   }
 }
 
@@ -508,15 +469,18 @@ async function loadAll(){
     $("p_org").textContent = `Org: ${ORG?.org?.name || "Unknown"} (${ORG?.org?.timezone || ""})`;
 
     setStatus("Loading members…");
-    MEMBERS = await tryFetchJSON(PATHS.members);
+    MEMBERS = await fetchJSON(PATHS.members);
 
     setStatus("Loading history manifest…");
     const index = await fetchJSON(PATHS.historyIndex);
     const files = index?.files || [];
 
-    const merged = { days: {} };
+    // base_path in manifest is web-root style; when using relative hosting, prefer local relative:
+    // We'll load month files relative to the manifest location by using "./data/history/<filename>" if present.
+    const merged = { days:{} };
+
     for(const f of files){
-      const monthUrl = f.path || (index.base_path + f.filename);
+      const monthUrl = f.filename ? `./data/history/${f.filename}` : f.path;
       const monthObj = await fetchJSON(monthUrl);
       if(monthObj?.days){
         for(const [ds, dayObj] of Object.entries(monthObj.days)){
@@ -530,17 +494,16 @@ async function loadAll(){
 
     setStatus("Loading supervisor patch (if present)…");
     const loadedPatch = await tryFetchJSON(PATHS.supervisorPatch);
-    if(loadedPatch && loadedPatch.overrides){
+    if(loadedPatch?.overrides){
       PATCH = loadedPatch;
-      // Enable buttons if there is anything
       if(Object.keys(PATCH.overrides || {}).length > 0){
-        $("btn_copy_patch").disabled = false;
-        $("btn_download_patch").disabled = false;
-        $("btn_reset_patch").disabled = false;
+        $("btn_copy_patch").disabled=false;
+        $("btn_download_patch").disabled=false;
+        $("btn_reset_patch").disabled=false;
       }
-      setStatus("Ready. (Patch loaded from /web/data/overrides/supervisor_patch.json)");
+      setStatus("Ready. (Patch loaded from ./data/overrides/supervisor_patch.json)");
     }else{
-      setStatus("Ready. (No patch file found yet — edits will create one.)");
+      setStatus("Ready. (No patch found yet — edits will create one.)");
     }
 
     $("btn_prev").addEventListener("click", ()=>shiftWeek(-1));
@@ -550,8 +513,7 @@ async function loadAll(){
       renderWeek();
     });
     $("week_start_picker").addEventListener("change", (e)=>{
-      const d = parseISO(e.target.value);
-      CURRENT_WEEK_START = startOfWeekThursday(d);
+      CURRENT_WEEK_START = startOfWeekThursday(parseISO(e.target.value));
       renderWeek();
     });
 
@@ -565,7 +527,7 @@ async function loadAll(){
   }catch(err){
     console.error(err);
     setStatus("ERROR: " + err.message);
-    alert("Supervisor page failed to load required data:\n\n" + err.message);
+    alert("Supervisor page failed to load required data:\n\n" + err.message + "\n\nTip: Use a local server instead of file://");
   }
 }
 
