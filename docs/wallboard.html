@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Wallboard</title>
+  <style>
+    :root{
+      --bg:#081021; --panel:#0f1a33; --text:#e8eefc; --muted:#a9b6d6;
+      --line:rgba(255,255,255,.10);
+      --als:#ff5c7a; --emt:#4aa3ff; --drv:#1fbf75; --open:#9aa8c7;
+      --ok:#1fbf75; --warn:#ffcc66; --bad:#ff5c7a; --neutral:#7f8fb4;
+      --shadow:0 10px 25px rgba(0,0,0,.35);
+      --r:16px;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family:var(--sans); color:var(--text);
+      background:radial-gradient(1200px 600px at 10% -10%, rgba(74,163,255,.22), transparent 55%),
+               radial-gradient(1000px 600px at 110% 10%, rgba(31,191,117,.16), transparent 55%),
+               var(--bg);
+    }
+    header{
+      position:sticky; top:0; z-index:20;
+      background:rgba(8,16,33,.86); backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+      padding:14px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.2px; }
+    .dot{ width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg, var(--emt), var(--drv)); box-shadow:0 0 0 4px rgba(74,163,255,.15); }
+    .sub{ color:var(--muted); font-size:12px; margin-top:2px; }
+    .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .btn{
+      border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--text);
+      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer;
+    }
+    .btn:active{ transform:translateY(1px); }
+    .wrap{ padding:14px 16px 20px; }
+    .board{
+      background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:var(--r);
+      box-shadow:var(--shadow); overflow:hidden;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 140px repeat(7, 1fr);
+    }
+    .cell{
+      border-right:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      padding:10px;
+      min-height:92px;
+      position:relative;
+    }
+    .cell:nth-child(8n){ border-right:none; }
+    .head{
+      background:rgba(255,255,255,.02);
+      position:sticky; top:58px; z-index:5;
+      padding:10px;
+    }
+    .daytitle{ font-weight:900; font-size:13px; }
+    .dateiso{ color:var(--muted); font-size:12px; margin-top:2px; }
+    .shiftlabel{ font-weight:900; font-size:12px; letter-spacing:.35px; }
+    .shiftlabel small{ display:block; color:var(--muted); font-weight:700; margin-top:3px; }
+    .tab{
+      position:absolute; top:10px; right:10px;
+      padding:6px 10px; border-radius:999px; font-size:11px; font-weight:900;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+    .tab.ok{ background:rgba(31,191,117,.18); outline:2px solid rgba(31,191,117,.35); }
+    .tab.warn{ background:rgba(255,204,102,.18); outline:2px solid rgba(255,204,102,.35); }
+    .tab.bad{ background:rgba(255,92,122,.16); outline:2px solid rgba(255,92,122,.35); }
+    .tab.neu{ background:rgba(127,143,180,.14); outline:2px solid rgba(127,143,180,.25); }
+    .names{ margin-top:26px; display:grid; gap:6px; }
+    .name{
+      font-size:13px; font-weight:900; line-height:1.15;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .role{ font-size:11px; color:var(--muted); font-weight:800; }
+    .als{ color:var(--als); }
+    .emt{ color:var(--emt); }
+    .drv{ color:var(--drv); }
+    .open{ color:var(--open); font-weight:800; }
+    .legend{ display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:12px; padding:10px 12px; border-top:1px solid var(--line); background:rgba(255,255,255,.02);}
+    .pill{ border:1px solid var(--line); padding:4px 8px; border-radius:999px; background:rgba(255,255,255,.03); }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 110px repeat(7, 1fr); }
+      .cell{ min-height:88px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand"><span class="dot"></span> ShiftCommander <span style="opacity:.7; font-weight:900;">Wallboard</span></div>
+    <div class="sub" id="sub">7-week view • AM/PM • auto-advance</div>
+  </div>
+  <div class="right">
+    <button class="btn" id="prev">◀︎</button>
+    <button class="btn" id="today">Today</button>
+    <button class="btn" id="next">▶︎</button>
+    <button class="btn" id="toggleAuto">Auto: ON</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="board">
+    <div class="grid" id="grid"></div>
+    <div class="legend">
+      <span class="pill"><b style="color:var(--als)">ALS</b></span>
+      <span class="pill"><b style="color:var(--emt)">EMT</b></span>
+      <span class="pill"><b style="color:var(--drv)">Driver</b></span>
+      <span class="pill">Health tabs: OK / Needs / Critical / Neutral</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = {
+  org: "/data/org_settings.json",
+  members: "/data/members.json",
+  historyIndex: "/data/history.index.json"
+};
+
+const SEAT_COL = { ALS:"als", EMT:"emt", Driver:"drv" };
+
+function isoDate(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+function startOfWeekMon(d){
+  const x=new Date(d); const dow=(x.getDay()+6)%7; x.setDate(x.getDate()-dow); x.setHours(0,0,0,0); return x;
+}
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+
+let ORG=null, MEMBERS=[], HISTORY_INDEX=null;
+let viewWeek = startOfWeekMon(new Date());
+let auto = true;
+let autoTimer = null;
+
+function memberById(id){
+  return MEMBERS.find(m=>String(m.id)===String(id)) || null;
+}
+
+function inferHealth(shift){
+  // shift: { ALS: {id}? , EMT: {id}? , Driver: {id}? , extras:[] }
+  const hasALS = !!(shift?.ALS?.id);
+  const hasEMT = !!(shift?.EMT?.id);
+  const hasDRV = !!(shift?.Driver?.id);
+  // Requirement: ALS + (EMT or Driver)
+  if(hasALS && (hasEMT || hasDRV)) return {k:"ok", t:"OK"};
+  if(!hasALS && (hasEMT || hasDRV)) return {k:"warn", t:"Need ALS"};
+  if(hasALS && !(hasEMT || hasDRV)) return {k:"warn", t:"Need EMT/Driver"};
+  if(!hasALS && !hasEMT && !hasDRV) return {k:"bad", t:"OPEN"};
+  return {k:"neu", t:"—"};
+}
+
+async function fetchJSON(url){
+  const r = await fetch(url, {cache:"no-store"});
+  if(!r.ok) throw new Error(`${r.status} ${url}`);
+  return await r.json();
+}
+
+async function loadHistoryForMonth(monthISO){
+  // monthISO = "2025-11"
+  try{
+    const r = await fetch(`/data/history/${monthISO}.normalized.json`, {cache:"no-store"});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch{ return null; }
+}
+
+async function build(){
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  // 7 weeks = 49 days, but wallboard wants "next 7 weeks" by day/shift:
+  // We'll show 1 week at a time (7 columns), 2 rows (AM/PM) and a small week navigator.
+  // The user asked "for next 7 weeks": we implement auto-advance weekly; supervisor can flip week.
+  const days = [...Array(7)].map((_,i)=>addDays(viewWeek,i));
+
+  // header row
+  grid.appendChild(elCell("head cell", ""));
+  for(const d of days){
+    const h = elCell("head cell", "");
+    h.classList.add("head");
+    h.innerHTML = `<div class="daytitle">${d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})}</div>
+                   <div class="dateiso">${isoDate(d)}</div>`;
+    grid.appendChild(h);
+  }
+
+  // pull shifts from loaded month files (if present). otherwise empty.
+  const monthSet = new Set(days.map(d=>isoDate(d).slice(0,7)));
+  const monthData = {};
+  for(const m of monthSet){
+    monthData[m] = await loadHistoryForMonth(m);
+  }
+
+  function getShift(dateISO, half){
+    const m = dateISO.slice(0,7);
+    const doc = monthData[m];
+    // Expected shape: { dates: { "YYYY-MM-DD": { AM:{ALS:{id},EMT:{id},Driver:{id},extras:[]}, PM:{...} } } }
+    const sh = doc?.dates?.[dateISO]?.[half];
+    return sh || { ALS:{id:null}, EMT:{id:null}, Driver:{id:null}, extras:[] };
+  }
+
+  for(const half of ["AM","PM"]){
+    const left = elCell("cell", "");
+    left.innerHTML = `<div class="shiftlabel">${half}<small>${half==="AM"?"Morning":"Evening"}</small></div>`;
+    grid.appendChild(left);
+
+    for(const d of days){
+      const dateISO = isoDate(d);
+      const sh = getShift(dateISO, half);
+      const health = inferHealth(sh);
+
+      const c = elCell("cell", "");
+      const tab = document.createElement("div");
+      tab.className = `tab ${health.k}`;
+      tab.textContent = health.t;
+      c.appendChild(tab);
+
+      const names = document.createElement("div");
+      names.className = "names";
+
+      const seats = [
+        ["ALS","ALS"],
+        ["EMT","EMT"],
+        ["Driver","Driver"]
+      ];
+
+      for(const [key,label] of seats){
+        const id = sh?.[key]?.id;
+        if(id){
+          const m = memberById(id);
+          const nm = m ? `${m.last}` : `#${id}`;
+          const cls = key==="ALS" ? "als" : (key==="EMT" ? "emt" : "drv");
+          const row = document.createElement("div");
+          row.className = `name ${cls}`;
+          row.innerHTML = `<span>${nm}</span><span class="role">${label}</span>`;
+          names.appendChild(row);
+        }else{
+          const row = document.createElement("div");
+          row.className = `name open`;
+          row.innerHTML = `<span>—</span><span class="role">${label}</span>`;
+          names.appendChild(row);
+        }
+      }
+
+      c.appendChild(names);
+      grid.appendChild(c);
+    }
+  }
+}
+
+function elCell(cls, text){
+  const d = document.createElement("div");
+  d.className = cls;
+  d.textContent = text;
+  return d;
+}
+
+function tickAuto(){
+  if(autoTimer) clearInterval(autoTimer);
+  if(!auto) return;
+  autoTimer = setInterval(()=>{
+    viewWeek = addDays(viewWeek, 7);
+    build();
+  }, 12000); // 12s per week for kiosk cycling
+}
+
+async function boot(){
+  try{
+    [ORG, MEMBERS] = await Promise.all([fetchJSON(API.org), fetchJSON(API.members)]);
+  }catch(err){
+    document.getElementById("sub").textContent = "Missing /data/org_settings.json or /data/members.json";
+    console.error(err);
+    ORG = ORG || {};
+    MEMBERS = MEMBERS || [];
+  }
+  await build();
+  tickAuto();
+}
+
+
+// ---------------- Drive Store (Apps Script) ----------------
+const STORE = {
+  url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
+  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
+};
+
+async function storeGet(params){
+  const u = new URL(STORE.url);
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
+  u.searchParams.set("token", STORE.token);
+  const r = await fetch(u.toString(), { cache: "no-store" });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store GET failed");
+  return j.payload;
+}
+
+async function storePost(body){
+  const r = await fetch(STORE.url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, token: STORE.token })
+  });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store POST failed");
+  return j;
+}
+
+function debounce(fn, ms=600){
+  let t=null;
+  return (...args) => { clearTimeout(t); t=setTimeout(() => fn(...args), ms); };
+}
+
+
+
+document.getElementById("prev").onclick = ()=>{ viewWeek = addDays(viewWeek, -7); build(); };
+document.getElementById("next").onclick = ()=>{ viewWeek = addDays(viewWeek, +7); build(); };
+document.getElementById("today").onclick = ()=>{ viewWeek = startOfWeekMon(new Date()); build(); };
+document.getElementById("toggleAuto").onclick = ()=>{
+  auto = !auto;
+  document.getElementById("toggleAuto").textContent = `Auto: ${auto ? "ON":"OFF"}`;
+  tickAuto();
+};
+
+boot();
+</script>
+</body>
+</html>
