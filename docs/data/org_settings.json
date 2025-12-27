@@ -1,0 +1,60 @@
+{
+  "org": {
+    "name": "ADR Fire/Rescue",
+    "timezone": "America/New_York"
+  },
+
+  "calendar": {
+    "week_start_dow": 4,
+    "shifts": ["AM", "PM"]
+  },
+
+  "wallboard": {
+    "weeks_to_show": 7,
+    "auto_advance_seconds": 15,
+    "day_health_rule": "worst_of_am_pm",
+    "show_riders": true
+  },
+
+  "seats": {
+    "required_per_shift": ["medical", "driver_emt"],
+    "fill_rules": {
+      "medical": ["ALS", "EMT"],
+      "driver_emt": ["Driver", "EMT", "ALS"]
+    }
+  },
+
+  "rules": {
+    "avoid_double_als": true,
+    "allow_double_als_if_needed_to_fill": true
+  },
+
+  "health": {
+    "states": ["green", "yellow", "red", "gray"],
+    "messages": {
+      "green": "Staffed",
+      "yellow": "Needs EMT",
+      "red": "Needs ALS",
+      "gray": "Not evaluated"
+    },
+    "logic": {
+      "green_when": ["medical_filled_and_driver_emt_filled_and_not_double_als"],
+      "yellow_when": ["double_als_but_required_seats_filled"],
+      "red_when": ["any_required_seat_open_or_missing_als"],
+      "gray_when": ["out_of_range_or_archived"]
+    }
+  },
+
+  "riders": {
+    "enabled": true,
+    "max_per_shift": 1,
+    "count_toward_health": false,
+    "require_core_staffed_first": true,
+    "allow_rider_only_availability": true
+  },
+
+  "availability": {
+    "states": ["preferred", "available", "noschedule"],
+    "flags": ["pref24", "rider_only"]
+  }
+}

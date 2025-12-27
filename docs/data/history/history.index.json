@@ -1,0 +1,27 @@
+{
+  "generated_at": "2025-12-25T00:00:00-05:00",
+  "base_path": "/web/data/history/",
+  "files": [
+    {
+      "month": "2025-11",
+      "filename": "2025-11.normalized.json",
+      "path": "/web/data/history/2025-11.normalized.json",
+      "start_date": "2025-11-01",
+      "end_date": "2025-11-30"
+    },
+    {
+      "month": "2025-12",
+      "filename": "2025-12.normalized.json",
+      "path": "/web/data/history/2025-12.normalized.json",
+      "start_date": "2025-12-01",
+      "end_date": "2025-12-31"
+    },
+    {
+      "month": "2026-01",
+      "filename": "2026-01.normalized.json",
+      "path": "/web/data/history/2026-01.normalized.json",
+      "start_date": "2026-01-01",
+      "end_date": "2026-01-31"
+    }
+  ]
+}
