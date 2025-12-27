@@ -4,1067 +4,128 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ShiftCommander — Member</title>
-  <meta name="color-scheme" content="light dark" />
   <style>
     :root{
-      --bg:#0b1220; --panel:#0f1a33; --panel2:#0c162c; --text:#e8eefc; --muted:#a9b6d6;
-      --line:rgba(255,255,255,.08);
-      --good:#1fbf75; --pref:#4aa3ff; --no:#ff5c7a; --warn:#ffcc66;
-      --chip:#152349;
-      --shadow: 0 10px 25px rgba(0,0,0,.35);
-      --r:16px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --bg:#0b1220; --text:#e8eefc; --muted:#a7b3d6;
+      --p:#7aa2ff; --good:#19c37d; --warn:#f7b955; --bad:#ff5c5c; --gray:#6b7aa7;
+      --shadow: 0 10px 30px rgba(0,0,0,.35); --radius:16px;
+      --bd: rgba(37,50,84,.9);
     }
-    @media (prefers-color-scheme: light){
-      :root{ --bg:#f6f8ff; --panel:#ffffff; --panel2:#f2f5ff; --text:#0f1a33; --muted:#51638d; --line:rgba(12,22,44,.12); --shadow: 0 10px 25px rgba(12,22,44,.12); }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(1200px 800px at 15% 10%, #12224c 0%, var(--bg) 55%);
+      color:var(--text);}
+    header{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.72);backdrop-filter:blur(10px);
+      border-bottom:1px solid rgba(37,50,84,.75);}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px;}
+    .top{display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;}
+    h1{margin:0;font-size:18px}
+    .sub{color:var(--muted);font-size:12px;margin-top:4px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+    select,input,button{
+      border-radius:12px;border:1px solid var(--bd);
+      background:rgba(16,26,48,.9);color:var(--text);
+      padding:10px 12px;outline:none;
     }
-    *{ box-sizing:border-box; }
-    body{
-      margin:0; font-family:var(--sans); background:radial-gradient(1200px 600px at 15% -10%, rgba(74,163,255,.25), transparent 55%),
-      radial-gradient(900px 500px at 110% 10%, rgba(31,191,117,.18), transparent 45%),
-      radial-gradient(800px 500px at 50% 120%, rgba(255,92,122,.14), transparent 55%),
-      var(--bg);
-      color:var(--text);
-    }
-    a{ color:inherit; text-decoration:none; }
-    header{
-      position:sticky; top:0; z-index:20;
-      background:linear-gradient(to bottom, rgba(10,16,30,.92), rgba(10,16,30,.60));
-      backdrop-filter: blur(10px);
-      border-bottom:1px solid var(--line);
-    }
-    @media (prefers-color-scheme: light){
-      header{ background:linear-gradient(to bottom, rgba(255,255,255,.92), rgba(255,255,255,.75)); }
-    }
-    .wrap{ max-width:1100px; margin:0 auto; padding:18px 16px; }
-    .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between; }
-    .brand{
-      display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px;
-    }
-    .brand .dot{ width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg, var(--pref), var(--good)); box-shadow:0 0 0 4px rgba(74,163,255,.18); }
-    .sub{ color:var(--muted); font-size:13px; margin-top:2px; }
-    .pillbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .select, .btn{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      box-shadow:none;
-      cursor:pointer;
-    }
-    @media (prefers-color-scheme: light){
-      .select, .btn{ background:#fff; }
-    }
-    .btn.primary{ background:linear-gradient(135deg, rgba(74,163,255,.95), rgba(31,191,117,.85)); border:none; color:#081226; font-weight:800; }
-    .btn.ghost{ background:transparent; }
-    .btn:active{ transform: translateY(1px); }
-    .content{ max-width:1100px; margin:0 auto; padding:18px 16px 34px; }
+    button{cursor:pointer}
+    button.primary{border-color:rgba(122,162,255,.8);box-shadow:0 0 0 1px rgba(122,162,255,.12) inset;}
+    .pill{padding:8px 10px;border-radius:999px;background:rgba(22,32,71,.65);
+      border:1px solid rgba(37,50,84,.85);color:var(--muted);font-size:12px;}
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid var(--line);
-      border-radius: var(--r);
-      box-shadow: var(--shadow);
+      margin-top:14px;
+      background:linear-gradient(180deg, rgba(16,26,48,.92), rgba(10,16,32,.92));
+      border:1px solid rgba(37,50,84,.9);border-radius:var(--radius);box-shadow:var(--shadow);
       overflow:hidden;
     }
-    @media (prefers-color-scheme: light){
-      .card{ background:linear-gradient(180deg, rgba(255,255,255,1), rgba(246,248,255,1)); }
-    }
-    .cardhd{
-      padding:14px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px;
-      border-bottom:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-    }
-    .cardhd .title{ font-weight:900; }
-    .tiny{ font-size:12px; color:var(--muted); }
+    .card .hd{padding:14px;border-bottom:1px solid rgba(37,50,84,.7);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:rgba(15,23,48,.55)}
+    .card .hd .k{font-weight:800}
+    .card .hd .s{color:var(--muted);font-size:12px}
     .grid{
       display:grid;
       grid-template-columns: 140px repeat(7, 1fr);
-      gap:0;
-      width:100%;
+      gap:10px;
+      padding:14px;
     }
-    .gcell{
-      border-right:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-      padding:10px;
-      min-height:76px;
-      position:relative;
+    .cellH{
+      color:var(--muted);font-size:12px;padding:8px 10px;border-radius:12px;
+      border:1px solid rgba(37,50,84,.6);background:rgba(16,26,48,.35);
     }
-    .gcell:nth-child(8n){ border-right:none; }
-    .ghead{
-      font-size:12px; color:var(--muted);
-      background:rgba(255,255,255,.02);
-      position:sticky; top:68px; z-index:5;
-      padding:10px;
+    .shiftLbl{
+      display:flex;flex-direction:column;gap:6px;
+      padding:10px;border-radius:14px;border:1px solid rgba(37,50,84,.75);
+      background:rgba(16,26,48,.45);
     }
-    @media (max-width: 920px){
-      .grid{ grid-template-columns: 110px repeat(7, 1fr); }
-      .gcell{ padding:8px; min-height:72px; }
+    .shiftLbl .d{font-weight:800}
+    .shiftLbl .t{color:var(--muted);font-size:12px}
+    .pick{
+      border-radius:14px;border:1px solid rgba(37,50,84,.85);
+      background:rgba(16,26,48,.55);
+      padding:10px;min-height:64px;
+      display:flex;flex-direction:column;justify-content:center;gap:6px;
+      cursor:pointer; user-select:none;
+      transition: transform .05s ease, border-color .1s ease;
     }
-    @media (max-width: 740px){
-      .grid{ grid-template-columns: 96px repeat(7, 1fr); }
-      .gcell{ min-height:68px; }
+    .pick:active{transform:scale(.99)}
+    .pick .state{font-weight:900;font-size:13px}
+    .pick .hint{color:var(--muted);font-size:11px}
+    .st-none{border-style:dashed;opacity:.85}
+    .st-preferred{border-color: rgba(25,195,125,.65); box-shadow: 0 0 0 1px rgba(25,195,125,.10) inset}
+    .st-available{border-color: rgba(122,162,255,.6); box-shadow: 0 0 0 1px rgba(122,162,255,.08) inset}
+    .st-nosched{border-color: rgba(255,92,92,.65); box-shadow: 0 0 0 1px rgba(255,92,92,.10) inset}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;padding:0 14px 14px}
+    .tag{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(37,50,84,.85);background:rgba(22,32,71,.55);font-size:12px;color:var(--muted)}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .dot.g{background:var(--good)} .dot.b{background:var(--p)} .dot.r{background:var(--bad)} .dot.x{background:var(--gray)}
+    @media (max-width:980px){
+      .grid{grid-template-columns: 110px repeat(7, 1fr)}
     }
-    .shiftlabel{ font-weight:900; font-size:12px; letter-spacing:.35px; }
-    .shiftlabel small{ display:block; font-weight:700; color:var(--muted); margin-top:3px; }
-    .tog{
-      display:flex; gap:8px; margin-top:8px;
-    }
-    .chip{
-      flex:1;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      padding:7px 8px;
-      border-radius:12px;
-      font-size:12px;
-      font-weight:800;
-      text-align:center;
-      cursor:pointer;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .chip[data-state="AVAILABLE"].on{ outline:2px solid rgba(31,191,117,.55); background:rgba(31,191,117,.14); }
-    .chip[data-state="PREFERRED"].on{ outline:2px solid rgba(74,163,255,.55); background:rgba(74,163,255,.14); }
-    .chip[data-state="NO"].on{ outline:2px solid rgba(255,92,122,.55); background:rgba(255,92,122,.14); }
-    .hintdot{
-      width:8px; height:8px; border-radius:999px; position:absolute; top:8px; right:8px;
-      background:rgba(255,255,255,.22);
-      display:none;
-    }
-    .hintdot.rule{ display:block; background:rgba(255,204,102,.95); box-shadow:0 0 0 3px rgba(255,204,102,.15); }
-    .hintdot.manual{ display:block; background:rgba(74,163,255,.95); box-shadow:0 0 0 3px rgba(74,163,255,.15); }
-    .footerbar{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      padding:12px 14px; border-top:1px solid var(--line); background:rgba(255,255,255,.02);
-    }
-    .kbd{ font-family:var(--mono); font-size:12px; color:var(--muted); }
-    /* Modal */
-    .modalback{
-      position:fixed; inset:0; background:rgba(0,0,0,.55);
-      display:none; align-items:center; justify-content:center;
-      z-index:50; padding:18px;
-    }
-    .modal{
-      width:min(820px, 100%);
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .mhd{ padding:14px 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
-    .mhd b{ font-size:14px; }
-    .mtabs{ display:flex; gap:8px; padding:10px 14px; border-bottom:1px solid var(--line); }
-    .tab{ padding:8px 10px; border-radius:12px; cursor:pointer; font-weight:900; font-size:12px; border:1px solid var(--line); background:rgba(255,255,255,.03); }
-    .tab.on{ outline:2px solid rgba(74,163,255,.45); background:rgba(74,163,255,.12); }
-    .mbody{ padding:14px; display:grid; gap:12px; }
-    .formrow{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    @media (max-width: 720px){ .formrow{ grid-template-columns: 1fr; } }
-    label{ font-size:12px; color:var(--muted); font-weight:800; display:grid; gap:6px; }
-    input, select, textarea{
-      width:100%; padding:10px 10px; border-radius:12px; border:1px solid var(--line);
-      background:rgba(255,255,255,.03); color:var(--text);
-      font-family:var(--sans);
-    }
-    textarea{ min-height:70px; resize:vertical; }
-    .mft{ padding:12px 14px; border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
-    .list{
-      border:1px solid var(--line); border-radius:14px; overflow:hidden;
-    }
-    .li{
-      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
-      padding:10px 12px; border-bottom:1px solid var(--line);
-    }
-    .li:last-child{ border-bottom:none; }
-    .li b{ font-size:13px; }
-    .li .meta{ font-size:12px; color:var(--muted); margin-top:2px; }
-    .tag{ font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--muted); }
   </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div class="row">
+    <div class="top">
       <div>
-        <div class="brand"><span class="dot"></span> ShiftCommander <span class="tiny">Member</span></div>
-        <div class="sub" id="subline">Loading…</div>
+        <h1>ShiftCommander — Member</h1>
+        <div class="sub" id="status">Loading…</div>
       </div>
-      <div class="pillbar">
-        <select class="select" id="memberSel" aria-label="Select member"></select>
-        <button class="btn ghost" id="prevWeek">◀︎ Week</button>
-        <button class="btn ghost" id="nextWeek">Week ▶︎</button>
-        <button class="btn" id="copyFwd">Copy → Next week</button>
-        <button class="btn" id="repeatBtn">Repeat…</button>
-        <button class="btn" id="timeOffBtn">Time off…</button>
-        <button class="btn primary" id="exportBtn">Export JSON</button>
+      <div class="row">
+        <span class="pill" id="orgpill">Org: …</span>
+        <select id="memberSel"></select>
+        <button class="primary" id="btnToday">This Week</button>
+        <button id="btnPrev">◀</button>
+        <button id="btnNext">▶</button>
+        <input type="date" id="weekStart" />
       </div>
     </div>
   </div>
 </header>
 
-<div class="content">
+<div class="wrap">
   <div class="card">
-    <div class="cardhd">
+    <div class="hd">
       <div>
-        <div class="title" id="weekTitle">Week</div>
-        <div class="tiny">Tap a shift, pick one: <b>Available</b>, <b>Preferred</b>, or <b>Do not schedule</b>. Use “Repeat…” for 2/4-week rotations.</div>
+        <div class="k">Set your availability</div>
+        <div class="s">Tap any AM/PM block to cycle: Preferred → Available → Do not schedule → Clear.</div>
       </div>
-      <div class="tiny kbd" id="leadHint"></div>
+      <div class="pill" id="savepill">Not saved yet…</div>
     </div>
-
-    <div class="grid" id="grid"></div>
-
-    <div class="footerbar">
-      <div class="tiny">
-        <span class="tag">• yellow dot = rule-based</span>
-        <span class="tag">• blue dot = manual</span>
-      </div>
-      <div class="kbd">Saved locally on this device. Use <b>Export JSON</b> to share/commit later.</div>
-    </div>
-  </div>
-</div>
-
-<!-- Repeat Modal -->
-<div class="modalback" id="repeatBack" role="dialog" aria-modal="true">
-  <div class="modal">
-    <div class="mhd">
-      <b>Repeat pattern</b>
-      <button class="btn" id="repeatClose">Close</button>
-    </div>
-    <div class="mbody">
-      <div class="formrow">
-        <label>Repeat every
-          <select id="repeatPeriod">
-            <option value="1">1 week (same weekly)</option>
-            <option value="2">2 weeks (rotation)</option>
-            <option value="4">4 weeks (rotation)</option>
-          </select>
-        </label>
-        <label>Mode
-          <select id="repeatMode">
-            <option value="same">Repeat only this week’s pattern</option>
-            <option value="rotation">Rotation (define each week)</option>
-          </select>
-        </label>
-      </div>
-      <div class="formrow">
-        <label>Anchor week start (Mon)
-          <input id="repeatAnchor" type="date" />
-        </label>
-        <label>Until (optional)
-          <input id="repeatUntil" type="date" />
-        </label>
-      </div>
-
-      <div class="list" id="rotationList"></div>
-
-      <div class="tiny">
-        Tip: For a 2-week or 4-week rotation, define Week 1 now, then click “Go to Week 2/3/4” when you’re ready. Undefined weeks stay blank (never overwrite your choices).
-      </div>
-    </div>
-    <div class="mft">
-      <button class="btn" id="repeatDisable">Disable repeat</button>
-      <button class="btn primary" id="repeatSave">Enable repeat</button>
-    </div>
-  </div>
-</div>
-
-<!-- Time Off Modal -->
-<div class="modalback" id="timeOffBack" role="dialog" aria-modal="true">
-  <div class="modal">
-    <div class="mhd">
-      <b>Time off rules</b>
-      <button class="btn" id="timeOffClose">Close</button>
-    </div>
-
-    <div class="mtabs">
-      <div class="tab on" data-tab="one">One-time dates</div>
-      <div class="tab" data-tab="rec">Recurring rules</div>
-    </div>
-
-    <div class="mbody" id="tab_one">
-      <div class="formrow">
-        <label>Start date
-          <input id="offStart" type="date" />
-        </label>
-        <label>End date (optional)
-          <input id="offEnd" type="date" />
-        </label>
-      </div>
-      <div class="formrow">
-        <label>Shifts
-          <select id="offHalf">
-            <option value="BOTH">AM + PM</option>
-            <option value="AM">AM only</option>
-            <option value="PM">PM only</option>
-          </select>
-        </label>
-        <label>Set to
-          <select id="offState">
-            <option value="NO">Do not schedule me</option>
-            <option value="AVAILABLE">Available</option>
-            <option value="PREFERRED">Preferred</option>
-          </select>
-        </label>
-      </div>
-      <label>Label (optional, for you)
-        <input id="offLabel" placeholder="Optional: vacation, out of town, etc." />
-      </label>
-      <div class="mft" style="padding:0; border:none; justify-content:flex-start;">
-        <button class="btn primary" id="offApply">Apply</button>
-        <button class="btn" id="offClear">Clear in range</button>
-      </div>
-
-      <div>
-        <div class="tiny" style="margin:8px 0 6px;">Existing one-time overrides</div>
-        <div class="list" id="oneTimeList"></div>
-      </div>
-    </div>
-
-    <div class="mbody" id="tab_rec" style="display:none;">
-      <div class="formrow">
-        <label>Rule type
-          <select id="recType">
-            <option value="yearly_range">Yearly date range (MM/DD → MM/DD)</option>
-            <option value="yearly_single">Yearly single date (MM/DD)</option>
-            <option value="weekly">Weekly pattern (days of week)</option>
-          </select>
-        </label>
-        <label>Set to
-          <select id="recState">
-            <option value="NO">Do not schedule me</option>
-            <option value="AVAILABLE">Available</option>
-            <option value="PREFERRED">Preferred</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="formrow" id="recRowA">
-        <label>Start (MM/DD)
-          <input id="recStart" placeholder="12/23" />
-        </label>
-        <label>End (MM/DD)
-          <input id="recEnd" placeholder="12/25" />
-        </label>
-      </div>
-
-      <div class="formrow" id="recRowB" style="display:none;">
-        <label>Date (MM/DD)
-          <input id="recSingle" placeholder="05/11" />
-        </label>
-        <label>Shifts
-          <select id="recHalf">
-            <option value="BOTH">AM + PM</option>
-            <option value="AM">AM only</option>
-            <option value="PM">PM only</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="formrow" id="recRowC" style="display:none;">
-        <label>Days (comma or check)
-          <input id="recDays" placeholder="Mon,Tue,Wed or Fri" />
-        </label>
-        <label>Shifts
-          <select id="recHalf2">
-            <option value="BOTH">AM + PM</option>
-            <option value="AM">AM only</option>
-            <option value="PM">PM only</option>
-          </select>
-        </label>
-      </div>
-
-      <label>Label (optional, for you)
-        <input id="recLabel" placeholder="Optional: out-of-town, family, other job, etc." />
-      </label>
-
-      <div class="mft" style="padding:0; border:none; justify-content:flex-start;">
-        <button class="btn primary" id="recAdd">Add rule</button>
-      </div>
-
-      <div>
-        <div class="tiny" style="margin:8px 0 6px;">Recurring rules</div>
-        <div class="list" id="recList"></div>
-      </div>
-    </div>
-
-    <div class="mft">
-      <button class="btn" id="timeOffExport">Export overrides JSON</button>
-      <button class="btn primary" id="timeOffDone">Done</button>
+    <div id="grid" class="grid"></div>
+    <div class="legend">
+      <div class="tag"><span class="dot g"></span> Preferred</div>
+      <div class="tag"><span class="dot b"></span> Available</div>
+      <div class="tag"><span class="dot r"></span> Do not schedule</div>
+      <div class="tag"><span class="dot x"></span> Clear / unset</div>
     </div>
   </div>
 </div>
 
 <script>
-/** =========================
- *  Data + Storage
- *  ========================= */
-const API = {
-  org: "/data/org_settings.json",
-  members: "/data/members.json",
-};
-
-const LS_KEYS = {
-  memberOverrides: "sc_member_overrides_v1",  // per-date explicit overrides (Option A)
-  recurringRules:  "sc_member_recurring_v1",  // recurring rules (Option B)
-  repeats:         "sc_member_repeats_v1"     // weekly / 2/4-week patterns
-};
-
-function loadLS(key, fallback){
-  try{ const v = JSON.parse(localStorage.getItem(key)); return (v ?? fallback); }catch{ return fallback; }
-}
-function saveLS(key, value){
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function downloadJSON(filename, obj){
-  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
-}
-
-function isoDate(d){
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
-}
-function startOfWeekMon(d){
-  const x = new Date(d);
-  const dow = (x.getDay()+6)%7; // Mon=0
-  x.setDate(x.getDate() - dow);
-  x.setHours(0,0,0,0);
-  return x;
-}
-function addDays(d, n){
-  const x = new Date(d); x.setDate(x.getDate()+n); return x;
-}
-function fmtWeekRange(weekStart){
-  const a = weekStart;
-  const b = addDays(weekStart, 6);
-  const opts = {month:"short", day:"numeric"};
-  return `${a.toLocaleDateString(undefined, opts)} – ${b.toLocaleDateString(undefined, opts)} (${a.getFullYear()})`;
-}
-function parseMMDD(s){
-  const m = String(s||"").trim().match(/^(\d{1,2})\s*\/\s*(\d{1,2})$/);
-  if(!m) return null;
-  const mm = Number(m[1]); const dd = Number(m[2]);
-  if(mm<1||mm>12||dd<1||dd>31) return null;
-  return {mm, dd};
-}
-function mmddOfISO(iso){
-  const [y,m,d] = iso.split("-").map(Number);
-  return {mm:m, dd:d};
-}
-function inYearlyRange(dateISO, startMMDD, endMMDD){
-  const md = mmddOfISO(dateISO);
-  const a = startMMDD, b = endMMDD;
-  if(!a || !b) return false;
-  // handle wrap across year end (e.g., 12/28 -> 01/02)
-  const aKey = a.mm*100 + a.dd;
-  const bKey = b.mm*100 + b.dd;
-  const xKey = md.mm*100 + md.dd;
-  if(aKey <= bKey) return (xKey >= aKey && xKey <= bKey);
-  return (xKey >= aKey || xKey <= bKey);
-}
-
-function normalizeState(s){
-  if(s === "AVAILABLE" || s === "PREFERRED" || s === "NO") return s;
-  return null;
-}
-
-/** =========================
- *  Preference resolution (precedence)
- *  1) explicit per-date overrides (Option A)
- *  2) recurring rules (Option B)
- *  3) repeat patterns (weekly / 2/4 week rotations)
- *  ========================= */
-function resolvePref(memberId, dateISO, half, stores){
-  const {oneTime, recurring, repeats} = stores;
-
-  // (1) explicit per-date
-  const mKey = String(memberId);
-  const explicit = oneTime?.[mKey]?.[dateISO]?.[half];
-  if(explicit) return {state: explicit, source:"manual"};
-
-  // (2) recurring rules
-  const rules = recurring?.[mKey] || [];
-  for(const r of rules){
-    if(!r?.enabled) continue;
-    const state = normalizeState(r.state);
-    const halves = (r.half || "BOTH");
-    const halfMatch = (halves === "BOTH" || halves === half);
-    if(!halfMatch) continue;
-
-    if(r.type === "yearly_single"){
-      const mmdd = parseMMDD(r.mmdd);
-      if(!mmdd) continue;
-      const md = mmddOfISO(dateISO);
-      if(md.mm === mmdd.mm && md.dd === mmdd.dd) return {state, source:"rule", label:r.label||""};
-    }
-    if(r.type === "yearly_range"){
-      const a = parseMMDD(r.start), b = parseMMDD(r.end);
-      if(inYearlyRange(dateISO, a, b)) return {state, source:"rule", label:r.label||""};
-    }
-    if(r.type === "weekly"){
-      const dow = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(dateISO+"T00:00:00").getDay()];
-      const set = (r.days||[]).map(x=>String(x).slice(0,3));
-      if(set.includes(dow)) return {state, source:"rule", label:r.label||""};
-    }
-  }
-
-  // (3) repeat patterns
-  const rep = repeats?.[mKey];
-  if(rep?.enabled){
-    const d0 = new Date(dateISO+"T00:00:00");
-    const ws = startOfWeekMon(d0);
-    const anchor = rep.anchorWeekStart ? startOfWeekMon(new Date(rep.anchorWeekStart+"T00:00:00")) : startOfWeekMon(new Date());
-    const diffDays = Math.round((ws.getTime() - anchor.getTime()) / (1000*60*60*24));
-    const diffWeeks = Math.floor(diffDays / 7);
-    const period = Math.max(1, Number(rep.periodWeeks||1));
-    const idx = ((diffWeeks % period) + period) % period; // 0..period-1
-
-    const weekPattern = rep.patterns?.[idx];
-    if(weekPattern){
-      const dow = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d0.getDay()];
-      const cell = weekPattern?.[dow]?.[half];
-      const state = normalizeState(cell);
-      if(state) return {state, source:"rule"};
-    }
-  }
-
-  return {state:null, source:null};
-}
-
-/** =========================
- *  UI state
- *  ========================= */
-let ORG = null;
-let MEMBERS = [];
-let memberId = null;
-let weekStart = startOfWeekMon(new Date());
-const stores = {
-  oneTime: loadLS(LS_KEYS.memberOverrides, {}),
-  recurring: loadLS(LS_KEYS.recurringRules, {}),
-  repeats: loadLS(LS_KEYS.repeats, {})
-};
-
-const gridEl = document.getElementById("grid");
-const memberSel = document.getElementById("memberSel");
-const weekTitle = document.getElementById("weekTitle");
-const subline = document.getElementById("subline");
-
-function setSubline(){
-  const m = MEMBERS.find(x=>String(x.id)===String(memberId));
-  subline.textContent = m ? `${m.last}, ${m.first} • #${m.id} • ${m.cert_level||""}` : "Select your name";
-}
-
-function buildMemberSelect(){
-  memberSel.innerHTML = "";
-  for(const m of MEMBERS){
-    const opt = document.createElement("option");
-    opt.value = String(m.id);
-    opt.textContent = `${m.last}, ${m.first} (#${m.id})`;
-    memberSel.appendChild(opt);
-  }
-  memberId = memberId || (MEMBERS[0] ? String(MEMBERS[0].id) : null);
-  if(memberId) memberSel.value = String(memberId);
-  setSubline();
-}
-
-function cellKey(dateISO, half){ return `${dateISO}_${half}`; }
-
-function setExplicit(memberId, dateISO, half, state){
-  const mKey = String(memberId);
-  stores.oneTime[mKey] = stores.oneTime[mKey] || {};
-  stores.oneTime[mKey][dateISO] = stores.oneTime[mKey][dateISO] || {};
-  if(state){
-    stores.oneTime[mKey][dateISO][half] = state;
-  }else{
-    delete stores.oneTime[mKey][dateISO][half];
-  }
-  // clean empties
-  if(stores.oneTime[mKey][dateISO] && Object.keys(stores.oneTime[mKey][dateISO]).length===0) delete stores.oneTime[mKey][dateISO];
-  if(stores.oneTime[mKey] && Object.keys(stores.oneTime[mKey]).length===0) delete stores.oneTime[mKey];
-
-  saveLS(LS_KEYS.memberOverrides, stores.oneTime);
-}
-
-function render(){
-  weekTitle.textContent = `Week of ${fmtWeekRange(weekStart)}`;
-  document.getElementById("leadHint").textContent = "";
-
-  // header row
-  const days = [];
-  for(let i=0;i<7;i++){
-    const d = addDays(weekStart, i);
-    days.push(d);
-  }
-
-  gridEl.innerHTML = "";
-
-  // header cells
-  const headA = document.createElement("div");
-  headA.className = "gcell ghead";
-  headA.textContent = "";
-  gridEl.appendChild(headA);
-
-  for(const d of days){
-    const h = document.createElement("div");
-    h.className = "gcell ghead";
-    const label = d.toLocaleDateString(undefined, {weekday:"short", month:"short", day:"numeric"});
-    h.innerHTML = `<div style="font-weight:900">${label}</div><div class="tiny">${isoDate(d)}</div>`;
-    gridEl.appendChild(h);
-  }
-
-  const halves = ["AM","PM"];
-  for(const half of halves){
-    // left label
-    const lbl = document.createElement("div");
-    lbl.className = "gcell";
-    lbl.innerHTML = `<div class="shiftlabel">${half}<small>${half==="AM"?"Morning":"Evening"}</small></div>`;
-    gridEl.appendChild(lbl);
-
-    for(const d of days){
-      const dateISO = isoDate(d);
-      const pref = resolvePref(memberId, dateISO, half, stores);
-
-      const cell = document.createElement("div");
-      cell.className = "gcell";
-      const dot = document.createElement("div");
-      dot.className = "hintdot";
-      if(pref.source === "rule") dot.classList.add("rule");
-      if(pref.source === "manual") dot.classList.add("manual");
-      cell.appendChild(dot);
-
-      const tog = document.createElement("div");
-      tog.className = "tog";
-      const states = [
-        {k:"AVAILABLE", t:"Available"},
-        {k:"PREFERRED", t:"Preferred"},
-        {k:"NO", t:"No"}
-      ];
-      for(const s of states){
-        const ch = document.createElement("div");
-        ch.className = "chip";
-        ch.dataset.state = s.k;
-        ch.textContent = s.t;
-        const isOn = (pref.state === s.k);
-        if(isOn) ch.classList.add("on");
-        ch.onclick = ()=>{
-          // clicking an already-on state toggles to blank (no explicit), so rules can apply
-          const currentExplicit = stores.oneTime?.[String(memberId)]?.[dateISO]?.[half] || null;
-          const target = (pref.state === s.k && currentExplicit) ? null : s.k;
-          setExplicit(memberId, dateISO, half, target);
-          render();
-        };
-        tog.appendChild(ch);
-      }
-      cell.appendChild(tog);
-      gridEl.appendChild(cell);
-    }
-  }
-}
-
-function copyWeekForward(){
-  const next = addDays(weekStart, 7);
-  const days = [...Array(7)].map((_,i)=>addDays(weekStart,i));
-  const nextDays = [...Array(7)].map((_,i)=>addDays(next,i));
-  const halves = ["AM","PM"];
-
-  // Copy explicit choices ONLY (not rules). That’s what people expect.
-  for(let i=0;i<7;i++){
-    const fromISO = isoDate(days[i]);
-    const toISO = isoDate(nextDays[i]);
-    for(const half of halves){
-      const val = stores.oneTime?.[String(memberId)]?.[fromISO]?.[half] || null;
-      if(val){
-        setExplicit(memberId, toISO, half, val);
-      }
-    }
-  }
-  weekStart = startOfWeekMon(next);
-  render();
-}
-
-function exportAll(){
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    notes: "Member-side availability/overrides saved locally. Commit these into /docs/data/overrides/ later if desired.",
-    memberId: memberId,
-    oneTimeOverrides: stores.oneTime?.[String(memberId)] || {},
-    recurringRules: stores.recurring?.[String(memberId)] || [],
-    repeat: stores.repeats?.[String(memberId)] || null
-  };
-  downloadJSON(`member_${memberId}_overrides.json`, payload);
-}
-
-/** =========================
- * Repeat modal logic
- * ========================= */
-const repeatBack = document.getElementById("repeatBack");
-const repeatBtn = document.getElementById("repeatBtn");
-const repeatClose = document.getElementById("repeatClose");
-const repeatPeriod = document.getElementById("repeatPeriod");
-const repeatMode = document.getElementById("repeatMode");
-const repeatAnchor = document.getElementById("repeatAnchor");
-const repeatUntil = document.getElementById("repeatUntil");
-const rotationList = document.getElementById("rotationList");
-const repeatSave = document.getElementById("repeatSave");
-const repeatDisable = document.getElementById("repeatDisable");
-
-function openRepeat(){
-  const rep = stores.repeats?.[String(memberId)] || null;
-  const currentAnchor = isoDate(weekStart);
-
-  repeatPeriod.value = String(rep?.periodWeeks || 2);
-  repeatMode.value = (rep?.mode || (Number(repeatPeriod.value)>1 ? "rotation":"same"));
-  repeatAnchor.value = rep?.anchorWeekStart || currentAnchor;
-  repeatUntil.value = rep?.until || "";
-
-  renderRotationList();
-  repeatBack.style.display = "flex";
-}
-function closeRepeat(){ repeatBack.style.display = "none"; }
-
-function currentWeekPatternFromExplicit(weekStartISO){
-  const ws = startOfWeekMon(new Date(weekStartISO+"T00:00:00"));
-  const days = [...Array(7)].map((_,i)=>addDays(ws,i));
-  const dowNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const pat = {};
-  for(const d of days){
-    const iso = isoDate(d);
-    const dow = dowNames[d.getDay()];
-    pat[dow] = pat[dow] || {};
-    for(const half of ["AM","PM"]){
-      const val = stores.oneTime?.[String(memberId)]?.[iso]?.[half] || null;
-      if(val) pat[dow][half] = val;
-    }
-  }
-  return pat;
-}
-
-function renderRotationList(){
-  const period = Math.max(1, Number(repeatPeriod.value||1));
-  const mode = repeatMode.value;
-  const rep = stores.repeats?.[String(memberId)] || {};
-  const patterns = rep.patterns || {};
-  const anchor = repeatAnchor.value || isoDate(weekStart);
-
-  rotationList.innerHTML = "";
-  if(mode === "same" || period === 1){
-    const box = document.createElement("div");
-    box.className = "li";
-    box.innerHTML = `<div><b>Weekly repeat</b><div class="meta">Uses your pattern from Week 1 for every week.</div></div><span class="tag">simple</span>`;
-    rotationList.appendChild(box);
-    return;
-  }
-
-  for(let i=0;i<period;i++){
-    const row = document.createElement("div");
-    row.className = "li";
-    const defined = patterns?.[i] ? true : false;
-    const label = `Week ${i+1} of ${period}`;
-    const meta = defined ? "Defined" : "Not defined (stays blank)";
-    row.innerHTML = `
-      <div>
-        <b>${label}</b>
-        <div class="meta">${meta}</div>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-        <span class="tag">${defined ? "saved" : "blank"}</span>
-        <button class="btn" data-go="${i}">Go to Week ${i+1}</button>
-        <button class="btn" data-cap="${i}">Capture from current week</button>
-        <button class="btn" data-clear="${i}">Clear</button>
-      </div>
-    `;
-    rotationList.appendChild(row);
-
-    row.querySelector(`[data-go="${i}"]`).onclick = ()=>{
-      const a = startOfWeekMon(new Date(anchor+"T00:00:00"));
-      weekStart = addDays(a, i*7);
-      closeRepeat();
-      render();
-    };
-    row.querySelector(`[data-cap="${i}"]`).onclick = ()=>{
-      const repNow = stores.repeats?.[String(memberId)] || {};
-      repNow.patterns = repNow.patterns || {};
-      repNow.patterns[i] = currentWeekPatternFromExplicit(isoDate(weekStart));
-      stores.repeats[String(memberId)] = repNow;
-      saveLS(LS_KEYS.repeats, stores.repeats);
-      renderRotationList();
-    };
-    row.querySelector(`[data-clear="${i}"]`).onclick = ()=>{
-      const repNow = stores.repeats?.[String(memberId)] || {};
-      repNow.patterns = repNow.patterns || {};
-      delete repNow.patterns[i];
-      stores.repeats[String(memberId)] = repNow;
-      saveLS(LS_KEYS.repeats, stores.repeats);
-      renderRotationList();
-    };
-  }
-}
-
-repeatBtn.onclick = openRepeat;
-repeatClose.onclick = closeRepeat;
-repeatBack.onclick = (e)=>{ if(e.target===repeatBack) closeRepeat(); };
-repeatPeriod.onchange = ()=>{ if(Number(repeatPeriod.value)===1) repeatMode.value="same"; renderRotationList(); };
-repeatMode.onchange = renderRotationList;
-repeatAnchor.onchange = renderRotationList;
-
-repeatSave.onclick = ()=>{
-  const period = Math.max(1, Number(repeatPeriod.value||1));
-  const mode = repeatMode.value;
-  const rep = stores.repeats?.[String(memberId)] || {};
-  rep.enabled = true;
-  rep.periodWeeks = period;
-  rep.mode = mode;
-  rep.anchorWeekStart = repeatAnchor.value || isoDate(weekStart);
-  rep.until = repeatUntil.value || "";
-  rep.patterns = rep.patterns || {};
-  if(mode === "same" || period === 1){
-    // store week 1 pattern at index 0
-    rep.patterns = {0: currentWeekPatternFromExplicit(isoDate(weekStart))};
-  }else{
-    // ensure week 1 exists (capture if missing)
-    if(!rep.patterns[0]) rep.patterns[0] = currentWeekPatternFromExplicit(isoDate(weekStart));
-  }
-  stores.repeats[String(memberId)] = rep;
-  saveLS(LS_KEYS.repeats, stores.repeats);
-  closeRepeat();
-  render();
-};
-
-repeatDisable.onclick = ()=>{
-  delete stores.repeats[String(memberId)];
-  saveLS(LS_KEYS.repeats, stores.repeats);
-  closeRepeat();
-  render();
-};
-
-/** =========================
- * Time off modal logic
- * ========================= */
-const timeOffBack = document.getElementById("timeOffBack");
-document.getElementById("timeOffBtn").onclick = ()=>{ openTimeOff(); };
-document.getElementById("timeOffClose").onclick = ()=>{ closeTimeOff(); };
-document.getElementById("timeOffDone").onclick = ()=>{ closeTimeOff(); };
-timeOffBack.onclick = (e)=>{ if(e.target===timeOffBack) closeTimeOff(); };
-document.getElementById("timeOffExport").onclick = ()=>{
-  const mKey = String(memberId);
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    memberId,
-    oneTimeOverrides: stores.oneTime?.[mKey] || {},
-    recurringRules: stores.recurring?.[mKey] || []
-  };
-  downloadJSON(`member_${memberId}_timeoff_rules.json`, payload);
-};
-
-function openTimeOff(){
-  // default dates
-  const today = isoDate(new Date());
-  document.getElementById("offStart").value = today;
-  document.getElementById("offEnd").value = "";
-  document.getElementById("offHalf").value = "BOTH";
-  document.getElementById("offState").value = "NO";
-  document.getElementById("offLabel").value = "";
-
-  // tab switching
-  for(const t of document.querySelectorAll(".tab")){
-    t.onclick = ()=>{
-      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
-      t.classList.add("on");
-      const id = t.dataset.tab;
-      document.getElementById("tab_one").style.display = (id==="one") ? "" : "none";
-      document.getElementById("tab_rec").style.display = (id==="rec") ? "" : "none";
-    };
-  }
-
-  // rec type rows
-  const recType = document.getElementById("recType");
-  function syncRecRows(){
-    const v = recType.value;
-    document.getElementById("recRowA").style.display = (v==="yearly_range") ? "" : "none";
-    document.getElementById("recRowB").style.display = (v==="yearly_single") ? "" : "none";
-    document.getElementById("recRowC").style.display = (v==="weekly") ? "" : "none";
-  }
-  recType.onchange = syncRecRows;
-  syncRecRows();
-
-  renderOneTimeList();
-  renderRecList();
-
-  timeOffBack.style.display = "flex";
-}
-function closeTimeOff(){ timeOffBack.style.display = "none"; render(); }
-
-function applyOneTimeRange(startISO, endISO, halfSel, state){
-  const s = new Date(startISO+"T00:00:00");
-  const e = endISO ? new Date(endISO+"T00:00:00") : new Date(startISO+"T00:00:00");
-  if(e < s) return;
-  const halves = halfSel==="BOTH" ? ["AM","PM"] : [halfSel];
-  for(let d = new Date(s); d<=e; d.setDate(d.getDate()+1)){
-    const iso = isoDate(d);
-    for(const half of halves){
-      setExplicit(memberId, iso, half, state);
-    }
-  }
-}
-
-document.getElementById("offApply").onclick = ()=>{
-  const a = document.getElementById("offStart").value;
-  const b = document.getElementById("offEnd").value;
-  const half = document.getElementById("offHalf").value;
-  const state = document.getElementById("offState").value;
-  if(!a) return;
-  applyOneTimeRange(a, b, half, state);
-  renderOneTimeList();
-};
-
-document.getElementById("offClear").onclick = ()=>{
-  const a = document.getElementById("offStart").value;
-  const b = document.getElementById("offEnd").value;
-  const halfSel = document.getElementById("offHalf").value;
-  const s = new Date(a+"T00:00:00");
-  const e = b ? new Date(b+"T00:00:00") : new Date(a+"T00:00:00");
-  const halves = halfSel==="BOTH" ? ["AM","PM"] : [halfSel];
-  const mKey = String(memberId);
-  for(let d = new Date(s); d<=e; d.setDate(d.getDate()+1)){
-    const iso = isoDate(d);
-    for(const half of halves){
-      if(stores.oneTime?.[mKey]?.[iso]?.[half]){
-        setExplicit(memberId, iso, half, null);
-      }
-    }
-  }
-  renderOneTimeList();
-};
-
-function renderOneTimeList(){
-  const box = document.getElementById("oneTimeList");
-  const mKey = String(memberId);
-  const entries = stores.oneTime?.[mKey] || {};
-  const rows = [];
-  for(const [dateISO, halves] of Object.entries(entries)){
-    for(const [half, state] of Object.entries(halves)){
-      rows.push({dateISO, half, state});
-    }
-  }
-  rows.sort((a,b)=> a.dateISO.localeCompare(b.dateISO) || a.half.localeCompare(b.half));
-
-  box.innerHTML = "";
-  if(rows.length===0){
-    box.innerHTML = `<div class="li"><div><b>None</b><div class="meta">No one-time overrides set.</div></div></div>`;
-    return;
-  }
-
-  for(const r of rows.slice(0, 120)){
-    const li = document.createElement("div");
-    li.className = "li";
-    li.innerHTML = `
-      <div>
-        <b>${r.dateISO} • ${r.half}</b>
-        <div class="meta">${r.state}</div>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <button class="btn" data-del="1">Remove</button>
-      </div>
-    `;
-    li.querySelector('[data-del="1"]').onclick = ()=>{
-      setExplicit(memberId, r.dateISO, r.half, null);
-      renderOneTimeList();
-    };
-    box.appendChild(li);
-  }
-}
-
-function renderRecList(){
-  const box = document.getElementById("recList");
-  const mKey = String(memberId);
-  const rules = stores.recurring?.[mKey] || [];
-  box.innerHTML = "";
-  if(rules.length===0){
-    box.innerHTML = `<div class="li"><div><b>None</b><div class="meta">No recurring rules set.</div></div></div>`;
-    return;
-  }
-  rules.forEach((r, idx)=>{
-    const li = document.createElement("div");
-    li.className = "li";
-    const desc = describeRule(r);
-    li.innerHTML = `
-      <div>
-        <b>${desc}</b>
-        <div class="meta">${r.state} • ${r.half||"BOTH"} ${r.label?("• "+escapeHTML(r.label)):""}</div>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-        <button class="btn" data-tog="1">${r.enabled ? "Disable" : "Enable"}</button>
-        <button class="btn" data-del="1">Delete</button>
-      </div>
-    `;
-    li.querySelector('[data-tog="1"]').onclick = ()=>{
-      r.enabled = !r.enabled;
-      rules[idx] = r;
-      stores.recurring[mKey] = rules;
-      saveLS(LS_KEYS.recurringRules, stores.recurring);
-      renderRecList();
-    };
-    li.querySelector('[data-del="1"]').onclick = ()=>{
-      rules.splice(idx,1);
-      stores.recurring[mKey] = rules;
-      saveLS(LS_KEYS.recurringRules, stores.recurring);
-      renderRecList();
-    };
-    box.appendChild(li);
-  });
-}
-function describeRule(r){
-  if(r.type==="yearly_range") return `Yearly: ${r.start} → ${r.end}`;
-  if(r.type==="yearly_single") return `Yearly: ${r.mmdd}`;
-  if(r.type==="weekly") return `Weekly: ${(r.days||[]).join(", ")}`;
-  return "Rule";
-}
-function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
-
-document.getElementById("recAdd").onclick = ()=>{
-  const mKey = String(memberId);
-  stores.recurring[mKey] = stores.recurring[mKey] || [];
-  const type = document.getElementById("recType").value;
-  const state = document.getElementById("recState").value;
-  const label = document.getElementById("recLabel").value.trim();
-  let rule = {enabled:true, type, state, label};
-
-  if(type==="yearly_range"){
-    const a = document.getElementById("recStart").value.trim();
-    const b = document.getElementById("recEnd").value.trim();
-    if(!parseMMDD(a) || !parseMMDD(b)) return;
-    rule.start = a; rule.end = b; rule.half = "BOTH";
-  }else if(type==="yearly_single"){
-    const d = document.getElementById("recSingle").value.trim();
-    if(!parseMMDD(d)) return;
-    rule.mmdd = d; rule.half = document.getElementById("recHalf").value;
-  }else if(type==="weekly"){
-    const txt = document.getElementById("recDays").value.trim();
-    const pieces = txt.split(",").map(x=>x.trim()).filter(Boolean);
-    const norm = pieces.map(x=>x.slice(0,3)).map(x=>x[0].toUpperCase()+x.slice(1).toLowerCase());
-    rule.days = norm; rule.half = document.getElementById("recHalf2").value;
-  }
-  stores.recurring[mKey].push(rule);
-  saveLS(LS_KEYS.recurringRules, stores.recurring);
-  renderRecList();
-};
-
-
-// ---------------- Drive Store (Apps Script) ----------------
+/* ===================== Drive Store (Apps Script) ===================== */
 const STORE = {
   url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
   token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
 };
-
 async function storeGet(params){
   const u = new URL(STORE.url);
   Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
@@ -1074,63 +135,251 @@ async function storeGet(params){
   if(!j.ok) throw new Error(j.error || "Store GET failed");
   return j.payload;
 }
-
 async function storePost(body){
   const r = await fetch(STORE.url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({ ...body, token: STORE.token })
   });
   const j = await r.json();
   if(!j.ok) throw new Error(j.error || "Store POST failed");
   return j;
 }
-
 function debounce(fn, ms=600){
   let t=null;
-  return (...args) => { clearTimeout(t); t=setTimeout(() => fn(...args), ms); };
+  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
 }
 
+/* ===================== Local data paths ===================== */
+const PATHS = {
+  org: "./data/org_settings.json",
+  members: "./data/members.json"
+};
 
+function $(id){return document.getElementById(id);}
+function fmtISO(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+function parseISO(s){const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d);}
+function addDays(d,n){const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x;}
+function startOfWeekThursday(anyDate){
+  const target=4; // Thu
+  const d=new Date(anyDate.getFullYear(), anyDate.getMonth(), anyDate.getDate());
+  const dow=d.getDay();
+  const delta=(dow-target+7)%7;
+  return addDays(d,-delta);
+}
 
+let ORG=null, MEMBERS=null;
+let CURRENT_WEEK_START = startOfWeekThursday(new Date());
+let memberId = null;
 
+// Member store model:
+// { member_id:"123", selections: { "YYYY-MM-DD": { "AM":"preferred|available|nosched|null", "PM":... } }, updatedAt:"..." }
+let memberStore = { selections:{} };
 
-/** =========================
- * Boot
- * ========================= */
-async function boot(){
+async function fetchJSON(url){
+  const r=await fetch(url,{cache:"no-store"});
+  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
+  return await r.json();
+}
+
+function setStatus(msg){ $("status").textContent = msg; }
+function setSave(msg){ $("savepill").textContent = msg; }
+
+const pushMember = debounce(async ()=>{
+  if(!memberId) return;
   try{
-    const [orgR, memR] = await Promise.allSettled([
-      fetch(API.org, {cache:"no-store"}),
-      fetch(API.members, {cache:"no-store"})
-    ]);
-    ORG = (orgR.status==="fulfilled" && orgR.value.ok) ? await orgR.value.json() : null;
-    MEMBERS = (memR.status==="fulfilled" && memR.value.ok) ? await memR.value.json() : [];
+    memberStore.member_id = String(memberId);
+    memberStore.updatedAt = new Date().toISOString();
+    localStorage.setItem("sc_member_"+memberId, JSON.stringify(memberStore));
+  }catch{}
+  try{
+    await storePost({ kind:"member", memberId:String(memberId), payload: memberStore });
+    setSave("Saved to Drive");
+  }catch(e){
+    console.warn("Drive save failed:", e);
+    setSave("Saved locally (Drive unavailable)");
+  }
+}, 650);
 
-    buildMemberSelect();
-    setSubline();
-    render();
+function getState(dateISO, shift){
+  const day = memberStore.selections?.[dateISO];
+  if(!day) return null;
+  return day[shift] ?? null;
+}
+function setState(dateISO, shift, value){
+  memberStore.selections = memberStore.selections || {};
+  memberStore.selections[dateISO] = memberStore.selections[dateISO] || { AM:null, PM:null };
+  memberStore.selections[dateISO][shift] = value;
+  pushMember();
+}
 
-    document.getElementById("subline").textContent = ORG?.org?.name
-      ? `${ORG.org.name} • choose your availability`
-      : `Choose your availability`;
+function cycleState(cur){
+  // Preferred → Available → NoSched → Clear
+  if(cur === "preferred") return "available";
+  if(cur === "available") return "nosched";
+  if(cur === "nosched") return null;
+  return "preferred";
+}
 
-  }catch(err){
-    document.getElementById("subline").textContent = "Failed to load required data files.";
-    console.error(err);
+function stateLabel(s){
+  if(s==="preferred") return "Preferred";
+  if(s==="available") return "Available";
+  if(s==="nosched") return "Do not schedule";
+  return "Unset";
+}
+function stateClass(s){
+  if(s==="preferred") return "st-preferred";
+  if(s==="available") return "st-available";
+  if(s==="nosched") return "st-nosched";
+  return "st-none";
+}
+
+function render(){
+  $("weekStart").value = fmtISO(CURRENT_WEEK_START);
+  const grid = $("grid");
+  grid.innerHTML = "";
+
+  const dowNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  // Header row
+  grid.appendChild(cellH(""));
+  for(let i=0;i<7;i++){
+    const d=addDays(CURRENT_WEEK_START,i);
+    grid.appendChild(cellH(`${dowNames[d.getDay()]}<br><span style="color:var(--muted)">${fmtISO(d)}</span>`));
+  }
+
+  // AM row
+  grid.appendChild(shiftLbl("AM"));
+  for(let i=0;i<7;i++){
+    const d=addDays(CURRENT_WEEK_START,i);
+    const ds=fmtISO(d);
+    grid.appendChild(pickCell(ds,"AM"));
+  }
+
+  // PM row
+  grid.appendChild(shiftLbl("PM"));
+  for(let i=0;i<7;i++){
+    const d=addDays(CURRENT_WEEK_START,i);
+    const ds=fmtISO(d);
+    grid.appendChild(pickCell(ds,"PM"));
   }
 }
 
-memberSel.onchange = ()=>{
-  memberId = memberSel.value;
-  setSubline();
-  render();
-};
+function cellH(html){
+  const div=document.createElement("div");
+  div.className="cellH";
+  div.innerHTML=html;
+  return div;
+}
+function shiftLbl(label){
+  const div=document.createElement("div");
+  div.className="shiftLbl";
+  div.innerHTML = `<div class="d">${label}</div><div class="t">tap to set</div>`;
+  return div;
+}
+function pickCell(dateISO, shift){
+  const cur = getState(dateISO, shift);
+  const div=document.createElement("div");
+  div.className = `pick ${stateClass(cur)}`;
+  div.innerHTML = `<div class="state">${stateLabel(cur)}</div><div class="hint">${dateISO} ${shift}</div>`;
+  div.addEventListener("click", ()=>{
+    const next = cycleState(getState(dateISO,shift));
+    setState(dateISO, shift, next);
+    render();
+    setSave("Saving…");
+  });
+  return div;
+}
 
-document.getElementById("prevWeek").onclick = ()=>{ weekStart = addDays(weekStart, -7); render(); };
-document.getElementById("nextWeek").onclick = ()=>{ weekStart = addDays(weekStart, +7); render(); };
-document.getElementById("copyFwd").onclick = copyWeekForward;
-document.getElementById("exportBtn").onclick = exportAll;
+async function loadMember(id){
+  memberId = String(id);
+  setSave("Loading…");
+
+  // Drive first
+  try{
+    const remote = await storeGet({ kind:"member", memberId });
+    if(remote && typeof remote === "object"){
+      memberStore = remote;
+      try{ localStorage.setItem("sc_member_"+memberId, JSON.stringify(memberStore)); }catch{}
+      setSave("Loaded from Drive");
+      render();
+      return;
+    }
+  }catch(e){
+    console.warn("Drive load failed:", e);
+  }
+
+  // local fallback
+  try{
+    const ls = JSON.parse(localStorage.getItem("sc_member_"+memberId) || "null");
+    if(ls && typeof ls === "object"){
+      memberStore = ls;
+      setSave("Loaded locally (Drive unavailable)");
+      render();
+      return;
+    }
+  }catch{}
+
+  memberStore = { selections:{} };
+  setSave("New (nothing saved yet)");
+  render();
+}
+
+async function boot(){
+  try{
+    setStatus("Loading org + members…");
+    ORG = await fetchJSON(PATHS.org);
+    MEMBERS = await fetchJSON(PATHS.members);
+    $("orgpill").textContent = `Org: ${ORG?.org?.name || "Unknown"}`;
+
+    const sel = $("memberSel");
+    sel.innerHTML = "";
+    (MEMBERS?.members || [])
+      .filter(m => m.active !== false)
+      .sort((a,b)=> (a.last_name||"").localeCompare(b.last_name||""))
+      .forEach(m=>{
+        const opt=document.createElement("option");
+        opt.value = String(m.member_id);
+        opt.textContent = `${m.last_name}, ${m.first_name} #${m.member_id}`;
+        sel.appendChild(opt);
+      });
+
+    sel.addEventListener("change", ()=>loadMember(sel.value));
+
+    $("btnToday").addEventListener("click", ()=>{
+      CURRENT_WEEK_START = startOfWeekThursday(new Date());
+      render();
+    });
+    $("btnPrev").addEventListener("click", ()=>{
+      CURRENT_WEEK_START = addDays(CURRENT_WEEK_START, -7);
+      render();
+    });
+    $("btnNext").addEventListener("click", ()=>{
+      CURRENT_WEEK_START = addDays(CURRENT_WEEK_START, +7);
+      render();
+    });
+    $("weekStart").addEventListener("change", (e)=>{
+      CURRENT_WEEK_START = startOfWeekThursday(parseISO(e.target.value));
+      render();
+    });
+
+    setStatus("Ready.");
+    CURRENT_WEEK_START = startOfWeekThursday(new Date());
+    render();
+
+    // default to first member
+    if(sel.options.length){
+      await loadMember(sel.value);
+    }
+
+  }catch(err){
+    console.error(err);
+    setStatus("ERROR: " + err.message);
+    alert("Member page failed to load:\n\n" + err.message);
+  }
+}
 
 boot();
 </script>

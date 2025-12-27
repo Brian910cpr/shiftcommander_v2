@@ -6,291 +6,77 @@
   <title>ShiftCommander — Wallboard</title>
   <style>
     :root{
-      --bg:#081021; --panel:#0f1a33; --text:#e8eefc; --muted:#a9b6d6;
-      --line:rgba(255,255,255,.10);
-      --als:#ff5c7a; --emt:#4aa3ff; --drv:#1fbf75; --open:#9aa8c7;
-      --ok:#1fbf75; --warn:#ffcc66; --bad:#ff5c7a; --neutral:#7f8fb4;
-      --shadow:0 10px 25px rgba(0,0,0,.35);
-      --r:16px;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      --bg:#061025; --text:#e8eefc; --muted:#a7b3d6;
+      --good:#19c37d; --warn:#f7b955; --bad:#ff5c5c; --gray:#6b7aa7;
+      --bd: rgba(37,50,84,.85);
     }
-    *{ box-sizing:border-box; }
-    body{
-      margin:0; font-family:var(--sans); color:var(--text);
-      background:radial-gradient(1200px 600px at 10% -10%, rgba(74,163,255,.22), transparent 55%),
-               radial-gradient(1000px 600px at 110% 10%, rgba(31,191,117,.16), transparent 55%),
-               var(--bg);
-    }
-    header{
-      position:sticky; top:0; z-index:20;
-      background:rgba(8,16,33,.86); backdrop-filter: blur(10px);
-      border-bottom:1px solid var(--line);
-      padding:14px 16px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-    }
-    .brand{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.2px; }
-    .dot{ width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg, var(--emt), var(--drv)); box-shadow:0 0 0 4px rgba(74,163,255,.15); }
-    .sub{ color:var(--muted); font-size:12px; margin-top:2px; }
-    .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
-    .btn{
-      border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--text);
-      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer;
-    }
-    .btn:active{ transform:translateY(1px); }
-    .wrap{ padding:14px 16px 20px; }
-    .board{
-      background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:var(--r);
-      box-shadow:var(--shadow); overflow:hidden;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns: 140px repeat(7, 1fr);
-    }
-    .cell{
-      border-right:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-      padding:10px;
-      min-height:92px;
-      position:relative;
-    }
-    .cell:nth-child(8n){ border-right:none; }
-    .head{
-      background:rgba(255,255,255,.02);
-      position:sticky; top:58px; z-index:5;
-      padding:10px;
-    }
-    .daytitle{ font-weight:900; font-size:13px; }
-    .dateiso{ color:var(--muted); font-size:12px; margin-top:2px; }
-    .shiftlabel{ font-weight:900; font-size:12px; letter-spacing:.35px; }
-    .shiftlabel small{ display:block; color:var(--muted); font-weight:700; margin-top:3px; }
-    .tab{
-      position:absolute; top:10px; right:10px;
-      padding:6px 10px; border-radius:999px; font-size:11px; font-weight:900;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-    }
-    .tab.ok{ background:rgba(31,191,117,.18); outline:2px solid rgba(31,191,117,.35); }
-    .tab.warn{ background:rgba(255,204,102,.18); outline:2px solid rgba(255,204,102,.35); }
-    .tab.bad{ background:rgba(255,92,122,.16); outline:2px solid rgba(255,92,122,.35); }
-    .tab.neu{ background:rgba(127,143,180,.14); outline:2px solid rgba(127,143,180,.25); }
-    .names{ margin-top:26px; display:grid; gap:6px; }
-    .name{
-      font-size:13px; font-weight:900; line-height:1.15;
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-    }
-    .role{ font-size:11px; color:var(--muted); font-weight:800; }
-    .als{ color:var(--als); }
-    .emt{ color:var(--emt); }
-    .drv{ color:var(--drv); }
-    .open{ color:var(--open); font-weight:800; }
-    .legend{ display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:12px; padding:10px 12px; border-top:1px solid var(--line); background:rgba(255,255,255,.02);}
-    .pill{ border:1px solid var(--line); padding:4px 8px; border-radius:999px; background:rgba(255,255,255,.03); }
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 110px repeat(7, 1fr); }
-      .cell{ min-height:88px; }
-    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(1400px 900px at 15% 10%, #102a5e 0%, var(--bg) 55%);
+      color:var(--text);}
+    header{position:sticky;top:0;z-index:10;background:rgba(6,16,37,.75);backdrop-filter:blur(10px);
+      border-bottom:1px solid rgba(37,50,84,.75);}
+    .wrap{max-width:1400px;margin:0 auto;padding:12px 14px;}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+    h1{margin:0;font-size:18px}
+    .sub{color:var(--muted);font-size:12px;margin-top:4px}
+    .pill{padding:8px 10px;border-radius:999px;background:rgba(22,32,71,.65);
+      border:1px solid rgba(37,50,84,.85);color:var(--muted);font-size:12px;}
+    .board{padding:12px 14px}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    th,td{border-top:1px solid rgba(37,50,84,.65);padding:10px 8px;vertical-align:middle}
+    th{color:var(--muted);font-size:12px;font-weight:700;border-top:none}
+    .dcol{width:160px}
+    .scol{width:64px}
+    .hcol{width:190px}
+    .health{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(37,50,84,.85);background:rgba(22,32,71,.55);font-size:12px;white-space:nowrap;}
+    .dot{width:10px;height:10px;border-radius:50%;}
+    .dot.green{background:var(--good)} .dot.yellow{background:var(--warn)} .dot.red{background:var(--bad)} .dot.gray{background:var(--gray)}
+    .seat{display:flex;flex-direction:column;gap:2px}
+    .name{font-weight:900;font-size:13px;line-height:1.15}
+    .lvl{color:var(--muted);font-size:11px}
+    .muted{color:var(--muted)}
   </style>
 </head>
 <body>
 <header>
-  <div>
-    <div class="brand"><span class="dot"></span> ShiftCommander <span style="opacity:.7; font-weight:900;">Wallboard</span></div>
-    <div class="sub" id="sub">7-week view • AM/PM • auto-advance</div>
-  </div>
-  <div class="right">
-    <button class="btn" id="prev">◀︎</button>
-    <button class="btn" id="today">Today</button>
-    <button class="btn" id="next">▶︎</button>
-    <button class="btn" id="toggleAuto">Auto: ON</button>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>ShiftCommander — Wallboard</h1>
+        <div class="sub" id="status">Loading…</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span class="pill" id="orgpill">Org: …</span>
+        <span class="pill" id="rangePill">Range: …</span>
+      </div>
+    </div>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="board">
-    <div class="grid" id="grid"></div>
-    <div class="legend">
-      <span class="pill"><b style="color:var(--als)">ALS</b></span>
-      <span class="pill"><b style="color:var(--emt)">EMT</b></span>
-      <span class="pill"><b style="color:var(--drv)">Driver</b></span>
-      <span class="pill">Health tabs: OK / Needs / Critical / Neutral</span>
-    </div>
-  </div>
+<div class="wrap board">
+  <table>
+    <thead>
+      <tr>
+        <th class="dcol">Date</th>
+        <th class="scol">Shift</th>
+        <th class="hcol">Health</th>
+        <th>Medical</th>
+        <th>Driver/EMT</th>
+        <th>Riders</th>
+      </tr>
+    </thead>
+    <tbody id="body"></tbody>
+  </table>
 </div>
 
 <script>
-const API = {
-  org: "/data/org_settings.json",
-  members: "/data/members.json",
-  historyIndex: "/data/history.index.json"
-};
-
-const SEAT_COL = { ALS:"als", EMT:"emt", Driver:"drv" };
-
-function isoDate(d){
-  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${da}`;
-}
-function startOfWeekMon(d){
-  const x=new Date(d); const dow=(x.getDay()+6)%7; x.setDate(x.getDate()-dow); x.setHours(0,0,0,0); return x;
-}
-function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
-
-let ORG=null, MEMBERS=[], HISTORY_INDEX=null;
-let viewWeek = startOfWeekMon(new Date());
-let auto = true;
-let autoTimer = null;
-
-function memberById(id){
-  return MEMBERS.find(m=>String(m.id)===String(id)) || null;
-}
-
-function inferHealth(shift){
-  // shift: { ALS: {id}? , EMT: {id}? , Driver: {id}? , extras:[] }
-  const hasALS = !!(shift?.ALS?.id);
-  const hasEMT = !!(shift?.EMT?.id);
-  const hasDRV = !!(shift?.Driver?.id);
-  // Requirement: ALS + (EMT or Driver)
-  if(hasALS && (hasEMT || hasDRV)) return {k:"ok", t:"OK"};
-  if(!hasALS && (hasEMT || hasDRV)) return {k:"warn", t:"Need ALS"};
-  if(hasALS && !(hasEMT || hasDRV)) return {k:"warn", t:"Need EMT/Driver"};
-  if(!hasALS && !hasEMT && !hasDRV) return {k:"bad", t:"OPEN"};
-  return {k:"neu", t:"—"};
-}
-
-async function fetchJSON(url){
-  const r = await fetch(url, {cache:"no-store"});
-  if(!r.ok) throw new Error(`${r.status} ${url}`);
-  return await r.json();
-}
-
-async function loadHistoryForMonth(monthISO){
-  // monthISO = "2025-11"
-  try{
-    const r = await fetch(`/data/history/${monthISO}.normalized.json`, {cache:"no-store"});
-    if(!r.ok) return null;
-    return await r.json();
-  }catch{ return null; }
-}
-
-async function build(){
-  const grid = document.getElementById("grid");
-  grid.innerHTML = "";
-
-  // 7 weeks = 49 days, but wallboard wants "next 7 weeks" by day/shift:
-  // We'll show 1 week at a time (7 columns), 2 rows (AM/PM) and a small week navigator.
-  // The user asked "for next 7 weeks": we implement auto-advance weekly; supervisor can flip week.
-  const days = [...Array(7)].map((_,i)=>addDays(viewWeek,i));
-
-  // header row
-  grid.appendChild(elCell("head cell", ""));
-  for(const d of days){
-    const h = elCell("head cell", "");
-    h.classList.add("head");
-    h.innerHTML = `<div class="daytitle">${d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})}</div>
-                   <div class="dateiso">${isoDate(d)}</div>`;
-    grid.appendChild(h);
-  }
-
-  // pull shifts from loaded month files (if present). otherwise empty.
-  const monthSet = new Set(days.map(d=>isoDate(d).slice(0,7)));
-  const monthData = {};
-  for(const m of monthSet){
-    monthData[m] = await loadHistoryForMonth(m);
-  }
-
-  function getShift(dateISO, half){
-    const m = dateISO.slice(0,7);
-    const doc = monthData[m];
-    // Expected shape: { dates: { "YYYY-MM-DD": { AM:{ALS:{id},EMT:{id},Driver:{id},extras:[]}, PM:{...} } } }
-    const sh = doc?.dates?.[dateISO]?.[half];
-    return sh || { ALS:{id:null}, EMT:{id:null}, Driver:{id:null}, extras:[] };
-  }
-
-  for(const half of ["AM","PM"]){
-    const left = elCell("cell", "");
-    left.innerHTML = `<div class="shiftlabel">${half}<small>${half==="AM"?"Morning":"Evening"}</small></div>`;
-    grid.appendChild(left);
-
-    for(const d of days){
-      const dateISO = isoDate(d);
-      const sh = getShift(dateISO, half);
-      const health = inferHealth(sh);
-
-      const c = elCell("cell", "");
-      const tab = document.createElement("div");
-      tab.className = `tab ${health.k}`;
-      tab.textContent = health.t;
-      c.appendChild(tab);
-
-      const names = document.createElement("div");
-      names.className = "names";
-
-      const seats = [
-        ["ALS","ALS"],
-        ["EMT","EMT"],
-        ["Driver","Driver"]
-      ];
-
-      for(const [key,label] of seats){
-        const id = sh?.[key]?.id;
-        if(id){
-          const m = memberById(id);
-          const nm = m ? `${m.last}` : `#${id}`;
-          const cls = key==="ALS" ? "als" : (key==="EMT" ? "emt" : "drv");
-          const row = document.createElement("div");
-          row.className = `name ${cls}`;
-          row.innerHTML = `<span>${nm}</span><span class="role">${label}</span>`;
-          names.appendChild(row);
-        }else{
-          const row = document.createElement("div");
-          row.className = `name open`;
-          row.innerHTML = `<span>—</span><span class="role">${label}</span>`;
-          names.appendChild(row);
-        }
-      }
-
-      c.appendChild(names);
-      grid.appendChild(c);
-    }
-  }
-}
-
-function elCell(cls, text){
-  const d = document.createElement("div");
-  d.className = cls;
-  d.textContent = text;
-  return d;
-}
-
-function tickAuto(){
-  if(autoTimer) clearInterval(autoTimer);
-  if(!auto) return;
-  autoTimer = setInterval(()=>{
-    viewWeek = addDays(viewWeek, 7);
-    build();
-  }, 12000); // 12s per week for kiosk cycling
-}
-
-async function boot(){
-  try{
-    [ORG, MEMBERS] = await Promise.all([fetchJSON(API.org), fetchJSON(API.members)]);
-  }catch(err){
-    document.getElementById("sub").textContent = "Missing /data/org_settings.json or /data/members.json";
-    console.error(err);
-    ORG = ORG || {};
-    MEMBERS = MEMBERS || [];
-  }
-  await build();
-  tickAuto();
-}
-
-
-// ---------------- Drive Store (Apps Script) ----------------
+/* ===================== Drive Store (Apps Script) ===================== */
 const STORE = {
   url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
   token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
 };
-
 async function storeGet(params){
   const u = new URL(STORE.url);
   Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
@@ -301,32 +87,173 @@ async function storeGet(params){
   return j.payload;
 }
 
-async function storePost(body){
-  const r = await fetch(STORE.url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...body, token: STORE.token })
-  });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "Store POST failed");
-  return j;
-}
-
-function debounce(fn, ms=600){
-  let t=null;
-  return (...args) => { clearTimeout(t); t=setTimeout(() => fn(...args), ms); };
-}
-
-
-
-document.getElementById("prev").onclick = ()=>{ viewWeek = addDays(viewWeek, -7); build(); };
-document.getElementById("next").onclick = ()=>{ viewWeek = addDays(viewWeek, +7); build(); };
-document.getElementById("today").onclick = ()=>{ viewWeek = startOfWeekMon(new Date()); build(); };
-document.getElementById("toggleAuto").onclick = ()=>{
-  auto = !auto;
-  document.getElementById("toggleAuto").textContent = `Auto: ${auto ? "ON":"OFF"}`;
-  tickAuto();
+const PATHS = {
+  org: "./data/org_settings.json",
+  historyIndex: "./data/history/history.index.json",
+  supervisorPatchFile: "./data/overrides/supervisor_patch.json"
 };
+
+function $(id){return document.getElementById(id);}
+function fmtISO(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+function parseISO(s){const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d);}
+function addDays(d,n){const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x;}
+function startOfWeekThursday(anyDate){
+  const target=4; // Thu
+  const d=new Date(anyDate.getFullYear(), anyDate.getMonth(), anyDate.getDate());
+  const dow=d.getDay();
+  const delta=(dow-target+7)%7;
+  return addDays(d,-delta);
+}
+async function fetchJSON(url){
+  const r=await fetch(url,{cache:"no-store"});
+  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
+  return await r.json();
+}
+async function tryFetchJSON(url){
+  try{ return await fetchJSON(url); }catch(e){ return null; }
+}
+
+const LEAD_DAYS = 21;
+function isWithinLead(dateISO){
+  const today = new Date();
+  const d = new Date(dateISO + "T00:00:00");
+  const ms = d.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const daysOut = Math.floor(ms / (1000*60*60*24));
+  return daysOut <= LEAD_DAYS;
+}
+
+let ORG=null;
+let HISTORY={ days:{} };
+let PATCH={ generated_at:null, overrides:{} };
+
+function getHistoryShift(dateISO, shift){
+  return HISTORY.days?.[dateISO]?.[shift] || null;
+}
+function getPatchShift(dateISO, shift){
+  return PATCH.overrides?.[dateISO]?.[shift] || null;
+}
+function mergeShiftView(dateISO, shift){
+  const base=getHistoryShift(dateISO, shift) || {
+    medical:{name:"Open", level:""},
+    driver_emt:{name:"Open", level:""},
+    riders:[]
+  };
+  const p=getPatchShift(dateISO, shift);
+  const riders_allowed = (p && typeof p.riders_allowed==="boolean") ? p.riders_allowed : (base.riders_allowed ?? ((ORG?.riders?.default_allowed===true)?true:false));
+  const riders_max     = (p && typeof p.riders_max==="number") ? p.riders_max : (base.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1));
+  const riders         = (p && Array.isArray(p.riders)) ? p.riders : (Array.isArray(base.riders) ? base.riders : []);
+  return {...base, riders_allowed, riders_max, riders};
+}
+
+function computeHealth(dateISO, shiftObj){
+  if(!isWithinLead(dateISO)) return {state:"gray", msg:"Outside lead window"};
+
+  const medical=shiftObj?.medical||null;
+  const driver=shiftObj?.driver_emt||null;
+
+  const medicalFilled=!!medical?.name && medical.name.toLowerCase()!=="open";
+  const driverFilled=!!driver?.name && driver.name.toLowerCase()!=="open";
+
+  if(!medicalFilled || !driverFilled) return {state:"red", msg:"Open seat"};
+
+  const medLevel=(medical.level||"").toUpperCase();
+  const drvLevel=(driver.level||"").toUpperCase();
+
+  if(medLevel!=="ALS") return {state:"red", msg:"Needs ALS"};
+  if(drvLevel==="ALS") return {state:"yellow", msg:"Needs EMT"};
+  return {state:"green", msg:"Staffed"};
+}
+
+function seatCell(seat){
+  const name = (seat?.name || "Open");
+  const lvl  = (seat?.level || "");
+  return `
+    <div class="seat">
+      <div class="name">${name}</div>
+      <div class="lvl">${lvl}</div>
+    </div>
+  `;
+}
+
+function ridersCell(view){
+  if(view.riders_allowed === false) return `<span class="muted">Disabled</span>`;
+  const riders = view.riders || [];
+  if(!riders.length) return `<span class="muted">—</span>`;
+  return riders.map(r => `<span class="muted">${r.name || ("Member "+r.member_id)}</span>`).join("<br>");
+}
+
+function addRow(tbody, dateISO, shift){
+  const view = mergeShiftView(dateISO, shift);
+  const h = computeHealth(dateISO, view);
+  const dotClass = (h.state==="green") ? "green" : (h.state==="yellow") ? "yellow" : (h.state==="red") ? "red" : "gray";
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td class="dcol"><div style="font-weight:900">${dateISO}</div></td>
+    <td class="scol"><div style="font-weight:900">${shift}</div></td>
+    <td class="hcol"><div class="health"><span class="dot ${dotClass}"></span><span>${h.msg}</span></div></td>
+    <td>${seatCell(view.medical)}</td>
+    <td>${seatCell(view.driver_emt)}</td>
+    <td>${ridersCell(view)}</td>
+  `;
+  tbody.appendChild(tr);
+}
+
+async function boot(){
+  try{
+    $("status").textContent = "Loading org/history/patch…";
+    ORG = await fetchJSON(PATHS.org);
+    $("orgpill").textContent = `Org: ${ORG?.org?.name || "Unknown"}`;
+
+    // history
+    const index = await fetchJSON(PATHS.historyIndex);
+    const files = index?.files || [];
+    const merged = { days:{} };
+    for(const f of files){
+      const monthUrl = f.filename ? `./data/history/${f.filename}` : f.path;
+      const monthObj = await fetchJSON(monthUrl);
+      if(monthObj?.days){
+        for(const [ds, dayObj] of Object.entries(monthObj.days)){
+          merged.days[ds] = merged.days[ds] || {};
+          if(dayObj.AM) merged.days[ds].AM = dayObj.AM;
+          if(dayObj.PM) merged.days[ds].PM = dayObj.PM;
+        }
+      }
+    }
+    HISTORY = merged;
+
+    // patch (Drive first, fallback to file)
+    try{
+      PATCH = await storeGet({ kind:"supervisor" }) || { generated_at:null, overrides:{} };
+    }catch(e){
+      const filePatch = await tryFetchJSON(PATHS.supervisorPatchFile);
+      PATCH = filePatch?.overrides ? filePatch : { generated_at:null, overrides:{} };
+    }
+
+    // render 7 weeks starting this Thu
+    const start = startOfWeekThursday(new Date());
+    const end = addDays(start, 7*7 - 1); // 49 days
+    $("rangePill").textContent = `Range: ${fmtISO(start)} → ${fmtISO(end)}`;
+
+    const tbody = $("body");
+    tbody.innerHTML = "";
+    for(let i=0;i<49;i++){
+      const d = addDays(start, i);
+      const ds = fmtISO(d);
+      addRow(tbody, ds, "AM");
+      addRow(tbody, ds, "PM");
+    }
+
+    $("status").textContent = "Ready.";
+  }catch(err){
+    console.error(err);
+    $("status").textContent = "ERROR: " + err.message;
+    alert("Wallboard failed to load:\n\n" + err.message);
+  }
+}
 
 boot();
 </script>
