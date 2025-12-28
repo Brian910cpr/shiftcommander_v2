@@ -27,7 +27,6 @@ build/
 tools/schedule/out/
 tools/schedule/**/out/
 tools/schedule/history_*.csv
-data/
 exports/
 scans/
 archive/
