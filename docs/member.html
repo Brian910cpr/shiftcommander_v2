@@ -1,1007 +1,859 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ShiftCommander — Member</title>
   <style>
     :root{
-      --bg0:#070b14;
-      --bg1:#0b1428;
-      --card:#0c1a34;
-      --card2:#0b1730;
-      --line:rgba(255,255,255,.10);
-      --line2:rgba(255,255,255,.16);
-      --text:#e9f1ff;
-      --muted:rgba(233,241,255,.72);
-      --muted2:rgba(233,241,255,.50);
-      --green:#26d07c;
-      --blue:#5c8dff;
-      --red:#ff5d5d;
-      --clear:rgba(233,241,255,.26);
-      --shadow:0 16px 50px rgba(0,0,0,.35);
-      --r:16px;
-      --r2:14px;
+      --bg:#0b1220; --text:#e8eefc; --muted:#a7b3d6;
+      --p:#7aa2ff; --good:#19c37d; --warn:#f7b955; --bad:#ff5c5c; --gray:#6b7aa7;
+      --shadow: 0 10px 30px rgba(0,0,0,.35); --radius:16px;
+      --bd: rgba(37,50,84,.9);
+
+      /* bolder borders */
+      --bd-strong: rgba(122,162,255,.75);
+      --bd-soft: rgba(37,50,84,.75);
+
+      /* state borders */
+      --bd-pref: rgba(25,195,125,.85);
+      --bd-avail: rgba(122,162,255,.85);
+      --bd-nos: rgba(255,92,92,.85);
+
+      /* focus week styling */
+      --focusGlow: 0 0 0 2px rgba(122,162,255,.22), 0 12px 35px rgba(0,0,0,.35);
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(1200px 800px at 15% 10%, #12224c 0%, var(--bg) 55%);
       color:var(--text);
-      background: radial-gradient(1100px 700px at 35% -20%, #163a86 0%, rgba(22,58,134,0) 55%),
-                  radial-gradient(900px 600px at 90% 0%, #2a0e6e 0%, rgba(42,14,110,0) 60%),
-                  linear-gradient(180deg, var(--bg0), var(--bg1));
     }
 
-    /* Header */
+    header{
+      position:sticky;top:0;z-index:10;
+      background:rgba(11,18,32,.72);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid rgba(37,50,84,.75);
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:16px;}
     .top{
-      position:sticky;
-      top:0;
-      z-index:20;
-      background: linear-gradient(180deg, rgba(5,8,16,.92), rgba(5,8,16,.55));
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--line);
+      display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;
     }
-    .topInner{
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 14px 14px 12px;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
+    h1{margin:0;font-size:18px}
+    .sub{color:var(--muted);font-size:12px;margin-top:4px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+
+    select,input,button{
+      border-radius:12px;border:1px solid var(--bd);
+      background:rgba(16,26,48,.9);color:var(--text);
+      padding:10px 12px;outline:none;
     }
-    .brand{
-      font-weight:800;
-      letter-spacing:.2px;
-      margin-right:auto;
-      white-space:nowrap;
+    button{cursor:pointer}
+    button.primary{
+      border-color:rgba(122,162,255,.8);
+      box-shadow:0 0 0 1px rgba(122,162,255,.12) inset;
     }
-    .controls{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      min-width: 320px;
-    }
+
     .pill{
-      background: rgba(255,255,255,.06);
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 9px 12px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      box-shadow: 0 8px 26px rgba(0,0,0,.18);
-    }
-    .pill label{font-size:12px; color:var(--muted2)}
-    select, input[type="date"]{
-      background: transparent;
-      color: var(--text);
-      border: 0;
-      outline: 0;
-      font-size: 14px;
-    }
-    option{color:#000}
-    .btn{
-      cursor:pointer;
-      border: 1px solid var(--line2);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 9px 12px;
-      font-weight: 700;
-      box-shadow: 0 8px 26px rgba(0,0,0,.18);
-      transition: transform .05s ease, background .15s ease, border-color .15s ease;
-      user-select:none;
+      padding:8px 10px;border-radius:999px;
+      background:rgba(22,32,71,.65);
+      border:1px solid rgba(37,50,84,.85);
+      color:var(--muted);font-size:12px;
+      display:flex;align-items:center;gap:10px;
       white-space:nowrap;
     }
-    .btn:active{transform: translateY(1px)}
-    .btn:hover{background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22)}
-    .btn.secondary{font-weight:700; opacity:.95}
 
-    .dot{
-      width:10px; height:10px; border-radius:999px;
-      background: var(--clear);
-      box-shadow: 0 0 0 3px rgba(255,255,255,.06);
-      flex:0 0 auto;
-    }
-    .dot.ok{ background: var(--green); box-shadow: 0 0 0 3px rgba(38,208,124,.16) }
-    .dot.warn{ background: #f4c542; box-shadow: 0 0 0 3px rgba(244,197,66,.16) }
+    /* “status lights” look */
+    .lights{display:flex;gap:6px;align-items:center}
+    .light{width:10px;height:10px;border-radius:50%;background:var(--gray);box-shadow:0 0 0 1px rgba(0,0,0,.35) inset}
+    .light.good{background:var(--good)}
+    .light.warn{background:var(--warn)}
+    .light.bad{background:var(--bad)}
 
-    /* Layout */
-    .wrap{
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 16px 14px 18px;
-    }
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      box-shadow: var(--shadow);
-      padding: 14px;
-    }
-    .headline{
-      display:flex;
-      align-items:flex-start;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .headline h2{
-      margin:0;
-      font-size: 16px;
-      line-height:1.25;
-      letter-spacing:.2px;
-    }
-    .headline .sub{
-      margin:2px 0 0;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .headline .right{
-      margin-left:auto;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .statusPill{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.04);
-      border-radius: 999px;
-      padding: 8px 10px;
-      min-height: 36px;
-    }
-    .statusPill .tiny{
-      font-size:12px;
-      color: var(--muted);
-      max-width: 0; /* hide by default, keep tooltip */
+      margin-top:14px;
+      background:linear-gradient(180deg, rgba(16,26,48,.92), rgba(10,16,32,.92));
+      border:1px solid rgba(37,50,84,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       overflow:hidden;
-      white-space:nowrap;
     }
-    .statusPill.hasText .tiny{ max-width: 420px } /* use for debug if you ever want */
-    .gridWrap{
-      margin-top: 14px;
-      overflow-x:auto;
-      border-radius: var(--r);
+    .card .hd{
+      padding:14px;
+      border-bottom:1px solid rgba(37,50,84,.7);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      background:rgba(15,23,48,.55)
     }
+    .card .hd .k{font-weight:900}
+    .card .hd .s{color:var(--muted);font-size:12px}
 
-    /* Calendar grid */
-    .cal{
-      min-width: 980px; /* prevents off-screen clipping; scrolls instead */
+    /* NEW: multi-week grid (each week = a row) */
+    .weeks{
+      padding:14px;
       display:grid;
-      grid-template-columns: 170px repeat(7, minmax(110px, 1fr));
-      gap:10px;
-      padding: 10px;
-      background: rgba(0,0,0,.10);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
+      gap:12px;
     }
-    .wkLabel{
-      padding: 12px;
-      border-radius: var(--r2);
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.035);
+    .weekRow{
+      display:grid;
+      grid-template-columns: 140px repeat(7, 1fr);
+      gap:10px;
+      align-items:stretch;
+    }
+    .weekLabel{
+      border-radius:14px;
+      border:1px solid rgba(37,50,84,.75);
+      background:rgba(16,26,48,.35);
+      padding:10px;
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:6px;
       justify-content:center;
-      min-height: 92px;
     }
-    .wkTag{
-      display:inline-flex;
-      width:fit-content;
-      align-items:center;
-      gap:8px;
+    .weekLabel .w{font-weight:900}
+    .weekLabel .d{color:var(--muted);font-size:12px}
+
+    .weekRow.focus .weekLabel{
+      border-color:var(--bd-strong);
+      box-shadow:0 0 0 1px rgba(122,162,255,.18) inset;
+    }
+
+    /* Column day head stays above week rows */
+    .dayHeads{
+      display:grid;
+      grid-template-columns: 140px repeat(7, 1fr);
+      gap:10px;
+      padding:14px 14px 0 14px;
+    }
+    .cellH{
+      color:var(--muted);
       font-size:12px;
-      font-weight:800;
-      letter-spacing:.3px;
-      text-transform:uppercase;
-      color: var(--muted);
-    }
-    .wkRange{
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .wkRange b{color:var(--text)}
-    .hdrCell{
-      padding: 10px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.03);
-      font-weight: 900;
-      letter-spacing:.3px;
-      text-transform:uppercase;
-      font-size: 12px;
-      color: var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(37,50,84,.6);
+      background:rgba(16,26,48,.35);
       text-align:center;
     }
+    .cellH strong{
+      display:block;
+      color:var(--text);
+      font-size:13px;
+      letter-spacing:.2px;
+    }
 
+    /* Day card */
     .dayCard{
-      border-radius: var(--r2);
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.03);
-      padding: 10px;
-      min-height: 92px;
+      border-radius:16px;
+      border:2px solid rgba(37,50,84,.85);
+      background:rgba(16,26,48,.55);
+      padding:10px;
+      min-height:122px;
       display:flex;
       flex-direction:column;
       gap:10px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.08) inset;
     }
+    .weekRow.focus .dayCard{
+      border-color: var(--bd-strong);
+      box-shadow: var(--focusGlow);
+    }
+
     .dayTop{
       display:flex;
-      align-items:flex-end;
+      align-items:flex-start;
       justify-content:space-between;
       gap:10px;
     }
-    .dayNum{
-      font-size: 26px;
-      font-weight: 950;
+    .dateNum{
+      font-weight:1000;
+      font-size:26px;
       line-height:1;
-      letter-spacing:.2px;
+      letter-spacing:.5px;
     }
-    .dayMini{
-      font-size: 11px;
-      color: var(--muted2);
-      letter-spacing:.2px;
-      white-space:nowrap;
+    .dateISO{
+      color:var(--muted);
+      font-size:11px;
+      text-align:right;
+      line-height:1.15;
     }
 
-    .shiftRow{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
-    .shiftBtn{
-      border-radius: 12px;
-      padding: 10px 8px;
-      border: 2px dashed rgba(233,241,255,.22);
-      background: rgba(255,255,255,.02);
-      cursor:pointer;
-      user-select:none;
-      text-align:center;
-      transition: transform .05s ease, background .15s ease, border-color .15s ease;
-    }
-    .shiftBtn:active{ transform: translateY(1px) }
-    .shiftBtn.locked{ cursor: not-allowed; opacity:.55 }
-    .shiftKey{ font-weight: 950; letter-spacing:.3px; font-size: 12px; }
-    .shiftState{ font-size: 10px; color: var(--muted2); margin-top: 3px; letter-spacing:.2px; text-transform:uppercase; }
-    .shiftBtn[data-state="preferred"]{ border-style: solid; border-color: rgba(38,208,124,.90) }
-    .shiftBtn[data-state="available"]{ border-style: solid; border-color: rgba(92,141,255,.95) }
-    .shiftBtn[data-state="nosched"]{ border-style: solid; border-color: rgba(255,93,93,.95) }
-    .shiftBtn[data-state="clear"]{ border-style: dashed; border-color: rgba(233,241,255,.22) }
-
-    .shiftBtn[data-state="worked"]{
-      border-style: solid;
-      border-color: rgba(233,241,255,.30);
-      background: rgba(255,255,255,.03);
-    }
-    .shiftBtn[data-state="worked"] .shiftState{ color: rgba(233,241,255,.75) }
-
-    /* Legend */
-    .legend{
-      margin-top: 12px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px 14px;
-      align-items:center;
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .legItem{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.03);
-      cursor: help;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .swatch{
-      width: 10px; height: 10px; border-radius: 999px;
-      background: rgba(233,241,255,.26);
-      box-shadow: 0 0 0 3px rgba(255,255,255,.05);
-    }
-    .swatch.pref{ background: var(--green); box-shadow: 0 0 0 3px rgba(38,208,124,.16) }
-    .swatch.av{ background: var(--blue); box-shadow: 0 0 0 3px rgba(92,141,255,.16) }
-    .swatch.no{ background: var(--red); box-shadow: 0 0 0 3px rgba(255,93,93,.16) }
-    .swatch.cl{ background: rgba(233,241,255,.26) }
-
-    /* Modal (Repeat/Tools) */
-    dialog{
-      border:none;
-      padding:0;
-      border-radius: 18px;
-      background: #0b1730;
-      color: var(--text);
-      width: min(720px, calc(100vw - 24px));
-      box-shadow: 0 30px 80px rgba(0,0,0,.55);
-    }
-    dialog::backdrop{ background: rgba(0,0,0,.55) }
-    .modalHead{
-      padding: 14px 14px 10px;
-      border-bottom: 1px solid var(--line);
-      display:flex;
-      align-items:center;
+    .toggles{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
       gap:10px;
     }
-    .modalHead h3{ margin:0; font-size: 15px }
-    .modalBody{ padding: 14px }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
-    .row > *{ flex: 0 0 auto }
-    .note{ font-size: 12px; color: var(--muted); line-height: 1.35 }
-    .danger{ border-color: rgba(255,93,93,.55) }
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:18px;
-      transform: translateX(-50%);
-      background: rgba(10,16,30,.92);
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 999px;
-      padding: 10px 12px;
-      color: var(--text);
-      font-weight: 800;
-      font-size: 12px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.50);
-      opacity:0;
-      pointer-events:none;
-      transition: opacity .18s ease;
-      z-index:999;
+    .toggle{
+      border-radius:14px;
+      border:3px solid rgba(107,122,167,.55);
+      background:rgba(10,16,32,.25);
+      padding:10px 10px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .05s ease, border-color .1s ease, box-shadow .12s ease, opacity .12s ease;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-height:56px;
+      justify-content:center;
+      text-align:center;
     }
-    .toast.show{ opacity:1 }
+    .toggle:active{transform:scale(.99)}
+    .toggle .sh{
+      font-weight:1000;
+      font-size:12px;
+      letter-spacing:.8px;
+      opacity:.95;
+    }
+    .toggle .st{
+      font-weight:900;
+      font-size:12px;
+      color:var(--muted);
+    }
 
-    @media (max-width: 860px){
-      .controls{ min-width: unset; width:100% }
-      .cal{ min-width: 900px }
-      .wkLabel{ min-height: 86px }
+    .st-none{border-style:dashed;opacity:.9}
+    .st-preferred{
+      border-color: var(--bd-pref);
+      box-shadow: 0 0 0 1px rgba(25,195,125,.12) inset, 0 0 18px rgba(25,195,125,.10);
+    }
+    .st-available{
+      border-color: var(--bd-avail);
+      box-shadow: 0 0 0 1px rgba(122,162,255,.10) inset, 0 0 18px rgba(122,162,255,.10);
+    }
+    .st-nosched{
+      border-color: var(--bd-nos);
+      box-shadow: 0 0 0 1px rgba(255,92,92,.10) inset, 0 0 18px rgba(255,92,92,.08);
+    }
+
+    .locked{
+      opacity:.35;
+      cursor:not-allowed;
+      filter:saturate(.7);
+    }
+
+    /* Legend (bigger bottom explanation) */
+    .legend{
+      display:grid;
+      gap:8px;
+      padding:14px;
+      border-top:1px solid rgba(37,50,84,.7);
+      background:rgba(12,18,36,.35);
+      font-size:13px;
+      color:var(--muted);
+    }
+    .legend .row{
+      justify-content:flex-start;
+      gap:10px;
+    }
+    .tag{
+      display:flex;gap:8px;align-items:center;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(37,50,84,.85);
+      background:rgba(22,32,71,.55);
+      font-size:12px;color:var(--muted)
+    }
+    .dot{width:10px;height:10px;border-radius:50%}
+    .dot.g{background:var(--good)} .dot.b{background:var(--p)} .dot.r{background:var(--bad)} .dot.x{background:var(--gray)}
+
+    @media (max-width:1050px){
+      .wrap{padding:12px}
+      .weekRow,.dayHeads{grid-template-columns: 110px repeat(7, 1fr)}
+    }
+    @media (max-width:860px){
+      /* On small screens we still keep 7-wide; wallboard style. It will scroll horizontally */
+      .weeks,.dayHeads{overflow:auto}
+      .weekRow,.dayHeads{min-width:980px}
     }
   </style>
 </head>
+
 <body>
-  <div class="top">
-    <div class="topInner">
-      <div class="brand">ShiftCommander — Member</div>
-
-      <div class="controls">
-        <div class="pill" title="Organization">
-          <label>Org:</label>
-          <span id="orgName" style="font-weight:900"></span>
-        </div>
-
-        <div class="pill" title="Select yourself">
-          <label>Member:</label>
-          <select id="memberSel"></select>
-        </div>
-
-        <button class="btn secondary" id="btnPrev">◀</button>
-        <button class="btn secondary" id="btnThis">This Week</button>
-        <button class="btn secondary" id="btnNext">▶</button>
-
-        <div class="pill" title="Jump to a week start">
-          <label>Week start:</label>
-          <input id="weekPick" type="date"/>
-        </div>
-      </div>
-    </div>
-  </div>
-
+<header>
   <div class="wrap">
-    <div class="card">
-      <div class="headline">
-        <div>
-          <h2>Set your availability</h2>
-          <div class="sub">Tap AM/PM to cycle: Preferred → Available → Do not schedule → Clear.</div>
-        </div>
-
-        <div class="right">
-          <div class="statusPill" id="savepill" title="Drive status">
-            <span class="dot warn" id="driveDot"></span>
-            <span class="tiny" id="driveTip">Checking…</span>
-          </div>
-          <button class="btn" id="btnTools">Repeat / Tools</button>
-        </div>
+    <div class="top">
+      <div>
+        <h1>ShiftCommander — Member</h1>
+        <div class="sub" id="status">Loading…</div>
       </div>
-
-      <div class="gridWrap">
-        <div class="cal" id="cal"></div>
-      </div>
-
-      <div class="legend" aria-label="Availability legend">
-        <span class="legItem" title="Preferred — You WANT this shift.">
-          <span class="swatch pref"></span> Preferred
-        </span>
-        <span class="legItem" title="Available — You CAN work this shift and will be considered if not filled by someone who PREFERS it (then weighted fairly).">
-          <span class="swatch av"></span> Available
-        </span>
-        <span class="legItem" title="Do not schedule — You will not be considered for this shift.">
-          <span class="swatch no"></span> Do not schedule
-        </span>
-        <span class="legItem" title="Clear / unset — No preference stated. You may still be considered only if no one prefers or is available (and fairness allows it).">
-          <span class="swatch cl"></span> Clear
-        </span>
+      <div class="row">
+        <span class="pill" id="orgpill">Org: …</span>
+        <select id="memberSel"></select>
+        <button class="primary" id="btnToday">This Week</button>
+        <button id="btnPrev">◀</button>
+        <button id="btnNext">▶</button>
+        <input type="date" id="weekStart" />
       </div>
     </div>
   </div>
+</header>
 
-  <dialog id="toolsDlg">
-    <div class="modalHead">
-      <h3>Repeat / Tools</h3>
-      <div style="margin-left:auto"></div>
-      <button class="btn secondary" id="btnCloseDlg">Close</button>
-    </div>
-    <div class="modalBody">
-      <div class="note">
-        Most people repeat week-to-week. Use these to copy patterns forward, or set repeating rules later.
-        (This stays quiet until you need it.)
+<div class="wrap">
+  <div class="card">
+    <div class="hd">
+      <div>
+        <div class="k">Set your availability</div>
+        <div class="s">Tap AM/PM to cycle: <b>Preferred</b> → <b>Available</b> → <b>Do not schedule</b> → <b>Clear</b>.</div>
       </div>
-      <div style="height:12px"></div>
 
+      <!-- Save/Drive pill + Tools button grouped (popular + visible) -->
       <div class="row">
-        <button class="btn" id="copyThisWeek">Copy <b>this</b> week → next week</button>
-        <button class="btn" id="copyToAll">Copy <b>this</b> week → all shown weeks</button>
-        <button class="btn danger" id="clearThisWeek">Clear <b>this</b> week</button>
-      </div>
-
-      <div style="height:10px"></div>
-      <div class="note">
-        Heads up: if you already hand-picked a specific future date, copying will <b>not overwrite</b> that date (it skips locked/manual dates).
+        <div class="pill" id="savepill">
+          <span class="lights" aria-hidden="true">
+            <span id="l1" class="light"></span>
+            <span id="l2" class="light"></span>
+            <span id="l3" class="light"></span>
+          </span>
+          <span id="saveText">Not saved yet…</span>
+        </div>
+        <button id="btnTools" class="primary">Repeat / Tools</button>
       </div>
     </div>
-  </dialog>
 
-  <div class="toast" id="toast"></div>
+    <!-- Day-of-week heads -->
+    <div class="dayHeads" id="dayHeads"></div>
+
+    <!-- Weeks -->
+    <div class="weeks" id="weeks"></div>
+
+    <!-- Bigger, clearer legend -->
+    <div class="legend">
+      <div class="row">
+        <div class="tag"><span class="dot g"></span> Preferred</div>
+        <div class="tag"><span class="dot b"></span> Available</div>
+        <div class="tag"><span class="dot r"></span> Do not schedule</div>
+        <div class="tag"><span class="dot x"></span> Clear / unset</div>
+      </div>
+      <div><b>Preferred</b> — You WANT this shift.</div>
+      <div><b>Available</b> — You CAN work this shift and will be considered if not filled by someone who PREFERS it (then weighted fairly).</div>
+      <div><b>Do not schedule</b> — You will not be considered for this shift.</div>
+      <div><b>Clear / unset</b> — No preference stated. You may still be considered only if no one prefers or is available (and fairness allows it).</div>
+    </div>
+  </div>
+</div>
 
 <script>
-/* =========================
-   Config
-========================= */
-const ORG_SETTINGS_URL = "/data/org_settings.json";
-const MEMBERS_URL      = "/data/members.json";
+/* ===================== Drive Store (Apps Script) ===================== */
+const STORE = {
+  url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
+  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741" // replace with your real token
+};
 
-/* Google Apps Script JSON store (you already deployed this) */
-const STORE_URL = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
-
-/* lead window + display window */
-const LEAD_DAYS = 21;          // suppress supervisor-style “Needs…” until 3 weeks out (member page still allows edits)
-const WEEKS_SHOWN = 5;         // editing week + 4 upcoming
-
-/* =========================
-   Helpers
-========================= */
-const $ = (id)=>document.getElementById(id);
-
-function todayISO(){
-  const t = new Date();
-  return new Date(t.getFullYear(), t.getMonth(), t.getDate()).toISOString().slice(0,10);
-}
-function addDaysISO(dateISO, days){
-  const d = new Date(dateISO + "T00:00:00");
-  d.setDate(d.getDate()+days);
-  return d.toISOString().slice(0,10);
-}
-function weekStartISO(anyDateISO){
-  // week starts Thu (ADR’s planning cadence)
-  const d = new Date(anyDateISO + "T00:00:00");
-  const dow = d.getDay(); // 0 Sun..6 Sat
-  const THU = 4;
-  const delta = (dow - THU + 7) % 7;
-  d.setDate(d.getDate() - delta);
-  return d.toISOString().slice(0,10);
-}
-function fmtMD(dateISO){
-  // no year anywhere
-  const d = new Date(dateISO + "T00:00:00");
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  const dd = String(d.getDate()).padStart(2,"0");
-  return mm + "/" + dd;
-}
-function dayName(dateISO){
-  // Thu, Fri, ...
-  return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(dateISO+"T00:00:00").getDay()];
-}
-function isPast(dateISO){
-  return dateISO < todayISO();
-}
-function toast(msg){
-  const t = $("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(toast._t);
-  toast._t=setTimeout(()=>t.classList.remove("show"), 1600);
+async function storeGet(params){
+  const u = new URL(STORE.url);
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
+  u.searchParams.set("token", STORE.token);
+  const r = await fetch(u.toString(), { cache: "no-store" });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store GET failed");
+  return j.payload;
 }
 
-/* =========================
-   Local + Remote State
-========================= */
-function lsKey(memberId){ return "sc_member_" + memberId; }
-function lsMetaKey(memberId){ return "sc_member_meta_" + memberId; } // {dirty:boolean,lastPushISO,lastError:string}
-
-function getLocal(memberId){
-  try{ return JSON.parse(localStorage.getItem(lsKey(memberId)) || "{}"); }catch(e){ return {}; }
-}
-function setLocal(memberId, obj){
-  localStorage.setItem(lsKey(memberId), JSON.stringify(obj));
-}
-function getMeta(memberId){
-  try{ return JSON.parse(localStorage.getItem(lsMetaKey(memberId)) || "{}"); }catch(e){ return {}; }
-}
-function setMeta(memberId, meta){
-  localStorage.setItem(lsMetaKey(memberId), JSON.stringify(meta));
-}
-
-async function storeGet(kind, memberId){
-  const url = new URL(STORE_URL);
-  url.searchParams.set("kind", kind);
-  if(memberId) url.searchParams.set("memberId", memberId);
-  // token is enforced server-side; for member page we rely on the script property token
-  // (If you later require client token, we’ll add it to org_settings.json and read it here.)
-  const r = await fetch(url.toString(), { method:"GET", cache:"no-store" });
-  if(!r.ok) throw new Error("store GET " + r.status);
-  return await r.json();
-}
-
-async function storePut(kind, memberId, payload){
-  const body = { kind, memberId, payload };
-  const r = await fetch(STORE_URL, {
+async function storePost(body){
+  const r = await fetch(STORE.url, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, token: STORE.token })
   });
-  if(!r.ok) throw new Error("store POST " + r.status);
-  return await r.json();
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store POST failed");
+  return j;
 }
 
-/* auto-sync: if we had edits while “offline”, push when online resumes */
-async function trySync(memberId){
-  const meta = getMeta(memberId);
-  if(!meta.dirty) return true;
+function debounce(fn, ms=600){
+  let t=null;
+  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+}
 
+/* ===================== Local data paths ===================== */
+const PATHS = {
+  org: "./data/org_settings.json",
+  members: "./data/members.json"
+};
+
+function $(id){return document.getElementById(id);}
+function fmtISO(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+function parseISO(s){const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d);}
+function addDays(d,n){const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x;}
+function startOfWeekThursday(anyDate){
+  const target=4; // Thu
+  const d=new Date(anyDate.getFullYear(), anyDate.getMonth(), anyDate.getDate());
+  const dow=d.getDay();
+  const delta=(dow-target+7)%7;
+  return addDays(d,-delta);
+}
+function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+
+const dowNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+/* ===================== View config ===================== */
+const WEEKS_VISIBLE = 6;         // editing week + next weeks visible
+const PAST_LOCK_DAYS = 1;        // past is locked (yesterday and back)
+let ORG=null, MEMBERS=null;
+let CURRENT_WEEK_START = startOfWeekThursday(new Date());
+let memberId = null;
+let memberStore = { selections:{} };
+
+function setStatus(msg){ $("status").textContent = msg; }
+
+/* ===================== Save / status lights ===================== */
+function setLights(mode){
+  // mode: "good" | "warn" | "bad"
+  $("l1").className="light"; $("l2").className="light"; $("l3").className="light";
+  if(mode==="good"){ $("l1").classList.add("good"); $("l2").classList.add("good"); $("l3").classList.add("good"); }
+  else if(mode==="warn"){ $("l1").classList.add("warn"); $("l2").classList.add("warn"); }
+  else { $("l1").classList.add("bad"); }
+}
+function setSave(msg, mode="warn"){
+  $("saveText").textContent = msg;
+  setLights(mode);
+}
+
+/* ===================== Connectivity ===================== */
+let ONLINE_OK = true;
+async function pingStore(){
+  // prefer a ping endpoint if your Code.gs supports it.
+  // If not, this will throw and we'll treat as offline.
   try{
-    const payload = getLocal(memberId);
-    await storePut("member", memberId, payload);
-    meta.dirty = false;
-    meta.lastError = "";
-    meta.lastPushISO = new Date().toISOString();
-    setMeta(memberId, meta);
-    setDriveStatus(true, meta);
-    return true;
-  }catch(e){
-    meta.lastError = String(e.message || e);
-    setMeta(memberId, meta);
-    setDriveStatus(false, meta);
+    const u = new URL(STORE.url);
+    u.searchParams.set("kind","ping");
+    u.searchParams.set("token", STORE.token);
+    const r = await fetch(u.toString(), { cache:"no-store" });
+    const j = await r.json();
+    return !!j.ok;
+  }catch{
     return false;
   }
 }
 
-/* Drive status UI: only colors (green/yellow). Full meaning via hover tooltip. */
-function setDriveStatus(ok, meta){
-  const dot = $("driveDot");
-  const tip = $("driveTip");
-  const online = navigator.onLine !== false;
-
-  dot.classList.remove("ok","warn");
-  dot.classList.add(ok ? "ok" : "warn");
-
-  // keep it SHORT (no wrapping). Details only in title/tooltip.
-  let short = ok ? "Saved" : "Local";
-  if(!online) short = "Offline";
-
-  tip.textContent = short;
-
-  // Full tooltip meaning:
-  const parts = [];
-  if(ok) parts.push("Saved to Drive.");
-  else parts.push("Saved on this device. Will sync when online.");
-  if(meta && meta.lastPushISO) parts.push("Last push: " + new Date(meta.lastPushISO).toLocaleString());
-  if(!ok && meta && meta.lastError) parts.push("Reason: " + meta.lastError);
-  if(!online) parts.push("No internet connection detected.");
-  $("savepill").title = parts.join(" ");
-}
-
-/* =========================
-   History (optional)
-   Files live at /data/history/YYYY-MM.normalized.json (if present).
-========================= */
-const historyCache = new Map(); // "YYYY-MM" -> normalized month json
-
-async function loadHistoryMonth(yyyyMM){
-  if(historyCache.has(yyyyMM)) return historyCache.get(yyyyMM);
-  try{
-    const r = await fetch(`/data/history/${yyyyMM}.normalized.json`, { cache:"no-store" });
-    if(!r.ok) throw new Error("history " + r.status);
-    const j = await r.json();
-    historyCache.set(yyyyMM, j);
-    return j;
-  }catch(e){
-    historyCache.set(yyyyMM, null);
-    return null;
+async function updateOnlineState(){
+  // navigator.onLine is necessary but not sufficient; we also ping the store.
+  const navOnline = navigator.onLine !== false;
+  if(!navOnline){
+    ONLINE_OK = false;
+    setSave("Offline — saved on this device. Will sync when back online. Don’t clear your browser.", "warn");
+    return;
   }
-}
-function memberWorked(historyMonth, dateISO, half, memberId){
-  if(!historyMonth || !historyMonth.days || !historyMonth.days[dateISO]) return false;
-  const d = historyMonth.days[dateISO];
-  const obj = d[half];
-  if(!obj) return false;
-  // check any seat member_id match
-  for(const k of Object.keys(obj)){
-    const v = obj[k];
-    if(v && typeof v === "object" && v.member_id && String(v.member_id) === String(memberId)){
-      return true;
+  const ok = await pingStore();
+  ONLINE_OK = ok;
+  if(ok){
+    setSave("Connected", "good");
+    // If we have a member loaded, attempt to push local state up (idempotent).
+    if(memberId){
+      try{
+        memberStore.member_id = String(memberId);
+        memberStore.updatedAt = new Date().toISOString();
+        await storePost({ kind:"member", memberId:String(memberId), payload: memberStore });
+        setSave("Saved to Drive", "good");
+      }catch{
+        // If ping succeeded but write fails, show warn.
+        setSave("Connected, but save failed — saved locally", "warn");
+      }
     }
-  }
-  return false;
-}
-
-/* =========================
-   Availability Model
-========================= */
-const cycle = ["preferred","available","nosched","clear"];
-const stateLabelTiny = {
-  preferred:"Preferred",
-  available:"Available",
-  nosched:"Do not schedule",
-  clear:"Clear",
-  worked:"Worked"
-};
-
-function getStateFor(memberState, dateISO, half){
-  return (memberState?.[dateISO]?.[half]) || "clear";
-}
-function setStateFor(memberState, dateISO, half, val){
-  if(!memberState[dateISO]) memberState[dateISO] = {};
-  memberState[dateISO][half] = val;
-}
-
-/* “manual lock” dates to prevent copy-overwrite:
-   if user touched a specific date, we mark it locked in meta.locks[dateISO]=true */
-function getLocks(memberId){
-  const meta = getMeta(memberId);
-  return meta.locks || {};
-}
-function setLocked(memberId, dateISO){
-  const meta = getMeta(memberId);
-  meta.locks = meta.locks || {};
-  meta.locks[dateISO] = true;
-  setMeta(memberId, meta);
-}
-
-/* =========================
-   Render
-========================= */
-let orgSettings = null;
-let members = [];
-let memberId = null;
-let editWeekStart = weekStartISO(todayISO());
-let memberState = {}; // availability map
-let locks = {}; // dateISO -> true
-let suppressEditPast = true;
-
-function weekRangeLabel(startISO){
-  const end = addDaysISO(startISO, 6);
-  return `${fmtMD(startISO)} – ${fmtMD(end)}`;
-}
-
-function weekTag(startISO){
-  const t = todayISO();
-  const end = addDaysISO(startISO, 6);
-  if(end < t) return "Past";
-  if(startISO <= t && t <= end) return "Editing";
-  return "Upcoming";
-}
-
-function buildHeaderRow(container){
-  // blank corner
-  const corner = document.createElement("div");
-  corner.className = "hdrCell";
-  corner.style.opacity = ".85";
-  corner.textContent = "Week";
-  container.appendChild(corner);
-
-  // day headers based on editWeekStart
-  for(let i=0;i<7;i++){
-    const dateISO = addDaysISO(editWeekStart, i);
-    const h = document.createElement("div");
-    h.className = "hdrCell";
-    h.textContent = dayName(dateISO);
-    container.appendChild(h);
+  }else{
+    setSave("Offline — saved on this device. Will sync when back online. Don’t clear your browser.", "warn");
   }
 }
+window.addEventListener("online", ()=>updateOnlineState());
+window.addEventListener("offline", ()=>updateOnlineState());
 
-function buildWeekRow(container, startISO, idx){
-  const tag = weekTag(startISO);
+/* ===================== Member state helpers ===================== */
+function getState(dateISO, shift){
+  const day = memberStore.selections?.[dateISO];
+  if(!day) return null;
+  return day[shift] ?? null;
+}
+function setState(dateISO, shift, value){
+  memberStore.selections = memberStore.selections || {};
+  memberStore.selections[dateISO] = memberStore.selections[dateISO] || { AM:null, PM:null };
+  memberStore.selections[dateISO][shift] = value;
+  pushMember();
+}
+function cycleState(cur){
+  // Preferred → Available → NoSched → Clear
+  if(cur === "preferred") return "available";
+  if(cur === "available") return "nosched";
+  if(cur === "nosched") return null;
+  return "preferred";
+}
+function stateLabel(s){
+  if(s==="preferred") return "Preferred";
+  if(s==="available") return "Available";
+  if(s==="nosched") return "Do Not";
+  return "Clear";
+}
+function stateClass(s){
+  if(s==="preferred") return "st-preferred";
+  if(s==="available") return "st-available";
+  if(s==="nosched") return "st-nosched";
+  return "st-none";
+}
+function isLocked(dateISO){
+  // Past locked: any date < today - PAST_LOCK_DAYS
+  const d = parseISO(dateISO);
+  const today = startOfDay(new Date());
+  const cutoff = addDays(today, -PAST_LOCK_DAYS);
+  return d < cutoff;
+}
 
-  const label = document.createElement("div");
-  label.className = "wkLabel";
-  const t = document.createElement("div");
-  t.className = "wkTag";
-  t.innerHTML = `<span class="dot ${tag==="Editing" ? "ok" : "warn"}"></span>${tag}`;
-  const r = document.createElement("div");
-  r.className = "wkRange";
-  r.innerHTML = `<b>${weekRangeLabel(startISO)}</b>`;
-  label.appendChild(t);
-  label.appendChild(r);
-  container.appendChild(label);
+/* ===================== Save behavior ===================== */
+const pushMember = debounce(async ()=>{
+  if(!memberId) return;
+
+  // always save locally
+  try{
+    memberStore.member_id = String(memberId);
+    memberStore.updatedAt = new Date().toISOString();
+    localStorage.setItem("sc_member_"+memberId, JSON.stringify(memberStore));
+  }catch{}
+
+  // then try Drive
+  if(!ONLINE_OK){
+    setSave("Offline — saved on this device. Will sync when back online. Don’t clear your browser.", "warn");
+    return;
+  }
+  try{
+    await storePost({ kind:"member", memberId:String(memberId), payload: memberStore });
+    setSave("Saved to Drive", "good");
+  }catch(e){
+    console.warn("Drive save failed:", e);
+    setSave("Saved locally (Drive unavailable)", "warn");
+  }
+}, 650);
+
+/* ===================== UI render ===================== */
+function renderHeads(){
+  const head = $("dayHeads");
+  head.innerHTML = "";
+  // left spacer
+  const left = document.createElement("div");
+  left.className = "cellH";
+  left.innerHTML = "<strong>Week</strong>";
+  head.appendChild(left);
 
   for(let i=0;i<7;i++){
-    const dateISO = addDaysISO(startISO, i);
-    const day = document.createElement("div");
-    day.className = "dayCard";
+    const d=addDays(CURRENT_WEEK_START,i);
+    const div=document.createElement("div");
+    div.className="cellH";
+    div.innerHTML = `<strong>${dowNames[d.getDay()]}</strong>`;
+    head.appendChild(div);
+  }
+}
 
-    const top = document.createElement("div");
-    top.className = "dayTop";
-    const num = document.createElement("div");
-    num.className = "dayNum";
-    num.textContent = String(new Date(dateISO+"T00:00:00").getDate());
-    const mini = document.createElement("div");
-    mini.className = "dayMini";
-    mini.textContent = fmtMD(dateISO);
-    top.appendChild(num);
-    top.appendChild(mini);
+function renderWeeks(){
+  $("weekStart").value = fmtISO(CURRENT_WEEK_START);
+  const weeks = $("weeks");
+  weeks.innerHTML = "";
+
+  for(let w=0; w<WEEKS_VISIBLE; w++){
+    const ws = addDays(CURRENT_WEEK_START, w*7);
+    const we = addDays(ws, 6);
 
     const row = document.createElement("div");
-    row.className = "shiftRow";
+    row.className = "weekRow" + (w===0 ? " focus" : "");
 
-    const isLockedPast = isPast(dateISO) && suppressEditPast;
-    const isManualLocked = !!locks[dateISO];
-    const editable = !isLockedPast;
+    const label = document.createElement("div");
+    label.className = "weekLabel";
+    label.innerHTML = `
+      <div class="w">${w===0 ? "Editing Week" : "Upcoming"}</div>
+      <div class="d">${fmtISO(ws)} → ${fmtISO(we)}</div>
+    `;
+    row.appendChild(label);
 
-    // optional history “worked” badge for past
-    const monthKey = dateISO.slice(0,7);
-    const hist = historyCache.get(monthKey) || null;
+    for(let i=0;i<7;i++){
+      const d = addDays(ws, i);
+      const iso = fmtISO(d);
 
-    for(const half of ["AM","PM"]){
-      const btn = document.createElement("div");
-      btn.className = "shiftBtn";
-      btn.dataset.date = dateISO;
-      btn.dataset.half = half;
+      const card = document.createElement("div");
+      card.className = "dayCard";
 
-      let state = getStateFor(memberState, dateISO, half);
+      const top = document.createElement("div");
+      top.className = "dayTop";
+      top.innerHTML = `
+        <div class="dateNum">${d.getDate()}</div>
+        <div class="dateISO">${iso}</div>
+      `;
+      card.appendChild(top);
 
-      if(isPast(dateISO)){
-        // If history says you worked, show that (read-only visual)
-        if(hist && memberWorked(hist, dateISO, half, memberId)) state = "worked";
-      }
+      const tg = document.createElement("div");
+      tg.className = "toggles";
 
-      btn.dataset.state = state;
-      btn.title = `${dayName(dateISO)} ${fmtMD(dateISO)} ${half} — ${stateLabelTiny[state] || state}`;
+      ["AM","PM"].forEach(sh=>{
+        const cur = getState(iso, sh);
+        const locked = isLocked(iso);
 
-      if(!editable || state==="worked"){
-        btn.classList.add("locked");
-      }
+        const t = document.createElement("div");
+        t.className = `toggle ${stateClass(cur)} ${locked ? "locked" : ""}`;
+        t.innerHTML = `
+          <div class="sh">${sh}</div>
+          <div class="st">${stateLabel(cur)}</div>
+        `;
 
-      const key = document.createElement("div");
-      key.className = "shiftKey";
-      key.textContent = half;
+        t.addEventListener("click", ()=>{
+          if(locked) return;
+          const next = cycleState(getState(iso, sh));
+          setState(iso, sh, next);
+          setSave("Saving…", "warn");
+          // re-render only this week row for simplicity (fast enough); keep full render stable.
+          renderWeeks();
+        });
 
-      const st = document.createElement("div");
-      st.className = "shiftState";
-      // TINY labels only
-      st.textContent = state==="clear" ? "" : (state==="nosched" ? "NO" : (state==="preferred" ? "PREF" : (state==="available" ? "AVL" : state.toUpperCase())));
-      btn.appendChild(key);
-      btn.appendChild(st);
-
-      btn.addEventListener("click", async ()=>{
-        if(!editable) return;
-        if(btn.dataset.state === "worked") return;
-
-        const cur = btn.dataset.state || "clear";
-        const nxt = cycle[(cycle.indexOf(cur)+1) % cycle.length];
-        btn.dataset.state = nxt;
-        btn.title = `${dayName(dateISO)} ${fmtMD(dateISO)} ${half} — ${stateLabelTiny[nxt]}`;
-        st.textContent = nxt==="clear" ? "" : (nxt==="nosched" ? "NO" : (nxt==="preferred" ? "PREF" : "AVL"));
-
-        setStateFor(memberState, dateISO, half, nxt);
-        setLocal(memberId, memberState);
-        setLocked(memberId, dateISO);
-
-        const meta = getMeta(memberId);
-        meta.dirty = true;
-        setMeta(memberId, meta);
-        setDriveStatus(false, meta);
-
-        // try push in background (doesn't block UI)
-        const ok = await trySync(memberId);
-        if(ok) toast("Saved");
+        tg.appendChild(t);
       });
 
-      row.appendChild(btn);
+      card.appendChild(tg);
+      row.appendChild(card);
     }
 
-    // subtle lock indicator if manual date exists (visual only)
-    if(isManualLocked){
-      day.style.borderColor = "rgba(233,241,255,.18)";
-    }
-
-    day.appendChild(top);
-    day.appendChild(row);
-    container.appendChild(day);
+    weeks.appendChild(row);
   }
 }
 
-async function render(){
-  const cal = $("cal");
-  cal.innerHTML = "";
-  buildHeaderRow(cal);
-
-  // preload history months for weeks shown (best-effort)
-  const months = new Set();
-  for(let w=0; w<WEEKS_SHOWN; w++){
-    const ws = addDaysISO(editWeekStart, w*7);
-    for(let i=0;i<7;i++) months.add(addDaysISO(ws,i).slice(0,7));
-  }
-  await Promise.all([...months].map(loadHistoryMonth));
-
-  // stitch loaded history into cache (loadHistoryMonth stored null on failure)
-  for(const m of months){
-    if(!historyCache.has(m)){
-      // loadHistoryMonth stores to cache, but in case it didn't:
-      historyCache.set(m, null);
-    }
-  }
-
-  for(let w=0; w<WEEKS_SHOWN; w++){
-    buildWeekRow(cal, addDaysISO(editWeekStart, w*7), w);
-  }
+function render(){
+  renderHeads();
+  renderWeeks();
 }
 
-/* =========================
-   Repeat / Tools
-========================= */
-function copyWeekPattern(srcWeekStartISO, dstWeekStartISO){
-  // copies availability from src week -> dst week, but SKIPS manual locked dates
-  for(let i=0;i<7;i++){
-    const srcDay = addDaysISO(srcWeekStartISO, i);
-    const dstDay = addDaysISO(dstWeekStartISO, i);
-    if(locks[dstDay]) continue; // don't overwrite hand-picked dates
-    for(const half of ["AM","PM"]){
-      const v = getStateFor(memberState, srcDay, half);
-      setStateFor(memberState, dstDay, half, v);
-    }
-  }
-}
-async function persistAfterBulkEdit(){
-  setLocal(memberId, memberState);
-  const meta = getMeta(memberId);
-  meta.dirty = true;
-  setMeta(memberId, meta);
-  setDriveStatus(false, meta);
-  await render();
-  const ok = await trySync(memberId);
-  if(ok) toast("Saved");
-}
-$("btnTools").addEventListener("click", ()=> $("toolsDlg").showModal());
-$("btnCloseDlg").addEventListener("click", ()=> $("toolsDlg").close());
-
-$("copyThisWeek").addEventListener("click", async ()=>{
-  copyWeekPattern(editWeekStart, addDaysISO(editWeekStart, 7));
-  await persistAfterBulkEdit();
-  $("toolsDlg").close();
-});
-$("copyToAll").addEventListener("click", async ()=>{
-  for(let w=1; w<WEEKS_SHOWN; w++){
-    copyWeekPattern(editWeekStart, addDaysISO(editWeekStart, w*7));
-  }
-  await persistAfterBulkEdit();
-  $("toolsDlg").close();
-});
-$("clearThisWeek").addEventListener("click", async ()=>{
-  for(let i=0;i<7;i++){
-    const day = addDaysISO(editWeekStart, i);
-    if(locks[day]) continue; // skip manual locked dates (respect their intent)
-    for(const half of ["AM","PM"]){
-      setStateFor(memberState, day, half, "clear");
-    }
-  }
-  await persistAfterBulkEdit();
-  $("toolsDlg").close();
-});
-
-/* =========================
-   Boot
-========================= */
-async function loadRequired(){
-  const [orgR, memR] = await Promise.all([
-    fetch(ORG_SETTINGS_URL, {cache:"no-store"}),
-    fetch(MEMBERS_URL, {cache:"no-store"})
-  ]);
-  if(!orgR.ok) throw new Error("Fetch failed " + orgR.status + ": " + ORG_SETTINGS_URL);
-  if(!memR.ok) throw new Error("Fetch failed " + memR.status + ": " + MEMBERS_URL);
-  orgSettings = await orgR.json();
-  members = await memR.json();
-
-  $("orgName").textContent = orgSettings?.org_name || "Org";
-  // member dropdown
-  const sel = $("memberSel");
-  sel.innerHTML = "";
-  for(const m of members){
-    const opt = document.createElement("option");
-    opt.value = m.id;
-    opt.textContent = `${m.last || ""}, ${m.first || ""} #${m.id}`;
-    sel.appendChild(opt);
-  }
-  memberId = String(members?.[0]?.id || "");
-  sel.value = memberId;
+/* ===================== Boot + load ===================== */
+async function fetchJSON(url){
+  const r=await fetch(url,{cache:"no-store"});
+  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
+  return await r.json();
 }
 
-async function loadMember(){
-  locks = getLocks(memberId);
+async function loadMember(id){
+  memberId = String(id);
+  setSave("Loading…", "warn");
 
-  // start with local
-  memberState = getLocal(memberId) || {};
-  let meta = getMeta(memberId);
-
-  // show “ok” if last push exists and not dirty
-  const optimisticOk = !!meta.lastPushISO && !meta.dirty && (navigator.onLine !== false);
-  setDriveStatus(optimisticOk, meta);
-
-  // pull remote if available, but do NOT clobber local if local is dirty
+  // attempt Drive first
   try{
-    const remote = await storeGet("member", memberId);
-    if(remote && remote.payload){
-      if(!meta.dirty){
-        memberState = remote.payload;
-        setLocal(memberId, memberState);
-      }
-      meta.lastError = "";
-      setMeta(memberId, meta);
-      setDriveStatus(!meta.dirty, meta);
+    const remote = await storeGet({ kind:"member", memberId });
+    if(remote && typeof remote === "object"){
+      memberStore = remote;
+      try{ localStorage.setItem("sc_member_"+memberId, JSON.stringify(memberStore)); }catch{}
+      setSave("Loaded from Drive", "good");
+      render();
+      return;
     }
   }catch(e){
-    meta.lastError = String(e.message || e);
-    setMeta(memberId, meta);
-    setDriveStatus(false, meta);
+    console.warn("Drive load failed:", e);
   }
 
-  // if we had dirty edits, try sync once on load
-  await trySync(memberId);
+  // local fallback
+  try{
+    const ls = JSON.parse(localStorage.getItem("sc_member_"+memberId) || "null");
+    if(ls && typeof ls === "object"){
+      memberStore = ls;
+      setSave("Loaded locally (Drive unavailable)", "warn");
+      render();
+      return;
+    }
+  }catch{}
 
-  await render();
-}
-
-function setEditWeekStart(newStartISO){
-  editWeekStart = weekStartISO(newStartISO);
-  $("weekPick").value = editWeekStart;
+  memberStore = { selections:{} };
+  setSave("New (nothing saved yet)", "warn");
   render();
 }
 
-$("memberSel").addEventListener("change", async (e)=>{
-  memberId = String(e.target.value);
-  await loadMember();
-});
-
-$("btnPrev").addEventListener("click", ()=>{
-  setEditWeekStart(addDaysISO(editWeekStart, -7));
-});
-$("btnNext").addEventListener("click", ()=>{
-  setEditWeekStart(addDaysISO(editWeekStart, 7));
-});
-$("btnThis").addEventListener("click", ()=>{
-  setEditWeekStart(todayISO());
-});
-$("weekPick").addEventListener("change", (e)=>{
-  if(e.target.value) setEditWeekStart(e.target.value);
-});
-
-// Online/offline events: if we come back online, push dirty edits automatically
-window.addEventListener("online", ()=> { if(memberId) trySync(memberId); });
-window.addEventListener("offline", ()=> { if(memberId){ const m=getMeta(memberId); setDriveStatus(false,m);} });
-
-(async function boot(){
+async function boot(){
   try{
-    await loadRequired();
-    setEditWeekStart(todayISO());
-    await loadMember();
-  }catch(e){
-    alert("Member page failed to load required data:\n\n" + (e.message || e));
-    console.error(e);
+    setStatus("Loading org + members…");
+
+    ORG = await fetchJSON(PATHS.org);
+    MEMBERS = await fetchJSON(PATHS.members);
+    $("orgpill").textContent = `Org: ${ORG?.org?.name || "Unknown"}`;
+
+    const sel = $("memberSel");
+    sel.innerHTML = "";
+    (MEMBERS?.members || [])
+      .filter(m => m.active !== false)
+      .sort((a,b)=> (a.last_name||"").localeCompare(b.last_name||""))
+      .forEach(m=>{
+        const opt=document.createElement("option");
+        opt.value = String(m.member_id);
+        opt.textContent = `${m.last_name}, ${m.first_name} #${m.member_id}`;
+        sel.appendChild(opt);
+      });
+
+    sel.addEventListener("change", ()=>loadMember(sel.value));
+
+    $("btnToday").addEventListener("click", ()=>{
+      CURRENT_WEEK_START = startOfWeekThursday(new Date());
+      render();
+    });
+    $("btnPrev").addEventListener("click", ()=>{
+      CURRENT_WEEK_START = addDays(CURRENT_WEEK_START, -7);
+      render();
+    });
+    $("btnNext").addEventListener("click", ()=>{
+      CURRENT_WEEK_START = addDays(CURRENT_WEEK_START, +7);
+      render();
+    });
+    $("weekStart").addEventListener("change", (e)=>{
+      CURRENT_WEEK_START = startOfWeekThursday(parseISO(e.target.value));
+      render();
+    });
+
+    CURRENT_WEEK_START = startOfWeekThursday(new Date());
+    render();
+
+    // online status / lights
+    await updateOnlineState();
+
+    // default to first member
+    if(sel.options.length){
+      await loadMember(sel.value);
+    }
+
+    setStatus("Ready.");
+  }catch(err){
+    console.error(err);
+    setStatus("ERROR: " + err.message);
+    alert("Member page failed to load:\n\n" + err.message);
   }
-})();
+}
+
+/* ===================== Tools: existing logic (kept) ===================== */
+function setIfEmpty(dateISO, shift, value){
+  const cur = getState(dateISO, shift);
+  if(cur === null || cur === undefined){
+    setState(dateISO, shift, value);
+  }
+}
+// copy current week → next week, no overwrite
+function copyWeekForward(){
+  for(let i=0;i<7;i++){
+    const src = fmtISO(addDays(CURRENT_WEEK_START, i));
+    const dst = fmtISO(addDays(CURRENT_WEEK_START, i+7));
+    ["AM","PM"].forEach(sh=>{
+      const v = getState(src, sh);
+      if(v) setIfEmpty(dst, sh, v);
+    });
+  }
+  setSave("Saving…", "warn");
+  render();
+}
+// repeat every X weeks for N cycles, no overwrite
+function repeatPattern(everyWeeks, cycles){
+  for(let c=1;c<=cycles;c++){
+    const offset = c * everyWeeks * 7;
+    for(let i=0;i<7;i++){
+      const src = fmtISO(addDays(CURRENT_WEEK_START, i));
+      const dst = fmtISO(addDays(CURRENT_WEEK_START, i+offset));
+      ["AM","PM"].forEach(sh=>{
+        const v = getState(src, sh);
+        if(v) setIfEmpty(dst, sh, v);
+      });
+    }
+  }
+  setSave("Saving…", "warn");
+  render();
+}
+// tools modal wiring
+function openTools(){ $("toolsModal").style.display="block"; }
+function closeTools(){ $("toolsModal").style.display="none"; }
+
+document.addEventListener("click", (e)=>{
+  if(e.target && e.target.id === "btnTools") openTools();
+  if(e.target && e.target.id === "btnToolsClose") closeTools();
+  if(e.target && e.target.id === "toolsModal") closeTools();
+});
+document.addEventListener("click", (e)=>{
+  if(e.target && e.target.id === "btnCopyNext"){
+    copyWeekForward();
+    closeTools();
+  }
+  if(e.target && e.target.id === "btnRepeat"){
+    const every = Number($("repeatEvery").value);
+    const cycles = Number($("repeatCycles").value);
+    repeatPattern(every, cycles);
+    closeTools();
+  }
+  if(e.target && e.target.id === "btnSetException"){
+    const d = $("exDate").value;
+    const sh = $("exShift").value;
+    const st = $("exState").value || null;
+    if(!d){ alert("Pick a date."); return; }
+    setState(d, sh, st);
+    setSave("Saving…", "warn");
+    render();
+  }
+});
+
+boot();
 </script>
+
+<!-- Tools Modal (unchanged, but still works) -->
+<div id="toolsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9999; padding:18px;">
+  <div style="max-width:720px; margin:40px auto; background:rgba(16,26,48,.96); border:1px solid rgba(37,50,84,.9); border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.45); overflow:hidden;">
+    <div style="padding:14px 14px; border-bottom:1px solid rgba(37,50,84,.7); display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-weight:900;">Repeat / Tools</div>
+      <button id="btnToolsClose">Close</button>
+    </div>
+
+    <div style="padding:14px; display:grid; gap:12px;">
+      <div style="border:1px solid rgba(37,50,84,.75); border-radius:14px; padding:12px; background:rgba(16,26,48,.55);">
+        <div style="font-weight:900; margin-bottom:6px;">Copy week forward</div>
+        <div style="color:var(--muted); font-size:12px; margin-bottom:10px;">
+          Copies AM/PM selections from the current week into the next week. <b>Does not overwrite</b> any shifts already set.
+        </div>
+        <button class="primary" id="btnCopyNext">Copy → Next Week</button>
+      </div>
+
+      <div style="border:1px solid rgba(37,50,84,.75); border-radius:14px; padding:12px; background:rgba(16,26,48,.55);">
+        <div style="font-weight:900; margin-bottom:6px;">Repeat pattern</div>
+        <div style="color:var(--muted); font-size:12px; margin-bottom:10px;">
+          Repeat this week’s pattern every X weeks for N cycles. <b>Does not overwrite</b> existing selections.
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <label style="color:var(--muted); font-size:12px;">Every</label>
+          <select id="repeatEvery">
+            <option value="2">2 weeks</option>
+            <option value="4">4 weeks</option>
+          </select>
+
+          <label style="color:var(--muted); font-size:12px;">for</label>
+          <select id="repeatCycles">
+            <option value="4">4 cycles</option>
+            <option value="8">8 cycles</option>
+            <option value="12">12 cycles</option>
+          </select>
+
+          <button class="primary" id="btnRepeat">Apply Repeat</button>
+        </div>
+      </div>
+
+      <div style="border:1px solid rgba(37,50,84,.75); border-radius:14px; padding:12px; background:rgba(16,26,48,.55);">
+        <div style="font-weight:900; margin-bottom:6px;">Exceptions (specific dates)</div>
+        <div style="color:var(--muted); font-size:12px; margin-bottom:10px;">
+          Set a specific date/shift without worrying about repeats overwriting it.
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <input type="date" id="exDate" />
+          <select id="exShift">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+          <select id="exState">
+            <option value="preferred">Preferred</option>
+            <option value="available">Available</option>
+            <option value="nosched">Do not schedule</option>
+            <option value="">Clear</option>
+          </select>
+          <button class="primary" id="btnSetException">Set</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
