@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "updated_at": "2025-12-27T00:00:00Z",
+  "qualifications": [
+    { "id": "ALS", "label": "ALS Provider", "category": "Clinical", "active": true },
+    { "id": "EMT", "label": "EMT", "category": "Clinical", "active": true },
+    { "id": "DRIVER", "label": "Driver", "category": "Operational", "active": true },
+
+    { "id": "FTO", "label": "FTO", "category": "Training", "active": true },
+    { "id": "STUDENT", "label": "Student / Rider", "category": "Training", "active": true }
+  ]
+}
