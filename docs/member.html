@@ -10,77 +10,267 @@
       --p:#7aa2ff; --good:#19c37d; --warn:#f7b955; --bad:#ff5c5c; --gray:#6b7aa7;
       --shadow: 0 10px 30px rgba(0,0,0,.35); --radius:16px;
       --bd: rgba(37,50,84,.9);
+
+      /* bolder borders */
+      --bd-strong: rgba(122,162,255,.75);
+      --bd-soft: rgba(37,50,84,.75);
+
+      /* state borders */
+      --bd-pref: rgba(25,195,125,.85);
+      --bd-avail: rgba(122,162,255,.85);
+      --bd-nos: rgba(255,92,92,.85);
+
+      /* focus week styling */
+      --focusGlow: 0 0 0 2px rgba(122,162,255,.22), 0 12px 35px rgba(0,0,0,.35);
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
       background: radial-gradient(1200px 800px at 15% 10%, #12224c 0%, var(--bg) 55%);
-      color:var(--text);}
-    header{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.72);backdrop-filter:blur(10px);
-      border-bottom:1px solid rgba(37,50,84,.75);}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px;}
-    .top{display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;}
+      color:var(--text);
+    }
+
+    header{
+      position:sticky;top:0;z-index:10;
+      background:rgba(11,18,32,.72);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid rgba(37,50,84,.75);
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:16px;}
+    .top{
+      display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;
+    }
     h1{margin:0;font-size:18px}
     .sub{color:var(--muted);font-size:12px;margin-top:4px}
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+
     select,input,button{
       border-radius:12px;border:1px solid var(--bd);
       background:rgba(16,26,48,.9);color:var(--text);
       padding:10px 12px;outline:none;
     }
     button{cursor:pointer}
-    button.primary{border-color:rgba(122,162,255,.8);box-shadow:0 0 0 1px rgba(122,162,255,.12) inset;}
-    .pill{padding:8px 10px;border-radius:999px;background:rgba(22,32,71,.65);
-      border:1px solid rgba(37,50,84,.85);color:var(--muted);font-size:12px;}
+    button.primary{
+      border-color:rgba(122,162,255,.8);
+      box-shadow:0 0 0 1px rgba(122,162,255,.12) inset;
+    }
+
+    .pill{
+      padding:8px 10px;border-radius:999px;
+      background:rgba(22,32,71,.65);
+      border:1px solid rgba(37,50,84,.85);
+      color:var(--muted);font-size:12px;
+      display:flex;align-items:center;gap:10px;
+      white-space:nowrap;
+    }
+
+    /* “status lights” look */
+    .lights{display:flex;gap:6px;align-items:center}
+    .light{width:10px;height:10px;border-radius:50%;background:var(--gray);box-shadow:0 0 0 1px rgba(0,0,0,.35) inset}
+    .light.good{background:var(--good)}
+    .light.warn{background:var(--warn)}
+    .light.bad{background:var(--bad)}
+
     .card{
       margin-top:14px;
       background:linear-gradient(180deg, rgba(16,26,48,.92), rgba(10,16,32,.92));
-      border:1px solid rgba(37,50,84,.9);border-radius:var(--radius);box-shadow:var(--shadow);
+      border:1px solid rgba(37,50,84,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       overflow:hidden;
     }
-    .card .hd{padding:14px;border-bottom:1px solid rgba(37,50,84,.7);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:rgba(15,23,48,.55)}
-    .card .hd .k{font-weight:800}
+    .card .hd{
+      padding:14px;
+      border-bottom:1px solid rgba(37,50,84,.7);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      background:rgba(15,23,48,.55)
+    }
+    .card .hd .k{font-weight:900}
     .card .hd .s{color:var(--muted);font-size:12px}
-    .grid{
+
+    /* NEW: multi-week grid (each week = a row) */
+    .weeks{
+      padding:14px;
+      display:grid;
+      gap:12px;
+    }
+    .weekRow{
       display:grid;
       grid-template-columns: 140px repeat(7, 1fr);
       gap:10px;
-      padding:14px;
+      align-items:stretch;
+    }
+    .weekLabel{
+      border-radius:14px;
+      border:1px solid rgba(37,50,84,.75);
+      background:rgba(16,26,48,.35);
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      justify-content:center;
+    }
+    .weekLabel .w{font-weight:900}
+    .weekLabel .d{color:var(--muted);font-size:12px}
+
+    .weekRow.focus .weekLabel{
+      border-color:var(--bd-strong);
+      box-shadow:0 0 0 1px rgba(122,162,255,.18) inset;
+    }
+
+    /* Column day head stays above week rows */
+    .dayHeads{
+      display:grid;
+      grid-template-columns: 140px repeat(7, 1fr);
+      gap:10px;
+      padding:14px 14px 0 14px;
     }
     .cellH{
-      color:var(--muted);font-size:12px;padding:8px 10px;border-radius:12px;
-      border:1px solid rgba(37,50,84,.6);background:rgba(16,26,48,.35);
+      color:var(--muted);
+      font-size:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(37,50,84,.6);
+      background:rgba(16,26,48,.35);
+      text-align:center;
     }
-    .shiftLbl{
-      display:flex;flex-direction:column;gap:6px;
-      padding:10px;border-radius:14px;border:1px solid rgba(37,50,84,.75);
-      background:rgba(16,26,48,.45);
+    .cellH strong{
+      display:block;
+      color:var(--text);
+      font-size:13px;
+      letter-spacing:.2px;
     }
-    .shiftLbl .d{font-weight:800}
-    .shiftLbl .t{color:var(--muted);font-size:12px}
-    .pick{
-      border-radius:14px;border:1px solid rgba(37,50,84,.85);
+
+    /* Day card */
+    .dayCard{
+      border-radius:16px;
+      border:2px solid rgba(37,50,84,.85);
       background:rgba(16,26,48,.55);
-      padding:10px;min-height:64px;
-      display:flex;flex-direction:column;justify-content:center;gap:6px;
-      cursor:pointer; user-select:none;
-      transition: transform .05s ease, border-color .1s ease;
+      padding:10px;
+      min-height:122px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.08) inset;
     }
-    .pick:active{transform:scale(.99)}
-    .pick .state{font-weight:900;font-size:13px}
-    .pick .hint{color:var(--muted);font-size:11px}
-    .st-none{border-style:dashed;opacity:.85}
-    .st-preferred{border-color: rgba(25,195,125,.65); box-shadow: 0 0 0 1px rgba(25,195,125,.10) inset}
-    .st-available{border-color: rgba(122,162,255,.6); box-shadow: 0 0 0 1px rgba(122,162,255,.08) inset}
-    .st-nosched{border-color: rgba(255,92,92,.65); box-shadow: 0 0 0 1px rgba(255,92,92,.10) inset}
-    .legend{display:flex;gap:10px;flex-wrap:wrap;padding:0 14px 14px}
-    .tag{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(37,50,84,.85);background:rgba(22,32,71,.55);font-size:12px;color:var(--muted)}
+    .weekRow.focus .dayCard{
+      border-color: var(--bd-strong);
+      box-shadow: var(--focusGlow);
+    }
+
+    .dayTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .dateNum{
+      font-weight:1000;
+      font-size:26px;
+      line-height:1;
+      letter-spacing:.5px;
+    }
+    .dateISO{
+      color:var(--muted);
+      font-size:11px;
+      text-align:right;
+      line-height:1.15;
+    }
+
+    .toggles{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .toggle{
+      border-radius:14px;
+      border:3px solid rgba(107,122,167,.55);
+      background:rgba(10,16,32,.25);
+      padding:10px 10px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .05s ease, border-color .1s ease, box-shadow .12s ease, opacity .12s ease;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-height:56px;
+      justify-content:center;
+      text-align:center;
+    }
+    .toggle:active{transform:scale(.99)}
+    .toggle .sh{
+      font-weight:1000;
+      font-size:12px;
+      letter-spacing:.8px;
+      opacity:.95;
+    }
+    .toggle .st{
+      font-weight:900;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .st-none{border-style:dashed;opacity:.9}
+    .st-preferred{
+      border-color: var(--bd-pref);
+      box-shadow: 0 0 0 1px rgba(25,195,125,.12) inset, 0 0 18px rgba(25,195,125,.10);
+    }
+    .st-available{
+      border-color: var(--bd-avail);
+      box-shadow: 0 0 0 1px rgba(122,162,255,.10) inset, 0 0 18px rgba(122,162,255,.10);
+    }
+    .st-nosched{
+      border-color: var(--bd-nos);
+      box-shadow: 0 0 0 1px rgba(255,92,92,.10) inset, 0 0 18px rgba(255,92,92,.08);
+    }
+
+    .locked{
+      opacity:.35;
+      cursor:not-allowed;
+      filter:saturate(.7);
+    }
+
+    /* Legend (bigger bottom explanation) */
+    .legend{
+      display:grid;
+      gap:8px;
+      padding:14px;
+      border-top:1px solid rgba(37,50,84,.7);
+      background:rgba(12,18,36,.35);
+      font-size:13px;
+      color:var(--muted);
+    }
+    .legend .row{
+      justify-content:flex-start;
+      gap:10px;
+    }
+    .tag{
+      display:flex;gap:8px;align-items:center;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(37,50,84,.85);
+      background:rgba(22,32,71,.55);
+      font-size:12px;color:var(--muted)
+    }
     .dot{width:10px;height:10px;border-radius:50%}
     .dot.g{background:var(--good)} .dot.b{background:var(--p)} .dot.r{background:var(--bad)} .dot.x{background:var(--gray)}
-    @media (max-width:980px){
-      .grid{grid-template-columns: 110px repeat(7, 1fr)}
+
+    @media (max-width:1050px){
+      .wrap{padding:12px}
+      .weekRow,.dayHeads{grid-template-columns: 110px repeat(7, 1fr)}
+    }
+    @media (max-width:860px){
+      /* On small screens we still keep 7-wide; wallboard style. It will scroll horizontally */
+      .weeks,.dayHeads{overflow:auto}
+      .weekRow,.dayHeads{min-width:980px}
     }
   </style>
 </head>
+
 <body>
 <header>
   <div class="wrap">
@@ -95,7 +285,6 @@
         <button class="primary" id="btnToday">This Week</button>
         <button id="btnPrev">◀</button>
         <button id="btnNext">▶</button>
-        <button id="btnTools">Tools</button>
         <input type="date" id="weekStart" />
       </div>
     </div>
@@ -107,16 +296,41 @@
     <div class="hd">
       <div>
         <div class="k">Set your availability</div>
-        <div class="s">Tap any AM/PM block to cycle: Preferred → Available → Do not schedule → Clear.</div>
+        <div class="s">Tap AM/PM to cycle: <b>Preferred</b> → <b>Available</b> → <b>Do not schedule</b> → <b>Clear</b>.</div>
       </div>
-      <div class="pill" id="savepill">Not saved yet…</div>
+
+      <!-- Save/Drive pill + Tools button grouped (popular + visible) -->
+      <div class="row">
+        <div class="pill" id="savepill">
+          <span class="lights" aria-hidden="true">
+            <span id="l1" class="light"></span>
+            <span id="l2" class="light"></span>
+            <span id="l3" class="light"></span>
+          </span>
+          <span id="saveText">Not saved yet…</span>
+        </div>
+        <button id="btnTools" class="primary">Repeat / Tools</button>
+      </div>
     </div>
-    <div id="grid" class="grid"></div>
+
+    <!-- Day-of-week heads -->
+    <div class="dayHeads" id="dayHeads"></div>
+
+    <!-- Weeks -->
+    <div class="weeks" id="weeks"></div>
+
+    <!-- Bigger, clearer legend -->
     <div class="legend">
-      <div class="tag"><span class="dot g"></span> Preferred</div>
-      <div class="tag"><span class="dot b"></span> Available</div>
-      <div class="tag"><span class="dot r"></span> Do not schedule</div>
-      <div class="tag"><span class="dot x"></span> Clear / unset</div>
+      <div class="row">
+        <div class="tag"><span class="dot g"></span> Preferred</div>
+        <div class="tag"><span class="dot b"></span> Available</div>
+        <div class="tag"><span class="dot r"></span> Do not schedule</div>
+        <div class="tag"><span class="dot x"></span> Clear / unset</div>
+      </div>
+      <div><b>Preferred</b> — You WANT this shift.</div>
+      <div><b>Available</b> — You CAN work this shift and will be considered if not filled by someone who PREFERS it (then weighted fairly).</div>
+      <div><b>Do not schedule</b> — You will not be considered for this shift.</div>
+      <div><b>Clear / unset</b> — No preference stated. You may still be considered only if no one prefers or is available (and fairness allows it).</div>
     </div>
   </div>
 </div>
@@ -125,8 +339,9 @@
 /* ===================== Drive Store (Apps Script) ===================== */
 const STORE = {
   url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
-  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
+  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741" // replace with your real token
 };
+
 async function storeGet(params){
   const u = new URL(STORE.url);
   Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
@@ -136,6 +351,7 @@ async function storeGet(params){
   if(!j.ok) throw new Error(j.error || "Store GET failed");
   return j.payload;
 }
+
 async function storePost(body){
   const r = await fetch(STORE.url, {
     method:"POST",
@@ -146,6 +362,7 @@ async function storePost(body){
   if(!j.ok) throw new Error(j.error || "Store POST failed");
   return j;
 }
+
 function debounce(fn, ms=600){
   let t=null;
   return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
@@ -171,40 +388,82 @@ function startOfWeekThursday(anyDate){
   const delta=(dow-target+7)%7;
   return addDays(d,-delta);
 }
+function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
 
+const dowNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+/* ===================== View config ===================== */
+const WEEKS_VISIBLE = 6;         // editing week + next weeks visible
+const PAST_LOCK_DAYS = 1;        // past is locked (yesterday and back)
 let ORG=null, MEMBERS=null;
 let CURRENT_WEEK_START = startOfWeekThursday(new Date());
 let memberId = null;
-
-// Member store model:
-// { member_id:"123", selections: { "YYYY-MM-DD": { "AM":"preferred|available|nosched|null", "PM":... } }, updatedAt:"..." }
 let memberStore = { selections:{} };
 
-async function fetchJSON(url){
-  const r=await fetch(url,{cache:"no-store"});
-  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
-  return await r.json();
+function setStatus(msg){ $("status").textContent = msg; }
+
+/* ===================== Save / status lights ===================== */
+function setLights(mode){
+  // mode: "good" | "warn" | "bad"
+  $("l1").className="light"; $("l2").className="light"; $("l3").className="light";
+  if(mode==="good"){ $("l1").classList.add("good"); $("l2").classList.add("good"); $("l3").classList.add("good"); }
+  else if(mode==="warn"){ $("l1").classList.add("warn"); $("l2").classList.add("warn"); }
+  else { $("l1").classList.add("bad"); }
+}
+function setSave(msg, mode="warn"){
+  $("saveText").textContent = msg;
+  setLights(mode);
 }
 
-function setStatus(msg){ $("status").textContent = msg; }
-function setSave(msg){ $("savepill").textContent = msg; }
-
-const pushMember = debounce(async ()=>{
-  if(!memberId) return;
+/* ===================== Connectivity ===================== */
+let ONLINE_OK = true;
+async function pingStore(){
+  // prefer a ping endpoint if your Code.gs supports it.
+  // If not, this will throw and we'll treat as offline.
   try{
-    memberStore.member_id = String(memberId);
-    memberStore.updatedAt = new Date().toISOString();
-    localStorage.setItem("sc_member_"+memberId, JSON.stringify(memberStore));
-  }catch{}
-  try{
-    await storePost({ kind:"member", memberId:String(memberId), payload: memberStore });
-    setSave("Saved to Drive");
-  }catch(e){
-    console.warn("Drive save failed:", e);
-    setSave("Saved locally (Drive unavailable)");
+    const u = new URL(STORE.url);
+    u.searchParams.set("kind","ping");
+    u.searchParams.set("token", STORE.token);
+    const r = await fetch(u.toString(), { cache:"no-store" });
+    const j = await r.json();
+    return !!j.ok;
+  }catch{
+    return false;
   }
-}, 650);
+}
 
+async function updateOnlineState(){
+  // navigator.onLine is necessary but not sufficient; we also ping the store.
+  const navOnline = navigator.onLine !== false;
+  if(!navOnline){
+    ONLINE_OK = false;
+    setSave("Offline — saved on this device. Will sync when back online. Don’t clear your browser.", "warn");
+    return;
+  }
+  const ok = await pingStore();
+  ONLINE_OK = ok;
+  if(ok){
+    setSave("Connected", "good");
+    // If we have a member loaded, attempt to push local state up (idempotent).
+    if(memberId){
+      try{
+        memberStore.member_id = String(memberId);
+        memberStore.updatedAt = new Date().toISOString();
+        await storePost({ kind:"member", memberId:String(memberId), payload: memberStore });
+        setSave("Saved to Drive", "good");
+      }catch{
+        // If ping succeeded but write fails, show warn.
+        setSave("Connected, but save failed — saved locally", "warn");
+      }
+    }
+  }else{
+    setSave("Offline — saved on this device. Will sync when back online. Don’t clear your browser.", "warn");
+  }
+}
+window.addEventListener("online", ()=>updateOnlineState());
+window.addEventListener("offline", ()=>updateOnlineState());
+
+/* ===================== Member state helpers ===================== */
 function getState(dateISO, shift){
   const day = memberStore.selections?.[dateISO];
   if(!day) return null;
@@ -216,7 +475,6 @@ function setState(dateISO, shift, value){
   memberStore.selections[dateISO][shift] = value;
   pushMember();
 }
-
 function cycleState(cur){
   // Preferred → Available → NoSched → Clear
   if(cur === "preferred") return "available";
@@ -224,12 +482,11 @@ function cycleState(cur){
   if(cur === "nosched") return null;
   return "preferred";
 }
-
 function stateLabel(s){
   if(s==="preferred") return "Preferred";
   if(s==="available") return "Available";
-  if(s==="nosched") return "Do not schedule";
-  return "Unset";
+  if(s==="nosched") return "Do Not";
+  return "Clear";
 }
 function stateClass(s){
   if(s==="preferred") return "st-preferred";
@@ -237,74 +494,150 @@ function stateClass(s){
   if(s==="nosched") return "st-nosched";
   return "st-none";
 }
+function isLocked(dateISO){
+  // Past locked: any date < today - PAST_LOCK_DAYS
+  const d = parseISO(dateISO);
+  const today = startOfDay(new Date());
+  const cutoff = addDays(today, -PAST_LOCK_DAYS);
+  return d < cutoff;
+}
+
+/* ===================== Save behavior ===================== */
+const pushMember = debounce(async ()=>{
+  if(!memberId) return;
+
+  // always save locally
+  try{
+    memberStore.member_id = String(memberId);
+    memberStore.updatedAt = new Date().toISOString();
+    localStorage.setItem("sc_member_"+memberId, JSON.stringify(memberStore));
+  }catch{}
+
+  // then try Drive
+  if(!ONLINE_OK){
+    setSave("Offline — saved on this device. Will sync when back online. Don’t clear your browser.", "warn");
+    return;
+  }
+  try{
+    await storePost({ kind:"member", memberId:String(memberId), payload: memberStore });
+    setSave("Saved to Drive", "good");
+  }catch(e){
+    console.warn("Drive save failed:", e);
+    setSave("Saved locally (Drive unavailable)", "warn");
+  }
+}, 650);
+
+/* ===================== UI render ===================== */
+function renderHeads(){
+  const head = $("dayHeads");
+  head.innerHTML = "";
+  // left spacer
+  const left = document.createElement("div");
+  left.className = "cellH";
+  left.innerHTML = "<strong>Week</strong>";
+  head.appendChild(left);
+
+  for(let i=0;i<7;i++){
+    const d=addDays(CURRENT_WEEK_START,i);
+    const div=document.createElement("div");
+    div.className="cellH";
+    div.innerHTML = `<strong>${dowNames[d.getDay()]}</strong>`;
+    head.appendChild(div);
+  }
+}
+
+function renderWeeks(){
+  $("weekStart").value = fmtISO(CURRENT_WEEK_START);
+  const weeks = $("weeks");
+  weeks.innerHTML = "";
+
+  for(let w=0; w<WEEKS_VISIBLE; w++){
+    const ws = addDays(CURRENT_WEEK_START, w*7);
+    const we = addDays(ws, 6);
+
+    const row = document.createElement("div");
+    row.className = "weekRow" + (w===0 ? " focus" : "");
+
+    const label = document.createElement("div");
+    label.className = "weekLabel";
+    label.innerHTML = `
+      <div class="w">${w===0 ? "Editing Week" : "Upcoming"}</div>
+      <div class="d">${fmtISO(ws)} → ${fmtISO(we)}</div>
+    `;
+    row.appendChild(label);
+
+    for(let i=0;i<7;i++){
+      const d = addDays(ws, i);
+      const iso = fmtISO(d);
+
+      const card = document.createElement("div");
+      card.className = "dayCard";
+
+      const top = document.createElement("div");
+      top.className = "dayTop";
+      top.innerHTML = `
+        <div class="dateNum">${d.getDate()}</div>
+        <div class="dateISO">${iso}</div>
+      `;
+      card.appendChild(top);
+
+      const tg = document.createElement("div");
+      tg.className = "toggles";
+
+      ["AM","PM"].forEach(sh=>{
+        const cur = getState(iso, sh);
+        const locked = isLocked(iso);
+
+        const t = document.createElement("div");
+        t.className = `toggle ${stateClass(cur)} ${locked ? "locked" : ""}`;
+        t.innerHTML = `
+          <div class="sh">${sh}</div>
+          <div class="st">${stateLabel(cur)}</div>
+        `;
+
+        t.addEventListener("click", ()=>{
+          if(locked) return;
+          const next = cycleState(getState(iso, sh));
+          setState(iso, sh, next);
+          setSave("Saving…", "warn");
+          // re-render only this week row for simplicity (fast enough); keep full render stable.
+          renderWeeks();
+        });
+
+        tg.appendChild(t);
+      });
+
+      card.appendChild(tg);
+      row.appendChild(card);
+    }
+
+    weeks.appendChild(row);
+  }
+}
 
 function render(){
-  $("weekStart").value = fmtISO(CURRENT_WEEK_START);
-  const grid = $("grid");
-  grid.innerHTML = "";
-
-  const dowNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  // Header row
-  grid.appendChild(cellH(""));
-  for(let i=0;i<7;i++){
-    const d=addDays(CURRENT_WEEK_START,i);
-    grid.appendChild(cellH(`${dowNames[d.getDay()]}<br><span style="color:var(--muted)">${fmtISO(d)}</span>`));
-  }
-
-  // AM row
-  grid.appendChild(shiftLbl("AM"));
-  for(let i=0;i<7;i++){
-    const d=addDays(CURRENT_WEEK_START,i);
-    const ds=fmtISO(d);
-    grid.appendChild(pickCell(ds,"AM"));
-  }
-
-  // PM row
-  grid.appendChild(shiftLbl("PM"));
-  for(let i=0;i<7;i++){
-    const d=addDays(CURRENT_WEEK_START,i);
-    const ds=fmtISO(d);
-    grid.appendChild(pickCell(ds,"PM"));
-  }
+  renderHeads();
+  renderWeeks();
 }
 
-function cellH(html){
-  const div=document.createElement("div");
-  div.className="cellH";
-  div.innerHTML=html;
-  return div;
-}
-function shiftLbl(label){
-  const div=document.createElement("div");
-  div.className="shiftLbl";
-  div.innerHTML = `<div class="d">${label}</div><div class="t">tap to set</div>`;
-  return div;
-}
-function pickCell(dateISO, shift){
-  const cur = getState(dateISO, shift);
-  const div=document.createElement("div");
-  div.className = `pick ${stateClass(cur)}`;
-  div.innerHTML = `<div class="state">${stateLabel(cur)}</div><div class="hint">${dateISO} ${shift}</div>`;
-  div.addEventListener("click", ()=>{
-    const next = cycleState(getState(dateISO,shift));
-    setState(dateISO, shift, next);
-    render();
-    setSave("Saving…");
-  });
-  return div;
+/* ===================== Boot + load ===================== */
+async function fetchJSON(url){
+  const r=await fetch(url,{cache:"no-store"});
+  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
+  return await r.json();
 }
 
 async function loadMember(id){
   memberId = String(id);
-  setSave("Loading…");
+  setSave("Loading…", "warn");
 
-  // Drive first
+  // attempt Drive first
   try{
     const remote = await storeGet({ kind:"member", memberId });
     if(remote && typeof remote === "object"){
       memberStore = remote;
       try{ localStorage.setItem("sc_member_"+memberId, JSON.stringify(memberStore)); }catch{}
-      setSave("Loaded from Drive");
+      setSave("Loaded from Drive", "good");
       render();
       return;
     }
@@ -317,20 +650,21 @@ async function loadMember(id){
     const ls = JSON.parse(localStorage.getItem("sc_member_"+memberId) || "null");
     if(ls && typeof ls === "object"){
       memberStore = ls;
-      setSave("Loaded locally (Drive unavailable)");
+      setSave("Loaded locally (Drive unavailable)", "warn");
       render();
       return;
     }
   }catch{}
 
   memberStore = { selections:{} };
-  setSave("New (nothing saved yet)");
+  setSave("New (nothing saved yet)", "warn");
   render();
 }
 
 async function boot(){
   try{
     setStatus("Loading org + members…");
+
     ORG = await fetchJSON(PATHS.org);
     MEMBERS = await fetchJSON(PATHS.members);
     $("orgpill").textContent = `Org: ${ORG?.org?.name || "Unknown"}`;
@@ -366,15 +700,18 @@ async function boot(){
       render();
     });
 
-    setStatus("Ready.");
     CURRENT_WEEK_START = startOfWeekThursday(new Date());
     render();
+
+    // online status / lights
+    await updateOnlineState();
 
     // default to first member
     if(sel.options.length){
       await loadMember(sel.value);
     }
 
+    setStatus("Ready.");
   }catch(err){
     console.error(err);
     setStatus("ERROR: " + err.message);
@@ -382,13 +719,13 @@ async function boot(){
   }
 }
 
+/* ===================== Tools: existing logic (kept) ===================== */
 function setIfEmpty(dateISO, shift, value){
   const cur = getState(dateISO, shift);
   if(cur === null || cur === undefined){
     setState(dateISO, shift, value);
   }
 }
-
 // copy current week → next week, no overwrite
 function copyWeekForward(){
   for(let i=0;i<7;i++){
@@ -399,10 +736,9 @@ function copyWeekForward(){
       if(v) setIfEmpty(dst, sh, v);
     });
   }
-  setSave("Saving…");
+  setSave("Saving…", "warn");
   render();
 }
-
 // repeat every X weeks for N cycles, no overwrite
 function repeatPattern(everyWeeks, cycles){
   for(let c=1;c<=cycles;c++){
@@ -416,10 +752,9 @@ function repeatPattern(everyWeeks, cycles){
       });
     }
   }
-  setSave("Saving…");
+  setSave("Saving…", "warn");
   render();
 }
-
 // tools modal wiring
 function openTools(){ $("toolsModal").style.display="block"; }
 function closeTools(){ $("toolsModal").style.display="none"; }
@@ -429,7 +764,6 @@ document.addEventListener("click", (e)=>{
   if(e.target && e.target.id === "btnToolsClose") closeTools();
   if(e.target && e.target.id === "toolsModal") closeTools();
 });
-
 document.addEventListener("click", (e)=>{
   if(e.target && e.target.id === "btnCopyNext"){
     copyWeekForward();
@@ -447,19 +781,19 @@ document.addEventListener("click", (e)=>{
     const st = $("exState").value || null;
     if(!d){ alert("Pick a date."); return; }
     setState(d, sh, st);
-    setSave("Saving…");
+    setSave("Saving…", "warn");
     render();
   }
 });
 
-
 boot();
 </script>
 
+<!-- Tools Modal (unchanged, but still works) -->
 <div id="toolsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9999; padding:18px;">
   <div style="max-width:720px; margin:40px auto; background:rgba(16,26,48,.96); border:1px solid rgba(37,50,84,.9); border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.45); overflow:hidden;">
     <div style="padding:14px 14px; border-bottom:1px solid rgba(37,50,84,.7); display:flex; justify-content:space-between; align-items:center;">
-      <div style="font-weight:900;">Tools</div>
+      <div style="font-weight:900;">Repeat / Tools</div>
       <button id="btnToolsClose">Close</button>
     </div>
 
@@ -520,5 +854,6 @@ boot();
     </div>
   </div>
 </div>
+
 </body>
 </html>
