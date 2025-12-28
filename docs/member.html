@@ -918,10 +918,33 @@ async function loadRequired(){
   ]);
   if(!orgR.ok) throw new Error("Fetch failed " + orgR.status + ": " + ORG_SETTINGS_URL);
   if(!memR.ok) throw new Error("Fetch failed " + memR.status + ": " + MEMBERS_URL);
-  orgSettings = await orgR.json();
-  members = await memR.json();
 
-  $("orgName").textContent = orgSettings?.org_name || "Org";
+  orgSettings = await orgR.json();
+
+  const memJson = await memR.json();
+
+  // Accept BOTH shapes:
+  // 1) legacy: [ {id, first, last, ...}, ... ]
+  // 2) current: { version, updated_at, members: [ {member_id, first_name, last_name, ...}, ... ] }
+  let rawMembers = memJson;
+  if(Array.isArray(memJson)) rawMembers = memJson;
+  else if(memJson && Array.isArray(memJson.members)) rawMembers = memJson.members;
+  else throw new Error("members is not iterable (unexpected members.json shape)");
+
+  // Normalize to the fields this page uses
+  members = rawMembers.map(m => ({
+    // unify id field
+    id: String(m.id ?? m.member_id ?? ""),
+    first: (m.first ?? m.first_name ?? "").trim(),
+    last: (m.last ?? m.last_name ?? "").trim(),
+    active: (m.active !== false),
+    _raw: m
+  })).filter(m => m.id);
+
+  // Org name (supports both shapes)
+  const orgName = orgSettings?.org_name || orgSettings?.org?.name || "Org";
+  $("orgName").textContent = orgName;
+
   // member dropdown
   const sel = $("memberSel");
   sel.innerHTML = "";
