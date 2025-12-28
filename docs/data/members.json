@@ -1,229 +1,28 @@
 {
-  "generated_at": "2025-12-26T00:00:00-05:00",
+  "version": 1,
+  "updated_at": "2025-12-27T00:00:00Z",
   "members": [
-    {
-      "member_id": "102",
-      "last_name": "Camlin",
-      "first_name": "Stephen",
-      "display": "Camlin, Stephen #102",
-      "cert_level": "ALS",
-      "active": true,
-      "qualifications": ["driver", "als"],
-      "rank": "Fire Chief",
-      "can_ride": true
-    },
-    {
-      "member_id": "103",
-      "last_name": "Phelps",
-      "first_name": "Wilbert",
-      "display": "Phelps, Wilbert #103",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "rank": "Asst. Chief",
-      "can_ride": true
-    },
-    {
-      "member_id": "107",
-      "last_name": "Toney",
-      "first_name": "Gracie",
-      "display": "Toney, Gracie #107",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "rank": "Fire Lt",
-      "can_ride": true
-    },
-    {
-      "member_id": "112",
-      "last_name": "Smith",
-      "first_name": "AJ",
-      "display": "Smith, AJ #112",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "153",
-      "last_name": "Coleman",
-      "first_name": "Adam",
-      "display": "Coleman, Adam #153",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "168",
-      "last_name": "Grass",
-      "first_name": "Cassie",
-      "display": "Grass, Cassie #168",
-      "cert_level": "ALS",
-      "active": true,
-      "qualifications": ["driver", "als"],
-      "can_ride": true
-    },
-    {
-      "member_id": "151",
-      "last_name": "Hines",
-      "first_name": "Nora",
-      "display": "Hines, Nora #151",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "146",
-      "last_name": "Huff",
-      "first_name": "Sherman",
-      "display": "Huff, Sherman #146",
-      "cert_level": "Driver",
-      "active": true,
-      "qualifications": ["driver"],
-      "can_ride": true
-    },
-    {
-      "member_id": "148",
-      "last_name": "O'Hara",
-      "first_name": "Cyndi",
-      "display": "O'Hara, Cyndi #148",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "149",
-      "last_name": "Polletta",
-      "first_name": "Shane",
-      "display": "Polletta, Shane #149",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "145",
-      "last_name": "Toney",
-      "first_name": "Roger",
-      "display": "Toney, Roger #145",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "154",
-      "last_name": "Warner",
-      "first_name": "Cliff",
-      "display": "Warner, Cliff #154",
-      "cert_level": "Driver",
-      "active": true,
-      "qualifications": ["driver"],
-      "can_ride": true
-    },
-    {
-      "member_id": "156",
-      "last_name": "Wright",
-      "first_name": "Christian",
-      "display": "Wright, Christian #156",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "159",
-      "last_name": "Toney",
-      "first_name": "Brett",
-      "display": "Toney, Brett #159",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "181",
-      "last_name": "Squires",
-      "first_name": "Anna",
-      "display": "Squires, Anna #181",
-      "cert_level": "ALS",
-      "active": true,
-      "qualifications": ["driver", "als"],
-      "can_ride": true
-    },
-    {
-      "member_id": "182",
-      "last_name": "Meeks",
-      "first_name": "Nikki",
-      "display": "Meeks, Nikki #182",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "183",
-      "last_name": "Joyner",
-      "first_name": "Serenity",
-      "display": "Joyner, Serenity #183",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "184",
-      "last_name": "Nelson",
-      "first_name": "Lisa",
-      "display": "Nelson, Lisa #184",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "185",
-      "last_name": "Tripp",
-      "first_name": "Nicholas",
-      "display": "Tripp, Nicholas #185",
-      "cert_level": "ALS",
-      "active": true,
-      "qualifications": ["driver", "als"],
-      "rank": "EMS Capt",
-      "can_ride": true
-    },
-    {
-      "member_id": "186",
-      "last_name": "Benson",
-      "first_name": "Lynnsey",
-      "display": "Benson, Lynnsey #186",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    },
-    {
-      "member_id": "187",
-      "last_name": "Grant",
-      "first_name": "Gordon",
-      "display": "Grant, Gordon #187",
-      "cert_level": "ALS",
-      "active": true,
-      "qualifications": ["driver", "als"],
-      "can_ride": true
-    },
-    {
-      "member_id": "188",
-      "last_name": "Ennis",
-      "first_name": "Brian",
-      "display": "Ennis, Brian #188",
-      "cert_level": "EMT",
-      "active": true,
-      "qualifications": ["driver", "emt"],
-      "can_ride": true
-    }
+    { "member_id": "102", "first_name": "Stephen", "last_name": "Camlin", "active": true, "rank": "Fire Chief", "qualifications": ["ALS", "DRIVER"] },
+    { "member_id": "103", "first_name": "Wilbert", "last_name": "Phelps", "active": true, "rank": "Asst. Chief", "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "107", "first_name": "Gracie", "last_name": "Toney", "active": true, "rank": "Fire Lt", "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "112", "first_name": "AJ", "last_name": "Smith", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "153", "first_name": "Adam", "last_name": "Coleman", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "168", "first_name": "Cassie", "last_name": "Grass", "active": true, "qualifications": ["ALS", "DRIVER"] },
+    { "member_id": "151", "first_name": "Nora", "last_name": "Hines", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "146", "first_name": "Sherman", "last_name": "Huff", "active": true, "qualifications": ["DRIVER"] },
+    { "member_id": "148", "first_name": "Cyndi", "last_name": "O'Hara", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "149", "first_name": "Shane", "last_name": "Polletta", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "145", "first_name": "Roger", "last_name": "Toney", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "154", "first_name": "Cliff", "last_name": "Warner", "active": true, "qualifications": ["DRIVER"] },
+    { "member_id": "156", "first_name": "Christian", "last_name": "Wright", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "159", "first_name": "Brett", "last_name": "Toney", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "181", "first_name": "Anna", "last_name": "Squires", "active": true, "qualifications": ["ALS", "DRIVER"] },
+    { "member_id": "182", "first_name": "Nikki", "last_name": "Meeks", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "183", "first_name": "Serenity", "last_name": "Joyner", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "184", "first_name": "Lisa", "last_name": "Nelson", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "185", "first_name": "Nicholas", "last_name": "Tripp", "active": true, "rank": "EMS Capt", "qualifications": ["ALS", "DRIVER"] },
+    { "member_id": "186", "first_name": "Lynnsey", "last_name": "Benson", "active": true, "qualifications": ["EMT", "DRIVER"] },
+    { "member_id": "187", "first_name": "Gordon", "last_name": "Grant", "active": true, "qualifications": ["ALS", "DRIVER"] },
+    { "member_id": "188", "first_name": "Brian", "last_name": "Ennis", "active": true, "qualifications": ["EMT", "DRIVER"] }
   ]
 }
