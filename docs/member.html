@@ -385,6 +385,7 @@
   </style>
 </head>
 <body>
+<div style="position:fixed;bottom:6px;right:8px;z-index:9999;font-size:10px;color:#9ff;opacity:.55;pointer-events:none">MEMBER BUILD: fixed3 2025-12-28 15:19:33</div>
   <div class="top">
     <div class="topInner">
       <div class="brand">ShiftCommander — Member</div>
@@ -424,6 +425,11 @@
           <div class="statusPill" id="savepill" title="Drive status">
             <span class="dot warn" id="driveDot"></span>
             <span class="tiny" id="driveTip">Checking…</span>
+          </div>
+
+          <div class="row" id="pendingQuick" style="display:none; gap:8px; align-items:center">
+            <button class="btn secondary" id="btnUndoPendingQuick" title="Undo pending Published changes (revert locally)" style="padding:8px 10px;">Undo</button>
+            <button class="btn secondary" id="btnPostPendingQuick" title="Commit pending Published changes now (sync to Drive)" style="padding:8px 10px;">Post</button>
           </div>
           <button class="btn" id="btnTools">Repeat / Tools</button>
         </div>
@@ -612,82 +618,96 @@ function setMeta(memberId, meta){
 }
 
 async function storeGet(kind, memberId){
-  const url = new URL(STORE_URL);
-  url.searchParams.set("kind", kind);
-  if(memberId) url.searchParams.set("memberId", memberId);
-  // token is enforced server-side; for member page we rely on the script property token
-  // (If you later require client token, we’ll add it to org_settings.json and read it here.)
-  const r = await fetch(url.toString(), { method:"GET", cache:"no-store" });
-  if(!r.ok) throw new Error("store GET " + r.status);
-  return await r.json();
+  try{
+    const url = new URL(STORE_URL);
+    url.searchParams.set("kind", kind);
+    if(memberId) url.searchParams.set("memberId", memberId);
+    const r = await fetch(url.toString(), { method:"GET", cache:"no-store" });
+    if(!r.ok) throw new Error("store GET " + r.status);
+    return await r.json();
+  }catch(e){
+    // Network/CORS/offline: treat as unavailable, but do NOT crash the page
+    return { __error: String(e?.message || e) };
+  }
 }
 
+
 async function storePut(kind, memberId, payload){
-  const body = { kind, memberId, payload };
-  const r = await fetch(STORE_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(body),
-  });
-  if(!r.ok) throw new Error("store POST " + r.status);
-  return await r.json();
+  try{
+    const body = { kind, memberId, payload };
+    const r = await fetch(STORE_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body),
+    });
+    if(!r.ok) throw new Error("store POST " + r.status);
+    return await r.json();
+  }catch(e){
+    return { __error: String(e?.message || e) };
+  }
 }
+
 
 /* auto-sync: if we had edits while “offline”, push when online resumes */
 async function trySync(memberId){
   const meta = getMeta(memberId);
   if(!meta.dirty) return true;
 
-  try{
-    const payload = getLocal(memberId);
-    await storePut("member", memberId, payload);
-    meta.dirty = false;
-    meta.lastError = "";
-    meta.lastPushISO = new Date().toISOString();
-    setMeta(memberId, meta);
-    setDriveStatus(meta);
-    return true;
-  }catch(e){
-    meta.lastError = String(e.message || e);
+  const payload = getLocal(memberId);
+
+  const res = await storePut("member", memberId, payload);
+  if(res && res.__error){
+    meta.lastError = res.__error;
     setMeta(memberId, meta);
     setDriveStatus(meta);
     return false;
   }
+
+  meta.dirty = false;
+  meta.lastError = "";
+  meta.lastPushISO = new Date().toISOString();
+  setMeta(memberId, meta);
+  setDriveStatus(meta);
+  return true;
 }
+
 
 /* Drive status UI: only colors (green/yellow). Full meaning via hover tooltip. */
 function setDriveStatus(meta){
-  const dot = $("driveDot");
   const tip = $("driveTip");
   const online = navigator.onLine !== false;
 
-  // GREEN always means: your changes are saved locally on this device.
-  dot.classList.remove("ok","warn");
-  dot.classList.add("ok");
-
-  // Keep the visible text SHORT (no wrapping).
   let short = "Saved";
   if(meta && hasPending(meta)) short = "Pending";
   tip.textContent = short;
 
-  // Tooltip carries the nuance (sync pending / last push / error).
+  // Dot: green when synced/normal, yellow when offline or remote error
+  const dot = $("driveDot");
+  const warn = (!online) || (meta && meta.lastError);
+  dot.className = "dot " + (warn ? "warn" : "ok");
+
   const parts = [];
   parts.push("Saved locally on this device.");
   if(meta && hasPending(meta)){
     const ms = pendingRemainingMs(meta);
     parts.push(`Published changes pending (undo ${formatMinSec(ms)}).`);
-    parts.push("These will sync to Drive after the undo window, or when you click ‘Post pending now’.");
+    parts.push("Will sync to Drive after the undo window, or if you click ‘Post pending now’.");
   }else if(!online){
     parts.push("Offline: will sync to Drive when internet returns.");
   }else if(meta && meta.dirty){
     parts.push("Sync to Drive pending.");
+  }else if(meta && meta.lastError){
+    parts.push("Drive not reachable right now (still saved locally).");
   }else{
     parts.push("Synced to Drive.");
   }
   if(meta && meta.lastPushISO) parts.push("Last Drive sync: " + new Date(meta.lastPushISO).toLocaleString());
   if(meta && meta.lastError) parts.push("Drive sync issue: " + meta.lastError);
   $("savepill").title = parts.join(" ");
+  updatePendingQuick();
+
 }
+
 
 /* =========================
    History (optional)
@@ -1108,7 +1128,7 @@ async function render(){
   }
   // Heat borders (best-effort)
   if(HEAT && HEAT.ready) applyHeatToUI();
-  if(memberId) applyPendingMarkers();
+  if(memberId) if (typeof applyPendingMarkers==='function') applyPendingMarkers();
 }
 
 /* =========================
@@ -1251,6 +1271,23 @@ $("btnRepeatPlanning").addEventListener("click", async ()=>{
   await persistAfterBulkEdit();
   $("toolsDlg").close();
 });
+
+// Quick pending buttons (visible only when something is pending)
+function updatePendingQuick(){
+  const meta = getMeta(memberId);
+  const show = !!(meta && hasPending(meta));
+  const box = $("pendingQuick");
+  if(!box) return;
+  box.style.display = show ? "flex" : "none";
+}
+
+$("btnPostPendingQuick")?.addEventListener("click", async ()=>{
+  $("btnPostPending")?.click();
+});
+$("btnUndoPendingQuick")?.addEventListener("click", async ()=>{
+  $("btnUndoPending")?.click();
+});
+
 /* =========================
    Boot
 ========================= */
@@ -1294,7 +1331,8 @@ async function loadHeat(){
     HEAT.eligibleCount = E;
     if(E === 0){ HEAT.ready = true; HEAT.byKey = {}; return; }
 
-    const all = await storeGet("member"); // expected: array of {memberId,payload} or object
+    const all = await storeGet("member");
+    if(all && all.__error) throw new Error(all.__error); // expected: array of {memberId,payload} or object
     const payloads = [];
 
     if(Array.isArray(all)){
@@ -1440,7 +1478,11 @@ async function loadMember(){
   // pull remote if available, but do NOT clobber local if local is dirty
   try{
     const remote = await storeGet("member", memberId);
-    if(remote && remote.payload){
+    if(remote && remote.__error){
+      meta.lastError = remote.__error;
+      setMeta(memberId, meta);
+      setDriveStatus(meta);
+    } else if(remote && remote.payload){
       if(!meta.dirty){
         memberState = remote.payload;
         setLocal(memberId, memberState);
@@ -1515,7 +1557,7 @@ window.addEventListener("offline", ()=> { if(memberId){ const m=getMeta(memberId
           updatePendingHint();
           await flushExpiredPending(memberId);
           // refresh pending markers
-          applyPendingMarkers();
+          if (typeof applyPendingMarkers==='function') applyPendingMarkers();
         }
       };
       setInterval(()=>{ tick().catch(()=>{}); }, 15000);
