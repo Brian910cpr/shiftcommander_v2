@@ -1,0 +1,20 @@
+// seats.json
+{
+  "seats": [
+    {
+      "id": "seat_als_medic",
+      "label": "ALS Medic",
+      "requires": { "certs_any": ["Paramedic"], "endorse_all": [] }
+    },
+    {
+      "id": "seat_emt",
+      "label": "EMT",
+      "requires": { "certs_any": ["EMT", "AEMT", "Paramedic"], "endorse_all": [] }
+    },
+    {
+      "id": "seat_driver",
+      "label": "Driver",
+      "requires": { "certs_any": [], "endorse_all": ["EVOC"] }
+    }
+  ]
+}

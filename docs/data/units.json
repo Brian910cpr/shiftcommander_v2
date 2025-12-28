@@ -1,0 +1,15 @@
+// units.json
+{
+  "units": [
+    {
+      "id": "unit_ambu_1",
+      "label": "Ambulance 1",
+      "type": "ambulance",
+      "status": "ACTIVE",
+      "min_crew": 2,
+      "max_crew": 3,
+      "seat_plan": ["seat_als_medic", "seat_emt", "seat_driver"],
+      "notes": "Minimum is Medic + EMT. Driver is preferred if 3rd."
+    }
+  ]
+}
