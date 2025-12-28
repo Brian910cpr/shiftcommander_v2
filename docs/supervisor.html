@@ -1,608 +1,250 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ShiftCommander — Supervisor</title>
-  <style>
-    :root{
-      --bg:#0b1220; --text:#e8eefc; --muted:#a7b3d6; --good:#19c37d; --warn:#f7b955; --bad:#ff5c5c; --gray:#6b7aa7;
-      --shadow: 0 10px 30px rgba(0,0,0,.35); --radius:14px;
-      --panel: rgba(16,26,48,.92);
-      --panel2: rgba(10,16,32,.92);
-      --bd: rgba(37,50,84,.9);
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background: radial-gradient(1200px 800px at 15% 10%, #12224c 0%, var(--bg) 55%);
-      color:var(--text);}
-    header{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.72);backdrop-filter:blur(10px);
-      border-bottom:1px solid rgba(37,50,84,.75);}
-    .wrap{max-width:1200px;margin:0 auto;padding:16px 16px 22px;}
-    .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;}
-    .title{display:flex;flex-direction:column;gap:4px;}
-    .title h1{margin:0;font-size:18px;letter-spacing:.2px}
-    .title .sub{color:var(--muted);font-size:12px}
-    .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
-    button, select, input{
-      border-radius:12px;border:1px solid rgba(37,50,84,.9);
-      background:rgba(16,26,48,.9);color:var(--text);
-      padding:10px 12px;outline:none;
-    }
-    button{cursor:pointer}
-    button.primary{border-color:rgba(122,162,255,.8);box-shadow:0 0 0 1px rgba(122,162,255,.1) inset;}
-    button.danger{border-color:rgba(255,92,92,.7)}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    .pill{
-      padding:8px 10px;border-radius:999px;background:rgba(22,32,71,.65);
-      border:1px solid rgba(37,50,84,.85);color:var(--muted);font-size:12px;
-      display:flex;align-items:center;gap:8px;max-width:100%;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
-    .grid{display:grid;grid-template-columns:1fr;gap:14px;padding:16px;}
-    .panel{
-      background:linear-gradient(180deg, var(--panel), var(--panel2));
-      border:1px solid var(--bd);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
-    }
-    .panel .hd{padding:14px 14px 10px;border-bottom:1px solid rgba(37,50,84,.7);
-      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;background:rgba(15,23,48,.55);}
-    .panel .hd .left{display:flex;flex-direction:column;gap:4px;}
-    .panel .hd .left .k{font-size:14px;font-weight:700}
-    .panel .hd .left .s{font-size:12px;color:var(--muted)}
-    .panel .bd{padding:14px}
-    .weekbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    .weekbar .nav{display:flex;gap:8px;align-items:center;}
-    .weekbar input[type="date"]{padding:9px 10px}
-    .table{width:100%;border-collapse:collapse;table-layout:fixed;}
-    .table th, .table td{border-top:1px solid rgba(37,50,84,.65);padding:10px 8px;vertical-align:top;}
-    .table th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;border-top:none;padding-top:0;}
-    .rowhead{display:flex;gap:10px;align-items:center;}
-    .dow{width:120px;display:flex;flex-direction:column;gap:2px;}
-    .dow .d{font-weight:800;font-size:13px}
-    .dow .dt{color:var(--muted);font-size:12px}
-    .shiftchip{width:64px;flex:none;padding:6px 10px;border-radius:999px;background:rgba(22,32,71,.7);
-      border:1px solid rgba(37,50,84,.8);font-size:12px;text-align:center;color:var(--muted);}
-    .health{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
-      border:1px solid rgba(37,50,84,.85);background:rgba(22,32,71,.55);font-size:12px;white-space:nowrap;}
-    .dot{width:10px;height:10px;border-radius:50%;}
-    .dot.green{background:var(--good)} .dot.yellow{background:var(--warn)}
-    .dot.red{background:var(--bad)} .dot.gray{background:var(--gray)}
-    .slots{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:260px;}
-    .slot{padding:10px;border-radius:12px;border:1px solid rgba(37,50,84,.8);background:rgba(16,26,48,.6);
-      display:flex;flex-direction:column;gap:6px;min-height:66px;}
-    .slot .lbl{font-size:11px;color:var(--muted)}
-    .slot .val{font-weight:800;font-size:13px;line-height:1.15}
-    .slot .meta{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
-    .riders{display:flex;flex-direction:column;gap:8px;min-width:260px;}
-    .riders .line{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-    .tag{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
-      background:rgba(22,32,71,.55);border:1px solid rgba(37,50,84,.85);font-size:12px;}
-    .tag button{padding:4px 8px;border-radius:999px;border:1px solid rgba(37,50,84,.9);background:rgba(16,26,48,.85);}
-    .toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;
-      border:1px solid rgba(37,50,84,.85);background:rgba(16,26,48,.6);font-size:12px;color:var(--muted);}
-    .toggle input{transform:scale(1.2);}
-    .muted{color:var(--muted)}
-    .footnote{font-size:12px;color:var(--muted);margin-top:10px}
-    code{color:#cfe0ff}
-    @media (max-width:980px){ .slots{grid-template-columns:1fr} .dow{width:100px} }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ShiftCommander — Supervisor</title>
+<style>
+  :root{
+    --bg:#071225; --panel:#0b1730; --line:rgba(233,241,255,.14);
+    --text:#eaf2ff; --muted:rgba(233,241,255,.72);
+    --green:#26d07c; --red:#ff5d5d; --amber:#ffa836; --blue:#5c8dff;
+  }
+  body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background: radial-gradient(1200px 700px at 25% 10%, rgba(92,141,255,.12), transparent 55%), var(--bg); color:var(--text); }
+  header{ padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; position:sticky; top:0; background:rgba(7,18,37,.92); backdrop-filter: blur(10px); z-index:5;}
+  h1{ font-size:16px; margin:0; letter-spacing:.2px; }
+  .pill{ margin-left:auto; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); background:rgba(233,241,255,.05); border-radius:999px; font-size:12px; }
+  .dot{ width:10px; height:10px; border-radius:99px; background:var(--green); box-shadow:0 0 0 4px rgba(38,208,124,.12); }
+  .dot.warn{ background:var(--amber); box-shadow:0 0 0 4px rgba(255,168,54,.14); }
+  main{ padding:16px; max-width:1100px; margin:0 auto; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  select, button{ background:rgba(233,241,255,.06); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:13px; }
+  button{ cursor:pointer; }
+  button:hover{ border-color:rgba(233,241,255,.24); }
+  .card{ margin-top:14px; border:1px solid var(--line); border-radius:16px; background:rgba(11,23,48,.72); overflow:hidden; }
+  .cardHead{ padding:12px 12px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; }
+  .muted{ color:var(--muted); font-size:12px; }
+  table{ width:100%; border-collapse:collapse; }
+  th, td{ padding:10px 12px; border-bottom:1px solid rgba(233,241,255,.08); font-size:13px; }
+  th{ text-align:left; font-size:12px; color:var(--muted); letter-spacing:.2px; text-transform:uppercase; }
+  .heat{ display:inline-flex; align-items:center; gap:8px; }
+  .bar{ width:12px; height:12px; border-radius:4px; border:2px solid rgba(233,241,255,.18); }
+  .bar.need2{ border-color: rgba(38,208,124,.95); }
+  .bar.need1{ border-color: rgba(38,208,124,.55); }
+  .bar.neutral{ border-color: rgba(233,241,255,.18); }
+  .bar.crowd1{ border-color: rgba(255,168,54,.55); }
+  .bar.crowd2{ border-color: rgba(255,93,93,.92); }
+  .kpi{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .kpi .box{ padding:10px 12px; border:1px solid rgba(233,241,255,.10); border-radius:14px; background:rgba(233,241,255,.04); font-size:12px; }
+  .kpi b{ font-size:14px; }
+</style>
 </head>
 <body>
 <header>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="title">
-        <h1>ShiftCommander — Supervisor</h1>
-        <div class="sub" id="subline">Loading…</div>
-      </div>
-      <div class="controls">
-        <div class="pill" id="p_org">Org: …</div>
-        <div class="pill" id="p_week">Week: …</div>
-        <button class="primary" id="btn_copy_patch" disabled>Copy Patch JSON</button>
-        <button class="primary" id="btn_download_patch" disabled>Download Patch JSON</button>
-        <button id="btn_reset_patch" class="danger" disabled>Reset Patch</button>
-      </div>
-    </div>
+  <h1>Supervisor — Forecast / Popularity</h1>
+  <div class="pill" id="statusPill" title="">
+    <span class="dot" id="dot"></span>
+    <span id="statusText">Connecting…</span>
   </div>
 </header>
 
-<div class="grid wrap">
-  <section class="panel">
-    <div class="hd">
-      <div class="left">
-        <div class="k">Week View</div>
-        <div class="s">
-          Loads from <code>/docs/data/</code>. Patch saves to Google Drive via Apps Script (no more manual commits).
-          Health warnings only appear inside the 21-day lead window.
-        </div>
-      </div>
-      <div class="weekbar">
-        <div class="nav">
-          <button id="btn_prev">◀</button>
-          <button id="btn_today">Today</button>
-          <button id="btn_next">▶</button>
-        </div>
-        <div class="muted">Week start (Thu):</div>
-        <input type="date" id="week_start_picker" />
-      </div>
+<main>
+  <div class="row">
+    <button id="btnRefresh">Refresh</button>
+    <span class="muted">Eligibility filter (for popularity math):</span>
+    <select id="qualFilter">
+      <option value="ALL">All active</option>
+      <option value="ALS">ALS only</option>
+      <option value="EMT">EMT only</option>
+      <option value="DRIVER">DRIVER only</option>
+      <option value="EMT_DRIVER">EMT + DRIVER</option>
+      <option value="ALS_DRIVER">ALS + DRIVER</option>
+    </select>
+    <span class="muted">Weeks shown:</span>
+    <select id="weeks">
+      <option value="6">6</option>
+      <option value="8">8</option>
+      <option value="12">12</option>
+    </select>
+  </div>
+
+  <div class="kpi" id="kpi"></div>
+
+  <div class="card">
+    <div class="cardHead">
+      <b>Shift popularity (Preferred-only, Model A)</b>
+      <span class="muted" id="subtitle"></span>
     </div>
-    <div class="bd">
-      <table class="table">
+    <div style="overflow:auto">
+      <table>
         <thead>
           <tr>
-            <th style="width:210px">Day / Shift</th>
-            <th style="width:160px">Health</th>
-            <th>Required Seats</th>
-            <th>3rd Rider</th>
+            <th style="width:170px">Date</th>
+            <th style="width:80px">Half</th>
+            <th style="width:140px">Stage</th>
+            <th>Popularity</th>
           </tr>
         </thead>
-        <tbody id="week_body"></tbody>
+        <tbody id="rows"></tbody>
       </table>
-      <div class="footnote">
-        <b>Patch storage:</b> edits save to Drive automatically. (Copy/Download buttons remain for backup/export.)
-      </div>
     </div>
-  </section>
-</div>
+  </div>
+</main>
 
 <script>
-/* ===================== Drive Store (Apps Script) ===================== */
-const STORE = {
-  url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
-  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
-};
+const MEMBERS_URL = "/data/members.json";
+const STORE_URL = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
 
-async function storeGet(params){
-  const u = new URL(STORE.url);
-  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
-  u.searchParams.set("token", STORE.token);
-  const r = await fetch(u.toString(), { cache: "no-store" });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "Store GET failed");
-  return j.payload;
+const $ = (id)=>document.getElementById(id);
+function todayISO(){ const t=new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()).toISOString().slice(0,10); }
+function addDaysISO(iso,days){ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10); }
+function weekStartISO(iso){ const d=new Date(iso+"T00:00:00"); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return d.toISOString().slice(0,10); }
+function daysBetweenISO(a,b){ return Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000); }
+function weekTag(startISO){
+  const t=todayISO();
+  const managedStart=weekStartISO(t);
+  const end=addDaysISO(startISO,6);
+  if(end<t) return "Past";
+  const w=Math.floor(daysBetweenISO(managedStart,startISO)/7);
+  const MANAGED_WEEKS=3, PUBLISHED_WEEKS=3;
+  if(w>=0 && w<MANAGED_WEEKS) return "Managed";
+  if(w>=MANAGED_WEEKS && w<(MANAGED_WEEKS+PUBLISHED_WEEKS)) return "Published";
+  return "Planning";
 }
-async function storePost(body){
-  const r = await fetch(STORE.url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...body, token: STORE.token })
-  });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "Store POST failed");
-  return j;
-}
-function debounce(fn, ms=600){
-  let t=null;
-  return (...args) => { clearTimeout(t); t=setTimeout(() => fn(...args), ms); };
-}
-
-/* ===================== Local data paths (docs-relative) ===================== */
-const PATHS = {
-  org: "./data/org_settings.json",
-  members: "./data/members.json",
-  historyIndex: "./data/history/history.index.json",
-  supervisorPatchFile: "./data/overrides/supervisor_patch.json" // optional fallback only
-};
-
-let ORG=null, MEMBERS=null;
-let HISTORY={ days:{} };
-let PATCH={ generated_at:null, overrides:{} };
-
-function $(id){return document.getElementById(id);}
-function setStatus(msg){$("subline").textContent=msg;}
-
-function fmtISO(d){
-  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${da}`;
-}
-function parseISO(s){const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d);}
-function addDays(d,n){const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x;}
-function startOfWeekThursday(anyDate){
-  const target=4; // Thu
-  const d=new Date(anyDate.getFullYear(), anyDate.getMonth(), anyDate.getDate());
-  const dow=d.getDay();
-  const delta=(dow-target+7)%7;
-  return addDays(d,-delta);
-}
-
-/* ===================== Lead-window logic ===================== */
-const LEAD_DAYS = 21;
-function isWithinLead(dateISO){
-  const today = new Date();
-  const d = new Date(dateISO + "T00:00:00");
-  const ms = d.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const daysOut = Math.floor(ms / (1000*60*60*24));
-  return daysOut <= LEAD_DAYS;
-}
-
-/* ===================== Fetch helpers ===================== */
-async function fetchJSON(url){
-  const r=await fetch(url,{cache:"no-store"});
-  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
+async function storeGet(kind){
+  const url=new URL(STORE_URL);
+  url.searchParams.set("kind", kind);
+  const r=await fetch(url.toString(), {method:"GET", cache:"no-store"});
+  if(!r.ok) throw new Error("store GET " + r.status);
   return await r.json();
 }
-async function tryFetchJSON(url){
-  try{ return await fetchJSON(url); }catch(e){ return null; }
+
+let members=[];
+function eligibleMembers(){
+  const f=$("qualFilter").value;
+  const act=members.filter(m=>m && m.active!==false);
+  if(f==="ALL") return act;
+  const has=(m,q)=> (m.qualifications||[]).includes(q);
+  if(f==="ALS") return act.filter(m=>has(m,"ALS"));
+  if(f==="EMT") return act.filter(m=>has(m,"EMT"));
+  if(f==="DRIVER") return act.filter(m=>has(m,"DRIVER"));
+  if(f==="EMT_DRIVER") return act.filter(m=>has(m,"EMT") && has(m,"DRIVER"));
+  if(f==="ALS_DRIVER") return act.filter(m=>has(m,"ALS") && has(m,"DRIVER"));
+  return act;
 }
-
-function safeText(x){ return (x===undefined||x===null) ? "" : String(x); }
-
-function computeHealth(dateISO, shiftObj){
-  // If outside lead window, suppress nags.
-  if(!isWithinLead(dateISO)) return {state:"gray", msg:"Outside lead window"};
-
-  const medical=shiftObj?.medical||null;
-  const driver=shiftObj?.driver_emt||null;
-
-  const medicalFilled=!!medical?.name && medical.name.toLowerCase()!=="open";
-  const driverFilled=!!driver?.name && driver.name.toLowerCase()!=="open";
-
-  if(!medicalFilled || !driverFilled) return {state:"red", msg:"Open seat"};
-
-  const medLevel=(medical.level||"").toUpperCase();
-  const drvLevel=(driver.level||"").toUpperCase();
-
-  if(medLevel!=="ALS") return {state:"red", msg:"Needs ALS"};
-  if(drvLevel==="ALS") return {state:"yellow", msg:"Needs EMT"};
-  return {state:"green", msg:"Staffed"};
-}
-
-function getHistoryShift(dateISO, shift){
-  return HISTORY.days?.[dateISO]?.[shift] || null;
-}
-function getPatchShift(dateISO, shift){
-  return PATCH.overrides?.[dateISO]?.[shift] || null;
-}
-function ensurePatchShift(dateISO, shift){
-  PATCH.overrides[dateISO]=PATCH.overrides[dateISO]||{};
-  PATCH.overrides[dateISO][shift]=PATCH.overrides[dateISO][shift]||{
-    // default OFF (manager enables per shift)
-    riders_allowed: (ORG?.riders?.default_allowed === true) ? true : false,
-    riders_max: ORG?.riders?.default_max_per_shift ?? 1,
-    riders:[]
-  };
-  return PATCH.overrides[dateISO][shift];
-}
-
-function mergeShiftView(dateISO, shift){
-  const base=getHistoryShift(dateISO, shift) || {
-    medical:{name:"Open", level:""},
-    driver_emt:{name:"Open", level:""},
-    riders:[]
-  };
-  const p=getPatchShift(dateISO, shift);
-
-  const riders_allowed = (p && typeof p.riders_allowed==="boolean") ? p.riders_allowed : (base.riders_allowed ?? ((ORG?.riders?.default_allowed===true)?true:false));
-  const riders_max     = (p && typeof p.riders_max==="number") ? p.riders_max : (base.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1));
-  const riders         = (p && Array.isArray(p.riders)) ? p.riders : (Array.isArray(base.riders) ? base.riders : []);
-
-  return {...base, riders_allowed, riders_max, riders};
-}
-
-function rosterOptions(){
-  if(MEMBERS?.members?.length){
-    return MEMBERS.members
-      .filter(m => m.active!==false && m.can_ride!==false)
-      .map(m => ({
-        id:String(m.member_id),
-        label:`${m.last_name}, ${m.first_name} #${m.member_id}`,
-        name:`${m.first_name} ${m.last_name}`
-      }))
-      .sort((a,b)=>a.label.localeCompare(b.label));
+function classifyHeat(ratio,E,R){
+  if(E<4){
+    if(R<=0) return "need2";
+    if(R==1) return "need1";
+    if(R==2) return "neutral";
+    return "crowd2";
   }
-  return [];
+  if(ratio<0.10) return "need2";
+  if(ratio<0.25) return "need1";
+  if(ratio<0.50) return "neutral";
+  if(ratio<0.75) return "crowd1";
+  return "crowd2";
+}
+function fmtMD(iso){
+  const d=new Date(iso+"T00:00:00");
+  return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
 }
 
-/* ===================== Patch persistence ===================== */
-const LS_PATCH_KEY = "shiftcommander_supervisor_patch";
-
-const pushSupervisor = debounce(async () => {
+async function refresh(){
   try{
-    PATCH.generated_at = new Date().toISOString();
-    localStorage.setItem(LS_PATCH_KEY, JSON.stringify(PATCH));
-  }catch{}
-  try{
-    await storePost({ kind:"supervisor", payload: PATCH });
-    setStatus("Saved to Drive.");
-  }catch(e){
-    console.warn("Drive save failed:", e);
-    setStatus("Saved locally (Drive unavailable).");
-  }
-}, 650);
+    $("statusText").textContent="Loading…";
+    $("dot").classList.remove("warn");
+    $("statusPill").title="";
 
-function touchPatch(){
-  PATCH.generated_at = new Date().toISOString();
-  $("btn_copy_patch").disabled=false;
-  $("btn_download_patch").disabled=false;
-  $("btn_reset_patch").disabled=false;
-  pushSupervisor();
-}
+    const memR=await fetch(MEMBERS_URL,{cache:"no-store"});
+    const memJ=await memR.json();
+    members=memJ.members || memJ || [];
+    const elig=eligibleMembers();
+    const E=elig.length;
 
-async function copyPatch(){
-  const txt=JSON.stringify(PATCH,null,2);
-  await navigator.clipboard.writeText(txt);
-  alert("Patch JSON copied.");
-}
-function downloadPatch(){
-  const blob=new Blob([JSON.stringify(PATCH,null,2)],{type:"application/json"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url; a.download=`supervisor_patch_${fmtISO(new Date())}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-}
-function resetPatch(){
-  if(!confirm("Reset patch? (This removes rider settings/assignments saved in the patch store)")) return;
-  PATCH={generated_at:null, overrides:{}};
-  try{ localStorage.setItem(LS_PATCH_KEY, JSON.stringify(PATCH)); }catch{}
-  pushSupervisor();
-  renderWeek();
-}
+    const all=await storeGet("member");
+    const payloads=[];
+    if(Array.isArray(all)){ for(const it of all){ if(it&&it.payload) payloads.push(it.payload);} }
+    else if(all && Array.isArray(all.items)){ for(const it of all.items){ if(it&&it.payload) payloads.push(it.payload);} }
+    else if(all && typeof all==="object"){ for(const k of Object.keys(all)){ const it=all[k]; if(it&&it.payload) payloads.push(it.payload);} }
 
-function buildRiderSelect(dateISO, shift){
-  const sel=document.createElement("select");
-  const opts=rosterOptions();
-
-  const ph=document.createElement("option");
-  ph.value=""; ph.textContent="Add rider…";
-  sel.appendChild(ph);
-
-  for(const o of opts){
-    const opt=document.createElement("option");
-    opt.value=o.id; opt.textContent=o.label;
-    sel.appendChild(opt);
-  }
-
-  sel.addEventListener("change", ()=>{
-    const val=sel.value;
-    if(!val) return;
-
-    const view=mergeShiftView(dateISO, shift);
-    if(view.riders_allowed===false){
-      alert("Riders are disabled for this shift. Turn on ‘Allow riders’ first.");
-      sel.value=""; return;
-    }
-
-    const ps=ensurePatchShift(dateISO, shift);
-    ps.riders = ps.riders || [];
-
-    if(ps.riders.length >= (view.riders_max ?? 1)){
-      alert("Max riders reached for this shift.");
-      sel.value=""; return;
-    }
-
-    const picked=opts.find(o=>o.id===val);
-    if(!picked){ sel.value=""; return; }
-
-    const exists=ps.riders.some(r=>String(r.member_id)===String(picked.id));
-    if(!exists){
-      ps.riders.push({member_id:String(picked.id), name:picked.name, role:"rider"});
-      touchPatch();
-      renderWeek();
-    }
-
-    sel.value="";
-  });
-
-  return sel;
-}
-
-function removeRider(dateISO, shift, idx){
-  const ps=ensurePatchShift(dateISO, shift);
-  ps.riders=ps.riders||[];
-  ps.riders.splice(idx,1);
-  touchPatch();
-  renderWeek();
-}
-
-function shiftRow(dateISO, dowLabel, shift){
-  const view=mergeShiftView(dateISO, shift);
-  const health=computeHealth(dateISO, view);
-
-  const tr=document.createElement("tr");
-
-  const td0=document.createElement("td");
-  const head=document.createElement("div");
-  head.className="rowhead";
-  const dow=document.createElement("div");
-  dow.className="dow";
-  dow.innerHTML=`<div class="d">${dowLabel}</div><div class="dt">${dateISO}</div>`;
-  const chip=document.createElement("div");
-  chip.className="shiftchip"; chip.textContent=shift;
-  head.appendChild(dow); head.appendChild(chip);
-  td0.appendChild(head);
-
-  const td1=document.createElement("td");
-  const h=document.createElement("div"); h.className="health";
-  const dot=document.createElement("span"); dot.className="dot "+health.state;
-  const msg=document.createElement("span"); msg.textContent=health.msg;
-  h.appendChild(dot); h.appendChild(msg);
-  td1.appendChild(h);
-
-  const td2=document.createElement("td");
-  const slots=document.createElement("div"); slots.className="slots";
-
-  const slotA=document.createElement("div"); slotA.className="slot";
-  slotA.innerHTML=`
-    <div class="lbl">Medical</div>
-    <div class="val">${safeText(view.medical?.name||"Open")}</div>
-    <div class="meta"><span>${safeText(view.medical?.level||"")}</span><span class="muted">${safeText(view.medical?.from_token||"")}</span></div>
-  `;
-  const slotB=document.createElement("div"); slotB.className="slot";
-  slotB.innerHTML=`
-    <div class="lbl">Driver/EMT</div>
-    <div class="val">${safeText(view.driver_emt?.name||"Open")}</div>
-    <div class="meta"><span>${safeText(view.driver_emt?.level||"")}</span><span class="muted">${safeText(view.driver_emt?.from_token||"")}</span></div>
-  `;
-  slots.appendChild(slotA); slots.appendChild(slotB);
-  td2.appendChild(slots);
-
-  const td3=document.createElement("td");
-  const riders=document.createElement("div"); riders.className="riders";
-
-  const line0=document.createElement("div"); line0.className="line";
-
-  const tog=document.createElement("label"); tog.className="toggle";
-  const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!view.riders_allowed;
-  cb.addEventListener("change", ()=>{
-    const ps=ensurePatchShift(dateISO, shift);
-    ps.riders_allowed=cb.checked;
-    touchPatch(); renderWeek();
-  });
-  const t=document.createElement("span"); t.textContent="Allow riders";
-  tog.appendChild(cb); tog.appendChild(t);
-
-  const maxSel=document.createElement("select");
-  const currentMax=view.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1);
-  [0,1,2].forEach(n=>{
-    const opt=document.createElement("option");
-    opt.value=String(n); opt.textContent=`Max: ${n}`;
-    if(n===currentMax) opt.selected=true;
-    maxSel.appendChild(opt);
-  });
-  maxSel.addEventListener("change", ()=>{
-    const ps=ensurePatchShift(dateISO, shift);
-    ps.riders_max=Number(maxSel.value);
-    ps.riders=ps.riders||[];
-    if(ps.riders.length>ps.riders_max) ps.riders=ps.riders.slice(0,ps.riders_max);
-    touchPatch(); renderWeek();
-  });
-
-  line0.appendChild(tog);
-  line0.appendChild(maxSel);
-  riders.appendChild(line0);
-
-  const line1=document.createElement("div"); line1.className="line";
-  line1.appendChild(buildRiderSelect(dateISO, shift));
-  riders.appendChild(line1);
-
-  const list=document.createElement("div"); list.className="line";
-  const riderList=view.riders||[];
-  if(riderList.length===0){
-    const empty=document.createElement("span"); empty.className="muted"; empty.textContent="No riders";
-    list.appendChild(empty);
-  }else{
-    riderList.forEach((r,idx)=>{
-      const tag=document.createElement("span"); tag.className="tag";
-      tag.textContent=r.name || ("Member "+r.member_id);
-      const x=document.createElement("button"); x.textContent="×"; x.title="Remove rider";
-      x.addEventListener("click", ()=>removeRider(dateISO, shift, idx));
-      tag.appendChild(x);
-      list.appendChild(tag);
-    });
-  }
-  riders.appendChild(list);
-
-  td3.appendChild(riders);
-
-  tr.appendChild(td0); tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
-  return tr;
-}
-
-let CURRENT_WEEK_START = startOfWeekThursday(new Date());
-
-function renderWeek(){
-  $("p_week").textContent = `Week: ${fmtISO(CURRENT_WEEK_START)} (Thu)`;
-  $("week_start_picker").value = fmtISO(CURRENT_WEEK_START);
-
-  const tbody=$("week_body");
-  tbody.innerHTML="";
-
-  const dowNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  for(let i=0;i<7;i++){
-    const d=addDays(CURRENT_WEEK_START,i);
-    const ds=fmtISO(d);
-    const dow=dowNames[d.getDay()];
-    tbody.appendChild(shiftRow(ds, dow, "AM"));
-    tbody.appendChild(shiftRow(ds, dow, "PM"));
-  }
-}
-
-function shiftWeek(deltaWeeks){
-  CURRENT_WEEK_START = addDays(CURRENT_WEEK_START, deltaWeeks*7);
-  renderWeek();
-}
-
-async function loadAll(){
-  try{
-    setStatus("Loading org settings…");
-    ORG = await fetchJSON(PATHS.org);
-    $("p_org").textContent = `Org: ${ORG?.org?.name || "Unknown"} (${ORG?.org?.timezone || ""})`;
-
-    setStatus("Loading members…");
-    MEMBERS = await fetchJSON(PATHS.members);
-
-    setStatus("Loading history manifest…");
-    const index = await fetchJSON(PATHS.historyIndex);
-    const files = index?.files || [];
-
-    const merged = { days:{} };
-    for(const f of files){
-      const monthUrl = f.filename ? `./data/history/${f.filename}` : f.path;
-      const monthObj = await fetchJSON(monthUrl);
-      if(monthObj?.days){
-        for(const [ds, dayObj] of Object.entries(monthObj.days)){
-          merged.days[ds] = merged.days[ds] || {};
-          if(dayObj.AM) merged.days[ds].AM = dayObj.AM;
-          if(dayObj.PM) merged.days[ds].PM = dayObj.PM;
+    // count preferred per date|half
+    const counts={};
+    for(const st of payloads){
+      if(!st||typeof st!=="object") continue;
+      for(const dateISO of Object.keys(st)){
+        const day=st[dateISO];
+        if(!day||typeof day!=="object") continue;
+        for(const half of Object.keys(day)){
+          if(day[half]==="preferred"){
+            const k=`${dateISO}|${half}`;
+            counts[k]=(counts[k]||0)+1;
+          }
         }
       }
     }
-    HISTORY = merged;
 
-    // Patch: Drive store first (authoritative); fallbacks: localStorage; then optional file
-    setStatus("Loading supervisor patch from Drive…");
-    let loaded = null;
-    try{
-      loaded = await storeGet({ kind:"supervisor" });
-      if(loaded && typeof loaded === "object") PATCH = loaded;
-      setStatus("Ready. (Patch loaded from Drive)");
-    }catch(e){
-      console.warn("Drive patch load failed:", e);
-      setStatus("Drive unavailable — trying local…");
-      try{
-        const ls = JSON.parse(localStorage.getItem(LS_PATCH_KEY) || "null");
-        if(ls && typeof ls === "object") PATCH = ls;
-      }catch{}
-      if(!PATCH || !PATCH.overrides){
-        const filePatch = await tryFetchJSON(PATHS.supervisorPatchFile);
-        if(filePatch?.overrides) PATCH = filePatch;
+    // Build rows for upcoming weeks
+    const weeks=parseInt($("weeks").value,10);
+    const start=weekStartISO(todayISO());
+    const shifts=[];
+    for(let w=0; w<weeks; w++){
+      const ws=addDaysISO(start,w*7);
+      for(let i=0;i<7;i++){
+        const date=addDaysISO(ws,i);
+        if(new Date(date+"T00:00:00") < new Date(todayISO()+"T00:00:00") && weekTag(ws)!=="Managed") continue;
+        shifts.push({date, half:"AM"});
+        shifts.push({date, half:"PM"});
       }
-      setStatus("Ready. (Using local/file patch fallback)");
     }
 
-    if(PATCH?.overrides && Object.keys(PATCH.overrides || {}).length > 0){
-      $("btn_copy_patch").disabled=false;
-      $("btn_download_patch").disabled=false;
-      $("btn_reset_patch").disabled=false;
+    const tbody=$("rows"); tbody.innerHTML="";
+    let need=0, crowd=0;
+    for(const sh of shifts){
+      const k=`${sh.date}|${sh.half}`;
+      const R=counts[k]||0;
+      const ratio=E? (R/E):0;
+      const level=classifyHeat(ratio,E,R);
+      if(level.startsWith("need")) need++;
+      if(level.startsWith("crowd")) crowd++;
+
+      const tr=document.createElement("tr");
+      tr.innerHTML = `
+        <td>${fmtMD(sh.date)} <span class="muted">(${sh.date})</span></td>
+        <td>${sh.half}</td>
+        <td>${weekTag(weekStartISO(sh.date))}</td>
+        <td>
+          <span class="heat" title="Preferred-only popularity among eligible members">
+            <span class="bar ${level}"></span>
+            <span>${R}/${E} prefer (${E?Math.round(ratio*100):0}%)</span>
+          </span>
+        </td>
+      `;
+      tbody.appendChild(tr);
     }
 
-    $("btn_prev").addEventListener("click", ()=>shiftWeek(-1));
-    $("btn_next").addEventListener("click", ()=>shiftWeek(1));
-    $("btn_today").addEventListener("click", ()=>{
-      CURRENT_WEEK_START = startOfWeekThursday(new Date());
-      renderWeek();
-    });
-    $("week_start_picker").addEventListener("change", (e)=>{
-      CURRENT_WEEK_START = startOfWeekThursday(parseISO(e.target.value));
-      renderWeek();
-    });
+    $("subtitle").textContent = `• Eligible: ${E} • Filter: ${$("qualFilter").value}`;
+    $("kpi").innerHTML = `
+      <div class="box"><b>${E}</b><div class="muted">Eligible members</div></div>
+      <div class="box"><b>${need}</b><div class="muted">Need (green)</div></div>
+      <div class="box"><b>${crowd}</b><div class="muted">Crowded (red)</div></div>
+      <div class="box"><b>${shifts.length}</b><div class="muted">Shifts shown</div></div>
+    `;
 
-    $("btn_copy_patch").addEventListener("click", copyPatch);
-    $("btn_download_patch").addEventListener("click", downloadPatch);
-    $("btn_reset_patch").addEventListener("click", resetPatch);
-
-    CURRENT_WEEK_START = startOfWeekThursday(new Date());
-    renderWeek();
-
-  }catch(err){
-    console.error(err);
-    setStatus("ERROR: " + err.message);
-    alert("Supervisor page failed to load required data:\n\n" + err.message);
+    $("statusText").textContent="Connected";
+    $("statusPill").title="Loaded from Drive store.";
+  }catch(e){
+    console.error(e);
+    $("statusText").textContent="Offline / no Drive";
+    $("dot").classList.add("warn");
+    $("statusPill").title=String(e?.message||e);
   }
 }
 
-loadAll();
+$("btnRefresh").addEventListener("click", refresh);
+$("qualFilter").addEventListener("change", refresh);
+$("weeks").addEventListener("change", refresh);
+refresh();
 </script>
 </body>
 </html>

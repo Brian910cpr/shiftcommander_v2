@@ -268,12 +268,33 @@
     .shiftBtn.locked{ cursor: not-allowed; opacity:.55 }
     .shiftKey{ font-weight: 950; letter-spacing:.3px; font-size: 12px; }
     .shiftState{ font-size: 10px; color: var(--muted2); margin-top: 3px; letter-spacing:.2px; text-transform:uppercase; }
-    .shiftBtn[data-state="preferred"]{ border-style: solid; border-color: rgba(38,208,124,.90) }
-    .shiftBtn[data-state="available"]{ border-style: solid; border-color: rgba(92,141,255,.95) }
-    .shiftBtn[data-state="nosched"]{ border-style: solid; border-color: rgba(255,93,93,.95) }
-    .shiftBtn[data-state="clear"]{ border-style: dashed; border-color: rgba(233,241,255,.22) }
+    
+    /* Preference fill (member choice) */
+    .shiftBtn{ border: 2px solid rgba(233,241,255,.12); }
+    .shiftBtn[data-state="preferred"]{ background: rgba(38,208,124,.22); }
+    .shiftBtn[data-state="available"]{ background: rgba(92,141,255,.22); }
+    .shiftBtn[data-state="nosched"]{ background: rgba(255,93,93,.22); }
+    .shiftBtn[data-state="clear"]{ background: rgba(233,241,255,.06); border-style: dashed; }
 
-    .shiftBtn[data-state="worked"]{
+    /* Heat border (Model A: Preferred popularity among eligible) */
+    .shiftBtn[data-heat="need2"]{ border-color: rgba(38,208,124,.95); }
+    .shiftBtn[data-heat="need1"]{ border-color: rgba(38,208,124,.55); }
+    .shiftBtn[data-heat="neutral"]{ border-color: rgba(233,241,255,.18); }
+    .shiftBtn[data-heat="crowd1"]{ border-color: rgba(255,168,54,.55); }
+    .shiftBtn[data-heat="crowd2"]{ border-color: rgba(255,93,93,.92); }
+
+    /* Pending Published change marker */
+    .shiftBtn[data-pending="1"]{ position: relative; }
+    .shiftBtn[data-pending="1"]::after{
+      content:"";
+      position:absolute;
+      right:6px; top:6px;
+      width:8px; height:8px;
+      border-radius:99px;
+      background: rgba(255,168,54,.95);
+      box-shadow: 0 0 0 3px rgba(255,168,54,.18);
+    }
+.shiftBtn[data-state="worked"]{
       border-style: solid;
       border-color: rgba(233,241,255,.30);
       background: rgba(255,255,255,.03);
@@ -485,6 +506,15 @@
         <input type="checkbox" id="overwriteLocks" style="transform:scale(1.1)" />
         Overwrite future manual picks (ignore locks)
       </label>
+      <div style="height:12px"></div>
+
+      <div class="row" style="align-items:center; gap:10px">
+        <span class="note">Published safety:</span>
+        <button class="btn secondary" id="btnPostPending" title="Commit pending Published changes now (sync to Drive)">Post pending now</button>
+        <button class="btn secondary" id="btnUndoPending" title="Undo any pending Published changes (revert locally)">Undo pending</button>
+        <span class="note" id="pendingHint" style="margin-left:auto"></span>
+      </div>
+
 
       <div style="height:10px"></div>
       <div class="note">
@@ -507,7 +537,7 @@ const STORE_URL = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGz
 
 /* lead window + display window */
 const LEAD_DAYS = 21;          // suppress supervisor-style “Needs…” until 3 weeks out (member page still allows edits)
-const WEEKS_SHOWN = 5;         // editing week + 4 upcoming
+const WEEKS_SHOWN = 7;         // current week + 6 upcoming (covers Managed + Published)         // editing week + 4 upcoming
 
 /* =========================
    Helpers
@@ -629,14 +659,17 @@ function setDriveStatus(meta){
 
   // Keep the visible text SHORT (no wrapping).
   let short = "Saved";
-  if(!online) short = "Saved";
-  else if(meta && meta.dirty) short = "Saved";
+  if(meta && hasPending(meta)) short = "Pending";
   tip.textContent = short;
 
   // Tooltip carries the nuance (sync pending / last push / error).
   const parts = [];
   parts.push("Saved locally on this device.");
-  if(!online){
+  if(meta && hasPending(meta)){
+    const ms = pendingRemainingMs(meta);
+    parts.push(`Published changes pending (undo ${formatMinSec(ms)}).`);
+    parts.push("These will sync to Drive after the undo window, or when you click ‘Post pending now’.");
+  }else if(!online){
     parts.push("Offline: will sync to Drive when internet returns.");
   }else if(meta && meta.dirty){
     parts.push("Sync to Drive pending.");
@@ -702,6 +735,106 @@ function setStateFor(memberState, dateISO, half, val){
   memberState[dateISO][half] = val;
 }
 
+/* =========================
+   Published Undo (30 min)
+   - In Published weeks, changes are applied locally immediately,
+     but remote sync is delayed to reduce accidental disruption.
+   - Members can undo pending Published changes within the window.
+========================= */
+const UNDO_MINUTES_PUBLISHED = 30;
+
+function stageForDateISO(dateISO){
+  return weekTag(weekStartISO(dateISO)); // Past / Managed / Published / Planning
+}
+
+function getPendingMap(meta){
+  // meta.pending = { "<dateISO>|<half>": {prev, next, createdAt, expiresAt} }
+  if(!meta.pending || typeof meta.pending !== "object") meta.pending = {};
+  return meta.pending;
+}
+
+function markPending(meta, dateISO, half, prevVal, nextVal){
+  const key = `${dateISO}|${half}`;
+  const now = Date.now();
+  const expiresAt = now + UNDO_MINUTES_PUBLISHED*60*1000;
+  const pending = getPendingMap(meta);
+  if(!pending[key]){
+    pending[key] = { prev: prevVal, next: nextVal, createdAt: now, expiresAt };
+  }else{
+    // keep original prev; update next; extend timer
+    pending[key].next = nextVal;
+    pending[key].expiresAt = expiresAt;
+  }
+  return key;
+}
+
+function clearPending(meta, key){
+  const pending = getPendingMap(meta);
+  delete pending[key];
+}
+
+function pendingRemainingMs(meta){
+  const pending = getPendingMap(meta);
+  let min = Infinity;
+  for(const k in pending){
+    const ms = (pending[k]?.expiresAt || 0) - Date.now();
+    if(ms > 0 && ms < min) min = ms;
+  }
+  return (min===Infinity) ? 0 : min;
+}
+
+function formatMinSec(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const m = Math.floor(s/60);
+  const r = s%60;
+  return m>0 ? `${m}m ${String(r).padStart(2,'0')}s` : `${r}s`;
+}
+
+async function flushExpiredPending(memberId){
+  const meta = getMeta(memberId);
+  const pending = getPendingMap(meta);
+  let changed = false;
+
+  for(const key of Object.keys(pending)){
+    const item = pending[key];
+    if(!item) { delete pending[key]; changed = true; continue; }
+    if(Date.now() >= (item.expiresAt || 0)){
+      delete pending[key];
+      changed = true;
+    }
+  }
+
+  if(changed){
+    setMeta(memberId, meta);
+    // if nothing else is pending, try syncing the now-stable local state
+    await trySync(memberId);
+  }
+}
+
+function hasPending(meta){
+  const pending = getPendingMap(meta);
+  return Object.keys(pending).length > 0;
+}
+
+function setPendingUI(meta){
+  // Keep lights green; change message only.
+  if(hasPending(meta)){
+    const ms = pendingRemainingMs(meta);
+    const msg = ms ? `Pending changes (undo ${formatMinSec(ms)})` : "Pending changes";
+    setSave(msg, "good");
+  }
+
+function applyPendingMarkers(){
+  const meta = getMeta(memberId);
+  const pending = getPendingMap(meta);
+  document.querySelectorAll(".shiftBtn").forEach(btn=>{
+    const k = `${btn.dataset.date}|${btn.dataset.half}`;
+    if(pending[k]) btn.dataset.pending = "1";
+    else btn.dataset.pending = "0";
+  });
+}
+}
+
 /* “manual lock” dates to prevent copy-overwrite:
    if user touched a specific date, we mark it locked in meta.locks[dateISO]=true */
 function getLocks(memberId){
@@ -758,22 +891,21 @@ function weekRangeLabel(startISO){
 
 function weekTag(startISO){
   const t = todayISO();
-  const managed = managedWeekStart;
+  const managedStart = managedWeekStart; // week start containing today
   const end = addDaysISO(startISO, 6);
 
   // Past (entire week ended before today)
   if(end < t) return "Past";
 
-  // Managed = the week containing today (current work week)
-  const managedEnd = addDaysISO(managed, 6);
-  if(startISO <= t && t <= end) return "Managed";
+  // Compute week offset from the current Managed week start
+  const diffDays = daysBetweenISO(managedStart, startISO);
+  const w = Math.floor(diffDays / 7); // 0 = current week
 
-  // Published = the next 3 full weeks after Managed
-  const pubStart = addDaysISO(managed, 7);
-  const pubEnd = addDaysISO(managed, 27); // 3 weeks after: +7..+27 inclusive
-  if(startISO >= pubStart && startISO <= pubEnd) return "Published";
+  const MANAGED_WEEKS = 3;   // THIS week + 2 more
+  const PUBLISHED_WEEKS = 3; // next 3 weeks after Managed
 
-  // Planning = everything after Published
+  if(w >= 0 && w < MANAGED_WEEKS) return "Managed";
+  if(w >= MANAGED_WEEKS && w < (MANAGED_WEEKS + PUBLISHED_WEEKS)) return "Published";
   return "Planning";
 }
 
@@ -867,6 +999,9 @@ function buildWeekRow(container, startISO, idx){
       }
 
       btn.dataset.state = state;
+      btn.dataset.date = dateISO;
+      btn.dataset.half = half;
+      btn.dataset.heat = 'neutral';
       btn.title = `${dayName(dateISO)} ${fmtMD(dateISO)} ${half} — ${stateLabelTiny[state] || state}`;
 
       if(!editable || state==="worked"){
@@ -894,12 +1029,29 @@ function buildWeekRow(container, startISO, idx){
         btn.title = `${dayName(dateISO)} ${fmtMD(dateISO)} ${half} — ${stateLabelTiny[nxt]}`;
         st.textContent = nxt==="clear" ? "" : (nxt==="nosched" ? "NO" : (nxt==="preferred" ? "PREF" : "AVL"));
 
+        // apply locally immediately
         setStateFor(memberState, dateISO, half, nxt);
         setLocal(memberId, memberState);
         setLocked(memberId, dateISO);
 
         const meta = getMeta(memberId);
         meta.dirty = true;
+
+        const stage = stageForDateISO(dateISO);
+
+        if(stage === "Published"){
+          // 30-min undo window before remote sync
+          const key = markPending(meta, dateISO, half, cur, nxt);
+          btn.dataset.pending = "1";
+          setMeta(memberId, meta);
+          setDriveStatus(meta);
+          setPendingUI(meta);
+          toast("Pending (undo 30m)");
+          // No immediate sync — will flush when expired or user posts via Tools
+          return;
+        }
+
+        // Non-Published: sync normally (Planning + Managed + Past view edits)
         setMeta(memberId, meta);
         setDriveStatus(meta);
 
@@ -946,6 +1098,9 @@ async function render(){
   for(let w=0; w<WEEKS_SHOWN; w++){
     buildWeekRow(cal, addDaysISO(editWeekStart, w*7), w);
   }
+  // Heat borders (best-effort)
+  if(HEAT && HEAT.ready) applyHeatToUI();
+  if(memberId) applyPendingMarkers();
 }
 
 /* =========================
@@ -974,7 +1129,7 @@ async function persistAfterBulkEdit(){
   const ok = await trySync(memberId);
   if(ok) toast("Saved");
 }
-$("btnTools").addEventListener("click", ()=> { updatePatternLabel(); $("toolsDlg").showModal(); });
+$("btnTools").addEventListener("click", ()=> { updatePatternLabel(); updatePendingHint(); $("toolsDlg").showModal(); });
 $("btnCloseDlg").addEventListener("click", ()=> $("toolsDlg").close());
 
 $("copyPatternNext").addEventListener("click", async ()=>{
@@ -987,7 +1142,7 @@ $("copyPatternNext").addEventListener("click", async ()=>{
 $("copyPatternPublished").addEventListener("click", async ()=>{
   const overwrite = $("overwriteLocks")?.checked === true;
   // Published = next 3 weeks after Managed
-  const pubStart = addDaysISO(managedWeekStart, 7);
+  const pubStart = addDaysISO(managedWeekStart, 7*3); // after Managed (3 weeks)
   for(let w=0; w<3; w++){
     const dst = addDaysISO(pubStart, w*7);
     copyWeekPattern(patternWeekStart, dst, !overwrite);
@@ -1010,10 +1165,59 @@ $("clearPatternWeek").addEventListener("click", async ()=>{
 });
 
 function planningWeekStart(){
-  // Planning begins after Managed + 3 Published weeks
-  return addDaysISO(managedWeekStart, 28);
+  // Planning begins after 3 Managed + 3 Published weeks
+  return addDaysISO(managedWeekStart, 7*(3+3)); // 3 Managed + 3 Published
 }
 
+
+function updatePendingHint(){
+  const meta = getMeta(memberId);
+  const p = getPendingMap(meta);
+  const keys = Object.keys(p);
+  if(!$("pendingHint")) return;
+  if(keys.length === 0){ $("pendingHint").textContent = ""; return; }
+  const ms = pendingRemainingMs(meta);
+  $("pendingHint").textContent = `${keys.length} pending • undo ${formatMinSec(ms)}`;
+}
+
+$("btnPostPending")?.addEventListener("click", async ()=>{
+  const meta = getMeta(memberId);
+  const p = getPendingMap(meta);
+  const keys = Object.keys(p);
+  if(keys.length === 0){ toast("No pending changes"); return; }
+  // Commit: clear pending and sync now
+  meta.pending = {};
+  setMeta(memberId, meta);
+  setDriveStatus(meta);
+  const ok = await trySync(memberId);
+  render();
+  if(HEAT && HEAT.ready) applyHeatToUI();
+  toast(ok ? "Posted" : "Posted (local), sync pending");
+  $("toolsDlg").close();
+});
+
+$("btnUndoPending")?.addEventListener("click", async ()=>{
+  const meta = getMeta(memberId);
+  const p = getPendingMap(meta);
+  const keys = Object.keys(p);
+  if(keys.length === 0){ toast("No pending changes"); return; }
+
+  // Revert locally to previous values
+  for(const k of keys){
+    const [dateISO, half] = k.split("|");
+    const item = p[k];
+    if(!dateISO || !half || !item) continue;
+    setStateFor(memberState, dateISO, half, item.prev || "clear");
+  }
+  meta.pending = {};
+  setLocal(memberId, memberState);
+  setMeta(memberId, meta);
+  setDriveStatus(meta);
+  render();
+  if(HEAT && HEAT.ready) applyHeatToUI();
+  toast("Undone");
+  $("toolsDlg").close();
+});
 $("btnRepeatPlanning").addEventListener("click", async ()=>{
   const overwrite = $("overwriteLocks")?.checked === true;
   const every = parseInt($("repeatEvery")?.value || "4", 10);
@@ -1042,6 +1246,129 @@ $("btnRepeatPlanning").addEventListener("click", async ()=>{
 /* =========================
    Boot
 ========================= */
+
+/* =========================
+   Heat Map (Model A)
+   Border shows popularity among eligible members:
+   - Green = low Preferred interest (high need)
+   - Neutral = average
+   - Red = crowded
+   Only counts "preferred".
+========================= */
+let HEAT = { ready:false, byKey:{}, eligibleCount:0, loadedAt:0, lastError:"" };
+
+function heatKey(dateISO, half){ return `${dateISO}|${half}`; }
+
+function eligibleMembers(){
+  // Model A: eligible = active members (qual filters can be added later)
+  return (members || []).filter(m => m && m.active !== false);
+}
+
+function classifyHeat(ratio, E, R){
+  // small-roster correction
+  if(E < 4){
+    if(R <= 0) return "need2";
+    if(R == 1) return "need1";
+    if(R == 2) return "neutral";
+    return "crowd2";
+  }
+  if(ratio < 0.10) return "need2";
+  if(ratio < 0.25) return "need1";
+  if(ratio < 0.50) return "neutral";
+  if(ratio < 0.75) return "crowd1";
+  return "crowd2";
+}
+
+async function loadHeat(){
+  try{
+    const elig = eligibleMembers();
+    const E = elig.length;
+    HEAT.eligibleCount = E;
+    if(E === 0){ HEAT.ready = true; HEAT.byKey = {}; return; }
+
+    const all = await storeGet("member"); // expected: array of {memberId,payload} or object
+    const payloads = [];
+
+    if(Array.isArray(all)){
+      for(const item of all){
+        if(item && item.payload) payloads.push(item.payload);
+      }
+    }else if(all && typeof all === "object"){
+      // common wrapper forms
+      if(Array.isArray(all.items)){
+        for(const item of all.items){
+          if(item && item.payload) payloads.push(item.payload);
+        }
+      }else if(all.payload){
+        // single payload (unlikely for list) — ignore
+      }else{
+        // maybe { "102": {payload...}, ... }
+        for(const k of Object.keys(all)){
+          const item = all[k];
+          if(item && item.payload) payloads.push(item.payload);
+        }
+      }
+    }
+
+    const counts = {}; // key -> R preferred count
+    for(const st of payloads){
+      if(!st || typeof st !== "object") continue;
+      for(const dateISO of Object.keys(st)){
+        const day = st[dateISO];
+        if(!day || typeof day !== "object") continue;
+        for(const half of Object.keys(day)){
+          if(day[half] === "preferred"){
+            const k = heatKey(dateISO, half);
+            counts[k] = (counts[k] || 0) + 1;
+          }
+        }
+      }
+    }
+
+    const byKey = {};
+    for(const k of Object.keys(counts)){
+      const R = counts[k] || 0;
+      const ratio = R / E;
+      byKey[k] = { R, E, ratio, level: classifyHeat(ratio, E, R) };
+    }
+
+    HEAT.byKey = byKey;
+    HEAT.ready = true;
+    HEAT.loadedAt = Date.now();
+    HEAT.lastError = "";
+  }catch(e){
+    console.warn("Heat load failed:", e);
+    HEAT.ready = false;
+    HEAT.lastError = String(e?.message || e);
+  }
+}
+
+function applyHeatToUI(){
+  const grid = $("grid");
+  if(!grid) return;
+  grid.querySelectorAll(".shiftBtn").forEach(btn=>{
+    const dateISO = btn.dataset.date;
+    const half = btn.dataset.half;
+    if(!dateISO || !half) return;
+
+    const stage = stageForDateISO(dateISO);
+    if(stage !== "Published" && stage !== "Planning"){
+      btn.dataset.heat = "neutral";
+      return;
+    }
+
+    const k = heatKey(dateISO, half);
+    const h = HEAT.byKey[k];
+    btn.dataset.heat = h ? h.level : "need2"; // if nobody preferred yet, it's needed
+    // enrich tooltip (keep short)
+    if(h){
+      const pct = Math.round(h.ratio*100);
+      btn.title = btn.title + `\nPopularity: ${h.R}/${h.E} eligible prefer (${pct}%).`;
+    }else if(HEAT.eligibleCount){
+      btn.title = btn.title + `\nPopularity: 0/${HEAT.eligibleCount} eligible prefer (0%).`;
+    }
+  });
+}
 async function loadRequired(){
   const [orgR, memR] = await Promise.all([
     fetch(ORG_SETTINGS_URL, {cache:"no-store"}),
@@ -1167,6 +1494,25 @@ window.addEventListener("offline", ()=> { if(memberId){ const m=getMeta(memberId
       ru.value = d.toISOString().slice(0,10);
     }
     await loadMember();
+
+    // Heat map load (best-effort)
+    loadHeat().then(()=>{ HEAT.ready = true; applyHeatToUI(); }).catch(()=>{});
+
+    // Pending Published countdown + auto-flush
+    if(memberId){
+      const tick = async ()=>{
+        const meta = getMeta(memberId);
+        if(hasPending(meta)){
+          setPendingUI(meta);
+          updatePendingHint();
+          await flushExpiredPending(memberId);
+          // refresh pending markers
+          applyPendingMarkers();
+        }
+      };
+      setInterval(()=>{ tick().catch(()=>{}); }, 15000);
+      tick().catch(()=>{});
+    }
   }catch(e){
     alert("Member page failed to load required data:\n\n" + (e.message || e));
     console.error(e);
