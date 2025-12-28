@@ -437,20 +437,58 @@
     </div>
     <div class="modalBody">
       <div class="note">
-        Most people repeat week-to-week. Use these to copy patterns forward, or set repeating rules later.
-        (This stays quiet until you need it.)
-      </div>
-      <div style="height:12px"></div>
-
-      <div class="row">
-        <button class="btn" id="copyThisWeek">Copy <b>this</b> week → next week</button>
-        <button class="btn" id="copyToAll">Copy <b>this</b> week → all shown weeks</button>
-        <button class="btn danger" id="clearThisWeek">Clear <b>this</b> week</button>
+        Pick a <b>Pattern Week</b> (any week) and repeat it forward. The current work week may be restricted — your pattern doesn’t have to be.
       </div>
 
       <div style="height:10px"></div>
+
+      <div class="row" style="align-items:center">
+        <div class="pill" title="The week used as the source for repeats">
+          <label>Pattern:</label>
+          <span id="patternLabel" style="font-weight:900"></span>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="row">
+        <button class="btn" id="copyPatternNext">Copy <b>Pattern</b> → next week</button>
+        <button class="btn" id="copyPatternPublished">Copy <b>Pattern</b> → all <b>Published</b> weeks</button>
+        <button class="btn danger" id="clearPatternWeek">Clear <b>Pattern</b> week</button>
+      </div>
+
+      <div style="height:14px"></div>
+
+      <div style="border:1px solid var(--line); border-radius:16px; padding:12px; background: rgba(255,255,255,.03);">
+        <div style="font-weight:900; margin-bottom:6px;">Repeat into Planning</div>
+        <div class="note" style="margin-bottom:10px;">
+          Repeat the <b>Pattern Week</b> every X weeks, starting in <b>Planning</b>, until the date you choose.
+        </div>
+
+        <div class="row" style="align-items:center">
+          <label class="note">Every</label>
+          <select id="repeatEvery" title="Repeat interval">
+            <option value="2">2 weeks</option>
+            <option value="4">4 weeks</option>
+          </select>
+
+          <label class="note">until</label>
+          <input type="date" id="repeatUntil" title="Last date to fill (inclusive)"/>
+
+          <button class="btn" id="btnRepeatPlanning">Repeat → Planning</button>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <label class="note" style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none">
+        <input type="checkbox" id="overwriteLocks" style="transform:scale(1.1)" />
+        Overwrite future manual picks (ignore locks)
+      </label>
+
+      <div style="height:10px"></div>
       <div class="note">
-        Heads up: if you already hand-picked a specific future date, copying will <b>not overwrite</b> that date (it skips locked/manual dates).
+        By default, repeats won’t overwrite future dates you already touched. Check “Overwrite…” only when you mean it.
       </div>
     </div>
   </dialog>
@@ -670,6 +708,27 @@ function getLocks(memberId){
   const meta = getMeta(memberId);
   return meta.locks || {};
 }
+
+function getPatternWeek(memberId){
+  const meta = getMeta(memberId);
+  const v = meta.patternWeekStart;
+  if(v) return v;
+  // default: first Published week (next week after Managed)
+  return addDaysISO(managedWeekStart, 7);
+}
+function setPatternWeek(startISO){
+  patternWeekStart = startISO;
+  const meta = getMeta(memberId);
+  meta.patternWeekStart = startISO;
+  setMeta(memberId, meta);
+  updatePatternLabel();
+  render();
+}
+function updatePatternLabel(){
+  const el = $("patternLabel");
+  if(!el) return;
+  el.textContent = weekRangeLabel(patternWeekStart);
+}
 function setLocked(memberId, dateISO){
   const meta = getMeta(memberId);
   meta.locks = meta.locks || {};
@@ -684,6 +743,10 @@ let orgSettings = null;
 let members = [];
 let memberId = null;
 let editWeekStart = weekStartISO(todayISO());
+
+let managedWeekStart = weekStartISO(todayISO());
+let patternWeekStart = addDaysISO(managedWeekStart, 7); // default: first Published week
+
 let memberState = {}; // availability map
 let locks = {}; // dateISO -> true
 let suppressEditPast = true;
@@ -695,10 +758,23 @@ function weekRangeLabel(startISO){
 
 function weekTag(startISO){
   const t = todayISO();
+  const managed = managedWeekStart;
   const end = addDaysISO(startISO, 6);
+
+  // Past (entire week ended before today)
   if(end < t) return "Past";
-  if(startISO <= t && t <= end) return "Editing";
-  return "Upcoming";
+
+  // Managed = the week containing today (current work week)
+  const managedEnd = addDaysISO(managed, 6);
+  if(startISO <= t && t <= end) return "Managed";
+
+  // Published = the next 3 full weeks after Managed
+  const pubStart = addDaysISO(managed, 7);
+  const pubEnd = addDaysISO(managed, 27); // 3 weeks after: +7..+27 inclusive
+  if(startISO >= pubStart && startISO <= pubEnd) return "Published";
+
+  // Planning = everything after Published
+  return "Planning";
 }
 
 function buildHeaderRow(container){
@@ -726,12 +802,28 @@ function buildWeekRow(container, startISO, idx){
   label.className = "wkLabel";
   const t = document.createElement("div");
   t.className = "wkTag";
-  t.innerHTML = `<span class="dot ${tag==="Editing" ? "ok" : "warn"}"></span>${tag}`;
+
+  const dotClass = (tag==="Managed" || tag==="Published") ? "ok" : "warn";
+  const isPattern = (startISO === patternWeekStart);
+
+  t.innerHTML = `<span class="dot ${dotClass}"></span>${tag}${isPattern ? ' <span style="margin-left:6px; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.04); font-size:11px; font-weight:950;">PATTERN</span>' : ''}`;
+
   const r = document.createElement("div");
   r.className = "wkRange";
   r.innerHTML = `<b>${weekRangeLabel(startISO)}</b>`;
+
+  const pb = document.createElement("button");
+  pb.className = "btn secondary";
+  pb.style.padding = "7px 10px";
+  pb.style.borderRadius = "999px";
+  pb.style.fontSize = "12px";
+  pb.textContent = "Set Pattern";
+  pb.title = "Use this week as your repeating Pattern Week";
+  pb.addEventListener("click", (ev)=>{ ev.stopPropagation(); setPatternWeek(startISO); });
+
   label.appendChild(t);
   label.appendChild(r);
+  label.appendChild(pb);
   container.appendChild(label);
 
   for(let i=0;i<7;i++){
@@ -859,12 +951,13 @@ async function render(){
 /* =========================
    Repeat / Tools
 ========================= */
-function copyWeekPattern(srcWeekStartISO, dstWeekStartISO){
-  // copies availability from src week -> dst week, but SKIPS manual locked dates
+function copyWeekPattern(srcWeekStartISO, dstWeekStartISO, respectLocks=true){
+  // copies availability from src week -> dst week
+  // Default: SKIPS future dates you already touched (manual locks).
   for(let i=0;i<7;i++){
     const srcDay = addDaysISO(srcWeekStartISO, i);
     const dstDay = addDaysISO(dstWeekStartISO, i);
-    if(locks[dstDay]) continue; // don't overwrite hand-picked dates
+    if(respectLocks && locks[dstDay]) continue; // don't overwrite hand-picked dates unless requested
     for(const half of ["AM","PM"]){
       const v = getStateFor(memberState, srcDay, half);
       setStateFor(memberState, dstDay, half, v);
@@ -881,25 +974,33 @@ async function persistAfterBulkEdit(){
   const ok = await trySync(memberId);
   if(ok) toast("Saved");
 }
-$("btnTools").addEventListener("click", ()=> $("toolsDlg").showModal());
+$("btnTools").addEventListener("click", ()=> { updatePatternLabel(); $("toolsDlg").showModal(); });
 $("btnCloseDlg").addEventListener("click", ()=> $("toolsDlg").close());
 
-$("copyThisWeek").addEventListener("click", async ()=>{
-  copyWeekPattern(editWeekStart, addDaysISO(editWeekStart, 7));
+$("copyPatternNext").addEventListener("click", async ()=>{
+  const overwrite = $("overwriteLocks")?.checked === true;
+  copyWeekPattern(patternWeekStart, addDaysISO(patternWeekStart, 7), !overwrite);
   await persistAfterBulkEdit();
   $("toolsDlg").close();
 });
-$("copyToAll").addEventListener("click", async ()=>{
-  for(let w=1; w<WEEKS_SHOWN; w++){
-    copyWeekPattern(editWeekStart, addDaysISO(editWeekStart, w*7));
+
+$("copyPatternPublished").addEventListener("click", async ()=>{
+  const overwrite = $("overwriteLocks")?.checked === true;
+  // Published = next 3 weeks after Managed
+  const pubStart = addDaysISO(managedWeekStart, 7);
+  for(let w=0; w<3; w++){
+    const dst = addDaysISO(pubStart, w*7);
+    copyWeekPattern(patternWeekStart, dst, !overwrite);
   }
   await persistAfterBulkEdit();
   $("toolsDlg").close();
 });
-$("clearThisWeek").addEventListener("click", async ()=>{
+
+$("clearPatternWeek").addEventListener("click", async ()=>{
+  const overwrite = $("overwriteLocks")?.checked === true;
   for(let i=0;i<7;i++){
-    const day = addDaysISO(editWeekStart, i);
-    if(locks[day]) continue; // skip manual locked dates (respect their intent)
+    const day = addDaysISO(patternWeekStart, i);
+    if(!overwrite && locks[day]) continue;
     for(const half of ["AM","PM"]){
       setStateFor(memberState, day, half, "clear");
     }
@@ -908,6 +1009,36 @@ $("clearThisWeek").addEventListener("click", async ()=>{
   $("toolsDlg").close();
 });
 
+function planningWeekStart(){
+  // Planning begins after Managed + 3 Published weeks
+  return addDaysISO(managedWeekStart, 28);
+}
+
+$("btnRepeatPlanning").addEventListener("click", async ()=>{
+  const overwrite = $("overwriteLocks")?.checked === true;
+  const every = parseInt($("repeatEvery")?.value || "4", 10);
+  const until = $("repeatUntil")?.value || "";
+
+  if(!until){
+    toast("Pick an 'until' date");
+    return;
+  }
+  const untilWeek = weekStartISO(until);
+  const startPlanning = planningWeekStart();
+
+  // Repeat pattern forward every N weeks, but only fill Planning weeks.
+  for(let wStart = patternWeekStart; wStart <= untilWeek; ){
+    // advance first (we don't need to "repeat" into the pattern itself)
+    wStart = addDaysISO(wStart, every*7);
+    if(wStart > untilWeek) break;
+    if(addDaysISO(wStart, 6) < todayISO()) continue; // skip fully past
+    if(wStart < startPlanning) continue; // keep this button "Planning only"
+    copyWeekPattern(patternWeekStart, wStart, !overwrite);
+  }
+
+  await persistAfterBulkEdit();
+  $("toolsDlg").close();
+});
 /* =========================
    Boot
 ========================= */
@@ -959,6 +1090,8 @@ async function loadRequired(){
 }
 
 async function loadMember(){
+  managedWeekStart = weekStartISO(todayISO());
+  patternWeekStart = getPatternWeek(memberId);
   locks = getLocks(memberId);
 
   // start with local
@@ -990,6 +1123,7 @@ async function loadMember(){
   // if we had dirty edits, try sync once on load
   await trySync(memberId);
 
+  updatePatternLabel();
   await render();
 }
 
@@ -1025,6 +1159,13 @@ window.addEventListener("offline", ()=> { if(memberId){ const m=getMeta(memberId
   try{
     await loadRequired();
     setEditWeekStart(todayISO());
+    // default "repeat until" = 6 months out
+    const ru = $("repeatUntil");
+    if(ru){
+      const d = new Date();
+      d.setMonth(d.getMonth()+6);
+      ru.value = d.toISOString().slice(0,10);
+    }
     await loadMember();
   }catch(e){
     alert("Member page failed to load required data:\n\n" + (e.message || e));
