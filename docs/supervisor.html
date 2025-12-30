@@ -297,6 +297,19 @@ main{padding-top: 10px;}
   /* Week resolve (press-and-hold) */
   .weekButtons{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
   .weekBtn{ padding:8px 10px; border-radius:12px; font-size:12px; user-select:none; }
+/* Stage chips */
+.stageChip{
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; letter-spacing:.3px;
+  padding:2px 8px; border-radius:999px; margin-left:10px;
+  border:1px solid rgba(255,255,255,.16);
+}
+.stageChip.draft{ background: rgba(120,120,120,.18); color: rgba(255,255,255,.85); }
+.stageChip.published{ background: rgba(90,167,255,.18); color: rgba(180,220,255,.95); border-color: rgba(90,167,255,.30); }
+.stageChip.managed{ background: rgba(255,170,0,.18); color: rgba(255,220,160,.95); border-color: rgba(255,170,0,.30); }
+
+.seatMeta{ font-size:12px; color: var(--muted); margin-top:3px; }
+
   .weekBtn.resolving{ border-color: rgba(38,208,124,.55); background: rgba(38,208,124,.12); }
   tr.weekHi{ outline:1px solid rgba(38,208,124,.35); background: rgba(38,208,124,.06); }
 
@@ -392,6 +405,7 @@ main{padding-top: 10px;}
 </main>
 
 <script>
+
 const MEMBERS_URL = "/data/members.json";
 const STORE_URL = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
 
@@ -439,12 +453,57 @@ function hasQual(m, q){
   const qs = m.qualifications || m.quals || [];
   return qs.includes(q);
 }
-function seatEligible(m, seat){
-  const req = seat.requires_any || [];
-  if(req.length===0) return true;
-  for(const q of req){ if(hasQual(m,q)) return true; }
-  return false;
+
+function memberCredsSet(m){
+  const s = new Set();
+  const quals = Array.isArray(m.qualifications) ? m.qualifications : [];
+  for(const q of quals){ s.add(String(q)); }
+  // Lightweight aliasing to bridge current data into credential language
+  if(s.has("ALS")){
+    s.add("AEMT"); s.add("Paramedic"); s.add("ALS");
+  }
+  if(s.has("DRIVER")){
+    s.add("Ops-120"); s.add("EVOC"); s.add("DRIVER");
+  }
+  return s;
 }
+
+function normalizeSeat(seat){
+  if(!seat) return null;
+  const id = seat.id || seat.seat_id || seat.seatId;
+  const label = seat.label || seat.name || id;
+  const required = (typeof seat.required === "boolean") ? seat.required : null;
+  let credential_sets = seat.credential_sets;
+
+  // Legacy formats:
+  // - {requires_any:[...]} or {requires_all:[...]} at top-level
+  // - {requires:{certs_any:[...], endorse_all:[...]}}
+  // - {requires_any:[...], requires_all:[...]} inside "requires"
+  if(!Array.isArray(credential_sets)){
+    const r = seat.requires || {};
+    const any = seat.requires_any || r.requires_any || r.certs_any || [];
+    const all = seat.requires_all || r.requires_all || r.endorse_all || [];
+    if((any && any.length) || (all && all.length)){
+      credential_sets = [{ label:"Legacy", requires_any:any, requires_all:all }];
+    } else {
+      credential_sets = [];
+    }
+  }
+  return { id, label, required, credential_sets };
+}
+
+function satisfiesSeat(m, seat){
+  const s = normalizeSeat(seat);
+  const creds = memberCredsSet(m);
+  const sets = Array.isArray(s.credential_sets) ? s.credential_sets : [];
+  if(sets.length === 0) return true; // no rules means allow (admin-controlled)
+  return sets.some(set=>{
+    const allOk = !set.requires_all || set.requires_all.every(c=>creds.has(String(c)));
+    const anyOk = !set.requires_any || set.requires_any.some(c=>creds.has(String(c)));
+    return allOk && anyOk;
+  });
+}
+
 
 // local-only persistence key
 function lsKey(dateISO, unitId){ return `sc_assign_${dateISO}_${unitId}`; }
@@ -508,13 +567,36 @@ function renderMemberPool(){
   }
 }
 
+
+function getUnitSeatBuckets(unit){
+  // Supports both v1 (min_required/optional) and v2 (seat_plan + min_crew)
+  if(Array.isArray(unit.seat_plan) && unit.seat_plan.length){
+    const minCrew = Number(unit.min_crew||2);
+    const req = unit.seat_plan.slice(0, Math.min(minCrew, unit.seat_plan.length));
+    const opt = unit.seat_plan.slice(req.length);
+    return { required:req, optional:opt };
+  }
+  const req = Array.isArray(unit.min_required) ? unit.min_required : [];
+  const opt = Array.isArray(unit.optional) ? unit.optional : [];
+  return { required:req, optional:opt };
+}
+
+function findSeatById(seatId){
+  return (seats.seats||[]).find(s => (s.id||s.seat_id||s.seatId) === seatId) || null;
+}
+
 function renderSeatList(unit){
   $("unitTitle").textContent = `${unit.label} — Seat Assignments`;
   const list=$("seatList");
   list.innerHTML="";
-  const seatIds=[...unit.min_required, ...unit.optional];
+  const buckets = getUnitSeatBuckets(unit);
+  const seatIds=[...buckets.required, ...buckets.optional];
+
   for(const sid of seatIds){
-    const seat = (seats.seats||[]).find(s=>s.seat_id===sid) || {seat_id:sid,label:sid,requires_any:[]};
+    const seatRaw = findSeatById(sid) || {id:sid,label:sid,credential_sets:[]};
+    const seat = normalizeSeat(seatRaw);
+    const isOptional = buckets.optional.includes(sid);
+
     const row=document.createElement("div");
     row.className="seatRow";
 
@@ -522,70 +604,82 @@ function renderSeatList(unit){
     name.className="seatName";
     name.textContent = seat.label || sid;
 
+    const meta=document.createElement("div");
+    meta.className="seatMeta";
+    meta.textContent = isOptional ? "Optional" : "Required";
+
+    const left=document.createElement("div");
+    left.appendChild(name);
+    left.appendChild(meta);
+
     const sel=document.createElement("select");
     sel.dataset.seat_id = sid;
 
     const opt0=document.createElement("option");
     opt0.value="";
-    opt0.textContent = sid==="DRIVER" ? "— Optional —" : "— Select —";
+    opt0.textContent = isOptional ? "— Optional —" : "— Select —";
     sel.appendChild(opt0);
 
     const active = getActiveMembers().slice().sort((a,b)=>memberLabel(a).localeCompare(memberLabel(b)));
     for(const m of active){
-      const ok = seatEligible(m, seat);
-      // For optional DRIVER, only show driver-qualified by default
-      if(sid==="DRIVER" && !ok) continue;
+      const ok = satisfiesSeat(m, seatRaw);
+      if(!ok) continue;
 
       const o=document.createElement("option");
       o.value = m.member_id;
       o.textContent = memberLabel(m) + (m.rank ? ` (${m.rank})` : "");
+      if(currentAssignments[sid] && String(currentAssignments[sid])===String(m.member_id)){
+        o.selected = true;
+      }
       sel.appendChild(o);
     }
 
-    sel.value = currentAssignments[sid] || "";
     sel.addEventListener("change", ()=>{
-      currentAssignments[sid] = sel.value || "";
+      currentAssignments[sid] = sel.value;
       validateUnit(unit);
-      setSaveState("Unsaved changes");
+      window.SC_SHELL && window.SC_SHELL.markDirty && window.SC_SHELL.markDirty();
     });
 
-    const btn=document.createElement("button");
-    btn.className="secondary";
-    btn.textContent="Clear";
-    btn.addEventListener("click", ()=>{
-      sel.value="";
-      currentAssignments[sid]="";
-      validateUnit(unit);
-      setSaveState("Unsaved changes");
-    });
-
-    row.appendChild(name);
+    row.appendChild(left);
     row.appendChild(sel);
-    row.appendChild(btn);
     list.appendChild(row);
   }
 }
 
+
+
 function validateUnit(unit){
-  const missing=[];
-  // Required seats must be filled with eligible people
-  for(const sid of unit.min_required){
-    const seat = (seats.seats||[]).find(s=>s.seat_id===sid) || {seat_id:sid,requires_any:[]};
-    const mid=currentAssignments[sid];
-    if(!mid){ missing.push(`${sid} unassigned`); continue; }
-    const m=getActiveMembers().find(x=>String(x.member_id)===String(mid));
-    if(!m){ missing.push(`${sid} member not found`); continue; }
-    if(!seatEligible(m, seat)){ missing.push(`${sid} not qualified`); }
+  const buckets = getUnitSeatBuckets(unit);
+  const missing = [];
+  const notes = [];
+
+  for(const sid of buckets.required){
+    const mid = String(currentAssignments[sid]||"");
+    if(!mid){
+      missing.push(sid);
+      continue;
+    }
+    const m = (members.members||[]).find(x=>String(x.member_id)===mid);
+    const seatRaw = findSeatById(sid);
+    if(m && seatRaw && !satisfiesSeat(m, seatRaw)){
+      missing.push(sid);
+      notes.push(`${sid}: assigned member does not meet requirements`);
+    }
   }
 
   const ready = missing.length===0;
-  const badge=$("readyBadge");
+  const badge = $("readyBadge");
+  badge.className = "badge " + (ready ? "ok" : "warn");
   badge.textContent = ready ? "READY" : "NOT READY";
-  badge.classList.toggle("ok", ready);
-  badge.classList.toggle("warn", !ready);
-  $("validateMsg").textContent = ready ? "Minimum crew satisfied. You can publish." : ("Missing: " + missing.join(" • "));
-  return ready;
+
+  const msg = [];
+  if(!ready){
+    msg.push(`Missing required: ${missing.join(", ")}`);
+  }
+  msg.push(...notes);
+  $("validateMsg").textContent = msg.join(" • ");
 }
+
 
 function loadAssignmentsLocal(dateISO, unitId){
   const raw=localStorage.getItem(lsKey(dateISO, unitId));
@@ -601,7 +695,7 @@ async function loadStaffing(){
   const dateISO = $("staffDate").value || todayISO();
   const unitId = $("unitPick").value;
 
-  const unit = (units.units||[]).find(u=>u.unit_id===unitId) || (units.units||[])[0];
+  const unit = (units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0];
   if(!unit) return;
 
   // Try store first, fallback to local
@@ -665,14 +759,49 @@ function clearStaffing(){
   const dateISO = $("staffDate").value || todayISO();
   const unitId = $("unitPick").value;
   currentAssignments = {};
-  renderSeatList((units.units||[]).find(u=>u.unit_id===unitId) || (units.units||[])[0]);
-  validateUnit((units.units||[]).find(u=>u.unit_id===unitId) || (units.units||[])[0]);
+  renderSeatList((units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0]);
+  validateUnit((units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0]);
   localStorage.removeItem(lsKey(dateISO, unitId));
   setSaveState("Cleared");
 }
 
 function todayISO(){ const t=new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()).toISOString().slice(0,10); }
 function addDaysISO(iso,days){ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10); }
+
+/* =========================
+   Week stage model
+   ========================= */
+const MANAGED_WEEKS = 3;
+// Published window starts this many weeks out (change here). Weeks between MANAGED and PUBLISHED are "Published".
+const PUBLISHED_WEEKS = 6;
+
+function weekStartMon(d){
+  const x = new Date(d);
+  const day = (x.getDay()+6)%7; // Mon=0..Sun=6
+  x.setDate(x.getDate()-day);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function weekStartISOFromDate(d){
+  const ws = weekStartMon(d);
+  const y=ws.getFullYear();
+  const m=String(ws.getMonth()+1).padStart(2,'0');
+  const da=String(ws.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+function weekOffsetFromCurrent(weekStartISO){
+  const nowWs = weekStartISOFromDate(new Date());
+  const a = new Date(nowWs+"T00:00:00");
+  const b = new Date(weekStartISO+"T00:00:00");
+  return Math.round((b-a)/(7*24*3600*1000));
+}
+function stageForWeek(weekStartISO){
+  const off = weekOffsetFromCurrent(weekStartISO);
+  if(off <= (MANAGED_WEEKS-1)) return "MANAGED";
+  if(off <= (PUBLISHED_WEEKS-1)) return "PUBLISHED";
+  return "DRAFT";
+}
+
 function weekStartISO(iso){ const d=new Date(iso+"T00:00:00"); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return d.toISOString().slice(0,10); }
 function daysBetweenISO(a,b){ return Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000); }
 function weekTag(startISO){
@@ -790,7 +919,8 @@ async function refresh(){
         btn.type = 'button';
         btn.className = 'weekBtn';
         const tag = weekTag(ws);
-        btn.textContent = `Week of ${fmtMD(ws)}${tag?` • ${tag}`:''}`;
+        const st = stageForWeek(ws);
+        btn.innerHTML = `Week of ${fmtMD(ws)}${tag?` • ${tag}`:""} <span class="stageChip ${st.toLowerCase()}">${st}</span>`;
 
         const startResolve = ()=>{
           btn.classList.add('resolving');
@@ -907,6 +1037,7 @@ $("btnRefresh").addEventListener("click", refresh);
 $("qualFilter").addEventListener("change", refresh);
 $("weeks").addEventListener("change", refresh);
 refresh();
+
 </script>
   </div>
 </div>
