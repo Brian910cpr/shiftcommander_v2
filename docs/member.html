@@ -618,16 +618,36 @@ function setMeta(memberId, meta){
   localStorage.setItem(lsMetaKey(memberId), JSON.stringify(meta));
 }
 
+async function storeParseJson_(r){
+  const ct = (r.headers.get("content-type") || "").toLowerCase();
+  const text = await r.text();
+
+  // If Google/Cloudflare returns an HTML error page, fail loudly with a useful snippet.
+  const looksHtml = text.trim().startsWith("<") || ct.includes("text/html");
+  if(looksHtml){
+    throw new Error(`Store returned HTML (${r.status}). First 120 chars: ${text.trim().slice(0,120)}`);
+  }
+
+  // Prefer JSON content-type, but allow JSON even if header is missing/mis-set.
+  try{
+    return JSON.parse(text || "{}");
+  }catch(e){
+    throw new Error(`Store returned non-JSON (${r.status}). First 120 chars: ${text.trim().slice(0,120)}`);
+  }
+}
+
 async function storeGet(kind, memberId){
   try{
-    const url = new URL(STORE_URL);
+    const url = new URL(STORE_URL, window.location.href);
     url.searchParams.set("kind", kind);
     if(memberId) url.searchParams.set("memberId", memberId);
+
     const r = await fetch(url.toString(), { method:"GET", cache:"no-store" });
     if(!r.ok) throw new Error("store GET " + r.status);
-    return await r.json();
+
+    return await storeParseJson_(r);
   }catch(e){
-    // Network/CORS/offline: treat as unavailable, but do NOT crash the page
+    // Network/offline/backend error: return an error object and let UI fall back to local cache
     return { __error: String(e?.message || e) };
   }
 }
@@ -636,13 +656,17 @@ async function storeGet(kind, memberId){
 async function storePut(kind, memberId, payload){
   try{
     const body = { kind, memberId, payload };
-    const r = await fetch(STORE_URL, {
+    const url = new URL(STORE_URL, window.location.href);
+
+    const r = await fetch(url.toString(), {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify(body),
+      cache:"no-store"
     });
     if(!r.ok) throw new Error("store POST " + r.status);
-    return await r.json();
+
+    return await storeParseJson_(r);
   }catch(e){
     return { __error: String(e?.message || e) };
   }

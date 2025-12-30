@@ -284,6 +284,22 @@ main{padding-top: 10px;}
       </div>
     </div>
   </section>
+
+  <!-- Inbox (v1) -->
+  <section id="panelInbox" style="display:none">
+    <div class="row" style="align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap">
+      <div>
+        <h2 style="margin:0 0 6px 0">Inbox</h2>
+        <div class="muted">Only exceptions that need a supervisor. Managed items first.</div>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="secondary" id="btnInboxRefresh">Refresh Inbox</button>
+      </div>
+    </div>
+    <div id="inboxEmpty" class="muted" style="margin-top:12px; display:none">No issues found.</div>
+    <div id="inboxList" class="inboxList" style="margin-top:12px"></div>
+  </section>
+
 </main>ine); background:rgba(233,241,255,.04); }
   .badge.ok{ border-color:rgba(38,208,124,.45); background:rgba(38,208,124,.12); }
   .badge.warn{ border-color:rgba(255,168,54,.45); background:rgba(255,168,54,.12); }
@@ -312,6 +328,27 @@ main{padding-top: 10px;}
 
   .weekBtn.resolving{ border-color: rgba(38,208,124,.55); background: rgba(38,208,124,.12); }
   tr.weekHi{ outline:1px solid rgba(38,208,124,.35); background: rgba(38,208,124,.06); }
+
+
+  /* Inbox */
+  .inboxList{ display:flex; flex-direction:column; gap:10px; }
+  .inboxCard{
+    border:1px solid var(--line);
+    background: rgba(233,241,255,.03);
+    border-radius: var(--radius);
+    padding: 12px;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    justify-content:space-between;
+  }
+  .inboxLeft{ display:flex; flex-direction:column; gap:6px; }
+  .inboxTitle{ font-weight:800; }
+  .sev{ font-size:11px; font-weight:800; letter-spacing:.35px; padding:3px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.16); display:inline-flex; }
+  .sev.critical{ background: rgba(255,82,82,.14); color: rgba(255,200,200,.95); border-color: rgba(255,82,82,.25); }
+  .sev.warn{ background: rgba(255,168,54,.12); color: rgba(255,224,190,.95); border-color: rgba(255,168,54,.25); }
+  .sev.info{ background: rgba(90,167,255,.14); color: rgba(200,230,255,.95); border-color: rgba(90,167,255,.25); }
+  .inboxMeta{ font-size:12px; color: rgba(255,255,255,.70); }
 
 </style>
 </head>
@@ -407,9 +444,11 @@ main{padding-top: 10px;}
 <script>
 
 const MEMBERS_URL = "/data/members.json";
-const STORE_URL = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
+const STORE_URL = "/api/store"; // Cloudflare Worker proxy (same-origin) to avoid Apps Script CORS
 
 const $ = (id)=>document.getElementById(id);
+const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+const getVal = (id, fallback="") => { const el = $(id); return el ? (el.value ?? fallback) : fallback; };
 
 // --- Supervisor tabs ---
 function showPanel(which){
@@ -512,22 +551,29 @@ async function safeGet(kind){
   try{ return await storeGet(kind); }catch(_e){ return null; }
 }
 async function storeSet(kind, payload){
-  const url=new URL(STORE_URL);
-  url.searchParams.set("kind", kind);
-  const r=await fetch(url.toString(), {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(payload)
-  });
-  if(!r.ok) throw new Error("store POST " + r.status);
-  try{ return await r.json(); }catch(_e){ return {ok:true}; }
+  try{
+    // Match Member.html’s contract: JSON body wrapper
+    const body = { kind, payload };
+    const url = new URL(STORE_URL, window.location.href);
+
+    const r = await fetch(url.toString(), {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body),
+      cache:"no-store"
+    });
+    if(!r.ok) throw new Error("store POST " + r.status);
+    return await storeParseJson_(r);
+  }catch(e){
+    return { __error: String(e?.message || e) };
+  }
 }
 
 let seats = DEFAULT_SEATS;
 let units = DEFAULT_UNITS;
 let currentAssignments = {}; // seat_id -> member_id
 
-function setSaveState(text){ $("saveState").textContent = text || ""; }
+function setSaveState(text){ const el = $("saveState"); if(el) el.textContent = text || ""; }
 
 function getActiveMembers(){
   return (members||[]).filter(m=>m && m.active!==false);
@@ -535,9 +581,10 @@ function getActiveMembers(){
 
 function renderMemberPool(){
   const pool = $("memberPool");
+  if(!pool) return;
   pool.innerHTML = "";
   const active = getActiveMembers();
-  $("poolCount").textContent = `${active.length} active`;
+  const pc=$("poolCount"); if(pc) pc.textContent = `${active.length} active`;
   for(const m of active){
     const div=document.createElement("div");
     div.className="person";
@@ -692,8 +739,8 @@ function saveAssignmentsLocal(dateISO, unitId, payload){
 }
 
 async function loadStaffing(){
-  const dateISO = $("staffDate").value || todayISO();
-  const unitId = $("unitPick").value;
+  const dateISO = $("staffDate")?.value || todayISO();
+  const unitId = $("unitPick")?.value || ((units.units||[])[0]?.unit_id || (units.units||[])[0]?.id || "");
 
   const unit = (units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0];
   if(!unit) return;
@@ -734,8 +781,8 @@ function currentPayload(dateISO, unitId){
 }
 
 async function saveStaffing({publish=false}={}){
-  const dateISO = $("staffDate").value || todayISO();
-  const unitId = $("unitPick").value;
+  const dateISO = $("staffDate")?.value || todayISO();
+  const unitId = $("unitPick")?.value || ((units.units||[])[0]?.unit_id || (units.units||[])[0]?.id || "");
   const payload = currentPayload(dateISO, unitId);
 
   // always save local
@@ -743,7 +790,8 @@ async function saveStaffing({publish=false}={}){
 
   if(publish){
     try{
-      await storeSet("assignments", payload);
+      const res = await storeSet("assignments", payload);
+      if(res && res.__error) throw new Error(res.__error);
       setSaveState("Published (store)");
     }catch(e){
       console.warn(e);
@@ -756,8 +804,8 @@ async function saveStaffing({publish=false}={}){
 }
 
 function clearStaffing(){
-  const dateISO = $("staffDate").value || todayISO();
-  const unitId = $("unitPick").value;
+  const dateISO = $("staffDate")?.value || todayISO();
+  const unitId = $("unitPick")?.value || ((units.units||[])[0]?.unit_id || (units.units||[])[0]?.id || "");
   currentAssignments = {};
   renderSeatList((units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0]);
   validateUnit((units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0]);
@@ -815,17 +863,37 @@ function weekTag(startISO){
   if(w>=MANAGED_WEEKS && w<(MANAGED_WEEKS+PUBLISHED_WEEKS)) return "Published";
   return "Planning";
 }
+async function storeParseJson_(r){
+  const ct = (r.headers.get("content-type") || "").toLowerCase();
+  const text = await r.text();
+
+  const looksHtml = text.trim().startsWith("<") || ct.includes("text/html");
+  if(looksHtml){
+    throw new Error(`Store returned HTML (${r.status}). First 120 chars: ${text.trim().slice(0,120)}`);
+  }
+
+  try{
+    return JSON.parse(text || "{}");
+  }catch(_e){
+    throw new Error(`Store returned non-JSON (${r.status}). First 120 chars: ${text.trim().slice(0,120)}`);
+  }
+}
+
 async function storeGet(kind){
-  const url=new URL(STORE_URL);
-  url.searchParams.set("kind", kind);
-  const r=await fetch(url.toString(), {method:"GET", cache:"no-store"});
-  if(!r.ok) throw new Error("store GET " + r.status);
-  return await r.json();
+  try{
+    const url = new URL(STORE_URL, window.location.href);
+    url.searchParams.set("kind", kind);
+    const r = await fetch(url.toString(), { method:"GET", cache:"no-store" });
+    if(!r.ok) throw new Error("store GET " + r.status);
+    return await storeParseJson_(r);
+  }catch(e){
+    return { __error: String(e?.message || e) };
+  }
 }
 
 let members=[];
 function eligibleMembers(){
-  const f=$("qualFilter").value;
+  const f=document.getElementById("qualFilter")?.value;
   const act=members.filter(m=>m && m.active!==false);
   if(f==="ALL") return act;
   const has=(m,q)=> (m.qualifications||[]).includes(q);
@@ -867,6 +935,7 @@ async function refresh(){
     const E=elig.length;
 
     const all=await storeGet("member");
+    if(all && all.__error) throw new Error(all.__error);
     const payloads=[];
     if(Array.isArray(all)){ for(const it of all){ if(it&&it.payload) payloads.push(it.payload);} }
     else if(all && Array.isArray(all.items)){ for(const it of all.items){ if(it&&it.payload) payloads.push(it.payload);} }
@@ -889,7 +958,7 @@ async function refresh(){
     }
 
     // Build rows for upcoming weeks
-    const weeks=parseInt($("weeks").value,10);
+    const weeks=parseInt(document.getElementById("weeks")?.value,10);
     const start=weekStartISO(todayISO());
     const shifts=[];
     for(let w=0; w<weeks; w++){
@@ -967,33 +1036,35 @@ const tbody=$("rows"); tbody.innerHTML="";
       tbody.appendChild(tr);
     }
 
-    $("subtitle").textContent = `• Eligible: ${E} • Filter: ${$("qualFilter").value}`;
-    $("kpi").innerHTML = `
+    document.getElementById("subtitle").textContent = `• Eligible: ${E} • Filter: ${document.getElementById("qualFilter")?.value}`;
+    (function(){
+      const kpiEl = $("kpi");
+      if(kpiEl) kpiEl.innerHTML = `
       <div class="box"><b>${E}</b><div class="muted">Eligible members</div></div>
       <div class="box"><b>${need}</b><div class="muted">Need (green)</div></div>
       <div class="box"><b>${crowd}</b><div class="muted">Crowded (red)</div></div>
       <div class="box"><b>${shifts.length}</b><div class="muted">Shifts shown</div></div>
-    `;
-
-    $("statusText").textContent="Connected";
-    $("statusPill").title="Loaded from Drive store.";
+      `;
+      const st = $("statusText"); if(st) st.textContent = "Connected";
+      const pill = $("statusPill"); if(pill) pill.title = "Loaded from Drive store.";
+    })();
   }catch(e){
     console.error(e);
-    $("statusText").textContent="Offline / no Drive";
-    $("dot").classList.add("warn");
-    $("statusPill").title=String(e?.message||e);
+    { const st=$("statusText"); if(st) st.textContent="Offline / no Drive"; }
+    { const d=$("dot"); if(d) d.classList.add("warn"); }
+    { const p=$("statusPill"); if(p) p.title=String(e?.message||e); }
   }
 }
 
 
 // Tabs
-$("tabPopularity").addEventListener("click", ()=>showPanel("pop"));
-$("tabStaffing").addEventListener("click", ()=>showPanel("staff"));
+on("tabPopularity","click", ()=>showPanel("pop"));
+on("tabStaffing","click", ()=>showPanel("staff"));
 
 // Staffing controls
 (function initStaffing(){
   // Default date
-  $("staffDate").value = todayISO();
+  if($("staffDate")) $("staffDate").value = todayISO();
 
   // Load members for staffing uses the same members[] already loaded in refresh(); but we also want to load members even if you open Staffing first.
   // We'll populate units/seats from store if available; fallback to defaults.
@@ -1043,6 +1114,210 @@ refresh();
 </div>
 
 <script>
+
+/* =========================
+   Inbox v1 (exceptions only)
+   ========================= */
+async function refreshInbox(){
+  const list = document.getElementById('inboxList');
+  const empty = document.getElementById('inboxEmpty');
+  const badge = document.getElementById('inboxCount');
+  if(!list) return;
+
+  list.innerHTML = '';
+  if(empty) empty.style.display = 'none';
+
+  // Ensure base data loaded (members, seats, units)
+  try{
+    // members load is driven by refresh() in Dashboard/Staffing, but Inbox can be opened first
+    if(!window.members || !Array.isArray(window.members)){
+      // fall back to existing refresh pipeline if available
+      if(typeof refresh === 'function') await refresh();
+    }
+  }catch(_e){}
+
+  // Pull remote assignments once (best effort), fall back to localStorage per-day
+  let remoteAssignments = null;
+  try{ remoteAssignments = await safeGet("assignments"); }catch(_e){ remoteAssignments = null; }
+
+  const weeksShown = Number(document.getElementById('weeks')?.value || 6);
+  const today = new Date();
+  const currentWeekStart = weekStartISO(today);
+  const issues = [];
+
+  // Helper: load assignments for a date/unit
+  function getAssignmentsFor(dateISO, unitId){
+    // remote shape: {date, items:[{date,unit_id,seat_id,member_id}]}
+    if(remoteAssignments && Array.isArray(remoteAssignments.items)){
+      const found = remoteAssignments.items.filter(it => it && it.date===dateISO && it.unit_id===unitId);
+      if(found.length){
+        const map = {};
+        for(const it of found){
+          if(it && it.seat_id) map[it.seat_id] = it.member_id || "";
+        }
+        return map;
+      }
+    }
+    // localStorage shape used by staffing: {date,unit_id,items:[{seat_id,member_id}]}
+    const local = loadAssignmentsLocal(dateISO, unitId);
+    if(local && Array.isArray(local.items)){
+      const map = {};
+      for(const it of local.items){
+        if(it && it.seat_id) map[it.seat_id] = it.member_id || "";
+      }
+      return map;
+    }
+    return null;
+  }
+
+  // Evaluate one unit on one day
+  function evaluateUnitDay(unit, dateISO){
+    const buckets = getUnitSeatBuckets(unit);
+    const required = buckets.required || [];
+    const assigns = getAssignmentsFor(dateISO, unit.id || unit.unit_id || unit.unitId || unit.label || "");
+    if(!assigns) return { hasData:false, missing: required.slice(), invalid: [] };
+
+    const missing = [];
+    const invalid = [];
+
+    for(const seatId of required){
+      const seat = findSeatById(seatId);
+      const memberId = assigns[seatId];
+      if(!memberId){
+        missing.push(seatId);
+        continue;
+      }
+      const member = (getActiveMembers()||[]).find(m => (m.member_id||m.id) === memberId);
+      if(!member){
+        invalid.push({seatId, reason:"member not found/active"});
+        continue;
+      }
+      const creds = memberCredsSet(member);
+      if(seat && !satisfiesSeat(creds, seat)){
+        invalid.push({seatId, reason:"not qualified"});
+      }
+    }
+    return { hasData:true, missing, invalid };
+  }
+
+  const activeUnits = (units.units||units||[]).filter(u => (u.status||u.active||"ACTIVE")==="ACTIVE");
+
+  for(let w=0; w<weeksShown; w++){
+    const weekStart = addDays(currentWeekStart, w*7);
+    const weekStartISOstr = weekStart.toISOString().slice(0,10);
+    const stage = stageForWeek(weekStartISOstr);
+
+    // Inbox priorities: Managed + Published only (Draft stays quiet)
+    if(stage === "DRAFT") continue;
+
+    // Look across the week (Mon-Sun) but keep it light: only surface first day with problems per unit
+    for(const unit of activeUnits){
+      let surfaced = false;
+      for(let d=0; d<7; d++){
+        const day = addDays(weekStart, d);
+        const dayISO = day.toISOString().slice(0,10);
+        const res = evaluateUnitDay(unit, dayISO);
+
+        const unitId = unit.id || unit.unit_id || unit.unitId || unit.label || "UNIT";
+        const unitLabel = unit.label || unitId;
+
+        // If no data at all for this unit on this day, only flag in MANAGED (because it’s close-in)
+        if(!res.hasData){
+          if(stage === "MANAGED"){
+            issues.push({
+              severity: "warn",
+              title: `${unitLabel}: no assignments saved`,
+              meta: `${dayISO} • ${stage}`,
+              actionHash: `#/staffing?date=${encodeURIComponent(dayISO)}&unit=${encodeURIComponent(unitId)}`
+            });
+            surfaced = true;
+          }
+          continue;
+        }
+
+        if(res.missing.length || res.invalid.length){
+          const missingText = res.missing.length ? `Missing: ${res.missing.join(", ")}` : "";
+          const invalidText = res.invalid.length ? `Invalid: ${res.invalid.map(x=>x.seatId).join(", ")}` : "";
+          const details = [missingText, invalidText].filter(Boolean).join(" • ");
+
+          issues.push({
+            severity: (stage==="MANAGED" ? "critical" : "warn"),
+            title: `${unitLabel}: coverage issue`,
+            meta: `${dayISO} • ${stage} • ${details}`,
+            actionHash: `#/staffing?date=${encodeURIComponent(dayISO)}&unit=${encodeURIComponent(unitId)}`
+          });
+          surfaced = true;
+        }
+
+        if(surfaced) break; // keep inbox readable
+      }
+    }
+  }
+
+  // Render
+  if(!issues.length){
+    if(empty) empty.style.display = '';
+    if(badge){ badge.style.display = 'none'; badge.textContent = '0'; }
+    return;
+  }
+
+  // Update sidebar badge
+  if(badge){
+    badge.textContent = String(issues.length);
+    badge.style.display = '';
+  }
+
+  // Render cards
+  for(const it of issues){
+    const card = document.createElement('div');
+    card.className = 'inboxCard';
+    const left = document.createElement('div');
+    left.className = 'inboxLeft';
+
+    const top = document.createElement('div');
+    top.className = 'row';
+    top.style.gap = '8px';
+
+    const sev = document.createElement('span');
+    sev.className = 'sev ' + (it.severity||'info');
+    sev.textContent = (it.severity||'INFO').toUpperCase();
+
+    const title = document.createElement('div');
+    title.className = 'inboxTitle';
+    title.textContent = it.title;
+
+    top.appendChild(sev);
+    top.appendChild(title);
+
+    const meta = document.createElement('div');
+    meta.className = 'inboxMeta';
+    meta.textContent = it.meta;
+
+    left.appendChild(top);
+    left.appendChild(meta);
+
+    const btn = document.createElement('button');
+    btn.className = 'secondary';
+    btn.textContent = 'Open Staffing';
+    btn.addEventListener('click', ()=>{
+      // Deep-link via hash and let shell route
+      location.hash = it.actionHash;
+    });
+
+    card.appendChild(left);
+    card.appendChild(btn);
+    list.appendChild(card);
+  }
+}
+
+// Inbox refresh button
+document.addEventListener('click', (e)=>{
+  if(e.target && e.target.id === 'btnInboxRefresh'){
+    refreshInbox();
+  }
+});
+
+
 /* =========================
    Shell routing + mode state
    ========================= */
@@ -1061,6 +1336,7 @@ refresh();
   // Existing panels from your page
   const panelPopularity = document.getElementById('panelPopularity');
   const panelStaffing = document.getElementById('panelStaffing');
+  const panelInbox = document.getElementById('panelInbox');
 
   // Lightweight edit-state flags (we’ll wire “real” dirty tracking into staffing editors next)
   let editMode = false;
@@ -1087,6 +1363,7 @@ refresh();
     // Default: hide everything "view-like"
     if(panelPopularity) panelPopularity.style.display = 'none';
     if(panelStaffing) panelStaffing.style.display = 'none';
+    if(panelInbox) panelInbox.style.display = 'none';
 
     // Nav highlighting
     Object.entries(nav).forEach(([k, el])=>{
@@ -1102,10 +1379,26 @@ refresh();
     } else if(route === 'staffing'){
       crumb.textContent = 'Supervisor ▸ Staffing ▸ AMB120';
       if(panelStaffing) panelStaffing.style.display = '';
+      // Apply deep-link params (e.g., #/staffing?date=YYYY-MM-DD&unit=AMB120)
+      try{
+        const qs = window.__SC_HASH_QS || '';
+        if(qs){
+          const p = new URLSearchParams(qs);
+          const d = p.get('date');
+          const u = p.get('unit');
+          const staffDate = document.getElementById('staffDate');
+          const unitPick = document.getElementById('unitPick');
+          if(d && staffDate) staffDate.value = d;
+          if(u && unitPick) unitPick.value = u;
+        }
+      }catch(_e){}
+      if(typeof loadStaffing === 'function') loadStaffing();
+      return;
     } else if(route === 'inbox'){
       crumb.textContent = 'Supervisor ▸ Inbox';
-      alert('Inbox is the next module. For now, use Dashboard + Staffing.');
-      location.hash = '#/dashboard';
+      if(panelInbox) panelInbox.style.display = '';
+      // Update count + render
+      refreshInbox();
       return;
     } else {
       crumb.textContent = 'Supervisor';
@@ -1116,8 +1409,10 @@ refresh();
   }
 
   function routeFromHash(){
-    const h = (location.hash || '#/dashboard').replace('#/','');
-    return h || 'dashboard';
+    const hfull = (location.hash || '#/dashboard').replace('#/','');
+    const [base, qs] = hfull.split('?');
+    window.__SC_HASH_QS = qs || '';
+    return (base || 'dashboard');
   }
 
   // Click handlers
