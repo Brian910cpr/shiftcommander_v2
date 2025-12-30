@@ -1,5 +1,5 @@
-// units.json
 {
+  "version": 2,
   "units": [
     {
       "id": "unit_ambu_1",
@@ -8,8 +8,12 @@
       "status": "ACTIVE",
       "min_crew": 2,
       "max_crew": 3,
-      "seat_plan": ["seat_als_medic", "seat_emt", "seat_driver"],
-      "notes": "Minimum is Medic + EMT. Driver is preferred if 3rd."
+      "seat_plan": [
+        "seat_als_medic",
+        "seat_driver",
+        "seat_3rd_rider"
+      ],
+      "notes": "ALS + Driver required. Driver prefers EMT+Ops-120. 3rd rider optional."
     }
   ]
 }

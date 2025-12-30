@@ -1,20 +1,50 @@
-// seats.json
 {
+  "version": 2,
   "seats": [
     {
-      "id": "seat_als_medic",
-      "label": "ALS Medic",
-      "requires": { "certs_any": ["Paramedic"], "endorse_all": [] }
-    },
-    {
-      "id": "seat_emt",
-      "label": "EMT",
-      "requires": { "certs_any": ["EMT", "AEMT", "Paramedic"], "endorse_all": [] }
+      "id": "seat_als",
+      "label": "ALS",
+      "required": true,
+      "credential_sets": [
+        {
+          "label": "ALS Qualified",
+          "requires_any": ["AEMT", "Paramedic"]
+        }
+      ],
+      "legacy": {
+        "certs_any": ["Paramedic"],
+        "endorse_all": []
+      }
     },
     {
       "id": "seat_driver",
       "label": "Driver",
-      "requires": { "certs_any": [], "endorse_all": ["EVOC"] }
+      "required": true,
+      "credential_sets": [
+        {
+          "label": "EMT + Ops-120",
+          "requires_all": ["EMT", "Ops-120"]
+        },
+        {
+          "label": "Ops-120",
+          "requires_all": ["Ops-120"]
+        }
+      ],
+      "legacy": {
+        "certs_any": [],
+        "endorse_all": ["EVOC"]
+      }
+    },
+    {
+      "id": "seat_3rd_rider",
+      "label": "3rd Rider",
+      "required": false,
+      "credential_sets": [
+        {
+          "label": "3rd Rider Qualified",
+          "requires_all": ["3rdRider"]
+        }
+      ]
     }
   ]
 }
