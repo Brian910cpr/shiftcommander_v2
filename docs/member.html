@@ -150,23 +150,24 @@
       justify-content:flex-end;
     }
     .statusPill{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.04);
-      border-radius: 999px;
-      padding: 8px 10px;
-      min-height: 36px;
-    }
-    .statusPill .tiny{
-      font-size:12px;
-      color: var(--muted);
-      max-width: 0; /* hide by default, keep tooltip */
-      overflow:hidden;
-      white-space:nowrap;
-    }
-    .statusPill.hasText .tiny{ max-width: 420px } /* use for debug if you ever want */
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(10,16,30,.75);
+  border-radius: 999px;
+  padding: 8px 12px;
+  min-height: 34px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+}
+.statusPill .tiny{
+  font-size:12px;
+  color: rgba(233,241,255,.80);
+  white-space:nowrap;
+}
+
+/* use for debug if you ever want */
     .gridWrap{
       margin-top: 14px;
       overflow-x:auto;
@@ -677,15 +678,18 @@ function setDriveStatus(meta){
   const tip = $("driveTip");
   const online = navigator.onLine !== false;
 
-  let short = "Saved";
-  if(meta && hasPending(meta)) short = "Pending";
-  tip.textContent = short;
-
-  // Dot: green when synced/normal, yellow when offline or remote error
-  const dot = $("driveDot");
   const warn = (!online) || (meta && meta.lastError);
+
+  // Visible label (matches the new light pill style)
+  let label = warn ? "Offline / no Drive" : "Online / Drive";
+  if(!warn && meta && hasPending(meta)) label = "Online / Pending";
+  tip.textContent = label;
+
+  // Dot: green when good, amber when offline/error
+  const dot = $("driveDot");
   dot.className = "dot " + (warn ? "warn" : "ok");
 
+  // Tooltip: keep the richer detail on hover
   const parts = [];
   parts.push("Saved locally on this device.");
   if(meta && hasPending(meta)){
@@ -705,7 +709,6 @@ function setDriveStatus(meta){
   if(meta && meta.lastError) parts.push("Drive sync issue: " + meta.lastError);
   $("savepill").title = parts.join(" ");
   updatePendingQuick();
-
 }
 
 
