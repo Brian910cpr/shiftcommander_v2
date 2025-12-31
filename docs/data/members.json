@@ -1,28 +1,228 @@
 {
   "version": 1,
-  "updated_at": "2025-12-27T00:00:00Z",
+  "updated_at": "2025-12-31T12:33:15Z",
   "members": [
-    { "member_id": "102", "first_name": "Stephen", "last_name": "Camlin", "active": true, "rank": "Fire Chief", "qualifications": ["ALS", "DRIVER"] },
-    { "member_id": "103", "first_name": "Wilbert", "last_name": "Phelps", "active": true, "rank": "Asst. Chief", "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "107", "first_name": "Gracie", "last_name": "Toney", "active": true, "rank": "Fire Lt", "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "112", "first_name": "AJ", "last_name": "Smith", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "153", "first_name": "Adam", "last_name": "Coleman", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "168", "first_name": "Cassie", "last_name": "Grass", "active": true, "qualifications": ["ALS", "DRIVER"] },
-    { "member_id": "151", "first_name": "Nora", "last_name": "Hines", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "146", "first_name": "Sherman", "last_name": "Huff", "active": true, "qualifications": ["DRIVER"] },
-    { "member_id": "148", "first_name": "Cyndi", "last_name": "O'Hara", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "149", "first_name": "Shane", "last_name": "Polletta", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "145", "first_name": "Roger", "last_name": "Toney", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "154", "first_name": "Cliff", "last_name": "Warner", "active": true, "qualifications": ["DRIVER"] },
-    { "member_id": "156", "first_name": "Christian", "last_name": "Wright", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "159", "first_name": "Brett", "last_name": "Toney", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "181", "first_name": "Anna", "last_name": "Squires", "active": true, "qualifications": ["ALS", "DRIVER"] },
-    { "member_id": "182", "first_name": "Nikki", "last_name": "Meeks", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "183", "first_name": "Serenity", "last_name": "Joyner", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "184", "first_name": "Lisa", "last_name": "Nelson", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "185", "first_name": "Nicholas", "last_name": "Tripp", "active": true, "rank": "EMS Capt", "qualifications": ["ALS", "DRIVER"] },
-    { "member_id": "186", "first_name": "Lynnsey", "last_name": "Benson", "active": true, "qualifications": ["EMT", "DRIVER"] },
-    { "member_id": "187", "first_name": "Gordon", "last_name": "Grant", "active": true, "qualifications": ["ALS", "DRIVER"] },
-    { "member_id": "188", "first_name": "Brian", "last_name": "Ennis", "active": true, "qualifications": ["EMT", "DRIVER"] }
+    {
+      "member_id": "102",
+      "first_name": "Stephen",
+      "last_name": "Camlin",
+      "active": true,
+      "rank": "Fire Chief",
+      "qualifications": [
+        "AEMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "103",
+      "first_name": "Wilbert",
+      "last_name": "Phelps",
+      "active": true,
+      "rank": "Asst. Chief",
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "107",
+      "first_name": "Gracie",
+      "last_name": "Toney",
+      "active": true,
+      "rank": "Fire Lt",
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "112",
+      "first_name": "AJ",
+      "last_name": "Smith",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "153",
+      "first_name": "Adam",
+      "last_name": "Coleman",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "168",
+      "first_name": "Cassie",
+      "last_name": "Grass",
+      "active": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "151",
+      "first_name": "Nora",
+      "last_name": "Hines",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "146",
+      "first_name": "Sherman",
+      "last_name": "Huff",
+      "active": true,
+      "qualifications": [
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "148",
+      "first_name": "Cyndi",
+      "last_name": "O'Hara",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "149",
+      "first_name": "Shane",
+      "last_name": "Polletta",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "145",
+      "first_name": "Roger",
+      "last_name": "Toney",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "154",
+      "first_name": "Cliff",
+      "last_name": "Warner",
+      "active": true,
+      "qualifications": [
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "156",
+      "first_name": "Christian",
+      "last_name": "Wright",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "159",
+      "first_name": "Brett",
+      "last_name": "Toney",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "181",
+      "first_name": "Anna",
+      "last_name": "Squires",
+      "active": true,
+      "qualifications": [
+        "PARAMEDIC",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "182",
+      "first_name": "Nikki",
+      "last_name": "Meeks",
+      "active": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "183",
+      "first_name": "Serenity",
+      "last_name": "Joyner",
+      "active": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "184",
+      "first_name": "Lisa",
+      "last_name": "Nelson",
+      "active": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "185",
+      "first_name": "Nicholas",
+      "last_name": "Tripp",
+      "active": true,
+      "rank": "EMS Capt",
+      "qualifications": [
+        "AEMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "186",
+      "first_name": "Lynnsey",
+      "last_name": "Benson",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "187",
+      "first_name": "Gordon",
+      "last_name": "Grant",
+      "active": true,
+      "qualifications": [
+        "PARAMEDIC",
+        "DRIVER"
+      ]
+    },
+    {
+      "member_id": "188",
+      "first_name": "Brian",
+      "last_name": "Ennis",
+      "active": true,
+      "qualifications": [
+        "EMT",
+        "DRIVER"
+      ]
+    }
   ]
 }
