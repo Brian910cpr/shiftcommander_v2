@@ -16,12 +16,13 @@
   --pref:#2bd27e;
   --avail:#5c8dff;
   --no:#ff5d5d;
-  --clear:#2a3355;
+  --clear: rgba(255,255,255,.18); /* visible neutral */
 }
 
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui}
 
+/* Header */
 header{
   position:sticky;top:0;z-index:10;
   background:linear-gradient(180deg,#050814,#050814cc);
@@ -43,17 +44,41 @@ header .pill{
 header select{
   min-width:220px;
   font-size:14px;
+  background:rgba(255,255,255,.04);
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:6px 8px;
 }
 
-.status{
+/* Drive save pill (consistent pattern) */
+.savePill{
+  display:flex; align-items:center; gap:10px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  border-radius:999px;
+  padding:6px 10px;
+  min-height:34px;
+  cursor: default;
   margin-left:auto;
-  font-size:12px;
-  color:var(--muted);
+}
+.savePill .tiny{ font-size:12px; color: rgba(234,241,255,.70); min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+
+.dot{
+  width:10px; height:10px; border-radius:999px;
+  background: rgba(233,241,255,.26);
+  box-shadow: 0 0 0 3px rgba(255,255,255,.06);
+}
+.dot.ok{
+  background:#2bd27e;
+  box-shadow: 0 0 0 3px rgba(43,210,126,.16);
+}
+.dot.warn{
+  background:#f4c542;
+  box-shadow: 0 0 0 3px rgba(244,197,66,.16);
 }
 
-main{
-  padding:12px;
-}
+main{ padding:12px; }
 
 /* MONTH LAYOUT */
 .monthRow{
@@ -93,156 +118,74 @@ main{
   align-content:start;
 }
 
-/* DAY CELLS — HARD LOCKED */
-/* === COMPACT DAY CELL: number beside pills === */
-
+/* DAY CELLS — HARD LOCKED, NUMBER BESIDE PILLS */
 .day{
-  height: 30px;              /* smaller cell */
-  padding: 3px 4px;
-  display: flex;
-  flex-direction: row;       /* number beside pills */
-  align-items: center;
-  gap: 6px;
+  height:30px;                 /* smaller cell */
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:3px 4px;
+  display:flex;
+  flex-direction:row;          /* number beside pills */
+  align-items:center;
+  gap:6px;
 }
-
 
 .day.blank{border:none;background:none}
 .day.past{opacity:.35;pointer-events:none}
 
-
-
-/* number is now a narrow left column */
+/* day number */
 .dayNum{
-  width: 16px;
-  text-align: right;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
+  width:16px;
+  text-align:right;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+  cursor:pointer;
 }
 
-/* bars become a tight right column */
+/* pill stack */
 .bars{
-  margin-top: 0;             /* no bottom pinning needed now */
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  align-items: flex-start;   /* keep pills consistent */
+  margin-top:0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  align-items:flex-start;
 }
 
-/* pills 150% bigger (6px -> 9px), and half-length */
-/* Base bar */
-/* AM/PM text inside the bar without changing layout */
+/* pills: thicker + half-length look */
 .bar{
-  width: 34px;        /* try 34–44 */
-  height: 10px;       /* beef it slightly */
-  border-radius: 999px;
+  position:relative;
+  width:34px;                 /* gives real “pill” body */
+  height:10px;                /* 150% bigger vibe */
+  border-radius:999px;
+  cursor:pointer;
+
+  background: var(--clear);   /* visible neutral */
+  border: 1px solid rgba(255,255,255,.25);
+
   display:flex;
   align-items:center;
   justify-content:center;
 
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1;
-  color: rgba(255,255,255,.9);
+  font-size:9px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:0.2px;
+  color: rgba(255,255,255,.80);
+  user-select:none;
 }
-
-/* Use the attribute as the text source */
-.bar::after{
-  content: attr(data-label);
-}
-
-/* Optional: make "clear" state text quieter */
-.bar:not(.pref):not(.avail):not(.no){
-  color: rgba(255,255,255,.55);
-}
+.bar::after{ content: attr(data-label); }
 
 /* Explicit states */
-.bar.pref{
-  background: var(--pref);
-  border-color: var(--pref);
-}
+.bar.pref{ background:var(--pref); border-color:var(--pref); }
+.bar.avail{ background:var(--avail); border-color:var(--avail); }
+.bar.no{ background:var(--no); border-color:var(--no); }
 
-.bar.avail{
-  background: var(--avail);
-  border-color: var(--avail);
-}
+/* Make the text on colored fills readable */
+.bar.pref, .bar.avail, .bar.no{ color: rgba(0,0,0,.70); }
 
-.bar.no{
-  background: var(--no);
-  border-color: var(--no);
-}
-
-.bar.pref, .bar.avail, .bar.no{
-  color: rgba(0,0,0,.75);   /* readable on bright fills */
-}
-
-/* === Week Brackets === */
-.day{
-  position: relative; /* needed for bracket pseudo-elements */
-}
-
-/* base bracket (hidden unless class applied) */
-.day.weekL::before,
-.day.weekR::after{
-  content:"";
-  position:absolute;
-  top:4px;
-  bottom:4px;
-  width:6px;
-  border-radius:10px;
-  opacity:.9;
-  pointer-events:none;
-}
-
-/* left bracket */
-.day.weekL::before{
-  left:-2px;
-  border-left:3px solid rgba(255,255,255,.35);
-  border-top:3px solid rgba(255,255,255,.18);
-  border-bottom:3px solid rgba(255,255,255,.18);
-}
-
-/* right bracket */
-.day.weekR::after{
-  right:-2px;
-  border-right:3px solid rgba(255,255,255,.35);
-  border-top:3px solid rgba(255,255,255,.18);
-  border-bottom:3px solid rgba(255,255,255,.18);
-}
-
-/* color variants */
-.day.weekPast.weekL::before,
-.day.weekPast.weekR::after{
-  border-color: rgba(160,170,190,.55);
-}
-
-.day.weekActive.weekL::before,
-.day.weekActive.weekR::after{
-  border-color: rgba(255,255,255,.70);
-}
-
-.day.weekPlan.weekL::before,
-.day.weekPlan.weekR::after{
-  border-color: rgba(43,210,126,.75);
-}
-
-/* planning blurb */
-.weekNote{
-  position:absolute;
-  right:6px;
-  bottom:4px;
-  font-size:9px;
-  color: rgba(167,179,214,.75);
-  letter-spacing:.2px;
-  white-space:nowrap;
-  pointer-events:none;
-}
-
-
-
-
-
+/* Make clear state slightly quieter but still visible */
+.bar:not(.pref):not(.avail):not(.no){ opacity:.75; }
 </style>
 </head>
 
@@ -253,38 +196,228 @@ main{
 
   <div class="pill">
     Member:
+    <!-- IMPORTANT: option values should be stable member IDs -->
     <select id="member">
-      <option>Lynnsey Benson</option>
-      <option>Brian Ennis</option>
+      <option value="203">Lynnsey Benson</option>
+      <option value="brian">Brian Ennis</option>
     </select>
   </div>
 
-  <div class="status" id="status">Saved</div>
+  <div class="savePill" id="savepill" title="Checking…">
+    <span class="dot warn" id="driveDot"></span>
+    <span class="tiny" id="driveTip">Checking…</span>
+  </div>
 </header>
 
 <main id="months"></main>
 
 <script>
-/* ===== CONFIG ===== */
+/* ===================== DRIVE STORE CONFIG (PUT IT HERE) ===================== */
+const STORE = {
+  url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
+  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
+};
+
+/* ===================== CALENDAR CONFIG ===================== */
 const MONTHS_AHEAD = 6;
 const STATES = ["clear","pref","avail","no"];
 const today = new Date();
 
-/* ===== STATE ===== */
-const state = {}; // { dateISO: { am, pm } }
+/* In-memory state: dateISO -> { am, pm } */
+const state = {}; // { "YYYY-MM-DD": {am:"clear|pref|avail|no", pm:"..."} }
 
-/* ===== HELPERS ===== */
+/* Helpers */
 const iso = d => d.toISOString().slice(0,10);
 const cycle = s => STATES[(STATES.indexOf(s)+1)%STATES.length];
 const isPast = isoDate => isoDate < iso(new Date());
 
-function setStatus(msg){
-  const el = document.getElementById("status");
-  el.textContent = msg;
-  setTimeout(()=>el.textContent="Saved",800);
+function getActiveMemberId(){
+  const sel = document.getElementById("member");
+  return sel ? String(sel.value || "").trim() : "default";
 }
 
-/* ===== BUILD ===== */
+/* ===================== STORE HELPERS (same style as your wallboard) ===================== */
+async function storeGet(params){
+  const u = new URL(STORE.url);
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
+  u.searchParams.set("token", STORE.token);
+  const r = await fetch(u.toString(), { cache:"no-store" });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store GET failed");
+  return j.payload;
+}
+
+async function storePut(body){
+  const r = await fetch(STORE.url, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body: JSON.stringify({ token: STORE.token, ...body })
+  });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store PUT failed");
+  return j.payload;
+}
+
+/* ===================== SAVE PILL ===================== */
+function setDrivePill({state, label, tooltip}){
+  const dot = document.getElementById("driveDot");
+  const tip = document.getElementById("driveTip");
+  const pill = document.getElementById("savepill");
+  if(!dot || !tip || !pill) return;
+
+  dot.classList.remove("ok","warn");
+  dot.classList.add(state === "ok" ? "ok" : "warn");
+
+  tip.textContent = label;
+  pill.title = tooltip || label;
+}
+
+/* ===================== AVAILABILITY PERSISTENCE (Local + Drive) ===================== */
+const AV_KIND = "member_availability";
+const LS_PREFIX = "sc:avail:";          // sc:avail:<memberId>
+const LS_META_PREFIX = "sc:availmeta:"; // sc:availmeta:<memberId>
+
+function nowISO(){ return new Date().toISOString(); }
+function lsKey(memberId){ return LS_PREFIX + memberId; }
+function lsMetaKey(memberId){ return LS_META_PREFIX + memberId; }
+
+function getLocalPayload(memberId){
+  try{
+    const raw = localStorage.getItem(lsKey(memberId));
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function setLocalPayload(memberId, payload){
+  localStorage.setItem(lsKey(memberId), JSON.stringify(payload));
+}
+function getMeta(memberId){
+  try{
+    const raw = localStorage.getItem(lsMetaKey(memberId));
+    return raw ? JSON.parse(raw) : { dirty:false, lastPushISO:null, lastError:null };
+  }catch(e){
+    return { dirty:false, lastPushISO:null, lastError:null };
+  }
+}
+function setMeta(memberId, meta){
+  localStorage.setItem(lsMetaKey(memberId), JSON.stringify(meta));
+}
+
+function applyPayloadToState(payload){
+  if(!payload || !payload.days) return;
+  for(const [dateISO, v] of Object.entries(payload.days)){
+    state[dateISO] ||= { am:"clear", pm:"clear" };
+    if(v && typeof v === "object"){
+      if(v.am) state[dateISO].am = v.am;
+      if(v.pm) state[dateISO].pm = v.pm;
+    }
+  }
+}
+
+let syncTimer = null;
+
+function markDirty(memberId){
+  const meta = getMeta(memberId);
+  meta.dirty = true;
+  meta.lastError = null;
+  setMeta(memberId, meta);
+
+  setDrivePill({
+    state:"warn",
+    label:"Saving…",
+    tooltip:"Changes saved locally. Syncing to Drive…"
+  });
+}
+
+function scheduleSync(memberId){
+  if(syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(()=> trySync(memberId), 600);
+}
+
+async function trySync(memberId){
+  const meta = getMeta(memberId);
+  if(!meta.dirty) return;
+
+  // Always keep local current
+  const payload = { updated_at: nowISO(), days: state };
+  setLocalPayload(memberId, payload);
+
+  if(!navigator.onLine){
+    setDrivePill({
+      state:"warn",
+      label:"Saved locally",
+      tooltip:"Offline. Your changes are saved on this device and will sync when you’re back online."
+    });
+    return;
+  }
+
+  try{
+    await storePut({ kind: AV_KIND, member_id: memberId, payload });
+
+    meta.dirty = false;
+    meta.lastPushISO = nowISO();
+    meta.lastError = null;
+    setMeta(memberId, meta);
+
+    setDrivePill({
+      state:"ok",
+      label:"Saved",
+      tooltip:`Synced to Drive.\nLast sync: ${meta.lastPushISO}`
+    });
+  }catch(err){
+    meta.lastError = String(err.message || err);
+    setMeta(memberId, meta);
+    setDrivePill({
+      state:"warn",
+      label:"Saved locally",
+      tooltip:`Drive sync failed.\n${meta.lastError}\nYour changes are still saved on this device.`
+    });
+  }
+}
+
+function onAvailabilityChanged(){
+  const memberId = getActiveMemberId();
+  markDirty(memberId);
+  scheduleSync(memberId);
+}
+
+async function loadAvailability(memberId){
+  // 1) local first (instant)
+  const local = getLocalPayload(memberId);
+  if(local){
+    applyPayloadToState(local);
+    setDrivePill({ state:"warn", label:"Loaded", tooltip:"Loaded locally. Checking Drive…" });
+  }else{
+    setDrivePill({ state:"warn", label:"Checking…", tooltip:"Checking Drive for saved availability…" });
+  }
+
+  // 2) Drive (authoritative)
+  try{
+    const remote = await storeGet({ kind: AV_KIND, member_id: memberId });
+    if(remote){
+      applyPayloadToState(remote);
+      setLocalPayload(memberId, remote);
+      const meta = getMeta(memberId);
+      meta.dirty = false;
+      meta.lastPushISO = nowISO();
+      meta.lastError = null;
+      setMeta(memberId, meta);
+
+      setDrivePill({ state:"ok", label:"Saved", tooltip:"Loaded from Drive and ready." });
+    }else{
+      setDrivePill({ state:"ok", label:"Saved", tooltip:"No Drive record yet — starting fresh." });
+    }
+  }catch(err){
+    setDrivePill({
+      state:"warn",
+      label:"Local only",
+      tooltip:`Couldn’t reach Drive.\n${err.message || err}\nWorking locally.`
+    });
+  }
+}
+
+window.addEventListener("online", ()=> trySync(getActiveMemberId()));
+
+/* ===================== UI BUILD ===================== */
 function build(){
   const wrap = document.getElementById("months");
   wrap.innerHTML="";
@@ -333,7 +466,7 @@ function blank(){
 }
 
 function dayCell(dateISO,day){
-state[dateISO] = { am: "pref|avail|no|clear", pm: "pref|avail|no|clear" }
+  state[dateISO] ||= {am:"clear",pm:"clear"};
 
   const d=document.createElement("div");
   d.className="day";
@@ -342,18 +475,30 @@ state[dateISO] = { am: "pref|avail|no|clear", pm: "pref|avail|no|clear" }
   const num=document.createElement("div");
   num.className="dayNum";
   num.textContent=day;
+
+  // Clicking the number sets BOTH AM and PM (your "24" shortcut)
   num.onclick=()=>{
     const next = cycle(state[dateISO].am);
     state[dateISO].am = next;
     state[dateISO].pm = next;
     render();
+    onAvailabilityChanged();
   };
 
   const bars=document.createElement("div");
   bars.className="bars";
 
- const am=bar(()=>{state[dateISO].am=cycle(state[dateISO].am);render();}, "AM");
-const pm=bar(()=>{state[dateISO].pm=cycle(state[dateISO].pm);render();}, "PM");
+  const am=bar(()=>{
+    state[dateISO].am=cycle(state[dateISO].am);
+    render();
+    onAvailabilityChanged();
+  },"AM");
+
+  const pm=bar(()=>{
+    state[dateISO].pm=cycle(state[dateISO].pm);
+    render();
+    onAvailabilityChanged();
+  },"PM");
 
   bars.append(am,pm);
   d.append(num,bars);
@@ -361,7 +506,6 @@ const pm=bar(()=>{state[dateISO].pm=cycle(state[dateISO].pm);render();}, "PM");
   function render(){
     am.className=`bar ${state[dateISO].am}`;
     pm.className=`bar ${state[dateISO].pm}`;
-    setStatus("Saving…");
   }
   render();
   return d;
@@ -370,12 +514,21 @@ const pm=bar(()=>{state[dateISO].pm=cycle(state[dateISO].pm);render();}, "PM");
 function bar(fn, label){
   const b=document.createElement("div");
   b.className="bar";
-  b.dataset.label = label;   // "AM" / "PM"
+  b.dataset.label = label; // AM / PM
   b.onclick=fn;
   return b;
 }
 
+/* ===================== STARTUP ===================== */
 build();
+loadAvailability(getActiveMemberId());
+
+document.getElementById("member")?.addEventListener("change", async ()=>{
+  // wipe current in-memory state, rebuild, then load for new member
+  for(const k of Object.keys(state)) delete state[k];
+  build();
+  await loadAvailability(getActiveMemberId());
+});
 </script>
 
 </body>
