@@ -117,6 +117,35 @@ main{
 .bar.pref{background:var(--pref)}
 .bar.avail{background:var(--avail)}
 .bar.no{background:var(--no)}
+
+/* === HARD CALENDAR LOCKS (Enrollware geometry fix) === */
+
+.month {
+  height: auto;
+  max-height: none;
+}
+
+.grid {
+  grid-auto-rows: auto;
+  align-content: start;
+}
+
+.day {
+  height: 42px;          /* hard lock: tune later (38–46px range) */
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bars {
+  margin-top: auto;      /* pins bars to bottom of the cell */
+}
+
+.bar {
+  height: 6px;
+}
+
+
 </style>
 </head>
 
