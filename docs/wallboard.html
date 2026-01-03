@@ -3,42 +3,147 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ShiftCommander — Wallboard</title>
+  <title>ShiftCommander — Wallboard (Calendar)</title>
   <style>
     :root{
-      --bg:#061025; --text:#e8eefc; --muted:#a7b3d6;
-      --good:#19c37d; --warn:#f7b955; --bad:#ff5c5c; --gray:#6b7aa7;
-      --bd: rgba(37,50,84,.85);
+      --bg:#061025;
+      --card:#0f1a36;
+      --text:#e8eefc;
+      --muted:#a7b3d6;
+      --line: rgba(37,50,84,.75);
+
+      --good:#19c37d;
+      --warn:#f7b955;
+      --bad:#ff5c5c;
+      --off:#0b0f1a;   /* “black” in your request */
+      --dayTint: rgba(255,255,255,.045);  /* unobtrusive day delineation */
+      --dayTint2: rgba(255,255,255,.028);
     }
+
     *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    body{
+      margin:0;
+      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
       background: radial-gradient(1400px 900px at 15% 10%, #102a5e 0%, var(--bg) 55%);
-      color:var(--text);}
-    header{position:sticky;top:0;z-index:10;background:rgba(6,16,37,.75);backdrop-filter:blur(10px);
-      border-bottom:1px solid rgba(37,50,84,.75);}
-    .wrap{max-width:1400px;margin:0 auto;padding:12px 14px;}
+      color:var(--text);
+    }
+
+    header{
+      position:sticky;top:0;z-index:10;
+      background:rgba(6,16,37,.78);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+
+    .wrap{max-width:1500px;margin:0 auto;padding:12px 14px;}
     .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
     h1{margin:0;font-size:18px}
     .sub{color:var(--muted);font-size:12px;margin-top:4px}
-    .pill{padding:8px 10px;border-radius:999px;background:rgba(22,32,71,.65);
-      border:1px solid rgba(37,50,84,.85);color:var(--muted);font-size:12px;}
-    .board{padding:12px 14px}
-    table{width:100%;border-collapse:collapse;table-layout:fixed}
-    th,td{border-top:1px solid rgba(37,50,84,.65);padding:10px 8px;vertical-align:middle}
-    th{color:var(--muted);font-size:12px;font-weight:700;border-top:none}
-    .dcol{width:160px}
-    .scol{width:64px}
-    .hcol{width:190px}
-    .health{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
-      border:1px solid rgba(37,50,84,.85);background:rgba(22,32,71,.55);font-size:12px;white-space:nowrap;}
-    .dot{width:10px;height:10px;border-radius:50%;}
-    .dot.green{background:var(--good)} .dot.yellow{background:var(--warn)} .dot.red{background:var(--bad)} .dot.gray{background:var(--gray)}
-    .seat{display:flex;flex-direction:column;gap:2px}
-    .name{font-weight:900;font-size:13px;line-height:1.15}
-    .lvl{color:var(--muted);font-size:11px}
-    .muted{color:var(--muted)}
+    .pill{
+      padding:8px 10px;border-radius:999px;
+      background:rgba(22,32,71,.65);
+      border:1px solid rgba(37,50,84,.85);
+      color:var(--muted);font-size:12px;
+      white-space:nowrap;
+    }
+
+    .legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .lg{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px}
+    .dot{width:10px;height:10px;border-radius:99px;}
+    .dot.good{background:var(--good)}
+    .dot.warn{background:var(--warn)}
+    .dot.bad{background:var(--bad)}
+    .dot.off{background:var(--off)}
+
+    main{padding:12px 14px}
+    .monthRow{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); /* 1–2 months wide */
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .month{
+      background:rgba(15,26,54,.75);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 10px 12px;
+    }
+    .month h3{
+      margin:2px 0 8px;
+      font-size:14px;
+      font-weight:900;
+      text-align:center;
+      letter-spacing:.2px;
+    }
+    .dow{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      font-size:10px;
+      color:var(--muted);
+      text-align:center;
+      margin-bottom:6px;
+      opacity:.85;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:5px;
+      align-content:start;
+    }
+
+    /* Day cell: compact + subtle fill to delineate */
+    .day{
+      position:relative;
+      height:40px;
+      border:1px solid rgba(37,50,84,.65);
+      border-radius:12px;
+      background: linear-gradient(180deg,var(--dayTint),var(--dayTint2));
+      padding:5px 6px 5px 10px; /* space for stripe */
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .day.blank{border:none;background:none}
+    .day:hover{border-color:rgba(60,86,150,.9)}
+    .day.past{opacity:.45}
+
+    /* Health stripe: AM top half, PM bottom half */
+    .stripe{
+      position:absolute;
+      left:0; top:0; bottom:0;
+      width:7px;
+      border-top-left-radius:12px;
+      border-bottom-left-radius:12px;
+      background: linear-gradient(to bottom, var(--off) 0 50%, var(--off) 50% 100%);
+    }
+
+    /* Date number (unobtrusive) */
+    .dateTop{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .num{
+      font-size:12px;
+      font-weight:900;
+      color: rgba(232,238,252,.9);
+      line-height:1;
+      min-width:16px;
+      text-align:left;
+    }
+    .mini{
+      font-size:10px;
+      color: rgba(167,179,214,.95);
+      line-height:1.1;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+    }
+    .mini b{color:rgba(232,238,252,.92); font-weight:800}
   </style>
 </head>
+
 <body>
 <header>
   <div class="wrap">
@@ -47,29 +152,22 @@
         <h1>ShiftCommander — Wallboard</h1>
         <div class="sub" id="status">Loading…</div>
       </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+
+      <div class="legend">
         <span class="pill" id="orgpill">Org: …</span>
         <span class="pill" id="rangePill">Range: …</span>
+        <div class="lg"><span class="dot good"></span> Good</div>
+        <div class="lg"><span class="dot warn"></span> Warn</div>
+        <div class="lg"><span class="dot bad"></span> Bad</div>
+        <div class="lg"><span class="dot off"></span> Off/Out of window</div>
       </div>
     </div>
   </div>
 </header>
 
-<div class="wrap board">
-  <table>
-    <thead>
-      <tr>
-        <th class="dcol">Date</th>
-        <th class="scol">Shift</th>
-        <th class="hcol">Health</th>
-        <th>Medical</th>
-        <th>Driver/EMT</th>
-        <th>Riders</th>
-      </tr>
-    </thead>
-    <tbody id="body"></tbody>
-  </table>
-</div>
+<main class="wrap">
+  <div id="months"></div>
+</main>
 
 <script>
 /* ===================== Drive Store (Apps Script) ===================== */
@@ -87,6 +185,7 @@ async function storeGet(params){
   return j.payload;
 }
 
+/* ===================== Local Paths ===================== */
 const PATHS = {
   org: "./data/org_settings.json",
   historyIndex: "./data/history/history.index.json",
@@ -94,6 +193,7 @@ const PATHS = {
 };
 
 function $(id){return document.getElementById(id);}
+
 function fmtISO(d){
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${da}`;
@@ -125,6 +225,7 @@ function isWithinLead(dateISO){
   return daysOut <= LEAD_DAYS;
 }
 
+/* ===================== Shift Merge (same as existing wallboard) ===================== */
 let ORG=null;
 let HISTORY={ days:{} };
 let PATCH={ generated_at:null, overrides:{} };
@@ -148,8 +249,9 @@ function mergeShiftView(dateISO, shift){
   return {...base, riders_allowed, riders_max, riders};
 }
 
+/* Health mapping */
 function computeHealth(dateISO, shiftObj){
-  if(!isWithinLead(dateISO)) return {state:"gray", msg:"Outside lead window"};
+  if(!isWithinLead(dateISO)) return {state:"off", msg:"Outside lead window"};
 
   const medical=shiftObj?.medical||null;
   const driver=shiftObj?.driver_emt||null;
@@ -157,51 +259,144 @@ function computeHealth(dateISO, shiftObj){
   const medicalFilled=!!medical?.name && medical.name.toLowerCase()!=="open";
   const driverFilled=!!driver?.name && driver.name.toLowerCase()!=="open";
 
-  if(!medicalFilled || !driverFilled) return {state:"red", msg:"Open seat"};
+  if(!medicalFilled || !driverFilled) return {state:"bad", msg:"Open seat"};
 
   const medLevel=(medical.level||"").toUpperCase();
   const drvLevel=(driver.level||"").toUpperCase();
 
-  if(medLevel!=="ALS") return {state:"red", msg:"Needs ALS"};
-  if(drvLevel==="ALS") return {state:"yellow", msg:"Needs EMT"};
-  return {state:"green", msg:"Staffed"};
+  if(medLevel!=="ALS") return {state:"bad", msg:"Needs ALS"};
+  if(drvLevel==="ALS") return {state:"warn", msg:"Needs EMT"};
+  return {state:"good", msg:"Staffed"};
 }
 
-function seatCell(seat){
-  const name = (seat?.name || "Open");
-  const lvl  = (seat?.level || "");
-  return `
-    <div class="seat">
-      <div class="name">${name}</div>
-      <div class="lvl">${lvl}</div>
-    </div>
+function healthColor(state){
+  if(state==="good") return "var(--good)";
+  if(state==="warn") return "var(--warn)";
+  if(state==="bad")  return "var(--bad)";
+  return "var(--off)";
+}
+
+/* ===================== Calendar Build ===================== */
+function buildMonths(rangeStartISO, rangeEndISO){
+  const monthsWrap = $("months");
+  monthsWrap.innerHTML = "";
+
+  const start = parseISO(rangeStartISO);
+  const end   = parseISO(rangeEndISO);
+
+  // build month list inclusive
+  const monthList = [];
+  let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+  const last = new Date(end.getFullYear(), end.getMonth(), 1);
+  while(cur <= last){
+    monthList.push(new Date(cur.getFullYear(), cur.getMonth(), 1));
+    cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+  }
+
+  let row = null;
+  monthList.forEach((mStart, idx) => {
+    if(idx % 2 === 0){
+      row = document.createElement("div");
+      row.className = "monthRow";
+      monthsWrap.appendChild(row);
+    }
+    row.appendChild(buildMonth(mStart, start, end));
+  });
+}
+
+function buildMonth(monthStart, rangeStart, rangeEnd){
+  const y = monthStart.getFullYear();
+  const m = monthStart.getMonth();
+
+  const month = document.createElement("div");
+  month.className = "month";
+  month.innerHTML = `
+    <h3>${monthStart.toLocaleString(undefined,{month:"long",year:"numeric"})}</h3>
+    <div class="dow">${["S","M","T","W","T","F","S"].map(x=>`<div>${x}</div>`).join("")}</div>
+    <div class="grid"></div>
   `;
+
+  const grid = month.querySelector(".grid");
+  const startDow = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+
+  // leading blanks
+  for(let i=0;i<startDow;i++){
+    const b = document.createElement("div");
+    b.className = "day blank";
+    grid.appendChild(b);
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const dateObj = new Date(y,m,d);
+    const dateISO = fmtISO(dateObj);
+
+    // Only show cells inside the 7-week range; others are blanks for continuity
+    const inRange = dateObj >= rangeStart && dateObj <= rangeEnd;
+
+    const cell = document.createElement("div");
+    cell.className = "day";
+    if(dateObj < new Date(new Date().toDateString())) cell.classList.add("past");
+    if(!inRange){
+      // still render but muted “empty” to preserve month continuity
+      cell.style.opacity = "0.18";
+    }
+
+    // compute AM/PM health
+    const amView = mergeShiftView(dateISO, "AM");
+    const pmView = mergeShiftView(dateISO, "PM");
+
+    const amH = computeHealth(dateISO, amView);
+    const pmH = computeHealth(dateISO, pmView);
+
+    const amC = healthColor(amH.state);
+    const pmC = healthColor(pmH.state);
+
+    const stripe = document.createElement("div");
+    stripe.className = "stripe";
+    stripe.style.background = `linear-gradient(to bottom, ${amC} 0 50%, ${pmC} 50% 100%)`;
+
+    const top = document.createElement("div");
+    top.className = "dateTop";
+    top.innerHTML = `
+      <div class="num">${d}</div>
+      <div class="mini">
+        <b>AM</b> ${shortSeat(amView)} &nbsp; • &nbsp;
+        <b>PM</b> ${shortSeat(pmView)}
+      </div>
+    `;
+
+    // tooltip on hover gives exact health messages
+    cell.title =
+      `${dateISO}\n` +
+      `AM: ${amH.msg}\nPM: ${pmH.msg}`;
+
+    cell.appendChild(stripe);
+    cell.appendChild(top);
+    grid.appendChild(cell);
+  }
+
+  return month;
 }
 
-function ridersCell(view){
-  if(view.riders_allowed === false) return `<span class="muted">Disabled</span>`;
-  const riders = view.riders || [];
-  if(!riders.length) return `<span class="muted">—</span>`;
-  return riders.map(r => `<span class="muted">${r.name || ("Member "+r.member_id)}</span>`).join("<br>");
+// short seat string for tiny inside-cell display
+function shortSeat(view){
+  const med = (view?.medical?.name && view.medical.name.toLowerCase()!=="open") ? view.medical.name : "Open";
+  const drv = (view?.driver_emt?.name && view.driver_emt.name.toLowerCase()!=="open") ? view.driver_emt.name : "Open";
+  const medL = (view?.medical?.level || "").toUpperCase();
+  const drvL = (view?.driver_emt?.level || "").toUpperCase();
+  // keep tiny: Name(Level)/Name(Level)
+  return `${abbr(med)}${medL?`(${medL})`:""} / ${abbr(drv)}${drvL?`(${drvL})`:""}`;
+}
+function abbr(name){
+  if(!name) return "";
+  if(name.toLowerCase()==="open") return "Open";
+  const parts = name.trim().split(/\s+/);
+  if(parts.length===1) return parts[0].slice(0,10);
+  return (parts[0][0] + parts[parts.length-1]).slice(0,10);
 }
 
-function addRow(tbody, dateISO, shift){
-  const view = mergeShiftView(dateISO, shift);
-  const h = computeHealth(dateISO, view);
-  const dotClass = (h.state==="green") ? "green" : (h.state==="yellow") ? "yellow" : (h.state==="red") ? "red" : "gray";
-
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td class="dcol"><div style="font-weight:900">${dateISO}</div></td>
-    <td class="scol"><div style="font-weight:900">${shift}</div></td>
-    <td class="hcol"><div class="health"><span class="dot ${dotClass}"></span><span>${h.msg}</span></div></td>
-    <td>${seatCell(view.medical)}</td>
-    <td>${seatCell(view.driver_emt)}</td>
-    <td>${ridersCell(view)}</td>
-  `;
-  tbody.appendChild(tr);
-}
-
+/* ===================== Boot ===================== */
 async function boot(){
   try{
     $("status").textContent = "Loading org/history/patch…";
@@ -233,19 +428,14 @@ async function boot(){
       PATCH = filePatch?.overrides ? filePatch : { generated_at:null, overrides:{} };
     }
 
-    // render 7 weeks starting this Thu
+    // Range: 7 weeks starting this Thu
     const start = startOfWeekThursday(new Date());
-    const end = addDays(start, 7*7 - 1); // 49 days
-    $("rangePill").textContent = `Range: ${fmtISO(start)} → ${fmtISO(end)}`;
+    const end = addDays(start, 7*7 - 1);
+    const startISO = fmtISO(start);
+    const endISO = fmtISO(end);
+    $("rangePill").textContent = `Range: ${startISO} → ${endISO}`;
 
-    const tbody = $("body");
-    tbody.innerHTML = "";
-    for(let i=0;i<49;i++){
-      const d = addDays(start, i);
-      const ds = fmtISO(d);
-      addRow(tbody, ds, "AM");
-      addRow(tbody, ds, "PM");
-    }
+    buildMonths(startISO, endISO);
 
     $("status").textContent = "Ready.";
   }catch(err){
