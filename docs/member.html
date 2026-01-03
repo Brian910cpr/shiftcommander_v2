@@ -134,17 +134,17 @@ main{
 /* Base bar */
 /* AM/PM text inside the bar without changing layout */
 .bar{
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;          /* tiny but readable */
+  width: 34px;        /* try 34–44 */
+  height: 10px;       /* beef it slightly */
+  border-radius: 999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size: 9px;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: 0.2px;
-  color: rgba(255,255,255,.85);
-  text-transform: uppercase;
-  user-select: none;
+  color: rgba(255,255,255,.9);
 }
 
 /* Use the attribute as the text source */
