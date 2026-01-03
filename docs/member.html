@@ -94,38 +94,43 @@ main{
 }
 
 /* DAY CELLS — HARD LOCKED */
+/* === COMPACT DAY CELL: number beside pills === */
+
 .day{
-  height:42px;
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:4px;
-  display:flex;
-  flex-direction:column;
+  height: 30px;              /* smaller cell */
+  padding: 3px 4px;
+  display: flex;
+  flex-direction: row;       /* number beside pills */
+  align-items: center;
+  gap: 6px;
 }
 
-.day.blank{border:none;background:none}
-.day.past{opacity:.35;pointer-events:none}
-
+/* number is now a narrow left column */
 .dayNum{
-  font-size:11px;
-  font-weight:700;
-  text-align:right;
-  cursor:pointer;
+  width: 16px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
 }
 
+/* bars become a tight right column */
 .bars{
-  margin-top:auto;
-  display:flex;
-  flex-direction:column;
-  gap:2px;
+  margin-top: 0;             /* no bottom pinning needed now */
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;   /* keep pills consistent */
 }
 
+/* pills 150% bigger (6px -> 9px), and half-length */
 .bar{
-  height:6px;
-  border-radius:4px;
-  background:var(--clear);
-  cursor:pointer;
+  height: 9px;               /* 150% bigger */
+  width: 28px;               /* half-length feel */
+  border-radius: 6px;
 }
+
 
 .bar.pref{background:var(--pref)}
 .bar.avail{background:var(--avail)}
