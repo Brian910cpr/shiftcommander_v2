@@ -16,7 +16,9 @@
   --pref:#2bd27e;
   --avail:#5c8dff;
   --no:#ff5d5d;
-  --clear: rgba(255,255,255,.18); /* visible neutral */
+
+  /* visible neutral (NOT transparent) */
+  --clear: rgba(255,255,255,.18);
 }
 
 *{box-sizing:border-box}
@@ -51,7 +53,14 @@ header select{
   padding:6px 8px;
 }
 
-/* Drive save pill (consistent pattern) */
+/* Mode pill */
+#modePill{
+  cursor:pointer;
+  user-select:none;
+}
+#modePill b{color:rgba(234,241,255,.92)}
+
+/* Drive save pill */
 .savePill{
   display:flex; align-items:center; gap:10px;
   border:1px solid rgba(255,255,255,.12);
@@ -61,8 +70,17 @@ header select{
   min-height:34px;
   cursor: default;
   margin-left:auto;
+  max-width: 160px;
 }
-.savePill .tiny{ font-size:12px; color: rgba(234,241,255,.70); min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.savePill .tiny{
+  font-size:12px;
+  color: rgba(234,241,255,.70);
+  min-width:0;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  line-height:1;
+}
 
 .dot{
   width:10px; height:10px; border-radius:999px;
@@ -79,6 +97,58 @@ header select{
 }
 
 main{ padding:12px; }
+
+/* Bulk panel (drawer) */
+.bulkPanel{
+  margin: 0 0 12px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  padding: 10px 10px 12px;
+}
+.bulkRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bulkTitle{font-weight:900;font-size:13px}
+.bulkHint{color:var(--muted);font-size:12px}
+
+.bulkGrid{
+  margin-top:8px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+}
+.bulkField{display:flex;flex-direction:column;gap:4px}
+.bulkField span{font-size:11px;color:var(--muted)}
+.bulkField select, .bulkField input{
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 6px 8px;
+  min-width: 160px;
+}
+
+.bulkBtns{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.bbtn{
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 12px;
+  cursor: pointer;
+}
+.bbtn:hover{border-color:rgba(255,255,255,.25)}
+.bbtn.primary{background: rgba(92,141,255,.18); border-color: rgba(92,141,255,.35)}
+.bbtn.danger{background: rgba(255,93,93,.16); border-color: rgba(255,93,93,.30)}
+
+.bulkNote{
+  margin-top:8px;
+  font-size:11px;
+  color: rgba(234,241,255,.60);
+  line-height:1.25;
+}
 
 /* MONTH LAYOUT */
 .monthRow{
@@ -98,7 +168,7 @@ main{ padding:12px; }
 .month h3{
   margin:2px 0 6px;
   font-size:14px;
-  font-weight:800;
+  font-weight:900;
   text-align:center;
 }
 
@@ -120,16 +190,15 @@ main{ padding:12px; }
 
 /* DAY CELLS — HARD LOCKED, NUMBER BESIDE PILLS */
 .day{
-  height:30px;                 /* smaller cell */
+  height:30px;
   border:1px solid var(--line);
   border-radius:10px;
   padding:3px 4px;
   display:flex;
-  flex-direction:row;          /* number beside pills */
+  flex-direction:row;
   align-items:center;
   gap:6px;
 }
-
 .day.blank{border:none;background:none}
 .day.past{opacity:.35;pointer-events:none}
 
@@ -152,15 +221,15 @@ main{ padding:12px; }
   align-items:flex-start;
 }
 
-/* pills: thicker + half-length look */
+/* pills: thicker + half-length */
 .bar{
   position:relative;
-  width:34px;                 /* gives real “pill” body */
-  height:10px;                /* 150% bigger vibe */
+  width:34px;
+  height:10px;
   border-radius:999px;
   cursor:pointer;
 
-  background: var(--clear);   /* visible neutral */
+  background: var(--clear);
   border: 1px solid rgba(255,255,255,.25);
 
   display:flex;
@@ -181,10 +250,10 @@ main{ padding:12px; }
 .bar.avail{ background:var(--avail); border-color:var(--avail); }
 .bar.no{ background:var(--no); border-color:var(--no); }
 
-/* Make the text on colored fills readable */
+/* Text on colored fills */
 .bar.pref, .bar.avail, .bar.no{ color: rgba(0,0,0,.70); }
 
-/* Make clear state slightly quieter but still visible */
+/* Clear is quieter but visible */
 .bar:not(.pref):not(.avail):not(.no){ opacity:.75; }
 </style>
 </head>
@@ -203,13 +272,59 @@ main{ padding:12px; }
     </select>
   </div>
 
+  <div class="pill" id="modePill" title="Toggle Bulk Push tools">
+    Mode: <b id="modeLabel">Fine-Tune</b>
+  </div>
+
   <div class="savePill" id="savepill" title="Checking…">
     <span class="dot warn" id="driveDot"></span>
     <span class="tiny" id="driveTip">Checking…</span>
   </div>
 </header>
 
-<main id="months"></main>
+<main>
+  <!-- Bulk drawer -->
+  <div id="bulkPanel" class="bulkPanel" style="display:none;">
+    <div class="bulkRow">
+      <div class="bulkTitle">Quick Set (Bulk)</div>
+      <div class="bulkHint">Stamp a baseline fast, then fine-tune on the calendar below.</div>
+    </div>
+
+    <div class="bulkGrid">
+      <label class="bulkField">
+        <span>Pattern</span>
+        <select id="bulkPattern">
+          <option value="week1">1-Week Pattern (repeat)</option>
+          <option value="week2">2-Week Alternating</option>
+        </select>
+      </label>
+
+      <label class="bulkField">
+        <span>From</span>
+        <input id="bulkFrom" type="date">
+      </label>
+
+      <label class="bulkField">
+        <span>To</span>
+        <input id="bulkTo" type="date">
+      </label>
+
+      <div class="bulkBtns">
+        <button id="btnCopyFwd" class="bbtn" type="button">Copy this week → Next</button>
+        <button id="btnApplyRange" class="bbtn primary" type="button">Apply to Range</button>
+        <button id="btnClearRange" class="bbtn danger" type="button">Clear Range</button>
+      </div>
+    </div>
+
+    <div class="bulkNote" id="bulkNote">
+      Bulk uses your <b>current week (Thu→Wed)</b> as the template.
+      Click the day-number to set a full-day (AM+PM) state quickly, then stamp it.
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div id="months"></div>
+</main>
 
 <script>
 /* ===================== DRIVE STORE CONFIG (PUT IT HERE) ===================== */
@@ -224,19 +339,29 @@ const STATES = ["clear","pref","avail","no"];
 const today = new Date();
 
 /* In-memory state: dateISO -> { am, pm } */
-const state = {}; // { "YYYY-MM-DD": {am:"clear|pref|avail|no", pm:"..."} }
+const state = {}; // { "YYYY-MM-DD": {am, pm} }
 
 /* Helpers */
-const iso = d => d.toISOString().slice(0,10);
-const cycle = s => STATES[(STATES.indexOf(s)+1)%STATES.length];
-const isPast = isoDate => isoDate < iso(new Date());
-
+function iso(d){ return d.toISOString().slice(0,10); }
+function parseISO(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+function addDays(d,n){ const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
+function cycle(s){ return STATES[(STATES.indexOf(s)+1)%STATES.length]; }
+function isPast(isoDate){ return isoDate < iso(new Date()); }
 function getActiveMemberId(){
   const sel = document.getElementById("member");
   return sel ? String(sel.value || "").trim() : "default";
 }
 
-/* ===================== STORE HELPERS (same style as your wallboard) ===================== */
+/* Week anchor: Thursday-start week (Thu→Wed) */
+function startOfWeekThursday(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dow = x.getDay(); // 0 Sun .. 6 Sat
+  const target = 4; // Thu
+  const delta = (dow - target + 7) % 7;
+  return addDays(x, -delta);
+}
+
+/* ===================== STORE HELPERS (same style as wallboard) ===================== */
 async function storeGet(params){
   const u = new URL(STORE.url);
   Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
@@ -274,8 +399,8 @@ function setDrivePill({state, label, tooltip}){
 
 /* ===================== AVAILABILITY PERSISTENCE (Local + Drive) ===================== */
 const AV_KIND = "member_availability";
-const LS_PREFIX = "sc:avail:";          // sc:avail:<memberId>
-const LS_META_PREFIX = "sc:availmeta:"; // sc:availmeta:<memberId>
+const LS_PREFIX = "sc:avail:";
+const LS_META_PREFIX = "sc:availmeta:";
 
 function nowISO(){ return new Date().toISOString(); }
 function lsKey(memberId){ return LS_PREFIX + memberId; }
@@ -330,7 +455,7 @@ function markDirty(memberId){
 
 function scheduleSync(memberId){
   if(syncTimer) clearTimeout(syncTimer);
-  syncTimer = setTimeout(()=> trySync(memberId), 600);
+  syncTimer = setTimeout(()=> trySync(memberId), 650);
 }
 
 async function trySync(memberId){
@@ -345,7 +470,7 @@ async function trySync(memberId){
     setDrivePill({
       state:"warn",
       label:"Saved locally",
-      tooltip:"Offline. Your changes are saved on this device and will sync when you’re back online."
+      tooltip:"Offline. Saved on this device and will sync when back online."
     });
     return;
   }
@@ -369,7 +494,7 @@ async function trySync(memberId){
     setDrivePill({
       state:"warn",
       label:"Saved locally",
-      tooltip:`Drive sync failed.\n${meta.lastError}\nYour changes are still saved on this device.`
+      tooltip:`Drive sync failed.\n${meta.lastError}\nStill saved locally.`
     });
   }
 }
@@ -381,7 +506,7 @@ function onAvailabilityChanged(){
 }
 
 async function loadAvailability(memberId){
-  // 1) local first (instant)
+  // local first
   const local = getLocalPayload(memberId);
   if(local){
     applyPayloadToState(local);
@@ -390,7 +515,7 @@ async function loadAvailability(memberId){
     setDrivePill({ state:"warn", label:"Checking…", tooltip:"Checking Drive for saved availability…" });
   }
 
-  // 2) Drive (authoritative)
+  // drive
   try{
     const remote = await storeGet({ kind: AV_KIND, member_id: memberId });
     if(remote){
@@ -414,7 +539,6 @@ async function loadAvailability(memberId){
     });
   }
 }
-
 window.addEventListener("online", ()=> trySync(getActiveMemberId()));
 
 /* ===================== UI BUILD ===================== */
@@ -434,8 +558,9 @@ function build(){
 }
 
 function buildMonth(offset){
-  const d = new Date(today.getFullYear(), today.getMonth()+offset,1);
-  const m = d.getMonth(), y=d.getFullYear();
+  const d = new Date(today.getFullYear(), today.getMonth()+offset, 1);
+  const m = d.getMonth(), y = d.getFullYear();
+
   const month = document.createElement("div");
   month.className="month";
 
@@ -447,15 +572,14 @@ function buildMonth(offset){
 
   const grid = month.querySelector(".grid");
   const start = new Date(y,m,1).getDay();
-  const days = new Date(y,m+1,0).getDate();
+  const days  = new Date(y,m+1,0).getDate();
 
   for(let i=0;i<start;i++) grid.appendChild(blank());
 
-  for(let day=1;day<=days;day++){
+  for(let day=1; day<=days; day++){
     const dateISO = iso(new Date(y,m,day));
-    grid.appendChild(dayCell(dateISO,day));
+    grid.appendChild(dayCell(dateISO, day));
   }
-
   return month;
 }
 
@@ -465,8 +589,8 @@ function blank(){
   return d;
 }
 
-function dayCell(dateISO,day){
-  state[dateISO] ||= {am:"clear",pm:"clear"};
+function dayCell(dateISO, day){
+  state[dateISO] ||= { am:"clear", pm:"clear" };
 
   const d=document.createElement("div");
   d.className="day";
@@ -476,7 +600,7 @@ function dayCell(dateISO,day){
   num.className="dayNum";
   num.textContent=day;
 
-  // Clicking the number sets BOTH AM and PM (your "24" shortcut)
+  // Clicking the number sets BOTH AM and PM (your “24” shortcut)
   num.onclick=()=>{
     const next = cycle(state[dateISO].am);
     state[dateISO].am = next;
@@ -489,23 +613,23 @@ function dayCell(dateISO,day){
   bars.className="bars";
 
   const am=bar(()=>{
-    state[dateISO].am=cycle(state[dateISO].am);
+    state[dateISO].am = cycle(state[dateISO].am);
     render();
     onAvailabilityChanged();
   },"AM");
 
   const pm=bar(()=>{
-    state[dateISO].pm=cycle(state[dateISO].pm);
+    state[dateISO].pm = cycle(state[dateISO].pm);
     render();
     onAvailabilityChanged();
   },"PM");
 
-  bars.append(am,pm);
-  d.append(num,bars);
+  bars.append(am, pm);
+  d.append(num, bars);
 
   function render(){
-    am.className=`bar ${state[dateISO].am}`;
-    pm.className=`bar ${state[dateISO].pm}`;
+    am.className = `bar ${state[dateISO].am}`;
+    pm.className = `bar ${state[dateISO].pm}`;
   }
   render();
   return d;
@@ -514,19 +638,164 @@ function dayCell(dateISO,day){
 function bar(fn, label){
   const b=document.createElement("div");
   b.className="bar";
-  b.dataset.label = label; // AM / PM
-  b.onclick=fn;
+  b.dataset.label = label;
+  b.onclick = fn;
   return b;
 }
 
+/* ===================== MODE TOGGLE (Bulk drawer) ===================== */
+let bulkOpen = false;
+function setMode(open){
+  bulkOpen = open;
+  document.getElementById("bulkPanel").style.display = bulkOpen ? "block" : "none";
+  document.getElementById("modeLabel").textContent = bulkOpen ? "Bulk Push" : "Fine-Tune";
+  document.getElementById("modePill").title =
+    bulkOpen
+      ? "Bulk Push is open. Stamp patterns, then fine-tune on the calendar."
+      : "Fine-Tune mode. Click to open Bulk Push tools.";
+}
+document.getElementById("modePill")?.addEventListener("click", ()=> setMode(!bulkOpen));
+setMode(false);
+
+/* ===================== BULK ACTIONS (writes into SAME state model) ===================== */
+function ensureDay(dateISO){
+  state[dateISO] ||= { am:"clear", pm:"clear" };
+  return state[dateISO];
+}
+
+function setRangeDefaults(){
+  // Default range: next 28 days (starting tomorrow)
+  const from = addDays(new Date(), 1);
+  const to   = addDays(from, 27);
+  document.getElementById("bulkFrom").value = iso(from);
+  document.getElementById("bulkTo").value   = iso(to);
+}
+
+function templateWeekA(){
+  // Current week anchored Thu→Wed, uses whatever is currently in state
+  const start = startOfWeekThursday(new Date());
+  const out = [];
+  for(let i=0;i<7;i++){
+    const ds = iso(addDays(start, i));
+    const v = ensureDay(ds);
+    out.push({ date: ds, am: v.am, pm: v.pm });
+  }
+  return out;
+}
+
+function templateWeekB(){
+  // Next week anchored Thu→Wed
+  const start = addDays(startOfWeekThursday(new Date()), 7);
+  const out = [];
+  for(let i=0;i<7;i++){
+    const ds = iso(addDays(start, i));
+    const v = ensureDay(ds);
+    out.push({ date: ds, am: v.am, pm: v.pm });
+  }
+  // If it's totally blank, it's okay — it means your alternating week isn’t defined yet.
+  return out;
+}
+
+function copyWeekForward(){
+  const startA = startOfWeekThursday(new Date());
+  const startB = addDays(startA, 7);
+
+  for(let i=0;i<7;i++){
+    const src = iso(addDays(startA, i));
+    const dst = iso(addDays(startB, i));
+    const v = ensureDay(src);
+    state[dst] = { am: v.am, pm: v.pm };
+  }
+}
+
+function applyPatternToRange(){
+  const fromISO = document.getElementById("bulkFrom").value;
+  const toISO   = document.getElementById("bulkTo").value;
+  if(!fromISO || !toISO) return;
+
+  const from = parseISO(fromISO);
+  const to   = parseISO(toISO);
+  if(to < from) return;
+
+  const pattern = document.getElementById("bulkPattern").value;
+
+  const A = templateWeekA();
+  const B = templateWeekB();
+
+  const baseStart = startOfWeekThursday(from);
+
+  for(let d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+       d <= to;
+       d = addDays(d,1)){
+
+    const ds = iso(d);
+
+    // Find which week block this day belongs to, relative to baseStart
+    const weekStart = startOfWeekThursday(d);
+    const weekIndex = Math.floor((weekStart.getTime() - baseStart.getTime()) / (7*24*60*60*1000));
+
+    const dayIndex = Math.floor((d.getTime() - weekStart.getTime()) / (24*60*60*1000)); // 0..6
+
+    let src;
+    if(pattern === "week2"){
+      src = (weekIndex % 2 === 0) ? A[dayIndex] : B[dayIndex];
+    }else{
+      src = A[dayIndex];
+    }
+
+    state[ds] = { am: src.am, pm: src.pm };
+  }
+}
+
+function clearRange(){
+  const fromISO = document.getElementById("bulkFrom").value;
+  const toISO   = document.getElementById("bulkTo").value;
+  if(!fromISO || !toISO) return;
+
+  const from = parseISO(fromISO);
+  const to   = parseISO(toISO);
+  if(to < from) return;
+
+  for(let d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+       d <= to;
+       d = addDays(d,1)){
+    const ds = iso(d);
+    state[ds] = { am:"clear", pm:"clear" };
+  }
+}
+
+function commitBulkChange(){
+  // Re-render UI + save once (debounced sync handles the rest)
+  build();
+  onAvailabilityChanged();
+}
+
+/* Wire buttons */
+document.getElementById("btnCopyFwd")?.addEventListener("click", ()=>{
+  copyWeekForward();
+  commitBulkChange();
+});
+
+document.getElementById("btnApplyRange")?.addEventListener("click", ()=>{
+  applyPatternToRange();
+  commitBulkChange();
+});
+
+document.getElementById("btnClearRange")?.addEventListener("click", ()=>{
+  clearRange();
+  commitBulkChange();
+});
+
 /* ===================== STARTUP ===================== */
 build();
+setRangeDefaults();
 loadAvailability(getActiveMemberId());
 
 document.getElementById("member")?.addEventListener("change", async ()=>{
   // wipe current in-memory state, rebuild, then load for new member
   for(const k of Object.keys(state)) delete state[k];
   build();
+  setRangeDefaults();
   await loadAvailability(getActiveMemberId());
 });
 </script>
