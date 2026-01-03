@@ -132,13 +132,29 @@ main{
 
 /* pills 150% bigger (6px -> 9px), and half-length */
 /* Base bar */
+/* AM/PM text inside the bar without changing layout */
 .bar{
-  height: 9px;
-  width: 28px;
-  border-radius: 6px;
-  cursor: pointer;
-  background: rgba(255,255,255,.18);   /* ← visible neutral */
-  border: 1px solid rgba(255,255,255,.25);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;          /* tiny but readable */
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  color: rgba(255,255,255,.85);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* Use the attribute as the text source */
+.bar::after{
+  content: attr(data-label);
+}
+
+/* Optional: make "clear" state text quieter */
+.bar:not(.pref):not(.avail):not(.no){
+  color: rgba(255,255,255,.55);
 }
 
 /* Explicit states */
@@ -156,6 +172,11 @@ main{
   background: var(--no);
   border-color: var(--no);
 }
+
+.bar.pref, .bar.avail, .bar.no{
+  color: rgba(0,0,0,.75);   /* readable on bright fills */
+}
+
 
 </style>
 </head>
@@ -266,8 +287,8 @@ function dayCell(dateISO,day){
   const bars=document.createElement("div");
   bars.className="bars";
 
-  const am=bar(()=>{state[dateISO].am=cycle(state[dateISO].am);render();});
-  const pm=bar(()=>{state[dateISO].pm=cycle(state[dateISO].pm);render();});
+ const am=bar(()=>{state[dateISO].am=cycle(state[dateISO].am);render();}, "AM");
+const pm=bar(()=>{state[dateISO].pm=cycle(state[dateISO].pm);render();}, "PM");
 
   bars.append(am,pm);
   d.append(num,bars);
@@ -281,9 +302,10 @@ function dayCell(dateISO,day){
   return d;
 }
 
-function bar(fn){
+function bar(fn, label){
   const b=document.createElement("div");
   b.className="bar";
+  b.dataset.label = label;   // "AM" / "PM"
   b.onclick=fn;
   return b;
 }
