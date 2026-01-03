@@ -131,16 +131,32 @@ main{
 }
 
 /* pills 150% bigger (6px -> 9px), and half-length */
+/* Base bar */
 .bar{
-  height: 9px;               /* 150% bigger */
-  width: 28px;               /* half-length feel */
+  height: 9px;
+  width: 28px;
   border-radius: 6px;
+  cursor: pointer;
+  background: rgba(255,255,255,.18);   /* ← visible neutral */
+  border: 1px solid rgba(255,255,255,.25);
 }
 
+/* Explicit states */
+.bar.pref{
+  background: var(--pref);
+  border-color: var(--pref);
+}
 
-.bar.pref{background:var(--pref)}
-.bar.avail{background:var(--avail)}
-.bar.no{background: var(--clear);}
+.bar.avail{
+  background: var(--avail);
+  border-color: var(--avail);
+}
+
+.bar.no{
+  background: var(--no);
+  border-color: var(--no);
+}
+
 </style>
 </head>
 
