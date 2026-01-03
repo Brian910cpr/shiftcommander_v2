@@ -141,6 +141,72 @@
       text-overflow:ellipsis;
     }
     .mini b{color:rgba(232,238,252,.92); font-weight:800}
+
+/* === Week Brackets === */
+.day{
+  position: relative; /* needed for bracket pseudo-elements */
+}
+
+/* base bracket (hidden unless class applied) */
+.day.weekL::before,
+.day.weekR::after{
+  content:"";
+  position:absolute;
+  top:4px;
+  bottom:4px;
+  width:6px;
+  border-radius:10px;
+  opacity:.9;
+  pointer-events:none;
+}
+
+/* left bracket */
+.day.weekL::before{
+  left:-2px;
+  border-left:3px solid rgba(255,255,255,.35);
+  border-top:3px solid rgba(255,255,255,.18);
+  border-bottom:3px solid rgba(255,255,255,.18);
+}
+
+/* right bracket */
+.day.weekR::after{
+  right:-2px;
+  border-right:3px solid rgba(255,255,255,.35);
+  border-top:3px solid rgba(255,255,255,.18);
+  border-bottom:3px solid rgba(255,255,255,.18);
+}
+
+/* color variants */
+.day.weekPast.weekL::before,
+.day.weekPast.weekR::after{
+  border-color: rgba(160,170,190,.55);
+}
+
+.day.weekActive.weekL::before,
+.day.weekActive.weekR::after{
+  border-color: rgba(255,255,255,.70);
+}
+
+.day.weekPlan.weekL::before,
+.day.weekPlan.weekR::after{
+  border-color: rgba(43,210,126,.75);
+}
+
+/* planning blurb */
+.weekNote{
+  position:absolute;
+  right:6px;
+  bottom:4px;
+  font-size:9px;
+  color: rgba(167,179,214,.75);
+  letter-spacing:.2px;
+  white-space:nowrap;
+  pointer-events:none;
+}
+
+
+
+
   </style>
 </head>
 
@@ -444,6 +510,8 @@ async function boot(){
     alert("Wallboard failed to load:\n\n" + err.message);
   }
 }
+
+
 
 boot();
 </script>
