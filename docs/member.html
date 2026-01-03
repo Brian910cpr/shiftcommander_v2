@@ -272,9 +272,9 @@ main{ padding:12px; }
     </select>
   </div>
 
-  <div class="pill" id="modePill" title="Toggle Bulk Push tools">
-    Mode: <b id="modeLabel">Fine-Tune</b>
-  </div>
+<div class="pill" id="bulkToggle" style="cursor:pointer;" title="Show/Hide Quick Set tools">
+  Quick Set ▾
+</div>
 
   <div class="savePill" id="savepill" title="Checking…">
     <span class="dot warn" id="driveDot"></span>
@@ -284,7 +284,7 @@ main{ padding:12px; }
 
 <main>
   <!-- Bulk drawer -->
-  <div id="bulkPanel" class="bulkPanel" style="display:none;">
+<div id="bulkPanel" class="bulkPanel" style="display:block;">
     <div class="bulkRow">
       <div class="bulkTitle">Quick Set (Bulk)</div>
       <div class="bulkHint">Stamp a baseline fast, then fine-tune on the calendar below.</div>
@@ -311,7 +311,7 @@ main{ padding:12px; }
 
       <div class="bulkBtns">
         <button id="btnCopyFwd" class="bbtn" type="button">Copy this week → Next</button>
-        <button id="btnApplyRange" class="bbtn primary" type="button">Apply to Range</button>
+        <button id="btnApplyRange" class="bbtn primary" type="button">Repeat week until…</button>
         <button id="btnClearRange" class="bbtn danger" type="button">Clear Range</button>
       </div>
     </div>
@@ -644,18 +644,17 @@ function bar(fn, label){
 }
 
 /* ===================== MODE TOGGLE (Bulk drawer) ===================== */
-let bulkOpen = false;
-function setMode(open){
+let bulkOpen = true; // set false if you want collapsed on load
+
+function setBulk(open){
   bulkOpen = open;
   document.getElementById("bulkPanel").style.display = bulkOpen ? "block" : "none";
-  document.getElementById("modeLabel").textContent = bulkOpen ? "Bulk Push" : "Fine-Tune";
-  document.getElementById("modePill").title =
-    bulkOpen
-      ? "Bulk Push is open. Stamp patterns, then fine-tune on the calendar."
-      : "Fine-Tune mode. Click to open Bulk Push tools.";
+  document.getElementById("bulkToggle").innerHTML = bulkOpen ? "Quick Set ▾" : "Quick Set ▸";
 }
-document.getElementById("modePill")?.addEventListener("click", ()=> setMode(!bulkOpen));
-setMode(false);
+
+document.getElementById("bulkToggle")?.addEventListener("click", ()=> setBulk(!bulkOpen));
+setBulk(bulkOpen);
+
 
 /* ===================== BULK ACTIONS (writes into SAME state model) ===================== */
 function ensureDay(dateISO){
