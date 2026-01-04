@@ -488,14 +488,14 @@ main{ padding:12px; }
 <script>
 /* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
-  url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
-  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
+  url: "https://adr-fr.org/api/store"
+  // token: (REMOVE THIS if Worker injects it)
 };
 
 /* ===================== CONFIG ===================== */
 const MONTHS_AHEAD = 6;
 const STATES = ["clear","pref","avail","no"];
-const AV_KIND = "member_availability";
+const AV_KIND = "member";
 
 // Optional (Impact tab) kinds. Beta1 reads if present; otherwise shows “not connected”
 const ASSIGN_KIND = "member_assignments"; // suggested format below
@@ -554,7 +554,10 @@ function startOfWeekThursday(d){
 async function storeGet(params){
   const u = new URL(STORE.url);
   Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
-  u.searchParams.set("token", STORE.token);
+
+  // If (and only if) you're NOT injecting token in the Worker:
+  // u.searchParams.set("token", STORE.token);
+
   const r = await fetch(u.toString(), { cache:"no-store" });
   const j = await r.json();
   if(!j.ok) throw new Error(j.error || "Store GET failed");
@@ -564,8 +567,12 @@ async function storeGet(params){
 async function storePut(body){
   const r = await fetch(STORE.url, {
     method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify({ token: STORE.token, ...body })
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      // If (and only if) you're NOT injecting token in the Worker:
+      // token: STORE.token,
+      ...body
+    })
   });
   const j = await r.json();
   if(!j.ok) throw new Error(j.error || "Store PUT failed");
@@ -670,7 +677,7 @@ async function trySync(memberId){
   }
 
   try{
-    await storePut({ kind: AV_KIND, member_id: memberId, payload });
+    await storePut({ kind: AV_KIND, memberId: memberId, payload });
 
     meta.dirty = false;
     meta.lastPushISO = nowISO();
@@ -703,7 +710,7 @@ async function loadMember(memberId){
 
   // drive authoritative
   try{
-    const remote = await storeGet({ kind: AV_KIND, member_id: memberId });
+    const remote = await storeGet({ kind: AV_KIND, memberId: memberId });
     if(remote){
       // reset local state then apply
       for(const k of Object.keys(stateDays)) delete stateDays[k];
