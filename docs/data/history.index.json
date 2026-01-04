@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-12-25T00:00:00-05:00",
+  "generated_at": "2026-01-04T20:47:43.102872",
   "base_path": "/web/data/history/",
   "files": [
     {
@@ -22,6 +22,13 @@
       "path": "/web/data/history/2026-01.normalized.json",
       "start_date": "2026-01-01",
       "end_date": "2026-01-31"
+    },
+    {
+      "month": "2026-02",
+      "filename": "2026-02.normalized.json",
+      "path": "/web/data/history/2026-02.normalized.json",
+      "start_date": "2026-02-01",
+      "end_date": "2026-02-28"
     }
   ]
 }

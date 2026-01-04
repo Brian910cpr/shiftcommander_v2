@@ -1,514 +1,80 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ShiftCommander — Member Scheduling</title>
-
-<style>
-:root{
-  --bg:#0b1020;
-  --card:#111a33;
-  --card2:rgba(255,255,255,.045);
-  --line:rgba(255,255,255,.12);
-  --text:#eaf1ff;
-  --muted:rgba(234,241,255,.55);
-
-  --pref:#2bd27e;
-  --avail:#5c8dff;
-  --no:#ff5d5d;
-  --clear: rgba(255,255,255,.18);
-  --warn:#f4c542;
-}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui}
-
-header{
-  position:sticky;top:0;z-index:10;
-  background:linear-gradient(180deg,#050814,#050814cc);
-  border-bottom:1px solid var(--line);
-  padding:10px 14px;
-  display:flex;gap:12px;align-items:center;flex-wrap:wrap;
-}
-.pill{
-  background:rgba(255,255,255,.06);
-  border:1px solid var(--line);
-  border-radius:999px;
-  padding:6px 10px;
-  font-size:13px;
-  white-space:nowrap;
-  flex-shrink:0;
-}
-select{
-  min-width:260px;
-  font-size:14px;
-  background:rgba(255,255,255,.04);
-  color:var(--text);
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:6px 8px;
-}
-.savePill{
-  display:flex; align-items:center; gap:10px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.04);
-  border-radius:999px;
-  padding:6px 10px;
-  min-height:34px;
-  cursor: default;
-  margin-left:auto;
-  max-width: 220px;
-}
-.savePill .tiny{
-  font-size:12px;
-  color: rgba(234,241,255,.70);
-  min-width:0;
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  line-height:1;
-}
-.dot{
-  width:10px; height:10px; border-radius:999px;
-  background: rgba(233,241,255,.26);
-  box-shadow: 0 0 0 3px rgba(255,255,255,.06);
-}
-.dot.ok{ background:#2bd27e; box-shadow: 0 0 0 3px rgba(43,210,126,.16); }
-.dot.warn{ background:var(--warn); box-shadow: 0 0 0 3px rgba(244,197,66,.16); }
-
-main{ padding:12px; }
-.panel{
-  background: var(--card2);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 14px;
-  padding: 10px;
-  margin-bottom: 12px;
-}
-.panelTitle{ font-weight: 900; font-size: 13px; margin-bottom: 6px; }
-.panelHint{ color: var(--muted); font-size: 12px; line-height: 1.25; }
-
-.togRow{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-  margin-top:8px;
-}
-.toggle{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  padding:8px 10px;
-  border-radius: 12px;
-  background: rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.10);
-}
-.toggle input{ transform: scale(1.1); }
-.toggle .lbl{ font-weight: 900; font-size: 12px; }
-.toggle .sub{ font-size: 11px; color: var(--muted); margin-top:2px; line-height:1.2; }
-.toggle .col{ display:flex; flex-direction:column; }
-
-.monthRow{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-  gap:12px;
-  margin-bottom:12px;
-}
-.month{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:8px;
-}
-.month h3{
-  margin:2px 0 6px;
-  font-size:14px;
-  font-weight:900;
-  text-align:center;
-}
-.dow{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  font-size:10px;
-  color:var(--muted);
-  text-align:center;
-  margin-bottom:4px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:4px;
-  align-content:start;
-}
-.day{
-  height:30px;
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:3px 4px;
-  display:flex;
-  flex-direction:row;
-  align-items:center;
-  gap:6px;
-}
-.day.blank{border:none;background:none}
-.day.past{opacity:.35;pointer-events:none}
-.dayNum{
-  width:16px;
-  text-align:right;
-  font-size:11px;
-  font-weight:900;
-  line-height:1;
-  cursor:pointer;
-}
-.bars{
-  display:flex;
-  flex-direction:column;
-  gap:3px;
-  align-items:flex-start;
-}
-.bar{
-  width:34px;
-  height:10px;
-  border-radius:999px;
-  cursor:pointer;
-  background: var(--clear);
-  border: 1px solid rgba(255,255,255,.25);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:9px;
-  font-weight:900;
-  line-height:1;
-  letter-spacing:0.2px;
-  color: rgba(255,255,255,.80);
-  user-select:none;
-}
-.bar::after{ content: attr(data-label); }
-.bar.pref{ background:var(--pref); border-color:var(--pref); color: rgba(0,0,0,.70); }
-.bar.avail{ background:var(--avail); border-color:var(--avail); color: rgba(0,0,0,.70); }
-.bar.no{ background:var(--no); border-color:var(--no); color: rgba(0,0,0,.70); }
-.bar:not(.pref):not(.avail):not(.no){ opacity:.75; }
-</style>
+  <meta charset="utf-8" />
+  <title>ShiftCommander – Member</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    select, textarea, button { font-size: 16px; margin: 5px 0; }
+    .status { margin-top: 10px; color: green; }
+  </style>
 </head>
-
 <body>
 
-<header>
-  <div class="pill">Member Scheduling</div>
+<h1>Member Availability</h1>
 
-  <div class="pill">
-    Member:
-    <select id="member"></select>
-  </div>
+<label>Member:</label><br />
+<select id="memberSelect"></select>
 
-  <div class="savePill" id="savepill" title="Checking…">
-    <span class="dot warn" id="driveDot"></span>
-    <span class="tiny" id="driveTip">Checking…</span>
-  </div>
-</header>
+<h3>Availability JSON</h3>
+<textarea id="payload" rows="10" cols="60"></textarea><br />
 
-<main>
-  <div class="panel">
-    <div class="panelTitle">Global preferences</div>
-    <div class="panelHint">
-      These don’t block staffing — they simply help the solver break ties and reduce friction.
-    </div>
+<button onclick="save()">Save</button>
 
-    <div class="togRow">
-      <label class="toggle">
-        <input id="chkPrefer24" type="checkbox">
-        <span class="col">
-          <span class="lbl">Prefer 24-hour shifts</span>
-          <span class="sub">Small bonus for continuity when possible.</span>
-        </span>
-      </label>
-
-      <label class="toggle">
-        <input id="chkBlankOk" type="checkbox" checked>
-        <span class="col">
-          <span class="lbl">If I left a day blank, you may still schedule me if needed</span>
-          <span class="sub">Blank stays eligible (0 points). Turn off to avoid “lingering zero” pull-ins.</span>
-        </span>
-      </label>
-    </div>
-  </div>
-
-  <div id="months"></div>
-</main>
+<div class="status" id="status"></div>
 
 <script>
-/* ===================== STORE CONFIG ===================== */
-/* IMPORTANT: This MUST be your Cloudflare Worker */
-const STORE = { url: "https://adr-fr.org/api/store" };
+const STORE = "https://adr-fr.org/api/store";
 
-/* ===================== KINDS ===================== */
-const K_MEMBERS = "members";
-const K_AVAIL   = "member_availability";
+async function loadRoster() {
+  const res = await fetch(`${STORE}?kind=members`);
+  const data = await res.json();
 
-/* ===================== CALENDAR CONFIG ===================== */
-const MONTHS_AHEAD = 6;
-const STATES = ["clear","pref","avail","no"];
-const today = new Date();
+  // members.json may be an object, not array
+  const members = Array.isArray(data.payload)
+    ? data.payload
+    : Object.values(data.payload || {});
 
-/* ===================== STATE ===================== */
-let roster = []; // loaded from Drive
-let prefs = { prefer_24:false, blank_ok:true };
-const stateDays = {}; // dateISO -> {am,pm}
+  const sel = document.getElementById("memberSelect");
+  sel.innerHTML = "";
 
-/* ===================== HELPERS ===================== */
-function iso(d){ return d.toISOString().slice(0,10); }
-function parseISO(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
-function cycle(s){ return STATES[(STATES.indexOf(s)+1)%STATES.length]; }
-function isPast(isoDate){ return isoDate < iso(new Date()); }
-
-function setDrivePill({state, label, tooltip}){
-  const dot = document.getElementById("driveDot");
-  const tip = document.getElementById("driveTip");
-  const pill = document.getElementById("savepill");
-  dot.classList.remove("ok","warn");
-  dot.classList.add(state === "ok" ? "ok" : "warn");
-  tip.textContent = label;
-  pill.title = tooltip || label;
-}
-
-async function storeGet(params){
-  const u = new URL(STORE.url);
-  for(const [k,v] of Object.entries(params)) u.searchParams.set(k, String(v));
-  u.searchParams.set("_ts", String(Date.now()));
-  const r = await fetch(u.toString(), { cache:"no-store" });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "Store GET failed");
-  return j.payload;
-}
-
-async function storePost(body){
-  const r = await fetch(STORE.url, {
-    method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify(body)
+  members.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = `${m.name} (${m.id})`;
+    sel.appendChild(opt);
   });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "Store POST failed");
-  return j;
+
+  sel.onchange = loadMember;
+  if (members.length) loadMember();
 }
 
-function getActiveMemberId(){
-  const sel = document.getElementById("member");
-  return sel ? String(sel.value||"").trim() : "";
+async function loadMember() {
+  const id = document.getElementById("memberSelect").value;
+  const res = await fetch(`${STORE}?kind=member_availability&member_id=${id}`);
+  const data = await res.json();
+  document.getElementById("payload").value =
+    JSON.stringify(data.payload || {}, null, 2);
 }
 
-function ensureDay(dateISO){
-  stateDays[dateISO] ||= { am:"clear", pm:"clear" };
-  return stateDays[dateISO];
+async function save() {
+  const id = document.getElementById("memberSelect").value;
+  const payload = JSON.parse(document.getElementById("payload").value);
+
+  await fetch(STORE, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      kind: "member_availability",
+      member_id: id,
+      payload
+    })
+  });
+
+  document.getElementById("status").textContent = "Saved to Drive ✔";
 }
 
-/* ===================== LOAD ROSTER ===================== */
-async function loadRoster(){
-  // Expecting payload to be an array of members: [{id,name,meta?}, ...]
-  const members = await storeGet({ kind: K_MEMBERS });
-  if(!Array.isArray(members)) throw new Error("Roster payload is not an array");
-  roster = members.map(m => ({
-    id: String(m.id),
-    name: String(m.name || m.full_name || m.display || m.id),
-    meta: String(m.meta || "")
-  }));
-}
-
-/* ===================== LOAD/SAVE MEMBER AVAILABILITY ===================== */
-function resetInMemory(){
-  for(const k of Object.keys(stateDays)) delete stateDays[k];
-  prefs = { prefer_24:false, blank_ok:true };
-}
-
-function applyPayload(payload){
-  resetInMemory();
-  if(payload?.prefs){
-    prefs.prefer_24 = !!payload.prefs.prefer_24;
-    prefs.blank_ok  = payload.prefs.blank_ok !== false;
-  }
-  if(payload?.days && typeof payload.days === "object"){
-    for(const [d,v] of Object.entries(payload.days)){
-      stateDays[d] = { am: v?.am || "clear", pm: v?.pm || "clear" };
-    }
-  }
-  syncPrefsUI();
-  buildCalendar();
-}
-
-async function loadMember(memberId){
-  setDrivePill({ state:"warn", label:"Loading…", tooltip:"Loading from Drive…" });
-  try{
-    const payload = await storeGet({ kind: K_AVAIL, member_id: memberId });
-    applyPayload(payload || {});
-    setDrivePill({ state:"ok", label:"Loaded", tooltip:"Loaded from Drive." });
-  }catch(err){
-    // Fresh member is OK; start empty
-    applyPayload({});
-    setDrivePill({ state:"warn", label:"New / empty", tooltip:String(err.message||err) });
-  }
-}
-
-let saveTimer = null;
-function scheduleSave(){
-  if(saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveNow, 650);
-}
-
-async function saveNow(){
-  const memberId = getActiveMemberId();
-  if(!memberId) return;
-
-  const payload = {
-    updated_at: new Date().toISOString(),
-    prefs: { prefer_24: !!prefs.prefer_24, blank_ok: prefs.blank_ok !== false },
-    days: stateDays
-  };
-
-  setDrivePill({ state:"warn", label:"Saving…", tooltip:"Saving to Drive…" });
-
-  try{
-    await storePost({ kind: K_AVAIL, member_id: memberId, payload });
-    setDrivePill({ state:"ok", label:"Saved", tooltip:"Saved to Drive." });
-  }catch(err){
-    setDrivePill({ state:"warn", label:"Save failed", tooltip:String(err.message||err) });
-  }
-}
-
-/* ===================== PREFS UI ===================== */
-function syncPrefsUI(){
-  document.getElementById("chkPrefer24").checked = !!prefs.prefer_24;
-  document.getElementById("chkBlankOk").checked = prefs.blank_ok !== false;
-}
-document.getElementById("chkPrefer24").addEventListener("change", e=>{
-  prefs.prefer_24 = !!e.target.checked;
-  scheduleSave();
-});
-document.getElementById("chkBlankOk").addEventListener("change", e=>{
-  prefs.blank_ok = !!e.target.checked;
-  scheduleSave();
-});
-
-/* ===================== CALENDAR ===================== */
-function buildCalendar(){
-  const wrap = document.getElementById("months");
-  wrap.innerHTML = "";
-
-  let row;
-  for(let i=0;i<MONTHS_AHEAD;i++){
-    if(i%2===0){
-      row=document.createElement("div");
-      row.className="monthRow";
-      wrap.appendChild(row);
-    }
-    row.appendChild(buildMonth(i));
-  }
-}
-
-function buildMonth(offset){
-  const d = new Date(today.getFullYear(), today.getMonth()+offset, 1);
-  const m = d.getMonth(), y = d.getFullYear();
-
-  const month = document.createElement("div");
-  month.className="month";
-  month.innerHTML = `
-    <h3>${d.toLocaleString(undefined,{month:"long",year:"numeric"})}</h3>
-    <div class="dow">${["S","M","T","W","T","F","S"].map(x=>`<div>${x}</div>`).join("")}</div>
-    <div class="grid"></div>
-  `;
-
-  const grid = month.querySelector(".grid");
-  const start = new Date(y,m,1).getDay();
-  const days  = new Date(y,m+1,0).getDate();
-
-  for(let i=0;i<start;i++) grid.appendChild(blankCell());
-
-  for(let day=1; day<=days; day++){
-    const dateISO = iso(new Date(y,m,day));
-    grid.appendChild(dayCell(dateISO, day));
-  }
-  return month;
-}
-
-function blankCell(){
-  const d=document.createElement("div");
-  d.className="day blank";
-  return d;
-}
-
-function dayCell(dateISO, day){
-  ensureDay(dateISO);
-
-  const d=document.createElement("div");
-  d.className="day";
-  if(isPast(dateISO)) d.classList.add("past");
-
-  const num=document.createElement("div");
-  num.className="dayNum";
-  num.textContent=day;
-
-  num.onclick=()=>{
-    const next = cycle(stateDays[dateISO].am);
-    stateDays[dateISO].am = next;
-    stateDays[dateISO].pm = next;
-    render();
-    scheduleSave();
-  };
-
-  const bars=document.createElement("div");
-  bars.className="bars";
-
-  const am=bar(()=>{
-    stateDays[dateISO].am = cycle(stateDays[dateISO].am);
-    render();
-    scheduleSave();
-  },"AM");
-
-  const pm=bar(()=>{
-    stateDays[dateISO].pm = cycle(stateDays[dateISO].pm);
-    render();
-    scheduleSave();
-  },"PM");
-
-  bars.append(am, pm);
-  d.append(num, bars);
-
-  function render(){
-    am.className = `bar ${stateDays[dateISO].am}`;
-    pm.className = `bar ${stateDays[dateISO].pm}`;
-  }
-  render();
-  return d;
-}
-
-function bar(fn, label){
-  const b=document.createElement("div");
-  b.className="bar";
-  b.dataset.label = label;
-  b.onclick = fn;
-  return b;
-}
-
-/* ===================== INIT ===================== */
-async function init(){
-  setDrivePill({ state:"warn", label:"Loading roster…", tooltip:"Loading roster from Drive…" });
-  await loadRoster();
-
-  const sel = document.getElementById("member");
-  sel.innerHTML = roster
-    .sort((a,b)=>a.name.localeCompare(b.name))
-    .map(m => `<option value="${m.id}">${m.name}</option>`)
-    .join("");
-
-  sel.addEventListener("change", async ()=> loadMember(getActiveMemberId()));
-
-  // default: first member
-  if(roster.length) sel.value = roster[0].id;
-  await loadMember(getActiveMemberId());
-}
-init().catch(err=>{
-  setDrivePill({ state:"warn", label:"Roster error", tooltip:String(err.message||err) });
-  alert("Roster load failed: " + (err.message||err));
-});
+loadRoster();
 </script>
 
 </body>

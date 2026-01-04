@@ -1,0 +1,65 @@
+{
+  "member_id": "183",
+  "name": "Serenity Joyner",
+  "active": true,
+  "rank": "",
+  "qualifications": [
+    "AEMT",
+    "DRIVER"
+  ],
+  "history_window_months": [
+    "2025-11",
+    "2025-12",
+    "2026-01"
+  ],
+  "assignment_count": 6,
+  "recent_assignments": [
+    {
+      "date": "2025-11-13",
+      "part": "PM",
+      "cert_level": "EMT"
+    },
+    {
+      "date": "2025-11-20",
+      "part": "PM",
+      "cert_level": "EMT"
+    },
+    {
+      "date": "2025-12-12",
+      "part": "PM",
+      "cert_level": "EMT"
+    },
+    {
+      "date": "2025-12-13",
+      "part": "PM",
+      "cert_level": "EMT"
+    },
+    {
+      "date": "2026-01-23",
+      "part": "AM",
+      "cert_level": "EMT"
+    },
+    {
+      "date": "2026-01-31",
+      "part": "AM",
+      "cert_level": "EMT"
+    }
+  ],
+  "inferred_preferences": {
+    "member_id": "183",
+    "name": "Serenity Joyner",
+    "time_of_day": {
+      "am": 0.333,
+      "pm": 0.667
+    },
+    "days_of_week": {
+      "thursday": 0.333,
+      "friday": 0.333,
+      "saturday": 0.333
+    },
+    "cert_levels": {
+      "EMT": 1.0
+    },
+    "sample_size": 6
+  }
+}

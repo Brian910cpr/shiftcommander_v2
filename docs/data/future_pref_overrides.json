@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-01-04T20:47:43.103105",
+  "months": {
+    "2026-01": {
+      "187": {
+        "preferred_days": [
+          "wednesday",
+          "friday"
+        ]
+      },
+      "188": {
+        "preferred_parts": [
+          "PM"
+        ],
+        "preferred_days": [
+          "tuesday",
+          "sunday"
+        ]
+      },
+      "182": {
+        "preferred_days": [
+          "wednesday",
+          "monday"
+        ]
+      },
+      "184": {
+        "preferred_days": [
+          "sunday",
+          "monday"
+        ]
+      },
+      "186": {
+        "preferred_days": [
+          "wednesday",
+          "thursday"
+        ]
+      },
+      "149": {
+        "preferred_parts": [
+          "PM"
+        ],
+        "preferred_days": [
+          "friday",
+          "monday"
+        ]
+      },
+      "181": {
+        "preferred_parts": [
+          "AM"
+        ],
+        "preferred_days": [
+          "tuesday",
+          "sunday"
+        ]
+      },
+      "159": {
+        "preferred_parts": [
+          "PM"
+        ],
+        "preferred_days": [
+          "saturday",
+          "thursday"
+        ]
+      }
+    },
+    "2026-02": {
+      "187": {
+        "preferred_days": [
+          "wednesday",
+          "friday"
+        ]
+      },
+      "188": {
+        "preferred_parts": [
+          "PM"
+        ],
+        "preferred_days": [
+          "tuesday",
+          "sunday"
+        ]
+      },
+      "182": {
+        "preferred_days": [
+          "wednesday",
+          "monday"
+        ]
+      },
+      "184": {
+        "preferred_days": [
+          "sunday",
+          "monday"
+        ]
+      },
+      "186": {
+        "preferred_days": [
+          "wednesday",
+          "thursday"
+        ]
+      },
+      "149": {
+        "preferred_parts": [
+          "PM"
+        ],
+        "preferred_days": [
+          "friday",
+          "monday"
+        ]
+      },
+      "181": {
+        "preferred_parts": [
+          "AM"
+        ],
+        "preferred_days": [
+          "tuesday",
+          "sunday"
+        ]
+      },
+      "159": {
+        "preferred_parts": [
+          "PM"
+        ],
+        "preferred_days": [
+          "saturday",
+          "thursday"
+        ]
+      }
+    }
+  }
+}

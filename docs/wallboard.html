@@ -1,112 +1,31 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ShiftCommander — Wallboard</title>
-<style>
-:root{--bg:#0b1020;--card:#111a33;--line:rgba(255,255,255,.12);--text:#eaf1ff;--muted:rgba(234,241,255,.55)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui}
-header{position:sticky;top:0;background:#050814cc;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.pill{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:13px}
-main{padding:12px}
-.week{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:10px;margin-bottom:12px}
-h2{margin:0 0 8px;font-size:14px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{border-bottom:1px solid rgba(255,255,255,.10);padding:8px;text-align:left}
-.badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font-weight:800;font-size:12px}
-.ok{background:rgba(43,210,126,.20);border-color:rgba(43,210,126,.35)}
-.open{background:rgba(255,93,93,.18);border-color:rgba(255,93,93,.35)}
-.ond{background:rgba(244,197,66,.18);border-color:rgba(244,197,66,.35)}
-small{color:var(--muted)}
-</style>
+  <meta charset="utf-8" />
+  <title>ShiftCommander – Wallboard</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #0f0; }
+    pre { font-size: 20px; }
+  </style>
 </head>
 <body>
-<header>
-  <div class="pill">Wallboard</div>
-  <div class="pill" id="status">Loading…</div>
-</header>
 
-<main id="wrap"></main>
+<h1>Wallboard</h1>
+<pre id="out">Loading…</pre>
 
 <script>
-const STORE = { url: "https://adr-fr.org/api/store" };
-const K_WALL = "wallboard";
+const STORE = "https://adr-fr.org/api/store";
 
-function setStatus(t){ document.getElementById("status").textContent = t; }
-
-async function storeGet(params){
-  const u = new URL(STORE.url);
-  for(const [k,v] of Object.entries(params)) u.searchParams.set(k, String(v));
-  u.searchParams.set("_ts", String(Date.now()));
-  const r = await fetch(u.toString(), { cache:"no-store" });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "GET failed");
-  return j.payload;
+async function load() {
+  const res = await fetch(`${STORE}?kind=assignments`);
+  const data = await res.json();
+  document.getElementById("out").textContent =
+    JSON.stringify(data.payload || {}, null, 2);
 }
 
-function badgeClass(status){
-  if(status === "OPEN") return "badge open";
-  if(status === "ON_DECK") return "badge ond";
-  return "badge ok";
-}
-
-function esc(s){
-  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-}
-
-function render(data){
-  const wrap = document.getElementById("wrap");
-  wrap.innerHTML = "";
-
-  if(!data || !Array.isArray(data.weeks)){
-    wrap.innerHTML = `<div class="week"><h2>No wallboard data yet</h2><small>Expected Drive kind: <b>${K_WALL}</b></small></div>`;
-    return;
-  }
-
-  setStatus(`Updated: ${data.generated_at || "?"}`);
-
-  for(const w of data.weeks){
-    const sec = document.createElement("section");
-    sec.className = "week";
-    sec.innerHTML = `
-      <h2>${esc(w.label || "Week")}</h2>
-      <table>
-        <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Status</th><th>Need</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    `;
-    const tb = sec.querySelector("tbody");
-    const shifts = Array.isArray(w.shifts) ? w.shifts : [];
-    for(const s of shifts){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${esc(s.date||"")}</td>
-        <td>${esc(s.shift||"")}</td>
-        <td>${esc(s.unit||"")}</td>
-        <td><span class="${badgeClass(String(s.status||"OK"))}">${esc(s.status||"OK")}</span></td>
-        <td>${esc(s.need||"")}</td>
-      `;
-      tb.appendChild(tr);
-    }
-    wrap.appendChild(sec);
-  }
-}
-
-async function refresh(){
-  try{
-    const data = await storeGet({ kind: K_WALL });
-    render(data);
-  }catch(err){
-    setStatus("Load failed");
-    render(null);
-    console.error(err);
-  }
-}
-
-refresh();
-setInterval(refresh, 30000);
+load();
+setInterval(load, 30000);
 </script>
+
 </body>
 </html>

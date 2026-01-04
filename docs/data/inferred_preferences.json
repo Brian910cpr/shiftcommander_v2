@@ -1,0 +1,257 @@
+{
+  "generated_at": "2026-01-04T20:47:43.101933",
+  "members": {
+    "187": {
+      "member_id": "187",
+      "name": "Gordon Grant",
+      "time_of_day": {
+        "am": 0.537,
+        "pm": 0.463
+      },
+      "days_of_week": {
+        "saturday": 0.171,
+        "wednesday": 0.195,
+        "tuesday": 0.146,
+        "monday": 0.146,
+        "friday": 0.195,
+        "sunday": 0.073,
+        "thursday": 0.073
+      },
+      "cert_levels": {
+        "ALS": 1.0
+      },
+      "sample_size": 41
+    },
+    "188": {
+      "member_id": "188",
+      "name": "Brian Ennis",
+      "time_of_day": {
+        "am": 0.083,
+        "pm": 0.917
+      },
+      "days_of_week": {
+        "saturday": 0.139,
+        "sunday": 0.222,
+        "tuesday": 0.25,
+        "friday": 0.194,
+        "monday": 0.111,
+        "wednesday": 0.083
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 36
+    },
+    "182": {
+      "member_id": "182",
+      "name": "Nikki Meeks",
+      "time_of_day": {
+        "am": 0.483,
+        "pm": 0.517
+      },
+      "days_of_week": {
+        "sunday": 0.172,
+        "wednesday": 0.207,
+        "monday": 0.207,
+        "saturday": 0.069,
+        "thursday": 0.172,
+        "friday": 0.069,
+        "tuesday": 0.103
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 29
+    },
+    "146": {
+      "member_id": "146",
+      "name": "Sherman Huff",
+      "time_of_day": {
+        "am": 0.6,
+        "pm": 0.4
+      },
+      "days_of_week": {
+        "sunday": 0.4,
+        "saturday": 0.4,
+        "thursday": 0.2
+      },
+      "cert_levels": {
+        "Driver": 1.0
+      },
+      "sample_size": 5
+    },
+    "184": {
+      "member_id": "184",
+      "name": "Lisa Nelson",
+      "time_of_day": {
+        "am": 0.649,
+        "pm": 0.351
+      },
+      "days_of_week": {
+        "monday": 0.189,
+        "thursday": 0.108,
+        "sunday": 0.216,
+        "friday": 0.162,
+        "wednesday": 0.108,
+        "tuesday": 0.189,
+        "saturday": 0.027
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 37
+    },
+    "186": {
+      "member_id": "186",
+      "name": "Lynnsey Benson",
+      "time_of_day": {
+        "am": 0.5,
+        "pm": 0.5
+      },
+      "days_of_week": {
+        "monday": 0.15,
+        "wednesday": 0.6,
+        "thursday": 0.2,
+        "friday": 0.05
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 20
+    },
+    "149": {
+      "member_id": "149",
+      "name": "Shane Polletta",
+      "time_of_day": {
+        "am": 0.0,
+        "pm": 1.0
+      },
+      "days_of_week": {
+        "monday": 0.304,
+        "friday": 0.348,
+        "sunday": 0.13,
+        "tuesday": 0.174,
+        "thursday": 0.043
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 23
+    },
+    "181": {
+      "member_id": "181",
+      "name": "Anna Squires",
+      "time_of_day": {
+        "am": 1.0,
+        "pm": 0.0
+      },
+      "days_of_week": {
+        "tuesday": 0.364,
+        "saturday": 0.182,
+        "wednesday": 0.091,
+        "sunday": 0.273,
+        "monday": 0.091
+      },
+      "cert_levels": {
+        "ALS": 1.0
+      },
+      "sample_size": 11
+    },
+    "159": {
+      "member_id": "159",
+      "name": "Brett Toney",
+      "time_of_day": {
+        "am": 0.071,
+        "pm": 0.929
+      },
+      "days_of_week": {
+        "thursday": 0.357,
+        "saturday": 0.571,
+        "wednesday": 0.071
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 14
+    },
+    "168": {
+      "member_id": "168",
+      "name": "Cassie Grass",
+      "time_of_day": {
+        "am": 1.0,
+        "pm": 0.0
+      },
+      "days_of_week": {
+        "friday": 1.0
+      },
+      "cert_levels": {
+        "ALS": 1.0
+      },
+      "sample_size": 1
+    },
+    "185": {
+      "member_id": "185",
+      "name": "Nicholas Tripp",
+      "time_of_day": {
+        "am": 0.5,
+        "pm": 0.5
+      },
+      "days_of_week": {
+        "wednesday": 0.25,
+        "thursday": 0.25,
+        "saturday": 0.5
+      },
+      "cert_levels": {
+        "ALS": 1.0
+      },
+      "sample_size": 4
+    },
+    "151": {
+      "member_id": "151",
+      "name": "Nora Hines",
+      "time_of_day": {
+        "am": 0.0,
+        "pm": 1.0
+      },
+      "days_of_week": {
+        "wednesday": 1.0
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 1
+    },
+    "183": {
+      "member_id": "183",
+      "name": "Serenity Joyner",
+      "time_of_day": {
+        "am": 0.333,
+        "pm": 0.667
+      },
+      "days_of_week": {
+        "thursday": 0.333,
+        "friday": 0.333,
+        "saturday": 0.333
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 6
+    },
+    "112": {
+      "member_id": "112",
+      "name": "AJ Smith",
+      "time_of_day": {
+        "am": 0.0,
+        "pm": 1.0
+      },
+      "days_of_week": {
+        "wednesday": 1.0
+      },
+      "cert_levels": {
+        "EMT": 1.0
+      },
+      "sample_size": 1
+    }
+  }
+}
