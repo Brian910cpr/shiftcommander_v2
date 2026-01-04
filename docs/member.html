@@ -1071,7 +1071,7 @@ async function loadImpact(){
   // Best-effort fetch member assignments
   memberAssignments = null;
   try{
-    const p = await storeGet({ kind: ASSIGN_KIND, member_id: getActiveMemberId() });
+    const p = await storeGet({ kind: ASSIGN_KIND, memberId: getActiveMemberId() });
     if(p && p.weeks && Array.isArray(p.weeks)) memberAssignments = p;
   }catch(e){
     // ignore; we will render fallback
