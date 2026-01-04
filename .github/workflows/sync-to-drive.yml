@@ -1,4 +1,4 @@
-name: Sync repo to Google Drive (app folder only)
+name: Sync docs/data to Google Drive (ShiftCommander)
 
 on:
   push:
@@ -8,27 +8,28 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install rclone
         run: |
-          curl https://rclone.org/install.sh | sudo bash
+          curl -fsSL https://rclone.org/install.sh | sudo bash
 
       - name: Write rclone config
         run: |
           mkdir -p ~/.config/rclone
           echo "${{ secrets.RCLONE_CONF }}" > ~/.config/rclone/rclone.conf
 
-      - name: Sync /docs to Drive app folder
-        env:
-          DRIVE_APP_FOLDER_ID: ${{ secrets.11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK }}
+      - name: Sync ./docs/data → Drive folder root (flat)
         run: |
+          DRIVE_FOLDER_ID="11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK"
+
           # IMPORTANT:
-          # - We sync ONLY the /docs folder (your web app surface)
-          # - We do NOT sync the Drive "store" folder used by Apps Script
-          rclone sync "./docs" "gdrive:/${11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK}" \
+          # - "gdrive:" must match the remote name inside your rclone.conf
+          # - This keeps Drive FLAT: it syncs the contents of ./docs/data into the folder root.
+          rclone sync ./docs/data "gdrive:/${DRIVE_FOLDER_ID}" \
             --exclude ".git/**" \
             --exclude ".github/**" \
             --exclude "node_modules/**" \

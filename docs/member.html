@@ -45,10 +45,7 @@
       padding:14px 14px 10px;
       display:flex;gap:12px;align-items:center;flex-wrap:wrap;
     }
-    .brand{
-      font-weight:800;letter-spacing:.2px;
-      font-size:18px;white-space:nowrap;
-    }
+    .brand{font-weight:800;letter-spacing:.2px;font-size:18px;white-space:nowrap;}
     .pill{
       background: rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.08);
@@ -57,15 +54,9 @@
       display:flex;align-items:center;gap:8px;
       box-shadow: 0 6px 18px rgba(0,0,0,.18);
     }
-    select, button, input{
-      font: inherit;
-      color:var(--ink);
-    }
+    select, button, input{font: inherit;color:var(--ink);}
     select, input{
-      background: transparent;
-      border:none;
-      outline:none;
-      min-width: 140px;
+      background: transparent;border:none;outline:none;min-width: 140px;
     }
     .btn{
       background: rgba(122,168,255,.10);
@@ -77,14 +68,8 @@
     }
     .btn:hover{transform: translateY(-1px); background: rgba(122,168,255,.14)}
     .btn:active{transform: translateY(0)}
-    .btn.ghost{
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-    }
-    .btn.danger{
-      background: rgba(255,77,109,.10);
-      border:1px solid rgba(255,77,109,.35);
-    }
+    .btn.ghost{background: rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);}
+    .btn.danger{background: rgba(255,77,109,.10);border:1px solid rgba(255,77,109,.35);}
     .navbtn{
       width:38px;height:38px;border-radius:12px;
       display:grid;place-items:center;
@@ -92,7 +77,6 @@
       border:1px solid rgba(255,255,255,.10);
       cursor:pointer;
     }
-
     .dot{
       width:10px;height:10px;border-radius:99px;
       background: #f2c14d;
@@ -116,14 +100,8 @@
       padding:16px 16px 12px;
       border-bottom:1px solid rgba(255,255,255,.06);
     }
-    .title{
-      font-size:16px;font-weight:800;
-      margin:0 0 4px;
-    }
-    .subtitle{
-      margin:0;color:var(--muted);
-      font-size:12.5px;
-    }
+    .title{font-size:16px;font-weight:800;margin:0 0 4px;}
+    .subtitle{margin:0;color:var(--muted);font-size:12.5px;}
 
     .toolbar{
       display:flex;align-items:center;gap:10px;flex-wrap:wrap;
@@ -151,12 +129,8 @@
     .sw.nos{background:var(--nos)}
     .sw.clear{background:rgba(255,255,255,.18)}
 
-    .grid{
-      padding:14px 12px 16px;
-      overflow:auto;
-    }
+    .grid{padding:14px 12px 16px;overflow:auto;}
 
-    /* Week grid layout: left column = week label, then 7 days */
     .wk{
       display:grid;
       grid-template-columns: 180px repeat(7, minmax(120px, 1fr));
@@ -164,7 +138,6 @@
       align-items:stretch;
       margin-bottom:10px;
     }
-
     .wk .wklabel{
       background: rgba(255,255,255,.03);
       border:1px solid rgba(255,255,255,.08);
@@ -174,17 +147,9 @@
       justify-content:center;
       min-height:88px;
     }
-    .wklabel .k{
-      font-weight:900;
-      letter-spacing:.2px;
-      font-size:13px;
-    }
+    .wklabel .k{font-weight:900;letter-spacing:.2px;font-size:13px;}
     .wklabel .rng{color:var(--muted);font-size:12px}
-    .wklabel .lock{
-      color: rgba(255,255,255,.55);
-      font-size:11.5px;
-      display:flex;align-items:center;gap:8px;
-    }
+    .wklabel .lock{color: rgba(255,255,255,.55);font-size:11.5px;display:flex;align-items:center;gap:8px;}
 
     .day{
       background: rgba(10,16,30,.55);
@@ -229,12 +194,6 @@
       position:relative;
     }
     .slot:hover{transform: translateY(-1px); background: rgba(255,255,255,.05)}
-    .slot small{
-      font-size:10px;
-      opacity:.40;
-      letter-spacing:.6px;
-      font-weight: see;
-    }
     .slot .mini{
       font-size:10px;
       opacity:.35;
@@ -249,7 +208,7 @@
       letter-spacing:.3px;
       font-size:12px;
       text-transform:uppercase;
-      opacity:.25; /* becomes mostly “border-driven” */
+      opacity:.25;
     }
 
     .slot.pref{border-color: rgba(46,224,143,.95); box-shadow: 0 0 0 2px rgba(46,224,143,.08) inset}
@@ -277,7 +236,6 @@
     }
     .wkhead .blank{background:transparent;border:none}
 
-    /* Modal */
     .modal-back{
       position:fixed;inset:0;
       background: rgba(0,0,0,.55);
@@ -311,9 +269,7 @@
       padding:10px 10px;
       display:flex;gap:10px;align-items:center;flex-wrap:wrap;
     }
-    .row .in input, .row .in select{
-      min-width: 120px;
-    }
+    .row .in input, .row .in select{min-width: 120px;}
     .modal .foot{
       padding:12px 16px;
       border-top:1px solid rgba(255,255,255,.08);
@@ -395,7 +351,6 @@
     </div>
   </div>
 
-  <!-- Tools Modal -->
   <div class="modal-back" id="modalBack">
     <div class="modal" role="dialog" aria-modal="true">
       <h3>Repeat / Tools</h3>
@@ -459,50 +414,79 @@
 /* ==========================
    CONFIG + HELPERS
 ========================== */
-const DAYS = ["Thu","Fri","Sat","Sun","Mon","Tue","Wed"]; // Week start Thursday (ADR style)
-const LEAD_DAYS = 21; // for future: suppress “Needs…” etc. (member page doesn’t show needs)
-
+const DAYS = ["Thu","Fri","Sat","Sun","Mon","Tue","Wed"];
 const STATE = { CLEAR:0, PREF:1, AVAIL:2, NOS:3 };
 const STATE_CLASS = ["clear","pref","avail","nos"];
 const STATE_NAME  = ["Clear","Preferred","Available","Do not schedule"];
 
 function iso(d){ return d.toISOString().slice(0,10); }
 function d0(dateISO){ return new Date(dateISO+"T00:00:00"); }
-function addDays(dateISO, n){
-  const d = d0(dateISO); d.setDate(d.getDate()+n); return iso(d);
-}
+function addDays(dateISO, n){ const d = d0(dateISO); d.setDate(d.getDate()+n); return iso(d); }
 function startOfWeek(dateISO){
-  // Our "week start" is Thursday. Convert any date to the most recent Thursday.
   const d = d0(dateISO);
   const day = d.getDay(); // Sun=0..Sat=6
-  // We want Thu=4
-  const offset = (day - 4 + 7) % 7;
+  const offset = (day - 4 + 7) % 7; // Thu=4
   d.setDate(d.getDate() - offset);
   return iso(d);
 }
-function fmtRange(startISO){
-  const end = addDays(startISO, 6);
-  return `${startISO} → ${end}`;
-}
+function fmtRange(startISO){ return `${startISO} → ${addDays(startISO, 6)}`; }
 function mmdd(dateISO){
   const d = d0(dateISO);
   const mm = String(d.getMonth()+1).padStart(2,"0");
   const dd = String(d.getDate()).padStart(2,"0");
   return `${mm}/${dd}`;
 }
-function dom(dateISO){
-  const d = d0(dateISO);
-  return String(d.getDate());
-}
+function dom(dateISO){ return String(d0(dateISO).getDate()); }
 function todayISO(){ return iso(new Date()); }
-function isPastWeek(weekStartISO){
-  return d0(addDays(weekStartISO,6)).getTime() < d0(todayISO()).getTime();
+function isPastWeek(weekStartISO){ return d0(addDays(weekStartISO,6)).getTime() < d0(todayISO()).getTime(); }
+
+/* ==========================
+   NORMALIZERS (fix your MEMBERS.map issue)
+========================== */
+function normalizeMembers(raw){
+  // Accept: [..] OR {members:[..]} OR {data:[..]} OR {rows:[..]} OR {items:[..]} OR object keyed by ids
+  if (Array.isArray(raw)) return raw;
+
+  if (raw && typeof raw === "object"){
+    const keys = ["members","data","rows","items","list","people"];
+    for (const k of keys){
+      if (Array.isArray(raw[k])) return raw[k];
+    }
+    // if it's an object keyed by ids => convert to array
+    const vals = Object.values(raw);
+    if (vals.length && vals.every(v => v && typeof v === "object" && !Array.isArray(v))) return vals;
+  }
+  return null;
+}
+
+function normalizeOrgs(orgSettings){
+  // Accept: {orgs:[..]} OR {org:{...}} OR {id,name} single org
+  if (!orgSettings || typeof orgSettings !== "object") return [{ id:"org", name:"Org" }];
+  if (Array.isArray(orgSettings.orgs) && orgSettings.orgs.length) return orgSettings.orgs;
+  if (orgSettings.org && typeof orgSettings.org === "object"){
+    const o = orgSettings.org;
+    return [{ id: o.id || "org", name: o.name || "Org" }];
+  }
+  if (orgSettings.id || orgSettings.name){
+    return [{ id: orgSettings.id || "org", name: orgSettings.name || "Org" }];
+  }
+  return [{ id:"org", name:"Org" }];
+}
+
+function memberIdOf(m){
+  return m.member_id ?? m.id ?? m.memberId ?? m.member ?? null;
+}
+function memberLabel(m){
+  const fn = m.first_name ?? m.firstName ?? m.first ?? "";
+  const ln = m.last_name ?? m.lastName ?? m.last ?? "";
+  const id = memberIdOf(m);
+  const name = (ln && fn) ? `${ln}, ${fn}` : (m.name || `${fn} ${ln}`.trim() || "Member");
+  return `${name} #${id ?? "?"}`;
 }
 
 /* ==========================
    STORE: local + Google Script
 ========================== */
-// You already have this Apps Script exec URL:
 const STORE_EXEC = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
 
 let ORG_SETTINGS = null;
@@ -519,9 +503,8 @@ function loadLocal(orgId, memberId){
     return JSON.parse(raw);
   }catch(e){ return { prefs:{} }; }
 }
-function saveLocal(orgId, memberId, obj){
-  localStorage.setItem(lsKey(orgId, memberId), JSON.stringify(obj));
-}
+function saveLocal(orgId, memberId, obj){ localStorage.setItem(lsKey(orgId, memberId), JSON.stringify(obj)); }
+
 function loadToolsLocal(orgId, memberId){
   try{
     const raw = localStorage.getItem(lsToolsKey(orgId, memberId));
@@ -531,13 +514,12 @@ function loadToolsLocal(orgId, memberId){
     return o;
   }catch(e){ return { patterns:[] }; }
 }
-function saveToolsLocal(orgId, memberId, obj){
-  localStorage.setItem(lsToolsKey(orgId, memberId), JSON.stringify(obj));
-}
+function saveToolsLocal(orgId, memberId, obj){ localStorage.setItem(lsToolsKey(orgId, memberId), JSON.stringify(obj)); }
 
 function getToken(){
-  // Token comes from org_settings.json (keeps it simple for now).
-  return (ORG_SETTINGS && ORG_SETTINGS.store && ORG_SETTINGS.store.token) ? ORG_SETTINGS.store.token : "";
+  // token location variations:
+  // org_settings.store.token OR org_settings.token OR org_settings.SC_TOKEN
+  return (ORG_SETTINGS?.store?.token) || ORG_SETTINGS?.token || ORG_SETTINGS?.SC_TOKEN || "";
 }
 
 async function storeGetMember(memberId){
@@ -562,10 +544,7 @@ async function storePostMember(memberId, payload){
   if(!r.ok) throw new Error(`Store POST failed ${r.status}`);
   return await r.json();
 }
-
 async function pingStore(){
-  // Don’t rely on /api/health. Just attempt a lightweight GET.
-  // If it fails, we treat as offline-ish.
   const token = getToken();
   if(!token) return false;
   try{
@@ -580,8 +559,7 @@ async function pingStore(){
 }
 
 /* ==========================
-   MERGE LOGIC (local <-> remote)
-   Each cell stored as: prefs[dateISO][half] = { v:STATE, t:epochMs }
+   MERGE LOGIC
 ========================== */
 function ensureCell(obj, dateISO){
   if(!obj.prefs) obj.prefs = {};
@@ -597,7 +575,6 @@ function setCellVal(obj, dateISO, half, v){
   cell[half] = { v, t: Date.now() };
 }
 function mergeLocalRemote(localObj, remoteObj){
-  // “latest timestamp wins” per cell.
   const out = { prefs:{} };
   const dates = new Set([
     ...Object.keys(localObj?.prefs||{}),
@@ -614,7 +591,7 @@ function mergeLocalRemote(localObj, remoteObj){
       const b = remoteObj?.prefs?.[dt]?.[h];
       if(!a && b) out.prefs[dt][h] = b;
       else if(a && !b) out.prefs[dt][h] = a;
-      else out.prefs[dt][h] = ( (a.t||0) >= (b.t||0) ) ? a : b;
+      else out.prefs[dt][h] = ((a.t||0) >= (b.t||0)) ? a : b;
     }
   }
   return out;
@@ -653,38 +630,55 @@ let currentOrgId = null;
 let currentMemberId = null;
 let editWeekStart = startOfWeek(todayISO());
 
-let localData = null;      // {prefs:{}}
-let localTools = null;     // {patterns:[...]}
-let lastSyncOk = false;
+let localData = null;
+let localTools = null;
 
-/* ==========================
-   LOAD STATIC JSON (from GitHub Pages)
-========================== */
 async function loadJSON(path){
   const r = await fetch(path, { cache:"no-store" });
   if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${path}`);
   return await r.json();
 }
+
+/* ==========================
+   BOOT
+========================== */
 async function boot(){
   try{
-    // In Pages, member.html lives in /docs/, so data is /data/*
     ORG_SETTINGS = await loadJSON("./data/org_settings.json");
-    MEMBERS = await loadJSON("./data/members.json");
 
-    ORGS = ORG_SETTINGS.orgs || [{ id:"org", name:"Org" }];
+    const rawMembers = await loadJSON("./data/members.json");
+    const normalized = normalizeMembers(rawMembers);
+    if(!normalized){
+      console.error("members.json raw:", rawMembers);
+      throw new Error("members.json format not recognized. Expected an array, or {members:[...]}, {data:[...]}, etc.");
+    }
+    MEMBERS = normalized;
 
-    // Fill selects
+    ORGS = normalizeOrgs(ORG_SETTINGS);
+
+    // Fill org select
     orgSel.innerHTML = ORGS.map(o=>`<option value="${o.id}">${o.name}</option>`).join("");
     currentOrgId = ORGS[0].id;
 
-    // Members list
-    memberSel.innerHTML = MEMBERS.map(m=>`<option value="${m.member_id}">${m.last_name}, ${m.first_name} #${m.member_id}</option>`).join("");
-    currentMemberId = MEMBERS[0]?.member_id || null;
+    // Fill member select
+    const opts = MEMBERS
+      .map(m=>{
+        const id = memberIdOf(m);
+        if(id===null || id===undefined) return null;
+        return `<option value="${id}">${memberLabel(m)}</option>`;
+      })
+      .filter(Boolean);
 
-    // Date input
+    if(opts.length === 0){
+      console.error("members normalized:", MEMBERS);
+      throw new Error("No members with a usable member_id/id found in members.json.");
+    }
+
+    memberSel.innerHTML = opts.join("");
+    currentMemberId = memberSel.value;
+
     wkStartIn.value = editWeekStart;
 
-    // Listeners
     orgSel.addEventListener("change", ()=>{ currentOrgId = orgSel.value; reloadMember(); });
     memberSel.addEventListener("change", ()=>{ currentMemberId = memberSel.value; reloadMember(); });
 
@@ -711,16 +705,13 @@ async function boot(){
 
     syncBtn.addEventListener("click", ()=> syncNow(true));
 
-    // Tools handlers
     copy1.addEventListener("click", ()=>{ copyWeekForward(1); });
     copy4.addEventListener("click", ()=>{ copyWeekForward(4); });
     savePatternBtn.addEventListener("click", saveRepeatPattern);
     materializeBtn.addEventListener("click", materializeRepeats);
 
-    // Go
     await reloadMember();
 
-    // Store status loop
     window.addEventListener("online", ()=> syncNow(false));
     window.addEventListener("offline", ()=> setOfflineUI());
     setInterval(()=> refreshStoreLight(), 4500);
@@ -731,51 +722,16 @@ async function boot(){
   }
 }
 
-async function reloadMember(){
-  if(!currentOrgId || !currentMemberId) return;
-
-  orgSel.value = currentOrgId;
-  memberSel.value = String(currentMemberId);
-
-  // Load local
-  localData = loadLocal(currentOrgId, currentMemberId);
-  localTools = loadToolsLocal(currentOrgId, currentMemberId);
-
-  // Default repeat-until date if empty
-  if(!repUntil.value){
-    const d = d0(todayISO()); d.setMonth(d.getMonth()+3);
-    repUntil.value = iso(d);
-  }
-
-  // Attempt sync (non-blocking feel)
-  await syncNow(false);
-
-  render();
-}
-
 /* ==========================
    ONLINE/OFFLINE INDICATOR
 ========================== */
-function setOnlineUI(){
-  storeDot.classList.add("ok");
-  storeTip.title = "Online — syncing to Drive";
-}
-function setOfflineUI(){
-  storeDot.classList.remove("ok");
-  storeTip.title = "Offline — saved on this device. Sync when back online.";
-}
+function setOnlineUI(){ storeDot.classList.add("ok"); storeTip.title = "Online — syncing to Drive"; }
+function setOfflineUI(){ storeDot.classList.remove("ok"); storeTip.title = "Offline — saved on this device. Sync when back online."; }
 async function refreshStoreLight(){
-  if(!navigator.onLine){
-    setOfflineUI(); return;
-  }
-  // If token missing, show “offline-ish”
-  if(!getToken()){
-    setOfflineUI(); return;
-  }
-  // Lightweight ping
+  if(!navigator.onLine){ setOfflineUI(); return; }
+  if(!getToken()){ setOfflineUI(); return; }
   const ok = await pingStore();
-  if(ok) setOnlineUI();
-  else setOfflineUI();
+  if(ok) setOnlineUI(); else setOfflineUI();
 }
 
 /* ==========================
@@ -792,26 +748,45 @@ async function syncNow(showToast){
     if(showToast) toast("Missing token in org_settings.json", "warn");
     return;
   }
-
   try{
     const remote = await storeGetMember(currentMemberId);
-    const merged = mergeLocalRemote(localData || {prefs:{}}, remote?.payload || remote || {prefs:{}});
+    const remotePayload = remote?.payload || remote || {prefs:{}};
+
+    const merged = mergeLocalRemote(localData || {prefs:{}}, remotePayload);
     localData = merged;
     saveLocal(currentOrgId, currentMemberId, localData);
 
-    // Push merged up (so remote catches up too)
     await storePostMember(currentMemberId, localData);
 
-    lastSyncOk = true;
     setOnlineUI();
     if(showToast) toast("Synced ✓", "ok");
   }catch(e){
-    lastSyncOk = false;
     setOfflineUI();
     if(showToast) toast("Sync failed — saved locally", "warn");
     console.warn(e);
   }
   renderStatus();
+}
+
+/* ==========================
+   LOAD/RELOAD
+========================== */
+async function reloadMember(){
+  if(!currentOrgId || !currentMemberId) return;
+
+  orgSel.value = currentOrgId;
+  memberSel.value = String(currentMemberId);
+
+  localData = loadLocal(currentOrgId, currentMemberId);
+  localTools = loadToolsLocal(currentOrgId, currentMemberId);
+
+  if(!repUntil.value){
+    const d = d0(todayISO()); d.setMonth(d.getMonth()+3);
+    repUntil.value = iso(d);
+  }
+
+  await syncNow(false);
+  render();
 }
 
 /* ==========================
@@ -823,12 +798,14 @@ function render(){
   renderPatterns();
   renderStatus();
 }
+
 function renderWeekHeader(){
   wkTitle.textContent = mmdd(editWeekStart) + " week";
   const headCells = ['<div class="hcell blank"></div>']
     .concat(DAYS.map(d=>`<div class="hcell">${d}</div>`));
   wkHead.innerHTML = headCells.join("");
 }
+
 function weekRowLabel(text, startISO){
   const past = isPastWeek(startISO);
   const lock = past ? '🔒 Past (read-only)' : '✎ Editable';
@@ -843,19 +820,18 @@ function weekRowLabel(text, startISO){
 function renderGrid(){
   grid.innerHTML = "";
 
-  // Show editing week + next 5 weeks (total 6)
-  const weeksToShow = 6;
+  const weeksToShow = 6; // editing + 5
   const blocks = [];
   for(let w=0; w<weeksToShow; w++){
     const ws = addDays(editWeekStart, w*7);
     const label = (w===0) ? "Editing Week" : (isPastWeek(ws) ? "Past" : "Upcoming");
-    blocks.push(renderWeek(ws, label, w===0));
+    blocks.push(renderWeek(ws, label));
   }
   grid.innerHTML = blocks.join("");
   wireTileHandlers();
 }
 
-function renderWeek(weekStartISO, label, isEditing){
+function renderWeek(weekStartISO, label){
   const past = isPastWeek(weekStartISO);
   let html = `<div class="wk">${weekRowLabel(label, weekStartISO)}`;
   for(let i=0;i<7;i++){
@@ -867,7 +843,6 @@ function renderWeek(weekStartISO, label, isEditing){
 }
 
 function renderDay(dateISO, locked){
-  // day-of-week derived from position in week, but we show DOW in cell for robustness
   const d = d0(dateISO);
   const dow = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
   const dn = dom(dateISO);
@@ -908,7 +883,6 @@ function wireTileHandlers(){
       const half = btn.getAttribute("data-half");
       const cur = getCellVal(localData, dateISO, half);
 
-      // cycle: PREF -> AVAIL -> NOS -> CLEAR -> back
       const next = (cur===STATE.PREF) ? STATE.AVAIL :
                    (cur===STATE.AVAIL) ? STATE.NOS :
                    (cur===STATE.NOS) ? STATE.CLEAR :
@@ -916,10 +890,9 @@ function wireTileHandlers(){
 
       setCellVal(localData, dateISO, half, next);
       saveLocal(currentOrgId, currentMemberId, localData);
-      renderGrid(); // repaint quickly
+      renderGrid();
       renderStatus();
 
-      // opportunistic sync (non-blocking)
       syncNow(false);
     });
   });
@@ -927,23 +900,14 @@ function wireTileHandlers(){
 
 function renderStatus(){
   const who = memberSel.options[memberSel.selectedIndex]?.textContent || "";
-  const weekTxt = fmtRange(editWeekStart);
-  statusLine.innerHTML = `<b>${who}</b> — Editing week: <b>${weekTxt}</b>`;
+  statusLine.innerHTML = `<b>${who}</b> — Editing week: <b>${fmtRange(editWeekStart)}</b>`;
 }
 
 /* ==========================
    TOOLS / REPEATS
-   patterns: [{ id, weekStart, everyWeeks, untilISO }]
-   Meaning: take the selections in weekStart as the “pattern template”
-   and apply to future weeks at intervals until untilISO, filling only CLEAR cells.
 ========================== */
-function openTools(){
-  modalBack.style.display = "flex";
-  renderPatterns();
-}
-function closeToolsModal(){
-  modalBack.style.display = "none";
-}
+function openTools(){ modalBack.style.display = "flex"; renderPatterns(); }
+function closeToolsModal(){ modalBack.style.display = "none"; }
 
 function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
 
@@ -952,7 +916,6 @@ function saveRepeatPattern(){
   const untilISO = repUntil.value || addDays(todayISO(), 90);
   const ws = editWeekStart;
 
-  // replace if same ws already exists
   const patterns = localTools.patterns || [];
   const existingIdx = patterns.findIndex(p=>p.weekStart===ws);
   const p = { id: existingIdx>=0 ? patterns[existingIdx].id : uid(), weekStart: ws, everyWeeks: every, untilISO };
@@ -1000,7 +963,7 @@ function copyWeekForward(weeksCount){
   const src = editWeekStart;
   for(let w=1; w<=weeksCount; w++){
     const dst = addDays(src, w*7);
-    applyWeekTemplate(src, dst, /*onlyFillClear*/ true);
+    applyWeekTemplate(src, dst, true);
   }
   saveLocal(currentOrgId, currentMemberId, localData);
   render();
@@ -1014,23 +977,17 @@ function materializeRepeats(){
     toast("No repeat patterns to apply", "warn");
     return;
   }
-
-  const tISO = todayISO();
   for(const p of patterns){
     const base = p.weekStart;
     const every = p.everyWeeks;
     const until = p.untilISO;
 
-    // start at base + every weeks (don’t re-apply to base itself)
     let ws = addDays(base, every*7);
     while(d0(ws).getTime() <= d0(until).getTime()){
-      // Fill into this week start
-      // IMPORTANT: never overwrite already-set dates (holiday blocks stay)
-      applyWeekTemplate(base, ws, /*onlyFillClear*/ true);
+      applyWeekTemplate(base, ws, true); // only fill clear
       ws = addDays(ws, every*7);
     }
   }
-
   saveLocal(currentOrgId, currentMemberId, localData);
   render();
   toast("Repeats applied", "ok");
@@ -1044,13 +1001,11 @@ function applyWeekTemplate(srcWeekStart, dstWeekStart, onlyFillClear){
 
     for(const half of ["AM","PM"]){
       const v = getCellVal(localData, srcDay, half);
-
-      // If src is clear, don’t force “clear” anywhere
       if(v===STATE.CLEAR) continue;
 
       if(onlyFillClear){
         const existing = getCellVal(localData, dstDay, half);
-        if(existing!==STATE.CLEAR) continue; // skip pre-selected dates
+        if(existing!==STATE.CLEAR) continue;
       }
       setCellVal(localData, dstDay, half, v);
     }
