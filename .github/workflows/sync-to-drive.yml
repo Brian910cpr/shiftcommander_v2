@@ -1,8 +1,8 @@
-name: Sync repo to Google Drive
+name: Sync repo to Google Drive (app folder only)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch: {}
 
 jobs:
@@ -21,12 +21,14 @@ jobs:
           mkdir -p ~/.config/rclone
           echo "${{ secrets.RCLONE_CONF }}" > ~/.config/rclone/rclone.conf
 
-      - name: Sync to Drive folder
+      - name: Sync /docs to Drive app folder
         env:
-          DRIVE_FOLDER_ID: ${{ secrets.11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK }}
+          DRIVE_APP_FOLDER_ID: ${{ secrets.11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK }}
         run: |
-          # "gdrive:" is the remote name in rclone.conf (see below)
-          rclone sync . "gdrive:/${11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK}" \
+          # IMPORTANT:
+          # - We sync ONLY the /docs folder (your web app surface)
+          # - We do NOT sync the Drive "store" folder used by Apps Script
+          rclone sync "./docs" "gdrive:/${11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK}" \
             --exclude ".git/**" \
             --exclude ".github/**" \
             --exclude "node_modules/**" \

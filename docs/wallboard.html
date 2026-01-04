@@ -1,519 +1,112 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ShiftCommander — Wallboard (Calendar)</title>
-  <style>
-    :root{
-      --bg:#061025;
-      --card:#0f1a36;
-      --text:#e8eefc;
-      --muted:#a7b3d6;
-      --line: rgba(37,50,84,.75);
-
-      --good:#19c37d;
-      --warn:#f7b955;
-      --bad:#ff5c5c;
-      --off:#0b0f1a;   /* “black” in your request */
-      --dayTint: rgba(255,255,255,.045);  /* unobtrusive day delineation */
-      --dayTint2: rgba(255,255,255,.028);
-    }
-
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background: radial-gradient(1400px 900px at 15% 10%, #102a5e 0%, var(--bg) 55%);
-      color:var(--text);
-    }
-
-    header{
-      position:sticky;top:0;z-index:10;
-      background:rgba(6,16,37,.78);
-      backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--line);
-    }
-
-    .wrap{max-width:1500px;margin:0 auto;padding:12px 14px;}
-    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
-    h1{margin:0;font-size:18px}
-    .sub{color:var(--muted);font-size:12px;margin-top:4px}
-    .pill{
-      padding:8px 10px;border-radius:999px;
-      background:rgba(22,32,71,.65);
-      border:1px solid rgba(37,50,84,.85);
-      color:var(--muted);font-size:12px;
-      white-space:nowrap;
-    }
-
-    .legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .lg{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px}
-    .dot{width:10px;height:10px;border-radius:99px;}
-    .dot.good{background:var(--good)}
-    .dot.warn{background:var(--warn)}
-    .dot.bad{background:var(--bad)}
-    .dot.off{background:var(--off)}
-
-    main{padding:12px 14px}
-    .monthRow{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); /* 1–2 months wide */
-      gap:12px;
-      margin-bottom:12px;
-    }
-    .month{
-      background:rgba(15,26,54,.75);
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:10px 10px 12px;
-    }
-    .month h3{
-      margin:2px 0 8px;
-      font-size:14px;
-      font-weight:900;
-      text-align:center;
-      letter-spacing:.2px;
-    }
-    .dow{
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
-      font-size:10px;
-      color:var(--muted);
-      text-align:center;
-      margin-bottom:6px;
-      opacity:.85;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
-      gap:5px;
-      align-content:start;
-    }
-
-    /* Day cell: compact + subtle fill to delineate */
-    .day{
-      position:relative;
-      height:40px;
-      border:1px solid rgba(37,50,84,.65);
-      border-radius:12px;
-      background: linear-gradient(180deg,var(--dayTint),var(--dayTint2));
-      padding:5px 6px 5px 10px; /* space for stripe */
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      overflow:hidden;
-    }
-    .day.blank{border:none;background:none}
-    .day:hover{border-color:rgba(60,86,150,.9)}
-    .day.past{opacity:.45}
-
-    /* Health stripe: AM top half, PM bottom half */
-    .stripe{
-      position:absolute;
-      left:0; top:0; bottom:0;
-      width:7px;
-      border-top-left-radius:12px;
-      border-bottom-left-radius:12px;
-      background: linear-gradient(to bottom, var(--off) 0 50%, var(--off) 50% 100%);
-    }
-
-    /* Date number (unobtrusive) */
-    .dateTop{
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .num{
-      font-size:12px;
-      font-weight:900;
-      color: rgba(232,238,252,.9);
-      line-height:1;
-      min-width:16px;
-      text-align:left;
-    }
-    .mini{
-      font-size:10px;
-      color: rgba(167,179,214,.95);
-      line-height:1.1;
-      overflow:hidden;
-      white-space:nowrap;
-      text-overflow:ellipsis;
-    }
-    .mini b{color:rgba(232,238,252,.92); font-weight:800}
-
-/* === Week Brackets === */
-.day{
-  position: relative; /* needed for bracket pseudo-elements */
-}
-
-/* base bracket (hidden unless class applied) */
-.day.weekL::before,
-.day.weekR::after{
-  content:"";
-  position:absolute;
-  top:4px;
-  bottom:4px;
-  width:6px;
-  border-radius:10px;
-  opacity:.9;
-  pointer-events:none;
-}
-
-/* left bracket */
-.day.weekL::before{
-  left:-2px;
-  border-left:3px solid rgba(255,255,255,.35);
-  border-top:3px solid rgba(255,255,255,.18);
-  border-bottom:3px solid rgba(255,255,255,.18);
-}
-
-/* right bracket */
-.day.weekR::after{
-  right:-2px;
-  border-right:3px solid rgba(255,255,255,.35);
-  border-top:3px solid rgba(255,255,255,.18);
-  border-bottom:3px solid rgba(255,255,255,.18);
-}
-
-/* color variants */
-.day.weekPast.weekL::before,
-.day.weekPast.weekR::after{
-  border-color: rgba(160,170,190,.55);
-}
-
-.day.weekActive.weekL::before,
-.day.weekActive.weekR::after{
-  border-color: rgba(255,255,255,.70);
-}
-
-.day.weekPlan.weekL::before,
-.day.weekPlan.weekR::after{
-  border-color: rgba(43,210,126,.75);
-}
-
-/* planning blurb */
-.weekNote{
-  position:absolute;
-  right:6px;
-  bottom:4px;
-  font-size:9px;
-  color: rgba(167,179,214,.75);
-  letter-spacing:.2px;
-  white-space:nowrap;
-  pointer-events:none;
-}
-
-
-
-
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ShiftCommander — Wallboard</title>
+<style>
+:root{--bg:#0b1020;--card:#111a33;--line:rgba(255,255,255,.12);--text:#eaf1ff;--muted:rgba(234,241,255,.55)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui}
+header{position:sticky;top:0;background:#050814cc;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:13px}
+main{padding:12px}
+.week{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:10px;margin-bottom:12px}
+h2{margin:0 0 8px;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid rgba(255,255,255,.10);padding:8px;text-align:left}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font-weight:800;font-size:12px}
+.ok{background:rgba(43,210,126,.20);border-color:rgba(43,210,126,.35)}
+.open{background:rgba(255,93,93,.18);border-color:rgba(255,93,93,.35)}
+.ond{background:rgba(244,197,66,.18);border-color:rgba(244,197,66,.35)}
+small{color:var(--muted)}
+</style>
 </head>
-
 <body>
 <header>
-  <div class="wrap">
-    <div class="top">
-      <div>
-        <h1>ShiftCommander — Wallboard</h1>
-        <div class="sub" id="status">Loading…</div>
-      </div>
-
-      <div class="legend">
-        <span class="pill" id="orgpill">Org: …</span>
-        <span class="pill" id="rangePill">Range: …</span>
-        <div class="lg"><span class="dot good"></span> Good</div>
-        <div class="lg"><span class="dot warn"></span> Warn</div>
-        <div class="lg"><span class="dot bad"></span> Bad</div>
-        <div class="lg"><span class="dot off"></span> Off/Out of window</div>
-      </div>
-    </div>
-  </div>
+  <div class="pill">Wallboard</div>
+  <div class="pill" id="status">Loading…</div>
 </header>
 
-<main class="wrap">
-  <div id="months"></div>
-</main>
+<main id="wrap"></main>
 
 <script>
-/* ===================== Drive Store (Apps Script) ===================== */
-const STORE = {
-  url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
-  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
-};
+const STORE = { url: "https://adr-fr.org/api/store" };
+const K_WALL = "wallboard";
+
+function setStatus(t){ document.getElementById("status").textContent = t; }
+
 async function storeGet(params){
   const u = new URL(STORE.url);
-  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
-  u.searchParams.set("token", STORE.token);
-  const r = await fetch(u.toString(), { cache: "no-store" });
+  for(const [k,v] of Object.entries(params)) u.searchParams.set(k, String(v));
+  u.searchParams.set("_ts", String(Date.now()));
+  const r = await fetch(u.toString(), { cache:"no-store" });
   const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "Store GET failed");
+  if(!j.ok) throw new Error(j.error || "GET failed");
   return j.payload;
 }
 
-/* ===================== Local Paths ===================== */
-const PATHS = {
-  org: "./data/org_settings.json",
-  historyIndex: "./data/history/history.index.json",
-  supervisorPatchFile: "./data/overrides/supervisor_patch.json"
-};
-
-function $(id){return document.getElementById(id);}
-
-function fmtISO(d){
-  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${da}`;
-}
-function parseISO(s){const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d);}
-function addDays(d,n){const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x;}
-function startOfWeekThursday(anyDate){
-  const target=4; // Thu
-  const d=new Date(anyDate.getFullYear(), anyDate.getMonth(), anyDate.getDate());
-  const dow=d.getDay();
-  const delta=(dow-target+7)%7;
-  return addDays(d,-delta);
-}
-async function fetchJSON(url){
-  const r=await fetch(url,{cache:"no-store"});
-  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${url}`);
-  return await r.json();
-}
-async function tryFetchJSON(url){
-  try{ return await fetchJSON(url); }catch(e){ return null; }
+function badgeClass(status){
+  if(status === "OPEN") return "badge open";
+  if(status === "ON_DECK") return "badge ond";
+  return "badge ok";
 }
 
-const LEAD_DAYS = 21;
-function isWithinLead(dateISO){
-  const today = new Date();
-  const d = new Date(dateISO + "T00:00:00");
-  const ms = d.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const daysOut = Math.floor(ms / (1000*60*60*24));
-  return daysOut <= LEAD_DAYS;
+function esc(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
 
-/* ===================== Shift Merge (same as existing wallboard) ===================== */
-let ORG=null;
-let HISTORY={ days:{} };
-let PATCH={ generated_at:null, overrides:{} };
+function render(data){
+  const wrap = document.getElementById("wrap");
+  wrap.innerHTML = "";
 
-function getHistoryShift(dateISO, shift){
-  return HISTORY.days?.[dateISO]?.[shift] || null;
-}
-function getPatchShift(dateISO, shift){
-  return PATCH.overrides?.[dateISO]?.[shift] || null;
-}
-function mergeShiftView(dateISO, shift){
-  const base=getHistoryShift(dateISO, shift) || {
-    medical:{name:"Open", level:""},
-    driver_emt:{name:"Open", level:""},
-    riders:[]
-  };
-  const p=getPatchShift(dateISO, shift);
-  const riders_allowed = (p && typeof p.riders_allowed==="boolean") ? p.riders_allowed : (base.riders_allowed ?? ((ORG?.riders?.default_allowed===true)?true:false));
-  const riders_max     = (p && typeof p.riders_max==="number") ? p.riders_max : (base.riders_max ?? (ORG?.riders?.default_max_per_shift ?? 1));
-  const riders         = (p && Array.isArray(p.riders)) ? p.riders : (Array.isArray(base.riders) ? base.riders : []);
-  return {...base, riders_allowed, riders_max, riders};
-}
-
-/* Health mapping */
-function computeHealth(dateISO, shiftObj){
-  if(!isWithinLead(dateISO)) return {state:"off", msg:"Outside lead window"};
-
-  const medical=shiftObj?.medical||null;
-  const driver=shiftObj?.driver_emt||null;
-
-  const medicalFilled=!!medical?.name && medical.name.toLowerCase()!=="open";
-  const driverFilled=!!driver?.name && driver.name.toLowerCase()!=="open";
-
-  if(!medicalFilled || !driverFilled) return {state:"bad", msg:"Open seat"};
-
-  const medLevel=(medical.level||"").toUpperCase();
-  const drvLevel=(driver.level||"").toUpperCase();
-
-  if(medLevel!=="ALS") return {state:"bad", msg:"Needs ALS"};
-  if(drvLevel==="ALS") return {state:"warn", msg:"Needs EMT"};
-  return {state:"good", msg:"Staffed"};
-}
-
-function healthColor(state){
-  if(state==="good") return "var(--good)";
-  if(state==="warn") return "var(--warn)";
-  if(state==="bad")  return "var(--bad)";
-  return "var(--off)";
-}
-
-/* ===================== Calendar Build ===================== */
-function buildMonths(rangeStartISO, rangeEndISO){
-  const monthsWrap = $("months");
-  monthsWrap.innerHTML = "";
-
-  const start = parseISO(rangeStartISO);
-  const end   = parseISO(rangeEndISO);
-
-  // build month list inclusive
-  const monthList = [];
-  let cur = new Date(start.getFullYear(), start.getMonth(), 1);
-  const last = new Date(end.getFullYear(), end.getMonth(), 1);
-  while(cur <= last){
-    monthList.push(new Date(cur.getFullYear(), cur.getMonth(), 1));
-    cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+  if(!data || !Array.isArray(data.weeks)){
+    wrap.innerHTML = `<div class="week"><h2>No wallboard data yet</h2><small>Expected Drive kind: <b>${K_WALL}</b></small></div>`;
+    return;
   }
 
-  let row = null;
-  monthList.forEach((mStart, idx) => {
-    if(idx % 2 === 0){
-      row = document.createElement("div");
-      row.className = "monthRow";
-      monthsWrap.appendChild(row);
-    }
-    row.appendChild(buildMonth(mStart, start, end));
-  });
-}
+  setStatus(`Updated: ${data.generated_at || "?"}`);
 
-function buildMonth(monthStart, rangeStart, rangeEnd){
-  const y = monthStart.getFullYear();
-  const m = monthStart.getMonth();
-
-  const month = document.createElement("div");
-  month.className = "month";
-  month.innerHTML = `
-    <h3>${monthStart.toLocaleString(undefined,{month:"long",year:"numeric"})}</h3>
-    <div class="dow">${["S","M","T","W","T","F","S"].map(x=>`<div>${x}</div>`).join("")}</div>
-    <div class="grid"></div>
-  `;
-
-  const grid = month.querySelector(".grid");
-  const startDow = new Date(y,m,1).getDay();
-  const daysInMonth = new Date(y,m+1,0).getDate();
-
-  // leading blanks
-  for(let i=0;i<startDow;i++){
-    const b = document.createElement("div");
-    b.className = "day blank";
-    grid.appendChild(b);
-  }
-
-  for(let d=1; d<=daysInMonth; d++){
-    const dateObj = new Date(y,m,d);
-    const dateISO = fmtISO(dateObj);
-
-    // Only show cells inside the 7-week range; others are blanks for continuity
-    const inRange = dateObj >= rangeStart && dateObj <= rangeEnd;
-
-    const cell = document.createElement("div");
-    cell.className = "day";
-    if(dateObj < new Date(new Date().toDateString())) cell.classList.add("past");
-    if(!inRange){
-      // still render but muted “empty” to preserve month continuity
-      cell.style.opacity = "0.18";
-    }
-
-    // compute AM/PM health
-    const amView = mergeShiftView(dateISO, "AM");
-    const pmView = mergeShiftView(dateISO, "PM");
-
-    const amH = computeHealth(dateISO, amView);
-    const pmH = computeHealth(dateISO, pmView);
-
-    const amC = healthColor(amH.state);
-    const pmC = healthColor(pmH.state);
-
-    const stripe = document.createElement("div");
-    stripe.className = "stripe";
-    stripe.style.background = `linear-gradient(to bottom, ${amC} 0 50%, ${pmC} 50% 100%)`;
-
-    const top = document.createElement("div");
-    top.className = "dateTop";
-    top.innerHTML = `
-      <div class="num">${d}</div>
-      <div class="mini">
-        <b>AM</b> ${shortSeat(amView)} &nbsp; • &nbsp;
-        <b>PM</b> ${shortSeat(pmView)}
-      </div>
+  for(const w of data.weeks){
+    const sec = document.createElement("section");
+    sec.className = "week";
+    sec.innerHTML = `
+      <h2>${esc(w.label || "Week")}</h2>
+      <table>
+        <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Status</th><th>Need</th></tr></thead>
+        <tbody></tbody>
+      </table>
     `;
-
-    // tooltip on hover gives exact health messages
-    cell.title =
-      `${dateISO}\n` +
-      `AM: ${amH.msg}\nPM: ${pmH.msg}`;
-
-    cell.appendChild(stripe);
-    cell.appendChild(top);
-    grid.appendChild(cell);
+    const tb = sec.querySelector("tbody");
+    const shifts = Array.isArray(w.shifts) ? w.shifts : [];
+    for(const s of shifts){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${esc(s.date||"")}</td>
+        <td>${esc(s.shift||"")}</td>
+        <td>${esc(s.unit||"")}</td>
+        <td><span class="${badgeClass(String(s.status||"OK"))}">${esc(s.status||"OK")}</span></td>
+        <td>${esc(s.need||"")}</td>
+      `;
+      tb.appendChild(tr);
+    }
+    wrap.appendChild(sec);
   }
-
-  return month;
 }
 
-// short seat string for tiny inside-cell display
-function shortSeat(view){
-  const med = (view?.medical?.name && view.medical.name.toLowerCase()!=="open") ? view.medical.name : "Open";
-  const drv = (view?.driver_emt?.name && view.driver_emt.name.toLowerCase()!=="open") ? view.driver_emt.name : "Open";
-  const medL = (view?.medical?.level || "").toUpperCase();
-  const drvL = (view?.driver_emt?.level || "").toUpperCase();
-  // keep tiny: Name(Level)/Name(Level)
-  return `${abbr(med)}${medL?`(${medL})`:""} / ${abbr(drv)}${drvL?`(${drvL})`:""}`;
-}
-function abbr(name){
-  if(!name) return "";
-  if(name.toLowerCase()==="open") return "Open";
-  const parts = name.trim().split(/\s+/);
-  if(parts.length===1) return parts[0].slice(0,10);
-  return (parts[0][0] + parts[parts.length-1]).slice(0,10);
-}
-
-/* ===================== Boot ===================== */
-async function boot(){
+async function refresh(){
   try{
-    $("status").textContent = "Loading org/history/patch…";
-    ORG = await fetchJSON(PATHS.org);
-    $("orgpill").textContent = `Org: ${ORG?.org?.name || "Unknown"}`;
-
-    // history
-    const index = await fetchJSON(PATHS.historyIndex);
-    const files = index?.files || [];
-    const merged = { days:{} };
-    for(const f of files){
-      const monthUrl = f.filename ? `./data/history/${f.filename}` : f.path;
-      const monthObj = await fetchJSON(monthUrl);
-      if(monthObj?.days){
-        for(const [ds, dayObj] of Object.entries(monthObj.days)){
-          merged.days[ds] = merged.days[ds] || {};
-          if(dayObj.AM) merged.days[ds].AM = dayObj.AM;
-          if(dayObj.PM) merged.days[ds].PM = dayObj.PM;
-        }
-      }
-    }
-    HISTORY = merged;
-
-    // patch (Drive first, fallback to file)
-    try{
-      PATCH = await storeGet({ kind:"supervisor" }) || { generated_at:null, overrides:{} };
-    }catch(e){
-      const filePatch = await tryFetchJSON(PATHS.supervisorPatchFile);
-      PATCH = filePatch?.overrides ? filePatch : { generated_at:null, overrides:{} };
-    }
-
-    // Range: 7 weeks starting this Thu
-    const start = startOfWeekThursday(new Date());
-    const end = addDays(start, 7*7 - 1);
-    const startISO = fmtISO(start);
-    const endISO = fmtISO(end);
-    $("rangePill").textContent = `Range: ${startISO} → ${endISO}`;
-
-    buildMonths(startISO, endISO);
-
-    $("status").textContent = "Ready.";
+    const data = await storeGet({ kind: K_WALL });
+    render(data);
   }catch(err){
+    setStatus("Load failed");
+    render(null);
     console.error(err);
-    $("status").textContent = "ERROR: " + err.message;
-    alert("Wallboard failed to load:\n\n" + err.message);
   }
 }
 
-
-
-boot();
+refresh();
+setInterval(refresh, 30000);
 </script>
 </body>
 </html>

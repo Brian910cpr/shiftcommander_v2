@@ -18,14 +18,11 @@
   --avail:#5c8dff;
   --no:#ff5d5d;
   --clear: rgba(255,255,255,.18);
-
   --warn:#f4c542;
 }
-
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui}
 
-/* Top header */
 header{
   position:sticky;top:0;z-index:10;
   background:linear-gradient(180deg,#050814,#050814cc);
@@ -33,7 +30,6 @@ header{
   padding:10px 14px;
   display:flex;gap:12px;align-items:center;flex-wrap:wrap;
 }
-
 .pill{
   background:rgba(255,255,255,.06);
   border:1px solid var(--line);
@@ -43,9 +39,8 @@ header{
   white-space:nowrap;
   flex-shrink:0;
 }
-
 select{
-  min-width:240px;
+  min-width:260px;
   font-size:14px;
   background:rgba(255,255,255,.04);
   color:var(--text);
@@ -53,8 +48,6 @@ select{
   border-radius:10px;
   padding:6px 8px;
 }
-
-/* Save pill (quiet) */
 .savePill{
   display:flex; align-items:center; gap:10px;
   border:1px solid rgba(255,255,255,.12);
@@ -64,7 +57,7 @@ select{
   min-height:34px;
   cursor: default;
   margin-left:auto;
-  max-width: 180px;
+  max-width: 220px;
 }
 .savePill .tiny{
   font-size:12px;
@@ -83,33 +76,7 @@ select{
 .dot.ok{ background:#2bd27e; box-shadow: 0 0 0 3px rgba(43,210,126,.16); }
 .dot.warn{ background:var(--warn); box-shadow: 0 0 0 3px rgba(244,197,66,.16); }
 
-/* Tabs */
-.tabbar{
-  display:flex;
-  gap:8px;
-  padding:10px 12px 0;
-}
-.tabbtn{
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.04);
-  color: var(--text);
-  padding: 8px 10px;
-  border-radius: 12px;
-  font-weight: 900;
-  font-size: 12px;
-  cursor: pointer;
-  user-select:none;
-}
-.tabbtn:hover{border-color:rgba(255,255,255,.22)}
-.tabbtn.active{
-  background: rgba(92,141,255,.18);
-  border-color: rgba(92,141,255,.35);
-}
 main{ padding:12px; }
-.tab{ display:none; }
-.tab.active{ display:block; }
-
-/* Panels */
 .panel{
   background: var(--card2);
   border: 1px solid rgba(255,255,255,.10);
@@ -117,18 +84,9 @@ main{ padding:12px; }
   padding: 10px;
   margin-bottom: 12px;
 }
-.panelTitle{
-  font-weight: 900;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
-.panelHint{
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.25;
-}
+.panelTitle{ font-weight: 900; font-size: 13px; margin-bottom: 6px; }
+.panelHint{ color: var(--muted); font-size: 12px; line-height: 1.25; }
 
-/* Toggle row */
 .togRow{
   display:flex;
   gap:10px;
@@ -150,41 +108,6 @@ main{ padding:12px; }
 .toggle .sub{ font-size: 11px; color: var(--muted); margin-top:2px; line-height:1.2; }
 .toggle .col{ display:flex; flex-direction:column; }
 
-/* Bulk tools */
-.bulkGrid{
-  margin-top:8px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:flex-end;
-}
-.bulkField{display:flex;flex-direction:column;gap:4px}
-.bulkField span{font-size:11px;color:var(--muted)}
-.bulkField select, .bulkField input{
-  background: rgba(255,255,255,.04);
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 10px;
-  padding: 6px 8px;
-  min-width: 160px;
-}
-.bulkBtns{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
-.bbtn{
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.04);
-  color: var(--text);
-  padding: 7px 10px;
-  border-radius: 10px;
-  font-weight: 900;
-  font-size: 12px;
-  cursor: pointer;
-}
-.bbtn:hover{border-color:rgba(255,255,255,.25)}
-.bbtn.primary{background: rgba(92,141,255,.18); border-color: rgba(92,141,255,.35)}
-.bbtn.danger{background: rgba(255,93,93,.16); border-color: rgba(255,93,93,.30)}
-.bbtn.ghost{background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.12)}
-
-/* Calendar month layout */
 .monthRow{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
@@ -217,8 +140,6 @@ main{ padding:12px; }
   gap:4px;
   align-content:start;
 }
-
-/* Day cells */
 .day{
   height:30px;
   border:1px solid var(--line);
@@ -231,8 +152,6 @@ main{ padding:12px; }
 }
 .day.blank{border:none;background:none}
 .day.past{opacity:.35;pointer-events:none}
-
-/* day number */
 .dayNum{
   width:16px;
   text-align:right;
@@ -241,8 +160,6 @@ main{ padding:12px; }
   line-height:1;
   cursor:pointer;
 }
-
-/* pill stack */
 .bars{
   display:flex;
   flex-direction:column;
@@ -271,93 +188,6 @@ main{ padding:12px; }
 .bar.avail{ background:var(--avail); border-color:var(--avail); color: rgba(0,0,0,.70); }
 .bar.no{ background:var(--no); border-color:var(--no); color: rgba(0,0,0,.70); }
 .bar:not(.pref):not(.avail):not(.no){ opacity:.75; }
-
-/* Preferences tab list */
-.searchRow{
-  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-  margin: 8px 0 10px;
-}
-.searchRow input{
-  background: rgba(255,255,255,.04);
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 10px;
-  padding: 7px 10px;
-  min-width: 260px;
-}
-.roster{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:8px;
-}
-.person{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  padding:8px 10px;
-  border-radius: 12px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.10);
-}
-.person .name{ font-weight: 900; font-size: 12px; }
-.person .meta{ font-size: 11px; color: var(--muted); }
-
-/* Impact tab */
-.weekBlock{
-  border:1px solid rgba(255,255,255,.12);
-  border-radius: 14px;
-  padding: 10px;
-  background: rgba(255,255,255,.03);
-  margin-bottom: 10px;
-  position: relative;
-}
-.weekTag{
-  display:inline-flex;
-  gap:8px;
-  align-items:center;
-  font-weight: 900;
-  font-size: 12px;
-  margin-bottom: 6px;
-}
-.bracket{
-  position:absolute;
-  top:10px;
-  bottom:10px;
-  width:10px;
-  border-radius: 10px;
-  opacity: .9;
-}
-.bracket.left{ left:10px; }
-.bracket.right{ right:10px; }
-.bracket.active{ background: rgba(255,255,255,.65); }
-.bracket.controlled{ background: rgba(255,255,255,.25); }
-.bracket.published{ background: rgba(43,210,126,.60); }
-.bracket.planning{ background: rgba(43,210,126,.18); border:1px dashed rgba(43,210,126,.30); background-clip: padding-box; }
-
-.weekInner{ padding-left: 22px; padding-right: 22px; }
-.shiftList{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:8px;
-}
-.shiftCard{
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.04);
-  border-radius: 12px;
-  padding: 8px 10px;
-}
-.shiftCard .t{ font-weight: 900; font-size: 12px; }
-.shiftCard .s{ color: var(--muted); font-size: 11px; margin-top: 2px; }
-.badgeWarn{
-  display:inline-flex;
-  gap:6px;
-  align-items:center;
-  margin-top: 6px;
-  font-size: 11px;
-  font-weight: 900;
-  color: rgba(244,197,66,.95);
-}
-.smallNote{ font-size: 11px; color: var(--muted); margin-top: 8px; line-height:1.25; }
 </style>
 </head>
 
@@ -377,524 +207,190 @@ main{ padding:12px; }
   </div>
 </header>
 
-<div class="tabbar">
-  <div class="tabbtn active" data-tab="tabAvail">Availability</div>
-  <div class="tabbtn" data-tab="tabPrefs">Preferences</div>
-  <div class="tabbtn" data-tab="tabImpact">Impact</div>
-</div>
-
 <main>
-  <!-- Availability -->
-  <section id="tabAvail" class="tab active">
-    <div class="panel">
-      <div class="panelTitle">Global preferences</div>
-      <div class="panelHint">
-        These don’t block staffing — they simply help the solver break ties and reduce friction.
-      </div>
-
-      <div class="togRow">
-        <label class="toggle">
-          <input id="chkPrefer24" type="checkbox">
-          <span class="col">
-            <span class="lbl">Prefer 24-hour shifts</span>
-            <span class="sub">Small bonus for AM↔PM or PM→next AM continuity when possible.</span>
-          </span>
-        </label>
-
-        <label class="toggle">
-          <input id="chkBlankOk" type="checkbox" checked>
-          <span class="col">
-            <span class="lbl">If I left a day blank, you may still schedule me if needed</span>
-            <span class="sub">Blank stays eligible (0 points). Turn off if you don’t want “lingering zero” pull-ins.</span>
-          </span>
-        </label>
-      </div>
+  <div class="panel">
+    <div class="panelTitle">Global preferences</div>
+    <div class="panelHint">
+      These don’t block staffing — they simply help the solver break ties and reduce friction.
     </div>
 
-    <div class="panel">
-      <div class="panelTitle">Quick Set (Bulk)</div>
-      <div class="panelHint">Stamp a baseline fast, then click pills below to fine-tune exceptions.</div>
+    <div class="togRow">
+      <label class="toggle">
+        <input id="chkPrefer24" type="checkbox">
+        <span class="col">
+          <span class="lbl">Prefer 24-hour shifts</span>
+          <span class="sub">Small bonus for continuity when possible.</span>
+        </span>
+      </label>
 
-      <div class="bulkGrid">
-        <label class="bulkField">
-          <span>Pattern</span>
-          <select id="bulkPattern">
-            <option value="week1">Repeat 1-week template</option>
-            <option value="week2">Alternate 2-week templates</option>
-          </select>
-        </label>
-
-        <label class="bulkField">
-          <span>From</span>
-          <input id="bulkFrom" type="date">
-        </label>
-
-        <label class="bulkField">
-          <span>To</span>
-          <input id="bulkTo" type="date">
-        </label>
-
-        <div class="bulkBtns">
-          <button id="btnRepeatUntil" class="bbtn primary" type="button">Copy this week → until date</button>
-          <button id="btnApplyRange" class="bbtn ghost" type="button">Apply pattern to range</button>
-          <button id="btnClearRange" class="bbtn danger" type="button">Clear range</button>
-        </div>
-      </div>
-
-      <div class="smallNote">
-        Tip: click the <b>day number</b> to set AM+PM together (fast “full-day” change).
-      </div>
+      <label class="toggle">
+        <input id="chkBlankOk" type="checkbox" checked>
+        <span class="col">
+          <span class="lbl">If I left a day blank, you may still schedule me if needed</span>
+          <span class="sub">Blank stays eligible (0 points). Turn off to avoid “lingering zero” pull-ins.</span>
+        </span>
+      </label>
     </div>
+  </div>
 
-    <div id="months"></div>
-  </section>
-
-  <!-- Preferences -->
-  <section id="tabPrefs" class="tab">
-    <div class="panel">
-      <div class="panelTitle">Compatibility (soft)</div>
-      <div class="panelHint">
-        “Rather not work with” is a soft preference. It never blocks staffing and never penalizes the other person.
-        If a conflict exists, <b>you</b> may lose a few points so someone else can win that seat when possible.
-      </div>
-
-      <div class="searchRow">
-        <input id="avoidSearch" type="text" placeholder="Search roster…" />
-        <button id="btnAvoidClear" class="bbtn danger" type="button">Clear list</button>
-      </div>
-
-      <div id="avoidRoster" class="roster"></div>
-
-      <div class="smallNote">
-        Private by default: this tab stays tucked away so availability stays clean and non-social.
-      </div>
-    </div>
-  </section>
-
-  <!-- Impact -->
-  <section id="tabImpact" class="tab">
-    <div class="panel">
-      <div class="panelTitle">Impact (read-only)</div>
-      <div class="panelHint">
-        This view mirrors the “Published” window so you can see the real-world effect of your changes.
-        If you drop something critical, you’ll see a warning icon — the shift won’t flip to “OPEN” until on-deck outreach is exhausted.
-      </div>
-    </div>
-
-    <div id="impactWrap"></div>
-  </section>
+  <div id="months"></div>
 </main>
 
 <script>
-/* ===================== DRIVE STORE CONFIG ===================== */
-const STORE = {
-  url: "https://adr-fr.org/api/store"
-  // token: (REMOVE THIS if Worker injects it)
-};
+/* ===================== STORE CONFIG ===================== */
+/* IMPORTANT: This MUST be your Cloudflare Worker */
+const STORE = { url: "https://adr-fr.org/api/store" };
 
-/* ===================== CONFIG ===================== */
+/* ===================== KINDS ===================== */
+const K_MEMBERS = "members";
+const K_AVAIL   = "member_availability";
+
+/* ===================== CALENDAR CONFIG ===================== */
 const MONTHS_AHEAD = 6;
 const STATES = ["clear","pref","avail","no"];
-const AV_KIND = "member";
-
-// Optional (Impact tab) kinds. Beta1 reads if present; otherwise shows “not connected”
-const ASSIGN_KIND = "member_assignments"; // suggested format below
-
-/* ===================== STATE ===================== */
 const today = new Date();
 
-// availability state: dateISO -> {am, pm}
-const stateDays = {};
-
-// prefs state
-let prefs = {
-  prefer_24: false,
-  blank_ok: true,     // if false, blank becomes slight penalty in solver later
-  avoid_with: []      // array of member_ids
-};
-
-// roster (for avoid list)
-let roster = [
-  { id:"203", name:"Lynnsey Benson", meta:"" },
-  { id:"brian", name:"Brian Ennis", meta:"" }
-];
-
-// published assignments for member (Impact tab), if available
-// expected structure:
-// { weeks: [ { phase:"published|controlled|active|planning", week_start:"YYYY-MM-DD", items:[{date:"YYYY-MM-DD", shift:"AM|PM", role:"EMT|ALS|Driver", status:"OK|ON_DECK|OPEN", note:"..."} ] } ] }
-let memberAssignments = null;
+/* ===================== STATE ===================== */
+let roster = []; // loaded from Drive
+let prefs = { prefer_24:false, blank_ok:true };
+const stateDays = {}; // dateISO -> {am,pm}
 
 /* ===================== HELPERS ===================== */
 function iso(d){ return d.toISOString().slice(0,10); }
 function parseISO(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
-function addDays(d,n){ const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
 function cycle(s){ return STATES[(STATES.indexOf(s)+1)%STATES.length]; }
 function isPast(isoDate){ return isoDate < iso(new Date()); }
 
-function getActiveMemberId(){
-  const sel = document.getElementById("member");
-  return sel ? String(sel.value || "").trim() : "default";
-}
-function getActiveMemberName(){
-  const sel = document.getElementById("member");
-  if(!sel) return "";
-  return sel.options[sel.selectedIndex]?.textContent || "";
-}
-
-/* Thu→Wed week anchor */
-function startOfWeekThursday(d){
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const dow = x.getDay(); // 0..6
-  const target = 4; // Thu
-  const delta = (dow - target + 7) % 7;
-  return addDays(x, -delta);
-}
-
-/* ===================== STORE HELPERS ===================== */
-async function storeGet(params){
-  const u = new URL(STORE.url);
-  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
-
-  // If (and only if) you're NOT injecting token in the Worker:
-  // if (STORE.token) u.searchParams.set("token", STORE.token);
-
-  const r = await fetch(u.toString(), { cache:"no-store" });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "Store GET failed");
-  return j.payload;
-}
-
-async function storePut(body){
-  const r = await fetch(STORE.url, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      // If (and only if) you're NOT injecting token in the Worker:
-      // token: STORE.token,
-      ...body
-    })
-  });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "Store PUT failed");
-  return j.payload;
-}
-
-/* ===================== SAVE PILL ===================== */
 function setDrivePill({state, label, tooltip}){
   const dot = document.getElementById("driveDot");
   const tip = document.getElementById("driveTip");
   const pill = document.getElementById("savepill");
-  if(!dot || !tip || !pill) return;
   dot.classList.remove("ok","warn");
   dot.classList.add(state === "ok" ? "ok" : "warn");
   tip.textContent = label;
   pill.title = tooltip || label;
 }
 
-/* ===================== LOCAL + DRIVE PERSISTENCE ===================== */
-const LS_PREFIX = "sc:avail:";
-const LS_META_PREFIX = "sc:availmeta:";
-
-function nowISO(){ return new Date().toISOString(); }
-function lsKey(memberId){ return LS_PREFIX + memberId; }
-function lsMetaKey(memberId){ return LS_META_PREFIX + memberId; }
-
-function getLocalPayload(memberId){
-  try{
-    const raw = localStorage.getItem(lsKey(memberId));
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){ return null; }
-}
-function setLocalPayload(memberId, payload){
-  localStorage.setItem(lsKey(memberId), JSON.stringify(payload));
-}
-function getMeta(memberId){
-  try{
-    const raw = localStorage.getItem(lsMetaKey(memberId));
-    return raw ? JSON.parse(raw) : { dirty:false, lastPushISO:null, lastError:null };
-  }catch(e){
-    return { dirty:false, lastPushISO:null, lastError:null };
-  }
-}
-function setMeta(memberId, meta){
-  localStorage.setItem(lsMetaKey(memberId), JSON.stringify(meta));
+async function storeGet(params){
+  const u = new URL(STORE.url);
+  for(const [k,v] of Object.entries(params)) u.searchParams.set(k, String(v));
+  u.searchParams.set("_ts", String(Date.now()));
+  const r = await fetch(u.toString(), { cache:"no-store" });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store GET failed");
+  return j.payload;
 }
 
-function applyPayload(payload){
-  if(!payload) return;
-  if(payload.prefs){
-    prefs = {
-      prefer_24: !!payload.prefs.prefer_24,
-      blank_ok: payload.prefs.blank_ok !== false,
-      avoid_with: Array.isArray(payload.prefs.avoid_with) ? payload.prefs.avoid_with.slice() : []
-    };
-  }
-  if(payload.days){
-    for(const [dateISO, v] of Object.entries(payload.days)){
-      stateDays[dateISO] ||= { am:"clear", pm:"clear" };
-      if(v && typeof v === "object"){
-        if(v.am) stateDays[dateISO].am = v.am;
-        if(v.pm) stateDays[dateISO].pm = v.pm;
-      }
-    }
-  }
+async function storePost(body){
+  const r = await fetch(STORE.url, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body: JSON.stringify(body)
+  });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store POST failed");
+  return j;
 }
 
-let syncTimer = null;
-
-function markDirty(memberId){
-  const meta = getMeta(memberId);
-  meta.dirty = true;
-  meta.lastError = null;
-  setMeta(memberId, meta);
-  setDrivePill({ state:"warn", label:"Saving…", tooltip:"Saved locally. Syncing to Drive…" });
+function getActiveMemberId(){
+  const sel = document.getElementById("member");
+  return sel ? String(sel.value||"").trim() : "";
 }
 
-function scheduleSync(memberId){
-  if(syncTimer) clearTimeout(syncTimer);
-  syncTimer = setTimeout(()=> trySync(memberId), 650);
-}
-
-async function trySync(memberId){
-  const meta = getMeta(memberId);
-  if(!meta.dirty) return;
-
-  const payload = {
-    updated_at: nowISO(),
-    prefs: {
-      prefer_24: !!prefs.prefer_24,
-      blank_ok: prefs.blank_ok !== false,
-      avoid_with: Array.isArray(prefs.avoid_with) ? prefs.avoid_with.slice() : []
-    },
-    days: stateDays
-  };
-
-  setLocalPayload(memberId, payload);
-
-  if(!navigator.onLine){
-    setDrivePill({ state:"warn", label:"Saved locally", tooltip:"Offline. Will sync when back online." });
-    return;
-  }
-
-  try{
-    await storePut({ kind: AV_KIND, memberId: memberId, payload });
-
-    meta.dirty = false;
-    meta.lastPushISO = nowISO();
-    meta.lastError = null;
-    setMeta(memberId, meta);
-
-    setDrivePill({ state:"ok", label:"Saved", tooltip:`Synced to Drive.\nLast sync: ${meta.lastPushISO}` });
-  }catch(err){
-    meta.lastError = String(err.message || err);
-    setMeta(memberId, meta);
-    setDrivePill({ state:"warn", label:"Saved locally", tooltip:`Drive sync failed.\n${meta.lastError}\nStill saved locally.` });
-  }
-}
-
-function onAnyChange(){
-  const memberId = getActiveMemberId();
-  markDirty(memberId);
-  scheduleSync(memberId);
-}
-
-async function loadMember(memberId){
-  // local first
-  const local = getLocalPayload(memberId);
-  if(local){
-    applyPayload(local);
-    setDrivePill({ state:"warn", label:"Loaded", tooltip:"Loaded locally. Checking Drive…" });
-  }else{
-    setDrivePill({ state:"warn", label:"Checking…", tooltip:"Checking Drive…" });
-  }
-
-  // drive authoritative
-  try{
-    const remote = await storeGet({ kind: AV_KIND, memberId: memberId });
-    if(remote){
-      // reset local state then apply
-      for(const k of Object.keys(stateDays)) delete stateDays[k];
-      prefs = { prefer_24:false, blank_ok:true, avoid_with:[] };
-      applyPayload(remote);
-      setLocalPayload(memberId, remote);
-
-      const meta = getMeta(memberId);
-      meta.dirty = false;
-      meta.lastPushISO = nowISO();
-      meta.lastError = null;
-      setMeta(memberId, meta);
-
-      setDrivePill({ state:"ok", label:"Saved", tooltip:"Loaded from Drive and ready." });
-    }else{
-      setDrivePill({ state:"ok", label:"Saved", tooltip:"No Drive record yet — starting fresh." });
-    }
-  }catch(err){
-    setDrivePill({ state:"warn", label:"Local only", tooltip:`Couldn’t reach Drive.\n${err.message || err}\nWorking locally.` });
-  }
-
-  // refresh UI
-  syncPrefsUI();
-  buildCalendar();
-  renderAvoidRoster();
-  await loadImpact(); // best effort
-}
-
-window.addEventListener("online", ()=> trySync(getActiveMemberId()));
-
-/* ===================== TAB UI ===================== */
-function setTab(id){
-  document.querySelectorAll(".tab").forEach(el=> el.classList.remove("active"));
-  document.querySelectorAll(".tabbtn").forEach(el=> el.classList.remove("active"));
-  document.getElementById(id)?.classList.add("active");
-  document.querySelector(`.tabbtn[data-tab="${id}"]`)?.classList.add("active");
-  if(id === "tabImpact") loadImpact(); // refresh when opening
-}
-document.querySelectorAll(".tabbtn").forEach(btn=>{
-  btn.addEventListener("click", ()=> setTab(btn.dataset.tab));
-});
-
-/* ===================== ROSTER LOAD (optional) ===================== */
-async function tryLoadRoster(){
-  // Tries to pull the live roster from Drive (via GAS + CF worker).
-  // Supported shapes:
-  // 1) kind=roster  -> [ {id,name,meta,...}, ... ]
-  // 2) kind=members -> [ ... ] OR { members:[ ... ] }
-  // 3) kind=supervisor -> { roster:[ ... ] } OR { members:[ ... ] }
-  const candidateKinds = ["roster","members","supervisor"];
-
-  for (const kind of candidateKinds){
-    try{
-      const data = await storeGet({ kind });
-      let arr = null;
-
-      if (Array.isArray(data)) arr = data;
-      else if (data && Array.isArray(data.members)) arr = data.members;
-      else if (data && Array.isArray(data.roster)) arr = data.roster;
-
-      if (!arr || !arr.length) continue;
-
-      const mapped = arr
-        .map(x => {
-          const id = String(x.id ?? x.member_id ?? x.memberId ?? "").trim();
-          if (!id) return null;
-
-          const name =
-            String(
-              x.name ??
-              x.full_name ??
-              x.fullName ??
-              x.display ??
-              x.callsign ??
-              id
-            ).trim();
-
-          const meta = String(
-            x.meta ??
-            x.qual ??
-            x.level ??
-            x.rank ??
-            ""
-          ).trim();
-
-          // Common "inactive" flags
-          if (x.is_active === false || x.active === false || x.hidden === true || x.eligible === false) return null;
-
-          return { id, name, meta };
-        })
-        .filter(Boolean)
-        .sort((a,b)=> a.name.localeCompare(b.name));
-
-      if (mapped.length){
-        roster = mapped;
-        return true;
-      }
-    }catch(e){
-      // try next kind
-    }
-  }
-  return false;
-}
-
-/* ===================== PREFS UI ===================== */
-function syncPrefsUI(){
-  const chk24 = document.getElementById("chkPrefer24");
-  const chkBlank = document.getElementById("chkBlankOk");
-  if(chk24) chk24.checked = !!prefs.prefer_24;
-  if(chkBlank) chkBlank.checked = prefs.blank_ok !== false;
-}
-document.getElementById("chkPrefer24")?.addEventListener("change", (e)=>{
-  prefs.prefer_24 = !!e.target.checked;
-  onAnyChange();
-});
-document.getElementById("chkBlankOk")?.addEventListener("change", (e)=>{
-  prefs.blank_ok = !!e.target.checked;
-  onAnyChange();
-});
-
-/* ===================== AVOID LIST UI ===================== */
-function renderAvoidRoster(){
-  const wrap = document.getElementById("avoidRoster");
-  if(!wrap) return;
-
-  const q = (document.getElementById("avoidSearch")?.value || "").trim().toLowerCase();
-  wrap.innerHTML = "";
-
-  const activeId = getActiveMemberId();
-  const list = roster
-    .filter(p => p.id !== activeId)
-    .filter(p => !q || p.name.toLowerCase().includes(q) || (p.meta||"").toLowerCase().includes(q))
-    .sort((a,b)=> a.name.localeCompare(b.name));
-
-  for(const p of list){
-    const el = document.createElement("label");
-    el.className = "person";
-
-    const checked = prefs.avoid_with.includes(p.id);
-    el.innerHTML = `
-      <input type="checkbox" ${checked ? "checked":""}/>
-      <div style="display:flex;flex-direction:column;">
-        <div class="name">${escapeHtml(p.name)}</div>
-        <div class="meta">${escapeHtml(p.meta || "")}</div>
-      </div>
-    `;
-
-    const cb = el.querySelector("input");
-    cb.addEventListener("change", ()=>{
-      const has = prefs.avoid_with.includes(p.id);
-      if(cb.checked && !has) prefs.avoid_with.push(p.id);
-      if(!cb.checked && has) prefs.avoid_with = prefs.avoid_with.filter(x=> x !== p.id);
-      onAnyChange();
-    });
-
-    wrap.appendChild(el);
-  }
-}
-
-document.getElementById("avoidSearch")?.addEventListener("input", renderAvoidRoster);
-document.getElementById("btnAvoidClear")?.addEventListener("click", ()=>{
-  prefs.avoid_with = [];
-  renderAvoidRoster();
-  onAnyChange();
-});
-
-function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-/* ===================== CALENDAR BUILD ===================== */
 function ensureDay(dateISO){
   stateDays[dateISO] ||= { am:"clear", pm:"clear" };
   return stateDays[dateISO];
 }
 
+/* ===================== LOAD ROSTER ===================== */
+async function loadRoster(){
+  // Expecting payload to be an array of members: [{id,name,meta?}, ...]
+  const members = await storeGet({ kind: K_MEMBERS });
+  if(!Array.isArray(members)) throw new Error("Roster payload is not an array");
+  roster = members.map(m => ({
+    id: String(m.id),
+    name: String(m.name || m.full_name || m.display || m.id),
+    meta: String(m.meta || "")
+  }));
+}
+
+/* ===================== LOAD/SAVE MEMBER AVAILABILITY ===================== */
+function resetInMemory(){
+  for(const k of Object.keys(stateDays)) delete stateDays[k];
+  prefs = { prefer_24:false, blank_ok:true };
+}
+
+function applyPayload(payload){
+  resetInMemory();
+  if(payload?.prefs){
+    prefs.prefer_24 = !!payload.prefs.prefer_24;
+    prefs.blank_ok  = payload.prefs.blank_ok !== false;
+  }
+  if(payload?.days && typeof payload.days === "object"){
+    for(const [d,v] of Object.entries(payload.days)){
+      stateDays[d] = { am: v?.am || "clear", pm: v?.pm || "clear" };
+    }
+  }
+  syncPrefsUI();
+  buildCalendar();
+}
+
+async function loadMember(memberId){
+  setDrivePill({ state:"warn", label:"Loading…", tooltip:"Loading from Drive…" });
+  try{
+    const payload = await storeGet({ kind: K_AVAIL, member_id: memberId });
+    applyPayload(payload || {});
+    setDrivePill({ state:"ok", label:"Loaded", tooltip:"Loaded from Drive." });
+  }catch(err){
+    // Fresh member is OK; start empty
+    applyPayload({});
+    setDrivePill({ state:"warn", label:"New / empty", tooltip:String(err.message||err) });
+  }
+}
+
+let saveTimer = null;
+function scheduleSave(){
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 650);
+}
+
+async function saveNow(){
+  const memberId = getActiveMemberId();
+  if(!memberId) return;
+
+  const payload = {
+    updated_at: new Date().toISOString(),
+    prefs: { prefer_24: !!prefs.prefer_24, blank_ok: prefs.blank_ok !== false },
+    days: stateDays
+  };
+
+  setDrivePill({ state:"warn", label:"Saving…", tooltip:"Saving to Drive…" });
+
+  try{
+    await storePost({ kind: K_AVAIL, member_id: memberId, payload });
+    setDrivePill({ state:"ok", label:"Saved", tooltip:"Saved to Drive." });
+  }catch(err){
+    setDrivePill({ state:"warn", label:"Save failed", tooltip:String(err.message||err) });
+  }
+}
+
+/* ===================== PREFS UI ===================== */
+function syncPrefsUI(){
+  document.getElementById("chkPrefer24").checked = !!prefs.prefer_24;
+  document.getElementById("chkBlankOk").checked = prefs.blank_ok !== false;
+}
+document.getElementById("chkPrefer24").addEventListener("change", e=>{
+  prefs.prefer_24 = !!e.target.checked;
+  scheduleSave();
+});
+document.getElementById("chkBlankOk").addEventListener("change", e=>{
+  prefs.blank_ok = !!e.target.checked;
+  scheduleSave();
+});
+
+/* ===================== CALENDAR ===================== */
 function buildCalendar(){
   const wrap = document.getElementById("months");
-  if(!wrap) return;
   wrap.innerHTML = "";
 
   let row;
@@ -914,7 +410,6 @@ function buildMonth(offset){
 
   const month = document.createElement("div");
   month.className="month";
-
   month.innerHTML = `
     <h3>${d.toLocaleString(undefined,{month:"long",year:"numeric"})}</h3>
     <div class="dow">${["S","M","T","W","T","F","S"].map(x=>`<div>${x}</div>`).join("")}</div>
@@ -951,15 +446,12 @@ function dayCell(dateISO, day){
   num.className="dayNum";
   num.textContent=day;
 
-  // Day-number toggles AM+PM together (full-day shortcut)
   num.onclick=()=>{
     const next = cycle(stateDays[dateISO].am);
     stateDays[dateISO].am = next;
     stateDays[dateISO].pm = next;
     render();
-    onAnyChange();
-    // Impact updates should reflect changes
-    if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
+    scheduleSave();
   };
 
   const bars=document.createElement("div");
@@ -968,15 +460,13 @@ function dayCell(dateISO, day){
   const am=bar(()=>{
     stateDays[dateISO].am = cycle(stateDays[dateISO].am);
     render();
-    onAnyChange();
-    if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
+    scheduleSave();
   },"AM");
 
   const pm=bar(()=>{
     stateDays[dateISO].pm = cycle(stateDays[dateISO].pm);
     render();
-    onAnyChange();
-    if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
+    scheduleSave();
   },"PM");
 
   bars.append(am, pm);
@@ -998,294 +488,27 @@ function bar(fn, label){
   return b;
 }
 
-/* ===================== BULK TOOLS ===================== */
-function setRangeDefaults(){
-  const from = addDays(new Date(), 1);
-  const to   = addDays(from, 27);
-  document.getElementById("bulkFrom").value = iso(from);
-  document.getElementById("bulkTo").value   = iso(to);
-}
-
-function templateWeek(start){
-  const out = [];
-  for(let i=0;i<7;i++){
-    const ds = iso(addDays(start, i));
-    const v = ensureDay(ds);
-    out.push({ date: ds, am: v.am, pm: v.pm });
-  }
-  return out;
-}
-
-// current Thu→Wed template
-function templateA(){
-  return templateWeek(startOfWeekThursday(new Date()));
-}
-// next Thu→Wed template
-function templateB(){
-  return templateWeek(addDays(startOfWeekThursday(new Date()), 7));
-}
-
-function applyPatternToRange(){
-  const fromISO = document.getElementById("bulkFrom").value;
-  const toISO   = document.getElementById("bulkTo").value;
-  if(!fromISO || !toISO) return;
-  const from = parseISO(fromISO);
-  const to   = parseISO(toISO);
-  if(to < from) return;
-
-  const pattern = document.getElementById("bulkPattern").value;
-  const A = templateA();
-  const B = templateB();
-
-  const baseStart = startOfWeekThursday(from);
-
-  for(let d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-       d <= to;
-       d = addDays(d,1)){
-
-    const ds = iso(d);
-    const weekStart = startOfWeekThursday(d);
-    const weekIndex = Math.floor((weekStart.getTime() - baseStart.getTime()) / (7*24*60*60*1000));
-    const dayIndex = Math.floor((d.getTime() - weekStart.getTime()) / (24*60*60*1000)); // 0..6
-
-    const src = (pattern === "week2")
-      ? ((weekIndex % 2 === 0) ? A[dayIndex] : B[dayIndex])
-      : A[dayIndex];
-
-    stateDays[ds] = { am: src.am, pm: src.pm };
-  }
-}
-
-// copy this week forward repeatedly until "To" date
-function repeatThisWeekUntil(){
-  const toISO = document.getElementById("bulkTo").value;
-  if(!toISO) return;
-  const to = parseISO(toISO);
-
-  const srcStart = startOfWeekThursday(new Date());
-  const A = templateWeek(srcStart);
-
-  // start stamping from the next week boundary after today
-  let stampStart = addDays(srcStart, 7);
-
-  while(stampStart <= to){
-    for(let i=0;i<7;i++){
-      const ds = iso(addDays(stampStart, i));
-      if(parseISO(ds) > to) break;
-      stateDays[ds] = { am: A[i].am, pm: A[i].pm };
-    }
-    stampStart = addDays(stampStart, 7);
-  }
-}
-
-function clearRange(){
-  const fromISO = document.getElementById("bulkFrom").value;
-  const toISO   = document.getElementById("bulkTo").value;
-  if(!fromISO || !toISO) return;
-  const from = parseISO(fromISO);
-  const to   = parseISO(toISO);
-  if(to < from) return;
-
-  for(let d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-       d <= to;
-       d = addDays(d,1)){
-    const ds = iso(d);
-    stateDays[ds] = { am:"clear", pm:"clear" };
-  }
-}
-
-function commitBulk(){
-  buildCalendar();
-  onAnyChange();
-  if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
-}
-
-document.getElementById("btnRepeatUntil")?.addEventListener("click", ()=>{ repeatThisWeekUntil(); commitBulk(); });
-document.getElementById("btnApplyRange")?.addEventListener("click", ()=>{ applyPatternToRange(); commitBulk(); });
-document.getElementById("btnClearRange")?.addEventListener("click", ()=>{ clearRange(); commitBulk(); });
-
-/* ===================== IMPACT TAB ===================== */
-async function loadImpact(){
-  const wrap = document.getElementById("impactWrap");
-  if(!wrap) return;
-
-  // Always render something immediately
-  wrap.innerHTML = `
-    <div class="panel">
-      <div class="panelTitle">Published view</div>
-      <div class="panelHint">Loading…</div>
-    </div>
-  `;
-
-  // Best-effort fetch member assignments
-  memberAssignments = null;
-  try{
-    const p = await storeGet({ kind: ASSIGN_KIND, memberId: getActiveMemberId() });
-    if(p && p.weeks && Array.isArray(p.weeks)) memberAssignments = p;
-  }catch(e){
-    // ignore; we will render fallback
-  }
-
-  if(!memberAssignments){
-    wrap.innerHTML = `
-      <div class="panel">
-        <div class="panelTitle">No published roster connected (yet)</div>
-        <div class="panelHint">
-          Beta 1 can show real impact as soon as the Wallboard/Supervisor pipeline publishes a member view
-          (recommended Drive kind: <b>${ASSIGN_KIND}</b>).
-        </div>
-        <div class="smallNote">
-          For now: your Availability + Preferences are saving and will be used by the solver.
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  // Render weeks
-  wrap.innerHTML = "";
-  for(const w of memberAssignments.weeks){
-    wrap.appendChild(renderWeekBlock(w));
-  }
-}
-
-function renderWeekBlock(w){
-  const phase = String(w.phase || "published").toLowerCase();
-  const weekStart = String(w.week_start || "");
-  const tagLabel = phaseLabel(phase, weekStart);
-
-  const el = document.createElement("div");
-  el.className = "weekBlock";
-
-  // brackets
-  const bl = document.createElement("div");
-  bl.className = `bracket left ${phase}`;
-  const br = document.createElement("div");
-  br.className = `bracket right ${phase}`;
-  el.append(bl, br);
-
-  const inner = document.createElement("div");
-  inner.className = "weekInner";
-
-  inner.innerHTML = `
-    <div class="weekTag">${escapeHtml(tagLabel)}</div>
-    <div class="shiftList"></div>
-  `;
-
-  const list = inner.querySelector(".shiftList");
-  const items = Array.isArray(w.items) ? w.items : [];
-
-  // Sort by date then shift
-  items.sort((a,b)=>{
-    const da = String(a.date||"");
-    const db = String(b.date||"");
-    if(da !== db) return da.localeCompare(db);
-    return String(a.shift||"").localeCompare(String(b.shift||""));
-  });
-
-  for(const it of items){
-    list.appendChild(renderShiftCard(it));
-  }
-
-  // Footer note for planning-style phases
-  if(phase === "planning" && w.resolve_by){
-    const note = document.createElement("div");
-    note.className = "smallNote";
-    note.textContent = `To be resolved on Thu ${w.resolve_by}`;
-    inner.appendChild(note);
-  }
-
-  el.appendChild(inner);
-  return el;
-}
-
-function phaseLabel(phase, weekStart){
-  const d = weekStart ? ` — week of ${weekStart}` : "";
-  if(phase === "active") return `Active${d}`;
-  if(phase === "controlled") return `Controlled${d}`;
-  if(phase === "planning") return `Planning${d}`;
-  return `Published${d}`;
-}
-
-function renderShiftCard(it){
-  const dateISO = String(it.date||"");
-  const shift = String(it.shift||"");
-  const role = String(it.role||"");
-  const status = String(it.status||"OK"); // OK | ON_DECK | OPEN
-  const note = String(it.note||"");
-
-  const el = document.createElement("div");
-  el.className = "shiftCard";
-
-  const dayState = stateDays[dateISO] || { am:"clear", pm:"clear" };
-  const mySel = shift === "AM" ? dayState.am : dayState.pm;
-
-  // Warning if member marked NO against a published/controlled assignment
-  const conflicts = (mySel === "no");
-  const shouldWarn = conflicts && (status === "OK" || status === "ON_DECK");
-
-  el.innerHTML = `
-    <div class="t">${escapeHtml(dateISO)} — ${escapeHtml(shift)} ${role ? "· "+escapeHtml(role) : ""}</div>
-    <div class="s">${escapeHtml(statusDisplay(status, note))}</div>
-  `;
-
-  if(shouldWarn){
-    const warn = document.createElement("div");
-    warn.className = "badgeWarn";
-    warn.textContent = "⚠️ Availability conflict (will notify on-deck before marking OPEN)";
-    el.appendChild(warn);
-  }
-
-  return el;
-}
-
-function statusDisplay(status, note){
-  if(status === "OPEN") return note ? `OPEN — ${note}` : "OPEN";
-  if(status === "ON_DECK") return note ? `On-deck outreach — ${note}` : "On-deck outreach in progress";
-  return note ? `Scheduled — ${note}` : "Scheduled";
-}
-
-/* ===================== MEMBER SELECTOR + STARTUP ===================== */
+/* ===================== INIT ===================== */
 async function init(){
+  setDrivePill({ state:"warn", label:"Loading roster…", tooltip:"Loading roster from Drive…" });
+  await loadRoster();
+
   const sel = document.getElementById("member");
+  sel.innerHTML = roster
+    .sort((a,b)=>a.name.localeCompare(b.name))
+    .map(m => `<option value="${m.id}">${m.name}</option>`)
+    .join("");
 
-  function rebuildMemberSelect(preferId){
-    const opts = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
-    sel.innerHTML = opts;
+  sel.addEventListener("change", async ()=> loadMember(getActiveMemberId()));
 
-    // Try to keep selection stable
-    const hasPrefer = preferId && roster.some(p=> String(p.id) === String(preferId));
-    sel.value = hasPrefer ? String(preferId) : (roster[0]?.id || "default");
-  }
-
-  // 1) Build from fallback roster immediately (so UI isn't blank)
-  rebuildMemberSelect(roster[0]?.id);
-
-  // 2) Try refresh roster from Drive (non-fatal)
-  const prev = sel.value;
-  const loaded = await tryLoadRoster();
-  if (loaded){
-    rebuildMemberSelect(prev);
-  }
-
-  // Load current member
-  setRangeDefaults();
+  // default: first member
+  if(roster.length) sel.value = roster[0].id;
   await loadMember(getActiveMemberId());
-
-  // Change handler
-  sel.addEventListener("change", async ()=>{
-    // reset local in-memory objects (not localStorage)
-    for(const k of Object.keys(stateDays)) delete stateDays[k];
-    prefs = { prefer_24:false, blank_ok:true, avoid_with:[] };
-    memberAssignments = null;
-
-    setRangeDefaults();
-    await loadMember(getActiveMemberId());
-  });
 }
-
-setRangeDefaults();
-init();
+init().catch(err=>{
+  setDrivePill({ state:"warn", label:"Roster error", tooltip:String(err.message||err) });
+  alert("Roster load failed: " + (err.message||err));
+});
 </script>
 
 </body>
