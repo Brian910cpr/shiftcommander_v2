@@ -5,7 +5,7 @@
   <title>ShiftCommander – Wallboard</title>
   <style>
     body { font-family: sans-serif; background: #111; color: #0f0; }
-    pre { font-size: 20px; }
+    pre { font-size: 20px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -17,10 +17,14 @@
 const STORE = "https://adr-fr.org/api/store";
 
 async function load() {
-  const res = await fetch(`${STORE}?kind=assignments`);
+  const res = await fetch(`${STORE}?kind=assignments&_ts=${Date.now()}`, { cache: "no-store" });
   const data = await res.json();
+
+  // Your store may return the JSON directly OR inside payload.
+  const payload = (data && typeof data === "object" && "payload" in data) ? data.payload : data;
+
   document.getElementById("out").textContent =
-    JSON.stringify(data.payload || {}, null, 2);
+    JSON.stringify(payload || {}, null, 2);
 }
 
 load();
