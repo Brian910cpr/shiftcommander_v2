@@ -23,10 +23,10 @@ jobs:
 
       - name: Sync to Drive folder
         env:
-          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+          DRIVE_FOLDER_ID: ${{ secrets.11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK }}
         run: |
           # "gdrive:" is the remote name in rclone.conf (see below)
-          rclone sync . "gdrive:/${DRIVE_FOLDER_ID}" \
+          rclone sync . "gdrive:/${11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK}" \
             --exclude ".git/**" \
             --exclude ".github/**" \
             --exclude "node_modules/**" \
