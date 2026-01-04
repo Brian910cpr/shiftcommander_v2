@@ -1,80 +1,277 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>ShiftCommander – Member</title>
-  <style>
-    body { font-family: sans-serif; margin: 20px; }
-    select, textarea, button { font-size: 16px; margin: 5px 0; }
-    .status { margin-top: 10px; color: green; }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ShiftCommander — Member Scheduling</title>
+<style>
+  body{margin:0;background:#0b1020;color:#eaf1ff;font-family:system-ui}
+  header{position:sticky;top:0;z-index:10;background:#070b18;border-bottom:1px solid rgba(255,255,255,.12);padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 10px;font-size:13px;white-space:nowrap}
+  select{min-width:260px;font-size:14px;background:rgba(255,255,255,.04);color:#eaf1ff;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 8px}
+  main{padding:12px}
+  .monthRow{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-bottom:12px}
+  .month{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:8px}
+  .month h3{margin:2px 0 6px;font-size:14px;font-weight:900;text-align:center}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:10px;color:rgba(234,241,255,.6);text-align:center;margin-bottom:4px}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-content:start}
+  .day{height:30px;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:3px 4px;display:flex;align-items:center;gap:6px}
+  .day.blank{border:none;background:none}
+  .day.past{opacity:.35;pointer-events:none}
+  .dayNum{width:16px;text-align:right;font-size:11px;font-weight:900;cursor:pointer}
+  .bars{display:flex;flex-direction:column;gap:3px}
+  .bar{width:34px;height:10px;border-radius:999px;cursor:pointer;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:rgba(255,255,255,.8);user-select:none}
+  .bar::after{content:attr(data-label)}
+  .bar.pref{background:#2bd27e;border-color:#2bd27e;color:rgba(0,0,0,.7)}
+  .bar.avail{background:#5c8dff;border-color:#5c8dff;color:rgba(0,0,0,.7)}
+  .bar.no{background:#ff5d5d;border-color:#ff5d5d;color:rgba(0,0,0,.7)}
+  .savePill{margin-left:auto;display:flex;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);border-radius:999px;padding:6px 10px;min-height:34px;max-width:200px}
+  .dot{width:10px;height:10px;border-radius:999px;background:rgba(233,241,255,.26);box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+  .dot.ok{background:#2bd27e;box-shadow:0 0 0 3px rgba(43,210,126,.16)}
+  .dot.warn{background:#f4c542;box-shadow:0 0 0 3px rgba(244,197,66,.16)}
+  .tiny{font-size:12px;color:rgba(234,241,255,.7);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
+</style>
 </head>
 <body>
 
-<h1>Member Availability</h1>
+<header>
+  <div class="pill">Member Scheduling</div>
+  <div class="pill">
+    Member:
+    <select id="member"></select>
+  </div>
+  <div class="savePill" id="savepill" title="Checking…">
+    <span class="dot warn" id="driveDot"></span>
+    <span class="tiny" id="driveTip">Checking…</span>
+  </div>
+</header>
 
-<label>Member:</label><br />
-<select id="memberSelect"></select>
-
-<h3>Availability JSON</h3>
-<textarea id="payload" rows="10" cols="60"></textarea><br />
-
-<button onclick="save()">Save</button>
-
-<div class="status" id="status"></div>
+<main>
+  <div id="months"></div>
+</main>
 
 <script>
 const STORE = "https://adr-fr.org/api/store";
+const KIND_MEMBERS = "members";
+const KIND_AVAIL = "member_availability";
 
-async function loadRoster() {
-  const res = await fetch(`${STORE}?kind=members`);
-  const data = await res.json();
+const MONTHS_AHEAD = 6;
+const STATES = ["clear","pref","avail","no"];
 
-  // members.json may be an object, not array
-  const members = Array.isArray(data.payload)
-    ? data.payload
-    : Object.values(data.payload || {});
+const today = new Date();
+const stateDays = {}; // dateISO -> {am,pm}
+let roster = [];      // array of member objects from Drive
 
-  const sel = document.getElementById("memberSelect");
-  sel.innerHTML = "";
+function iso(d){ return d.toISOString().slice(0,10); }
+function parseISO(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+function addDays(d,n){ const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
+function cycle(s){ return STATES[(STATES.indexOf(s)+1)%STATES.length]; }
+function isPast(isoDate){ return isoDate < iso(new Date()); }
 
-  members.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m.id;
-    opt.textContent = `${m.name} (${m.id})`;
-    sel.appendChild(opt);
+function setDrivePill({state,label,tooltip}){
+  const dot=document.getElementById("driveDot");
+  const tip=document.getElementById("driveTip");
+  const pill=document.getElementById("savepill");
+  dot.classList.remove("ok","warn");
+  dot.classList.add(state==="ok"?"ok":"warn");
+  tip.textContent=label;
+  pill.title=tooltip||label;
+}
+
+async function storeGet(params){
+  const u=new URL(STORE);
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,String(v)));
+  u.searchParams.set("_ts", String(Date.now()));
+  const r=await fetch(u.toString(), {cache:"no-store"});
+  const j=await r.json();
+  if(!j.ok) throw new Error(j.error||"Store GET failed");
+  return j.payload;
+}
+
+async function storePut(kind, member_id, payload){
+  const body = { kind, member_id, payload };
+  const r = await fetch(STORE, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body: JSON.stringify(body)
   });
-
-  sel.onchange = loadMember;
-  if (members.length) loadMember();
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error||"Store PUT failed");
+  return j;
 }
 
-async function loadMember() {
-  const id = document.getElementById("memberSelect").value;
-  const res = await fetch(`${STORE}?kind=member_availability&member_id=${id}`);
-  const data = await res.json();
-  document.getElementById("payload").value =
-    JSON.stringify(data.payload || {}, null, 2);
+function ensureDay(dateISO){
+  stateDays[dateISO] ||= { am:"clear", pm:"clear" };
+  return stateDays[dateISO];
 }
 
-async function save() {
-  const id = document.getElementById("memberSelect").value;
-  const payload = JSON.parse(document.getElementById("payload").value);
-
-  await fetch(STORE, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      kind: "member_availability",
-      member_id: id,
-      payload
-    })
-  });
-
-  document.getElementById("status").textContent = "Saved to Drive ✔";
+function buildCalendar(){
+  const wrap=document.getElementById("months");
+  wrap.innerHTML="";
+  let row;
+  for(let i=0;i<MONTHS_AHEAD;i++){
+    if(i%2===0){
+      row=document.createElement("div");
+      row.className="monthRow";
+      wrap.appendChild(row);
+    }
+    row.appendChild(buildMonth(i));
+  }
 }
 
-loadRoster();
+function buildMonth(offset){
+  const d = new Date(today.getFullYear(), today.getMonth()+offset, 1);
+  const m=d.getMonth(), y=d.getFullYear();
+  const month=document.createElement("div");
+  month.className="month";
+  month.innerHTML = `
+    <h3>${d.toLocaleString(undefined,{month:"long",year:"numeric"})}</h3>
+    <div class="dow">${["S","M","T","W","T","F","S"].map(x=>`<div>${x}</div>`).join("")}</div>
+    <div class="grid"></div>
+  `;
+  const grid=month.querySelector(".grid");
+  const start=new Date(y,m,1).getDay();
+  const days=new Date(y,m+1,0).getDate();
+  for(let i=0;i<start;i++){
+    const b=document.createElement("div");
+    b.className="day blank";
+    grid.appendChild(b);
+  }
+  for(let day=1; day<=days; day++){
+    const dateISO=iso(new Date(y,m,day));
+    grid.appendChild(dayCell(dateISO, day));
+  }
+  return month;
+}
+
+function dayCell(dateISO, day){
+  ensureDay(dateISO);
+  const d=document.createElement("div");
+  d.className="day";
+  if(isPast(dateISO)) d.classList.add("past");
+
+  const num=document.createElement("div");
+  num.className="dayNum";
+  num.textContent=day;
+
+  num.onclick=()=>{
+    const next=cycle(stateDays[dateISO].am);
+    stateDays[dateISO].am=next;
+    stateDays[dateISO].pm=next;
+    renderBars();
+    saveDebounced();
+  };
+
+  const bars=document.createElement("div");
+  bars.className="bars";
+
+  const am=mkBar("AM", ()=>{ stateDays[dateISO].am=cycle(stateDays[dateISO].am); renderBars(); saveDebounced(); });
+  const pm=mkBar("PM", ()=>{ stateDays[dateISO].pm=cycle(stateDays[dateISO].pm); renderBars(); saveDebounced(); });
+
+  bars.append(am,pm);
+  d.append(num,bars);
+
+  function renderBars(){
+    am.className = `bar ${stateDays[dateISO].am}`;
+    pm.className = `bar ${stateDays[dateISO].pm}`;
+  }
+  renderBars();
+  return d;
+}
+
+function mkBar(label, fn){
+  const b=document.createElement("div");
+  b.className="bar";
+  b.dataset.label=label;
+  b.onclick=fn;
+  return b;
+}
+
+function getActiveMemberId(){
+  const sel=document.getElementById("member");
+  return String(sel.value||"").trim();
+}
+
+let saveTimer=null;
+function saveDebounced(){
+  setDrivePill({state:"warn", label:"Saving…", tooltip:"Saving to Drive…"});
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveNow, 500);
+}
+
+async function saveNow(){
+  const member_id=getActiveMemberId();
+  const payload = {
+    updated_at: new Date().toISOString(),
+    days: stateDays
+  };
+  try{
+    await storePut(KIND_AVAIL, member_id, payload);
+    setDrivePill({state:"ok", label:"Saved", tooltip:"Saved to Drive"});
+  }catch(e){
+    setDrivePill({state:"warn", label:"Save failed", tooltip:e.message||String(e)});
+  }
+}
+
+async function loadMember(member_id){
+  // clear in-memory
+  for(const k of Object.keys(stateDays)) delete stateDays[k];
+
+  setDrivePill({state:"warn", label:"Loading…", tooltip:"Loading availability from Drive…"});
+  try{
+    const remote = await storeGet({ kind: KIND_AVAIL, member_id });
+    if(remote && remote.days && typeof remote.days === "object"){
+      for(const [dateISO, v] of Object.entries(remote.days)){
+        stateDays[dateISO] = { am: v.am || "clear", pm: v.pm || "clear" };
+      }
+    }
+    setDrivePill({state:"ok", label:"Saved", tooltip:"Loaded and ready"});
+  }catch(e){
+    setDrivePill({state:"warn", label:"Local only", tooltip:e.message||String(e)});
+  }
+  buildCalendar();
+}
+
+function memberDisplayName(m){
+  const fn = (m.first_name||"").trim();
+  const ln = (m.last_name||"").trim();
+  const id = String(m.member_id||"").trim();
+  const name = (fn || ln) ? `${fn} ${ln}`.trim() : id;
+  return `${name} (${id})`;
+}
+
+async function loadRoster(){
+  const payload = await storeGet({ kind: KIND_MEMBERS });
+  // payload is {version, updated_at, members:[...]}
+  const arr = Array.isArray(payload) ? payload : (payload && Array.isArray(payload.members) ? payload.members : null);
+  if(!arr) throw new Error("members payload shape not recognized (expected {members:[...]}).");
+
+  roster = arr.filter(m=>m && m.member_id);
+  // (optional) only active members
+  roster = roster.filter(m => m.active !== false);
+
+  // populate select
+  const sel=document.getElementById("member");
+  sel.innerHTML = roster.map(m=>`<option value="${String(m.member_id)}">${memberDisplayName(m).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}</option>`).join("");
+
+  // default first
+  sel.value = roster[0]?.member_id || "";
+  sel.addEventListener("change", ()=>loadMember(getActiveMemberId()));
+}
+
+async function init(){
+  try{
+    await loadRoster();
+    await loadMember(getActiveMemberId());
+  }catch(e){
+    setDrivePill({state:"warn", label:"Roster load failed", tooltip:e.message||String(e)});
+    document.getElementById("months").innerHTML = `<div style="padding:10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03)">
+      <b>Roster load failed.</b><br><span style="color:rgba(234,241,255,.7)">${String(e.message||e)}</span>
+    </div>`;
+  }
+}
+
+init();
 </script>
 
 </body>

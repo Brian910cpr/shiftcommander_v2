@@ -1,187 +1,267 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ShiftCommander — Supervisor</title>
-<style>
-:root{--bg:#0b1020;--card:#111a33;--line:rgba(255,255,255,.12);--text:#eaf1ff;--muted:rgba(234,241,255,.55)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui}
-header{position:sticky;top:0;background:#050814cc;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.pill{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:13px}
-main{padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:10px}
-h2{margin:0 0 8px;font-size:14px}
-small{color:var(--muted)}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{border-bottom:1px solid rgba(255,255,255,.10);padding:8px;text-align:left;vertical-align:top}
-input,textarea,select,button{
-  background:rgba(255,255,255,.04);color:var(--text);
-  border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:7px 9px;font-size:13px
-}
-button{cursor:pointer;font-weight:800}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
-textarea{width:100%;min-height:240px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ShiftCommander — Supervisor (Roster)</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:#0b1020; color:#eaf1ff;}
+    header{position:sticky;top:0;background:#070b18;border-bottom:1px solid rgba(255,255,255,.12);padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    h1{font-size:16px;margin:0;font-weight:900}
+    .pill{padding:6px 10px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.05);font-size:12px}
+    main{padding:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+    button{cursor:pointer;font-weight:900;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#eaf1ff;padding:8px 10px}
+    button.primary{background:rgba(92,141,255,.18);border-color:rgba(92,141,255,.35)}
+    button.danger{background:rgba(255,93,93,.16);border-color:rgba(255,93,93,.30)}
+    input,select,textarea{background:rgba(255,255,255,.04);color:#eaf1ff;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:7px 9px}
+    table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03)}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.10);vertical-align:top}
+    th{font-size:12px;text-align:left;color:rgba(234,241,255,.7)}
+    td{font-size:13px}
+    tr:last-child td{border-bottom:none}
+    .muted{color:rgba(234,241,255,.65);font-size:12px;line-height:1.3}
+    .ok{color:#2bd27e}
+    .warn{color:#f4c542}
+    .err{color:#ff5d5d}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+    .card{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);border-radius:14px;padding:10px}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;font-size:12px;white-space:pre-wrap}
+  </style>
 </head>
 <body>
 <header>
-  <div class="pill">Supervisor</div>
-  <div class="pill" id="status">Status: …</div>
+  <h1>Supervisor — Roster (Drive)</h1>
+  <div class="pill" id="statusPill">Status: <span class="warn">Loading…</span></div>
+  <div class="pill">Store: <span class="muted">https://adr-fr.org/api/store</span></div>
 </header>
 
 <main>
-  <section class="panel">
-    <h2>Roster (Drive)</h2>
-    <small>Edits save to Drive as <b>kind=members</b>. Member.html will auto-load this list.</small>
+  <div class="row">
+    <button class="primary" id="btnReload">Reload roster</button>
+    <button class="primary" id="btnSave">Save roster</button>
+    <button id="btnAdd">Add member</button>
+    <button class="danger" id="btnSort">Sort A→Z</button>
+  </div>
 
-    <div class="row">
-      <button id="btnReload">Reload roster</button>
-      <button id="btnSave">Save roster</button>
-      <button id="btnAdd">Add member</button>
+  <div class="muted" style="margin:0 0 10px 0;">
+    This page reads/writes <b>kind=members</b> in Drive as an <b>object</b>:
+    <span class="mono">{ version, updated_at, members:[…] }</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:120px;">member_id</th>
+        <th style="width:160px;">first_name</th>
+        <th style="width:180px;">last_name</th>
+        <th style="width:120px;">active</th>
+        <th style="width:180px;">rank</th>
+        <th>qualifications (comma)</th>
+        <th style="width:90px;"></th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="7" class="muted">Loading…</td></tr>
+    </tbody>
+  </table>
+
+  <div class="grid" style="margin-top:12px;">
+    <div class="card">
+      <div style="font-weight:900;margin-bottom:6px;">Raw payload (debug)</div>
+      <div class="mono" id="raw">—</div>
     </div>
-
-    <div style="overflow:auto;margin-top:10px">
-      <table id="tbl">
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Meta</th><th></th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div class="card">
+      <div style="font-weight:900;margin-bottom:6px;">Notes</div>
+      <div class="muted">
+        If something says “Roster is not an array”, it means code was expecting <code>payload</code> to be an array.
+        But your file is <code>{ members:[…] }</code>. We now read/write <code>payload.members</code>.
+      </div>
     </div>
-  </section>
-
-  <section class="panel">
-    <h2>Member Availability Viewer (read-only)</h2>
-    <small>Loads <b>kind=member_availability</b> for a selected member.</small>
-
-    <div class="row">
-      <select id="memberSel"></select>
-      <button id="btnLoadAvail">Load</button>
-    </div>
-
-    <textarea id="out" spellcheck="false" placeholder="Availability payload will appear here…"></textarea>
-  </section>
+  </div>
 </main>
 
 <script>
-const STORE = { url: "https://adr-fr.org/api/store" };
-const K_MEMBERS = "members";
-const K_AVAIL = "member_availability";
+const STORE = "https://adr-fr.org/api/store";
+const KIND_MEMBERS = "members";
 
-let roster = [];
+let rosterDoc = null; // {version, updated_at, members:[...]}
 
-function setStatus(t){ document.getElementById("status").textContent = "Status: " + t; }
-
-async function storeGet(params){
-  const u = new URL(STORE.url);
-  for(const [k,v] of Object.entries(params)) u.searchParams.set(k, String(v));
-  u.searchParams.set("_ts", String(Date.now()));
-  const r = await fetch(u.toString(), { cache:"no-store" });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "GET failed");
-  return j.payload;
-}
-async function storePost(body){
-  const r = await fetch(STORE.url, {
-    method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify(body)
-  });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || "POST failed");
-  return j;
-}
-
-function renderRoster(){
-  const tb = document.querySelector("#tbl tbody");
-  tb.innerHTML = "";
-  for(const m of roster){
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><input data-k="id" value="${escapeHtml(m.id)}" style="width:120px"></td>
-      <td><input data-k="name" value="${escapeHtml(m.name)}" style="width:100%"></td>
-      <td><input data-k="meta" value="${escapeHtml(m.meta||"")}" style="width:100%"></td>
-      <td><button data-act="del">Del</button></td>
-    `;
-    tr.querySelector('[data-act="del"]').onclick = ()=> {
-      roster = roster.filter(x=> x !== m);
-      renderRoster();
-      renderMemberSel();
-    };
-    tb.appendChild(tr);
-  }
-}
-
-function readRosterFromTable(){
-  const rows = [...document.querySelectorAll("#tbl tbody tr")];
-  const out = [];
-  for(const tr of rows){
-    const id = tr.querySelector('input[data-k="id"]').value.trim();
-    const name = tr.querySelector('input[data-k="name"]').value.trim();
-    const meta = tr.querySelector('input[data-k="meta"]').value.trim();
-    if(!id || !name) continue;
-    out.push({ id, name, meta });
-  }
-  return out;
-}
-
-function renderMemberSel(){
-  const sel = document.getElementById("memberSel");
-  sel.innerHTML = roster
-    .slice()
-    .sort((a,b)=>a.name.localeCompare(b.name))
-    .map(m=> `<option value="${escapeHtml(m.id)}">${escapeHtml(m.name)}</option>`)
-    .join("");
+function setStatus(type, msg){
+  const el = document.getElementById("statusPill");
+  const cls = type === "ok" ? "ok" : type === "err" ? "err" : "warn";
+  el.innerHTML = `Status: <span class="${cls}">${escapeHtml(msg)}</span>`;
 }
 
 function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+  return String(s ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
-async function reload(){
-  setStatus("Loading roster…");
-  roster = await storeGet({ kind: K_MEMBERS });
-  if(!Array.isArray(roster)) throw new Error("Roster is not an array");
-  roster = roster.map(m=>({ id:String(m.id), name:String(m.name||m.id), meta:String(m.meta||"") }));
-  renderRoster();
-  renderMemberSel();
-  setStatus("Roster loaded");
+async function storeGet(params){
+  const u = new URL(STORE);
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,String(v)));
+  u.searchParams.set("_ts", String(Date.now()));
+  const r = await fetch(u.toString(), { cache:"no-store" });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store GET failed");
+  return j.payload;
 }
 
-async function save(){
-  roster = readRosterFromTable();
-  setStatus("Saving roster…");
-  await storePost({ kind: K_MEMBERS, payload: roster });
-  setStatus("Roster saved");
+async function storePut(kind, payload){
+  const r = await fetch(STORE, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body: JSON.stringify({ kind, payload })
+  });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "Store PUT failed");
+  return j;
 }
 
-async function loadAvail(){
-  const id = document.getElementById("memberSel").value;
-  setStatus("Loading availability…");
-  const payload = await storeGet({ kind: K_AVAIL, member_id: id });
-  document.getElementById("out").value = JSON.stringify(payload, null, 2);
-  setStatus("Availability loaded");
+function normalizeRosterDoc(payload){
+  // Accept:
+  // 1) {version, updated_at, members:[...]}
+  // 2) [...members]  (fallback if you ever store just an array)
+  if(Array.isArray(payload)){
+    return { version: 1, updated_at: new Date().toISOString(), members: payload };
+  }
+  if(payload && typeof payload === "object" && Array.isArray(payload.members)){
+    return {
+      version: Number(payload.version || 1),
+      updated_at: String(payload.updated_at || new Date().toISOString()),
+      members: payload.members
+    };
+  }
+  throw new Error("Roster payload shape is not recognized (expected {members:[...]}).");
 }
 
-document.getElementById("btnReload").onclick = ()=> reload().catch(e=>alert(e.message||e));
-document.getElementById("btnSave").onclick = ()=> save().catch(e=>alert(e.message||e));
-document.getElementById("btnAdd").onclick = ()=>{
-  roster.push({ id:"", name:"", meta:"" });
-  renderRoster();
-};
-document.getElementById("btnLoadAvail").onclick = ()=> loadAvail().catch(e=>alert(e.message||e));
+function render(){
+  const tbody = document.getElementById("tbody");
+  const raw = document.getElementById("raw");
+  raw.textContent = rosterDoc ? JSON.stringify(rosterDoc, null, 2) : "—";
 
-reload().catch(e=>{
-  setStatus("Error");
-  alert(e.message||e);
+  if(!rosterDoc || !Array.isArray(rosterDoc.members)){
+    tbody.innerHTML = `<tr><td colspan="7" class="err">No roster loaded.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = "";
+  rosterDoc.members.forEach((m, idx)=>{
+    const tr = document.createElement("tr");
+
+    const q = Array.isArray(m.qualifications) ? m.qualifications.join(", ") : (m.qualifications ?? "");
+    tr.innerHTML = `
+      <td><input data-k="member_id" data-i="${idx}" value="${escapeHtml(m.member_id ?? "")}" style="width:100%"></td>
+      <td><input data-k="first_name" data-i="${idx}" value="${escapeHtml(m.first_name ?? "")}" style="width:100%"></td>
+      <td><input data-k="last_name" data-i="${idx}" value="${escapeHtml(m.last_name ?? "")}" style="width:100%"></td>
+      <td>
+        <select data-k="active" data-i="${idx}" style="width:100%">
+          <option value="true" ${m.active === true ? "selected":""}>true</option>
+          <option value="false" ${m.active === false ? "selected":""}>false</option>
+        </select>
+      </td>
+      <td><input data-k="rank" data-i="${idx}" value="${escapeHtml(m.rank ?? "")}" style="width:100%"></td>
+      <td><input data-k="qualifications" data-i="${idx}" value="${escapeHtml(q)}" style="width:100%"></td>
+      <td><button class="danger" data-del="${idx}">Delete</button></td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  // wire inputs
+  tbody.querySelectorAll("input,select").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const i = Number(el.getAttribute("data-i"));
+      const k = el.getAttribute("data-k");
+      if(!Number.isFinite(i) || !k) return;
+      const v = el.value;
+
+      const m = rosterDoc.members[i];
+      if(k === "active"){
+        m.active = (v === "true");
+      } else if(k === "qualifications"){
+        m.qualifications = String(v).split(",").map(x=>x.trim()).filter(Boolean);
+      } else {
+        m[k] = v;
+      }
+      rosterDoc.updated_at = new Date().toISOString();
+      document.getElementById("raw").textContent = JSON.stringify(rosterDoc, null, 2);
+      setStatus("warn", "Edited (not saved)");
+    });
+  });
+
+  // wire deletes
+  tbody.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const i = Number(btn.getAttribute("data-del"));
+      if(!Number.isFinite(i)) return;
+      rosterDoc.members.splice(i, 1);
+      rosterDoc.updated_at = new Date().toISOString();
+      render();
+      setStatus("warn", "Deleted row (not saved)");
+    });
+  });
+}
+
+async function loadRoster(){
+  setStatus("warn", "Loading roster from Drive…");
+  const payload = await storeGet({ kind: KIND_MEMBERS });
+  rosterDoc = normalizeRosterDoc(payload);
+  setStatus("ok", `Loaded ${rosterDoc.members.length} members`);
+  render();
+}
+
+async function saveRoster(){
+  if(!rosterDoc) return;
+  rosterDoc.updated_at = new Date().toISOString();
+  // ensure sane members
+  rosterDoc.members = (rosterDoc.members || []).map(m=>({
+    member_id: String(m.member_id ?? "").trim(),
+    first_name: String(m.first_name ?? "").trim(),
+    last_name: String(m.last_name ?? "").trim(),
+    active: m.active !== false,
+    rank: String(m.rank ?? "").trim(),
+    qualifications: Array.isArray(m.qualifications) ? m.qualifications : []
+  })).filter(m=>m.member_id);
+
+  setStatus("warn", "Saving roster to Drive…");
+  await storePut(KIND_MEMBERS, rosterDoc);
+  setStatus("ok", `Saved ${rosterDoc.members.length} members`);
+  render();
+}
+
+document.getElementById("btnReload").addEventListener("click", ()=>loadRoster().catch(e=>setStatus("err", e.message)));
+document.getElementById("btnSave").addEventListener("click", ()=>saveRoster().catch(e=>setStatus("err", e.message)));
+
+document.getElementById("btnAdd").addEventListener("click", ()=>{
+  if(!rosterDoc) rosterDoc = { version:1, updated_at:new Date().toISOString(), members:[] };
+  rosterDoc.members.push({
+    member_id: "",
+    first_name: "",
+    last_name: "",
+    active: true,
+    rank: "",
+    qualifications: []
+  });
+  render();
+  setStatus("warn", "Added row (not saved)");
 });
+
+document.getElementById("btnSort").addEventListener("click", ()=>{
+  if(!rosterDoc) return;
+  rosterDoc.members.sort((a,b)=>{
+    const an = `${a.last_name||""}, ${a.first_name||""}`.toLowerCase();
+    const bn = `${b.last_name||""}, ${b.first_name||""}`.toLowerCase();
+    return an.localeCompare(bn);
+  });
+  render();
+  setStatus("warn", "Sorted (not saved)");
+});
+
+// boot
+loadRoster().catch(e=>setStatus("err", e.message));
 </script>
 </body>
 </html>

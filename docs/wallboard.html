@@ -3,28 +3,29 @@
 <head>
   <meta charset="utf-8" />
   <title>ShiftCommander – Wallboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <style>
-    body { font-family: sans-serif; background: #111; color: #0f0; }
-    pre { font-size: 20px; white-space: pre-wrap; }
+    body { font-family: system-ui; background: #111; color: #0f0; margin:0; padding:14px; }
+    h1 { margin:0 0 10px 0; }
+    pre { font-size: 16px; white-space: pre-wrap; }
+    .muted{color:#7f7}
   </style>
 </head>
 <body>
 
 <h1>Wallboard</h1>
+<div class="muted">Source: https://adr-fr.org/api/store?kind=assignments</div>
 <pre id="out">Loading…</pre>
 
 <script>
 const STORE = "https://adr-fr.org/api/store";
 
 async function load() {
-  const res = await fetch(`${STORE}?kind=assignments&_ts=${Date.now()}`, { cache: "no-store" });
+  const res = await fetch(`${STORE}?kind=assignments&_ts=${Date.now()}`, { cache:"no-store" });
   const data = await res.json();
-
-  // Your store may return the JSON directly OR inside payload.
-  const payload = (data && typeof data === "object" && "payload" in data) ? data.payload : data;
-
+  // Your screenshot is exactly this: printing payload only.
   document.getElementById("out").textContent =
-    JSON.stringify(payload || {}, null, 2);
+    JSON.stringify(data.payload || {}, null, 2);
 }
 
 load();
