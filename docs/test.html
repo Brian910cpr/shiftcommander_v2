@@ -1,0 +1,29 @@
+<script>
+async function testStore() {
+  // goes to Cloudflare Worker, Worker injects token, Worker calls Apps Script
+  const base = "https://adr-fr.org/api/store";
+
+  // 1) Ping
+  const ping = await fetch(`${base}?kind=ping&_ts=${Date.now()}`, { cache:"no-store" }).then(r=>r.json());
+  console.log("PING:", ping);
+
+  // 2) Write member availability
+  const save = await fetch(base, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      kind: "member_availability",
+      member_id: "test",
+      payload: { hello: "world", saved_at: new Date().toISOString() }
+      // token omitted on purpose; worker injects it
+    })
+  }).then(r=>r.json());
+  console.log("SAVE:", save);
+
+  // 3) Read it back
+  const read = await fetch(`${base}?kind=member_availability&member_id=test&_ts=${Date.now()}`, { cache:"no-store" }).then(r=>r.json());
+  console.log("READ:", read);
+}
+
+testStore().catch(console.error);
+</script>
