@@ -1,0 +1,35 @@
+name: Sync repo to Google Drive
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Write rclone config
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "${{ secrets.RCLONE_CONF }}" > ~/.config/rclone/rclone.conf
+
+      - name: Sync to Drive folder
+        env:
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+        run: |
+          # "gdrive:" is the remote name in rclone.conf (see below)
+          rclone sync . "gdrive:/${DRIVE_FOLDER_ID}" \
+            --exclude ".git/**" \
+            --exclude ".github/**" \
+            --exclude "node_modules/**" \
+            --exclude "**/*.psd" \
+            --delete-during \
+            -v
