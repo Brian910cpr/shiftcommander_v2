@@ -488,8 +488,8 @@ main{ padding:12px; }
 <script>
 /* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
-  url: "https://adr-fr.org/api/store",
-  token: "" // not used; worker injects it
+  url: "https://adr-fr.org/api/store"
+  // token: (REMOVE THIS if Worker injects it)
 };
 
 /* ===================== CONFIG ===================== */
@@ -556,7 +556,7 @@ async function storeGet(params){
   Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
 
   // If (and only if) you're NOT injecting token in the Worker:
-  // u.searchParams.set("token", STORE.token);
+  // if (STORE.token) u.searchParams.set("token", STORE.token);
 
   const r = await fetch(u.toString(), { cache:"no-store" });
   const j = await r.json();
@@ -755,15 +755,64 @@ document.querySelectorAll(".tabbtn").forEach(btn=>{
 
 /* ===================== ROSTER LOAD (optional) ===================== */
 async function tryLoadRoster(){
-  // If you later expose a Drive kind for roster, this will pick it up without breaking Beta1.
-  try{
-    const r = await storeGet({ kind:"members" });
-    if(Array.isArray(r) && r.length){
-      roster = r.map(x=> ({ id:String(x.id), name:String(x.name||x.full_name||x.display||x.id), meta:String(x.meta||"") }));
+  // Tries to pull the live roster from Drive (via GAS + CF worker).
+  // Supported shapes:
+  // 1) kind=roster  -> [ {id,name,meta,...}, ... ]
+  // 2) kind=members -> [ ... ] OR { members:[ ... ] }
+  // 3) kind=supervisor -> { roster:[ ... ] } OR { members:[ ... ] }
+  const candidateKinds = ["roster","members","supervisor"];
+
+  for (const kind of candidateKinds){
+    try{
+      const data = await storeGet({ kind });
+      let arr = null;
+
+      if (Array.isArray(data)) arr = data;
+      else if (data && Array.isArray(data.members)) arr = data.members;
+      else if (data && Array.isArray(data.roster)) arr = data.roster;
+
+      if (!arr || !arr.length) continue;
+
+      const mapped = arr
+        .map(x => {
+          const id = String(x.id ?? x.member_id ?? x.memberId ?? "").trim();
+          if (!id) return null;
+
+          const name =
+            String(
+              x.name ??
+              x.full_name ??
+              x.fullName ??
+              x.display ??
+              x.callsign ??
+              id
+            ).trim();
+
+          const meta = String(
+            x.meta ??
+            x.qual ??
+            x.level ??
+            x.rank ??
+            ""
+          ).trim();
+
+          // Common "inactive" flags
+          if (x.is_active === false || x.active === false || x.hidden === true || x.eligible === false) return null;
+
+          return { id, name, meta };
+        })
+        .filter(Boolean)
+        .sort((a,b)=> a.name.localeCompare(b.name));
+
+      if (mapped.length){
+        roster = mapped;
+        return true;
+      }
+    }catch(e){
+      // try next kind
     }
-  }catch(e){
-    // ignore; keep fallback
   }
+  return false;
 }
 
 /* ===================== PREFS UI ===================== */
@@ -1198,15 +1247,26 @@ function statusDisplay(status, note){
 
 /* ===================== MEMBER SELECTOR + STARTUP ===================== */
 async function init(){
-  // build member dropdown from roster (fallback) then try refresh roster from Drive
   const sel = document.getElementById("member");
-  sel.innerHTML = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
 
-  await tryLoadRoster();
-  sel.innerHTML = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+  function rebuildMemberSelect(preferId){
+    const opts = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+    sel.innerHTML = opts;
 
-  // Default selection: first
-  sel.value = roster[0]?.id || "default";
+    // Try to keep selection stable
+    const hasPrefer = preferId && roster.some(p=> String(p.id) === String(preferId));
+    sel.value = hasPrefer ? String(preferId) : (roster[0]?.id || "default");
+  }
+
+  // 1) Build from fallback roster immediately (so UI isn't blank)
+  rebuildMemberSelect(roster[0]?.id);
+
+  // 2) Try refresh roster from Drive (non-fatal)
+  const prev = sel.value;
+  const loaded = await tryLoadRoster();
+  if (loaded){
+    rebuildMemberSelect(prev);
+  }
 
   // Load current member
   setRangeDefaults();
