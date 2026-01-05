@@ -1,36 +1,171 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>ShiftCommander – Wallboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <style>
-    body { font-family: system-ui; background: #111; color: #0f0; margin:0; padding:14px; }
-    h1 { margin:0 0 10px 0; }
-    pre { font-size: 16px; white-space: pre-wrap; }
-    .muted{color:#7f7}
-  </style>
-</head>
-<body>
+<div id="wallboardGrid" class="wb-grid"></div>
 
-<h1>Wallboard</h1>
-<div class="muted">Source: https://adr-fr.org/api/store?kind=assignments</div>
-<pre id="out">Loading…</pre>
+<style>
+  /* Overall board grid */
+  .wb-grid{
+    display:grid;
+    grid-template-columns: repeat(7, minmax(140px, 1fr));
+    gap:10px;
+    padding:10px;
+  }
+
+  /* Day tile */
+  .wb-day{
+    border:1px solid #d7dbe2;
+    border-radius:10px;
+    background:#fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    overflow:hidden;
+    min-height:132px;
+    display:grid;
+
+    /* 5 rows: Day#, AM label, AM names, PM label, PM names */
+    grid-template-rows: 34px 18px 30px 18px 30px;
+  }
+
+  /* Header row (day number + optional weekday) */
+  .wb-dayhead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 10px;
+    border-bottom:1px solid #eef1f5;
+    background: linear-gradient(#fbfcfe, #ffffff);
+  }
+  .wb-daynum{
+    font-size:18px;
+    font-weight:800;
+    line-height:1;
+  }
+  .wb-weekday{
+    font-size:12px;
+    color:#6b7280;
+    font-weight:600;
+  }
+
+  .wb-label{
+    padding:0 10px;
+    font-size:11px;
+    letter-spacing:.08em;
+    color:#6b7280;
+    font-weight:800;
+    display:flex;
+    align-items:center;
+    text-transform:uppercase;
+  }
+
+  .wb-slot{
+    padding:4px 10px 8px 10px;
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    border-top:1px solid #f3f5f8;
+  }
+  .wb-slot:first-of-type{ border-top:none; }
+
+  .wb-pill{
+    font-size:11px;
+    font-weight:800;
+    color:#111827;
+    background:#eef2ff;
+    border:1px solid #dbe0ff;
+    border-radius:999px;
+    padding:2px 8px;
+    flex:0 0 auto;
+  }
+  .wb-names{
+    font-size:12px;
+    color:#111827;
+    line-height:1.25;
+    font-weight:600;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+  }
+  .wb-names .muted{
+    color:#9ca3af;
+    font-weight:700;
+  }
+
+  /* Status accents (optional) */
+  .wb-day.is-today{ outline:2px solid #111827; outline-offset:1px; }
+  .wb-day.is-open{ border-color:#f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.15); }
+  .wb-day.is-healthy{ border-color:#10b981; }
+</style>
 
 <script>
-const STORE = "https://adr-fr.org/api/store";
+  // Example data shape per date key
+  // Replace this with your real "published schedule" data.
+  const demo = {
+    "2026-01-04": {
+      weekday: "Sun",
+      am: { attendant: "Benson", driver: "Sherman (Open)" },
+      pm: { attendant: "Tripp", driver: "Ennis" }
+    },
+    "2026-01-05": {
+      weekday: "Mon",
+      am: { attendant: "Open", driver: "Open" },
+      pm: { attendant: "Burr", driver: "Open" }
+    }
+  };
 
-async function load() {
-  const res = await fetch(`${STORE}?kind=assignments&_ts=${Date.now()}`, { cache:"no-store" });
-  const data = await res.json();
-  // Your screenshot is exactly this: printing payload only.
-  document.getElementById("out").textContent =
-    JSON.stringify(data.payload || {}, null, 2);
-}
+  function fmtNames(slot){
+    const att = slot?.attendant ?? "Open";
+    const drv = slot?.driver ?? "Open";
+    const a = (att.toLowerCase() === "open") ? `<span class="muted">OPEN</span>` : att;
+    const d = (drv.toLowerCase() === "open" || drv.toLowerCase().includes("open"))
+      ? `<span class="muted">${drv.toUpperCase()}</span>` : drv;
+    return `${a} <span class="muted">•</span> ${d}`;
+  }
 
-load();
-setInterval(load, 30000);
+  function buildDayTile(isoDate, dayNum, weekday, slots){
+    const isToday = (new Date().toISOString().slice(0,10) === isoDate);
+    const anyOpen =
+      [slots?.am, slots?.pm].some(s =>
+        (s?.attendant ?? "").toLowerCase().includes("open") ||
+        (s?.driver ?? "").toLowerCase().includes("open")
+      );
+
+    const div = document.createElement("div");
+    div.className = "wb-day" + (isToday ? " is-today" : "") + (anyOpen ? " is-open" : "");
+
+    div.innerHTML = `
+      <div class="wb-dayhead">
+        <div class="wb-daynum">${dayNum}</div>
+        <div class="wb-weekday">${weekday || ""}</div>
+      </div>
+
+      <div class="wb-label">AM</div>
+      <div class="wb-slot">
+        <span class="wb-pill">Att • Drv</span>
+        <div class="wb-names">${fmtNames(slots?.am)}</div>
+      </div>
+
+      <div class="wb-label">PM</div>
+      <div class="wb-slot">
+        <span class="wb-pill">Att • Drv</span>
+        <div class="wb-names">${fmtNames(slots?.pm)}</div>
+      </div>
+    `;
+    return div;
+  }
+
+  // Render a simple range (you will replace with your month logic)
+  function renderWallboard(data){
+    const grid = document.getElementById("wallboardGrid");
+    grid.innerHTML = "";
+
+    // Sort keys for deterministic output
+    const keys = Object.keys(data).sort();
+    for(const iso of keys){
+      const d = new Date(iso + "T00:00:00");
+      const dayNum = d.getDate();
+      const weekday = data[iso]?.weekday || d.toLocaleDateString(undefined, { weekday:"short" });
+      const tile = buildDayTile(iso, dayNum, weekday, data[iso]);
+      grid.appendChild(tile);
+    }
+  }
+
+  renderWallboard(demo);
 </script>
-
-</body>
-</html>
