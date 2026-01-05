@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ShiftCommander — Member Availability</title>
+<title>ShiftCommander — Member Scheduling</title>
 
 <style>
 :root{
   --bg:#0b1020;
   --card:#111a33;
+  --card2:rgba(255,255,255,.045);
   --line:rgba(255,255,255,.12);
   --text:#eaf1ff;
   --muted:rgba(234,241,255,.55);
@@ -16,15 +17,15 @@
   --pref:#2bd27e;
   --avail:#5c8dff;
   --no:#ff5d5d;
-
-  /* visible neutral (NOT transparent) */
   --clear: rgba(255,255,255,.18);
+
+  --warn:#f4c542;
 }
 
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui}
 
-/* Header */
+/* Top header */
 header{
   position:sticky;top:0;z-index:10;
   background:linear-gradient(180deg,#050814,#050814cc);
@@ -33,7 +34,7 @@ header{
   display:flex;gap:12px;align-items:center;flex-wrap:wrap;
 }
 
-header .pill{
+.pill{
   background:rgba(255,255,255,.06);
   border:1px solid var(--line);
   border-radius:999px;
@@ -43,8 +44,8 @@ header .pill{
   flex-shrink:0;
 }
 
-header select{
-  min-width:220px;
+select{
+  min-width:240px;
   font-size:14px;
   background:rgba(255,255,255,.04);
   color:var(--text);
@@ -53,14 +54,7 @@ header select{
   padding:6px 8px;
 }
 
-/* Mode pill */
-#modePill{
-  cursor:pointer;
-  user-select:none;
-}
-#modePill b{color:rgba(234,241,255,.92)}
-
-/* Drive save pill */
+/* Save pill (quiet) */
 .savePill{
   display:flex; align-items:center; gap:10px;
   border:1px solid rgba(255,255,255,.12);
@@ -70,7 +64,7 @@ header select{
   min-height:34px;
   cursor: default;
   margin-left:auto;
-  max-width: 160px;
+  max-width: 180px;
 }
 .savePill .tiny{
   font-size:12px;
@@ -81,35 +75,82 @@ header select{
   text-overflow:ellipsis;
   line-height:1;
 }
-
 .dot{
   width:10px; height:10px; border-radius:999px;
   background: rgba(233,241,255,.26);
   box-shadow: 0 0 0 3px rgba(255,255,255,.06);
 }
-.dot.ok{
-  background:#2bd27e;
-  box-shadow: 0 0 0 3px rgba(43,210,126,.16);
-}
-.dot.warn{
-  background:#f4c542;
-  box-shadow: 0 0 0 3px rgba(244,197,66,.16);
-}
+.dot.ok{ background:#2bd27e; box-shadow: 0 0 0 3px rgba(43,210,126,.16); }
+.dot.warn{ background:var(--warn); box-shadow: 0 0 0 3px rgba(244,197,66,.16); }
 
+/* Tabs */
+.tabbar{
+  display:flex;
+  gap:8px;
+  padding:10px 12px 0;
+}
+.tabbtn{
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 12px;
+  cursor: pointer;
+  user-select:none;
+}
+.tabbtn:hover{border-color:rgba(255,255,255,.22)}
+.tabbtn.active{
+  background: rgba(92,141,255,.18);
+  border-color: rgba(92,141,255,.35);
+}
 main{ padding:12px; }
+.tab{ display:none; }
+.tab.active{ display:block; }
 
-/* Bulk panel (drawer) */
-.bulkPanel{
-  margin: 0 0 12px;
-  background: rgba(255,255,255,.045);
+/* Panels */
+.panel{
+  background: var(--card2);
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 14px;
-  padding: 10px 10px 12px;
+  padding: 10px;
+  margin-bottom: 12px;
 }
-.bulkRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.bulkTitle{font-weight:900;font-size:13px}
-.bulkHint{color:var(--muted);font-size:12px}
+.panelTitle{
+  font-weight: 900;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.panelHint{
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
 
+/* Toggle row */
+.togRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top:8px;
+}
+.toggle{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.10);
+}
+.toggle input{ transform: scale(1.1); }
+.toggle .lbl{ font-weight: 900; font-size: 12px; }
+.toggle .sub{ font-size: 11px; color: var(--muted); margin-top:2px; line-height:1.2; }
+.toggle .col{ display:flex; flex-direction:column; }
+
+/* Bulk tools */
 .bulkGrid{
   margin-top:8px;
   display:flex;
@@ -127,7 +168,6 @@ main{ padding:12px; }
   padding: 6px 8px;
   min-width: 160px;
 }
-
 .bulkBtns{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .bbtn{
   border:1px solid rgba(255,255,255,.14);
@@ -142,36 +182,27 @@ main{ padding:12px; }
 .bbtn:hover{border-color:rgba(255,255,255,.25)}
 .bbtn.primary{background: rgba(92,141,255,.18); border-color: rgba(92,141,255,.35)}
 .bbtn.danger{background: rgba(255,93,93,.16); border-color: rgba(255,93,93,.30)}
+.bbtn.ghost{background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.12)}
 
-.bulkNote{
-  margin-top:8px;
-  font-size:11px;
-  color: rgba(234,241,255,.60);
-  line-height:1.25;
-}
-
-/* MONTH LAYOUT */
+/* Calendar month layout */
 .monthRow{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
   gap:12px;
   margin-bottom:12px;
 }
-
 .month{
   background:var(--card);
   border:1px solid var(--line);
   border-radius:14px;
   padding:8px;
 }
-
 .month h3{
   margin:2px 0 6px;
   font-size:14px;
   font-weight:900;
   text-align:center;
 }
-
 .dow{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -180,7 +211,6 @@ main{ padding:12px; }
   text-align:center;
   margin-bottom:4px;
 }
-
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -188,7 +218,7 @@ main{ padding:12px; }
   align-content:start;
 }
 
-/* DAY CELLS — HARD LOCKED, NUMBER BESIDE PILLS */
+/* Day cells */
 .day{
   height:30px;
   border:1px solid var(--line);
@@ -214,28 +244,21 @@ main{ padding:12px; }
 
 /* pill stack */
 .bars{
-  margin-top:0;
   display:flex;
   flex-direction:column;
   gap:3px;
   align-items:flex-start;
 }
-
-/* pills: thicker + half-length */
 .bar{
-  position:relative;
   width:34px;
   height:10px;
   border-radius:999px;
   cursor:pointer;
-
   background: var(--clear);
   border: 1px solid rgba(255,255,255,.25);
-
   display:flex;
   align-items:center;
   justify-content:center;
-
   font-size:9px;
   font-weight:900;
   line-height:1;
@@ -244,36 +267,108 @@ main{ padding:12px; }
   user-select:none;
 }
 .bar::after{ content: attr(data-label); }
-
-/* Explicit states */
-.bar.pref{ background:var(--pref); border-color:var(--pref); }
-.bar.avail{ background:var(--avail); border-color:var(--avail); }
-.bar.no{ background:var(--no); border-color:var(--no); }
-
-/* Text on colored fills */
-.bar.pref, .bar.avail, .bar.no{ color: rgba(0,0,0,.70); }
-
-/* Clear is quieter but visible */
+.bar.pref{ background:var(--pref); border-color:var(--pref); color: rgba(0,0,0,.70); }
+.bar.avail{ background:var(--avail); border-color:var(--avail); color: rgba(0,0,0,.70); }
+.bar.no{ background:var(--no); border-color:var(--no); color: rgba(0,0,0,.70); }
 .bar:not(.pref):not(.avail):not(.no){ opacity:.75; }
+
+/* Preferences tab list */
+.searchRow{
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  margin: 8px 0 10px;
+}
+.searchRow input{
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 7px 10px;
+  min-width: 260px;
+}
+.roster{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:8px;
+}
+.person{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.person .name{ font-weight: 900; font-size: 12px; }
+.person .meta{ font-size: 11px; color: var(--muted); }
+
+/* Impact tab */
+.weekBlock{
+  border:1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(255,255,255,.03);
+  margin-bottom: 10px;
+  position: relative;
+}
+.weekTag{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  font-weight: 900;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.bracket{
+  position:absolute;
+  top:10px;
+  bottom:10px;
+  width:10px;
+  border-radius: 10px;
+  opacity: .9;
+}
+.bracket.left{ left:10px; }
+.bracket.right{ right:10px; }
+.bracket.active{ background: rgba(255,255,255,.65); }
+.bracket.controlled{ background: rgba(255,255,255,.25); }
+.bracket.published{ background: rgba(43,210,126,.60); }
+.bracket.planning{ background: rgba(43,210,126,.18); border:1px dashed rgba(43,210,126,.30); background-clip: padding-box; }
+
+.weekInner{ padding-left: 22px; padding-right: 22px; }
+.shiftList{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:8px;
+}
+.shiftCard{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.shiftCard .t{ font-weight: 900; font-size: 12px; }
+.shiftCard .s{ color: var(--muted); font-size: 11px; margin-top: 2px; }
+.badgeWarn{
+  display:inline-flex;
+  gap:6px;
+  align-items:center;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(244,197,66,.95);
+}
+.smallNote{ font-size: 11px; color: var(--muted); margin-top: 8px; line-height:1.25; }
 </style>
 </head>
 
 <body>
 
 <header>
-  <div class="pill">Availability</div>
+  <div class="pill">Member Scheduling</div>
 
   <div class="pill">
     Member:
-    <!-- IMPORTANT: option values should be stable member IDs -->
-    <select id="member">
-      <option value="203">Lynnsey Benson</option>
-      <option value="brian">Brian Ennis</option>
-    </select>
-  </div>
-
-  <div class="pill" id="modePill" title="Toggle Bulk Push tools">
-    Mode: <b id="modeLabel">Fine-Tune</b>
+    <select id="member"></select>
   </div>
 
   <div class="savePill" id="savepill" title="Checking…">
@@ -282,86 +377,180 @@ main{ padding:12px; }
   </div>
 </header>
 
+<div class="tabbar">
+  <div class="tabbtn active" data-tab="tabAvail">Availability</div>
+  <div class="tabbtn" data-tab="tabPrefs">Preferences</div>
+  <div class="tabbtn" data-tab="tabImpact">Impact</div>
+</div>
+
 <main>
-  <!-- Bulk drawer -->
-  <div id="bulkPanel" class="bulkPanel" style="display:none;">
-    <div class="bulkRow">
-      <div class="bulkTitle">Quick Set (Bulk)</div>
-      <div class="bulkHint">Stamp a baseline fast, then fine-tune on the calendar below.</div>
-    </div>
+  <!-- Availability -->
+  <section id="tabAvail" class="tab active">
+    <div class="panel">
+      <div class="panelTitle">Global preferences</div>
+      <div class="panelHint">
+        These don’t block staffing — they simply help the solver break ties and reduce friction.
+      </div>
 
-    <div class="bulkGrid">
-      <label class="bulkField">
-        <span>Pattern</span>
-        <select id="bulkPattern">
-          <option value="week1">1-Week Pattern (repeat)</option>
-          <option value="week2">2-Week Alternating</option>
-        </select>
-      </label>
+      <div class="togRow">
+        <label class="toggle">
+          <input id="chkPrefer24" type="checkbox">
+          <span class="col">
+            <span class="lbl">Prefer 24-hour shifts</span>
+            <span class="sub">Small bonus for AM↔PM or PM→next AM continuity when possible.</span>
+          </span>
+        </label>
 
-      <label class="bulkField">
-        <span>From</span>
-        <input id="bulkFrom" type="date">
-      </label>
-
-      <label class="bulkField">
-        <span>To</span>
-        <input id="bulkTo" type="date">
-      </label>
-
-      <div class="bulkBtns">
-        <button id="btnCopyFwd" class="bbtn" type="button">Copy this week → Next</button>
-        <button id="btnApplyRange" class="bbtn primary" type="button">Apply to Range</button>
-        <button id="btnClearRange" class="bbtn danger" type="button">Clear Range</button>
+        <label class="toggle">
+          <input id="chkBlankOk" type="checkbox" checked>
+          <span class="col">
+            <span class="lbl">If I left a day blank, you may still schedule me if needed</span>
+            <span class="sub">Blank stays eligible (0 points). Turn off if you don’t want “lingering zero” pull-ins.</span>
+          </span>
+        </label>
       </div>
     </div>
 
-    <div class="bulkNote" id="bulkNote">
-      Bulk uses your <b>current week (Thu→Wed)</b> as the template.
-      Click the day-number to set a full-day (AM+PM) state quickly, then stamp it.
-    </div>
-  </div>
+    <div class="panel">
+      <div class="panelTitle">Quick Set (Bulk)</div>
+      <div class="panelHint">Stamp a baseline fast, then click pills below to fine-tune exceptions.</div>
 
-  <!-- Calendar -->
-  <div id="months"></div>
+      <div class="bulkGrid">
+        <label class="bulkField">
+          <span>Pattern</span>
+          <select id="bulkPattern">
+            <option value="week1">Repeat 1-week template</option>
+            <option value="week2">Alternate 2-week templates</option>
+          </select>
+        </label>
+
+        <label class="bulkField">
+          <span>From</span>
+          <input id="bulkFrom" type="date">
+        </label>
+
+        <label class="bulkField">
+          <span>To</span>
+          <input id="bulkTo" type="date">
+        </label>
+
+        <div class="bulkBtns">
+          <button id="btnRepeatUntil" class="bbtn primary" type="button">Copy this week → until date</button>
+          <button id="btnApplyRange" class="bbtn ghost" type="button">Apply pattern to range</button>
+          <button id="btnClearRange" class="bbtn danger" type="button">Clear range</button>
+        </div>
+      </div>
+
+      <div class="smallNote">
+        Tip: click the <b>day number</b> to set AM+PM together (fast “full-day” change).
+      </div>
+    </div>
+
+    <div id="months"></div>
+  </section>
+
+  <!-- Preferences -->
+  <section id="tabPrefs" class="tab">
+    <div class="panel">
+      <div class="panelTitle">Compatibility (soft)</div>
+      <div class="panelHint">
+        “Rather not work with” is a soft preference. It never blocks staffing and never penalizes the other person.
+        If a conflict exists, <b>you</b> may lose a few points so someone else can win that seat when possible.
+      </div>
+
+      <div class="searchRow">
+        <input id="avoidSearch" type="text" placeholder="Search roster…" />
+        <button id="btnAvoidClear" class="bbtn danger" type="button">Clear list</button>
+      </div>
+
+      <div id="avoidRoster" class="roster"></div>
+
+      <div class="smallNote">
+        Private by default: this tab stays tucked away so availability stays clean and non-social.
+      </div>
+    </div>
+  </section>
+
+  <!-- Impact -->
+  <section id="tabImpact" class="tab">
+    <div class="panel">
+      <div class="panelTitle">Impact (read-only)</div>
+      <div class="panelHint">
+        This view mirrors the “Published” window so you can see the real-world effect of your changes.
+        If you drop something critical, you’ll see a warning icon — the shift won’t flip to “OPEN” until on-deck outreach is exhausted.
+      </div>
+    </div>
+
+    <div id="impactWrap"></div>
+  </section>
 </main>
 
 <script>
-/* ===================== DRIVE STORE CONFIG (PUT IT HERE) ===================== */
+/* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
   url: "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec",
   token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"
 };
 
-/* ===================== CALENDAR CONFIG ===================== */
+/* ===================== CONFIG ===================== */
 const MONTHS_AHEAD = 6;
 const STATES = ["clear","pref","avail","no"];
+const AV_KIND = "member_availability";
+
+// Optional (Impact tab) kinds. Beta1 reads if present; otherwise shows “not connected”
+const ASSIGN_KIND = "member_assignments"; // suggested format below
+
+/* ===================== STATE ===================== */
 const today = new Date();
 
-/* In-memory state: dateISO -> { am, pm } */
-const state = {}; // { "YYYY-MM-DD": {am, pm} }
+// availability state: dateISO -> {am, pm}
+const stateDays = {};
 
-/* Helpers */
+// prefs state
+let prefs = {
+  prefer_24: false,
+  blank_ok: true,     // if false, blank becomes slight penalty in solver later
+  avoid_with: []      // array of member_ids
+};
+
+// roster (for avoid list)
+let roster = [
+  { id:"203", name:"Lynnsey Benson", meta:"" },
+  { id:"brian", name:"Brian Ennis", meta:"" }
+];
+
+// published assignments for member (Impact tab), if available
+// expected structure:
+// { weeks: [ { phase:"published|controlled|active|planning", week_start:"YYYY-MM-DD", items:[{date:"YYYY-MM-DD", shift:"AM|PM", role:"EMT|ALS|Driver", status:"OK|ON_DECK|OPEN", note:"..."} ] } ] }
+let memberAssignments = null;
+
+/* ===================== HELPERS ===================== */
 function iso(d){ return d.toISOString().slice(0,10); }
 function parseISO(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
 function addDays(d,n){ const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
 function cycle(s){ return STATES[(STATES.indexOf(s)+1)%STATES.length]; }
 function isPast(isoDate){ return isoDate < iso(new Date()); }
+
 function getActiveMemberId(){
   const sel = document.getElementById("member");
   return sel ? String(sel.value || "").trim() : "default";
 }
+function getActiveMemberName(){
+  const sel = document.getElementById("member");
+  if(!sel) return "";
+  return sel.options[sel.selectedIndex]?.textContent || "";
+}
 
-/* Week anchor: Thursday-start week (Thu→Wed) */
+/* Thu→Wed week anchor */
 function startOfWeekThursday(d){
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const dow = x.getDay(); // 0 Sun .. 6 Sat
+  const dow = x.getDay(); // 0..6
   const target = 4; // Thu
   const delta = (dow - target + 7) % 7;
   return addDays(x, -delta);
 }
 
-/* ===================== STORE HELPERS (same style as wallboard) ===================== */
+/* ===================== STORE HELPERS ===================== */
 async function storeGet(params){
   const u = new URL(STORE.url);
   Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
@@ -389,16 +578,13 @@ function setDrivePill({state, label, tooltip}){
   const tip = document.getElementById("driveTip");
   const pill = document.getElementById("savepill");
   if(!dot || !tip || !pill) return;
-
   dot.classList.remove("ok","warn");
   dot.classList.add(state === "ok" ? "ok" : "warn");
-
   tip.textContent = label;
   pill.title = tooltip || label;
 }
 
-/* ===================== AVAILABILITY PERSISTENCE (Local + Drive) ===================== */
-const AV_KIND = "member_availability";
+/* ===================== LOCAL + DRIVE PERSISTENCE ===================== */
 const LS_PREFIX = "sc:avail:";
 const LS_META_PREFIX = "sc:availmeta:";
 
@@ -427,13 +613,22 @@ function setMeta(memberId, meta){
   localStorage.setItem(lsMetaKey(memberId), JSON.stringify(meta));
 }
 
-function applyPayloadToState(payload){
-  if(!payload || !payload.days) return;
-  for(const [dateISO, v] of Object.entries(payload.days)){
-    state[dateISO] ||= { am:"clear", pm:"clear" };
-    if(v && typeof v === "object"){
-      if(v.am) state[dateISO].am = v.am;
-      if(v.pm) state[dateISO].pm = v.pm;
+function applyPayload(payload){
+  if(!payload) return;
+  if(payload.prefs){
+    prefs = {
+      prefer_24: !!payload.prefs.prefer_24,
+      blank_ok: payload.prefs.blank_ok !== false,
+      avoid_with: Array.isArray(payload.prefs.avoid_with) ? payload.prefs.avoid_with.slice() : []
+    };
+  }
+  if(payload.days){
+    for(const [dateISO, v] of Object.entries(payload.days)){
+      stateDays[dateISO] ||= { am:"clear", pm:"clear" };
+      if(v && typeof v === "object"){
+        if(v.am) stateDays[dateISO].am = v.am;
+        if(v.pm) stateDays[dateISO].pm = v.pm;
+      }
     }
   }
 }
@@ -445,12 +640,7 @@ function markDirty(memberId){
   meta.dirty = true;
   meta.lastError = null;
   setMeta(memberId, meta);
-
-  setDrivePill({
-    state:"warn",
-    label:"Saving…",
-    tooltip:"Changes saved locally. Syncing to Drive…"
-  });
+  setDrivePill({ state:"warn", label:"Saving…", tooltip:"Saved locally. Syncing to Drive…" });
 }
 
 function scheduleSync(memberId){
@@ -462,16 +652,20 @@ async function trySync(memberId){
   const meta = getMeta(memberId);
   if(!meta.dirty) return;
 
-  // Always keep local current
-  const payload = { updated_at: nowISO(), days: state };
+  const payload = {
+    updated_at: nowISO(),
+    prefs: {
+      prefer_24: !!prefs.prefer_24,
+      blank_ok: prefs.blank_ok !== false,
+      avoid_with: Array.isArray(prefs.avoid_with) ? prefs.avoid_with.slice() : []
+    },
+    days: stateDays
+  };
+
   setLocalPayload(memberId, payload);
 
   if(!navigator.onLine){
-    setDrivePill({
-      state:"warn",
-      label:"Saved locally",
-      tooltip:"Offline. Saved on this device and will sync when back online."
-    });
+    setDrivePill({ state:"warn", label:"Saved locally", tooltip:"Offline. Will sync when back online." });
     return;
   }
 
@@ -483,44 +677,40 @@ async function trySync(memberId){
     meta.lastError = null;
     setMeta(memberId, meta);
 
-    setDrivePill({
-      state:"ok",
-      label:"Saved",
-      tooltip:`Synced to Drive.\nLast sync: ${meta.lastPushISO}`
-    });
+    setDrivePill({ state:"ok", label:"Saved", tooltip:`Synced to Drive.\nLast sync: ${meta.lastPushISO}` });
   }catch(err){
     meta.lastError = String(err.message || err);
     setMeta(memberId, meta);
-    setDrivePill({
-      state:"warn",
-      label:"Saved locally",
-      tooltip:`Drive sync failed.\n${meta.lastError}\nStill saved locally.`
-    });
+    setDrivePill({ state:"warn", label:"Saved locally", tooltip:`Drive sync failed.\n${meta.lastError}\nStill saved locally.` });
   }
 }
 
-function onAvailabilityChanged(){
+function onAnyChange(){
   const memberId = getActiveMemberId();
   markDirty(memberId);
   scheduleSync(memberId);
 }
 
-async function loadAvailability(memberId){
+async function loadMember(memberId){
   // local first
   const local = getLocalPayload(memberId);
   if(local){
-    applyPayloadToState(local);
+    applyPayload(local);
     setDrivePill({ state:"warn", label:"Loaded", tooltip:"Loaded locally. Checking Drive…" });
   }else{
-    setDrivePill({ state:"warn", label:"Checking…", tooltip:"Checking Drive for saved availability…" });
+    setDrivePill({ state:"warn", label:"Checking…", tooltip:"Checking Drive…" });
   }
 
-  // drive
+  // drive authoritative
   try{
     const remote = await storeGet({ kind: AV_KIND, member_id: memberId });
     if(remote){
-      applyPayloadToState(remote);
+      // reset local state then apply
+      for(const k of Object.keys(stateDays)) delete stateDays[k];
+      prefs = { prefer_24:false, blank_ok:true, avoid_with:[] };
+      applyPayload(remote);
       setLocalPayload(memberId, remote);
+
       const meta = getMeta(memberId);
       meta.dirty = false;
       meta.lastPushISO = nowISO();
@@ -532,19 +722,124 @@ async function loadAvailability(memberId){
       setDrivePill({ state:"ok", label:"Saved", tooltip:"No Drive record yet — starting fresh." });
     }
   }catch(err){
-    setDrivePill({
-      state:"warn",
-      label:"Local only",
-      tooltip:`Couldn’t reach Drive.\n${err.message || err}\nWorking locally.`
-    });
+    setDrivePill({ state:"warn", label:"Local only", tooltip:`Couldn’t reach Drive.\n${err.message || err}\nWorking locally.` });
   }
+
+  // refresh UI
+  syncPrefsUI();
+  buildCalendar();
+  renderAvoidRoster();
+  await loadImpact(); // best effort
 }
+
 window.addEventListener("online", ()=> trySync(getActiveMemberId()));
 
-/* ===================== UI BUILD ===================== */
-function build(){
+/* ===================== TAB UI ===================== */
+function setTab(id){
+  document.querySelectorAll(".tab").forEach(el=> el.classList.remove("active"));
+  document.querySelectorAll(".tabbtn").forEach(el=> el.classList.remove("active"));
+  document.getElementById(id)?.classList.add("active");
+  document.querySelector(`.tabbtn[data-tab="${id}"]`)?.classList.add("active");
+  if(id === "tabImpact") loadImpact(); // refresh when opening
+}
+document.querySelectorAll(".tabbtn").forEach(btn=>{
+  btn.addEventListener("click", ()=> setTab(btn.dataset.tab));
+});
+
+/* ===================== ROSTER LOAD (optional) ===================== */
+async function tryLoadRoster(){
+  // If you later expose a Drive kind for roster, this will pick it up without breaking Beta1.
+  try{
+    const r = await storeGet({ kind:"members" });
+    if(Array.isArray(r) && r.length){
+      roster = r.map(x=> ({ id:String(x.id), name:String(x.name||x.full_name||x.display||x.id), meta:String(x.meta||"") }));
+    }
+  }catch(e){
+    // ignore; keep fallback
+  }
+}
+
+/* ===================== PREFS UI ===================== */
+function syncPrefsUI(){
+  const chk24 = document.getElementById("chkPrefer24");
+  const chkBlank = document.getElementById("chkBlankOk");
+  if(chk24) chk24.checked = !!prefs.prefer_24;
+  if(chkBlank) chkBlank.checked = prefs.blank_ok !== false;
+}
+document.getElementById("chkPrefer24")?.addEventListener("change", (e)=>{
+  prefs.prefer_24 = !!e.target.checked;
+  onAnyChange();
+});
+document.getElementById("chkBlankOk")?.addEventListener("change", (e)=>{
+  prefs.blank_ok = !!e.target.checked;
+  onAnyChange();
+});
+
+/* ===================== AVOID LIST UI ===================== */
+function renderAvoidRoster(){
+  const wrap = document.getElementById("avoidRoster");
+  if(!wrap) return;
+
+  const q = (document.getElementById("avoidSearch")?.value || "").trim().toLowerCase();
+  wrap.innerHTML = "";
+
+  const activeId = getActiveMemberId();
+  const list = roster
+    .filter(p => p.id !== activeId)
+    .filter(p => !q || p.name.toLowerCase().includes(q) || (p.meta||"").toLowerCase().includes(q))
+    .sort((a,b)=> a.name.localeCompare(b.name));
+
+  for(const p of list){
+    const el = document.createElement("label");
+    el.className = "person";
+
+    const checked = prefs.avoid_with.includes(p.id);
+    el.innerHTML = `
+      <input type="checkbox" ${checked ? "checked":""}/>
+      <div style="display:flex;flex-direction:column;">
+        <div class="name">${escapeHtml(p.name)}</div>
+        <div class="meta">${escapeHtml(p.meta || "")}</div>
+      </div>
+    `;
+
+    const cb = el.querySelector("input");
+    cb.addEventListener("change", ()=>{
+      const has = prefs.avoid_with.includes(p.id);
+      if(cb.checked && !has) prefs.avoid_with.push(p.id);
+      if(!cb.checked && has) prefs.avoid_with = prefs.avoid_with.filter(x=> x !== p.id);
+      onAnyChange();
+    });
+
+    wrap.appendChild(el);
+  }
+}
+
+document.getElementById("avoidSearch")?.addEventListener("input", renderAvoidRoster);
+document.getElementById("btnAvoidClear")?.addEventListener("click", ()=>{
+  prefs.avoid_with = [];
+  renderAvoidRoster();
+  onAnyChange();
+});
+
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* ===================== CALENDAR BUILD ===================== */
+function ensureDay(dateISO){
+  stateDays[dateISO] ||= { am:"clear", pm:"clear" };
+  return stateDays[dateISO];
+}
+
+function buildCalendar(){
   const wrap = document.getElementById("months");
-  wrap.innerHTML="";
+  if(!wrap) return;
+  wrap.innerHTML = "";
 
   let row;
   for(let i=0;i<MONTHS_AHEAD;i++){
@@ -574,7 +869,7 @@ function buildMonth(offset){
   const start = new Date(y,m,1).getDay();
   const days  = new Date(y,m+1,0).getDate();
 
-  for(let i=0;i<start;i++) grid.appendChild(blank());
+  for(let i=0;i<start;i++) grid.appendChild(blankCell());
 
   for(let day=1; day<=days; day++){
     const dateISO = iso(new Date(y,m,day));
@@ -583,14 +878,14 @@ function buildMonth(offset){
   return month;
 }
 
-function blank(){
+function blankCell(){
   const d=document.createElement("div");
   d.className="day blank";
   return d;
 }
 
 function dayCell(dateISO, day){
-  state[dateISO] ||= { am:"clear", pm:"clear" };
+  ensureDay(dateISO);
 
   const d=document.createElement("div");
   d.className="day";
@@ -600,36 +895,40 @@ function dayCell(dateISO, day){
   num.className="dayNum";
   num.textContent=day;
 
-  // Clicking the number sets BOTH AM and PM (your “24” shortcut)
+  // Day-number toggles AM+PM together (full-day shortcut)
   num.onclick=()=>{
-    const next = cycle(state[dateISO].am);
-    state[dateISO].am = next;
-    state[dateISO].pm = next;
+    const next = cycle(stateDays[dateISO].am);
+    stateDays[dateISO].am = next;
+    stateDays[dateISO].pm = next;
     render();
-    onAvailabilityChanged();
+    onAnyChange();
+    // Impact updates should reflect changes
+    if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
   };
 
   const bars=document.createElement("div");
   bars.className="bars";
 
   const am=bar(()=>{
-    state[dateISO].am = cycle(state[dateISO].am);
+    stateDays[dateISO].am = cycle(stateDays[dateISO].am);
     render();
-    onAvailabilityChanged();
+    onAnyChange();
+    if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
   },"AM");
 
   const pm=bar(()=>{
-    state[dateISO].pm = cycle(state[dateISO].pm);
+    stateDays[dateISO].pm = cycle(stateDays[dateISO].pm);
     render();
-    onAvailabilityChanged();
+    onAnyChange();
+    if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
   },"PM");
 
   bars.append(am, pm);
   d.append(num, bars);
 
   function render(){
-    am.className = `bar ${state[dateISO].am}`;
-    pm.className = `bar ${state[dateISO].pm}`;
+    am.className = `bar ${stateDays[dateISO].am}`;
+    pm.className = `bar ${stateDays[dateISO].pm}`;
   }
   render();
   return d;
@@ -643,37 +942,15 @@ function bar(fn, label){
   return b;
 }
 
-/* ===================== MODE TOGGLE (Bulk drawer) ===================== */
-let bulkOpen = false;
-function setMode(open){
-  bulkOpen = open;
-  document.getElementById("bulkPanel").style.display = bulkOpen ? "block" : "none";
-  document.getElementById("modeLabel").textContent = bulkOpen ? "Bulk Push" : "Fine-Tune";
-  document.getElementById("modePill").title =
-    bulkOpen
-      ? "Bulk Push is open. Stamp patterns, then fine-tune on the calendar."
-      : "Fine-Tune mode. Click to open Bulk Push tools.";
-}
-document.getElementById("modePill")?.addEventListener("click", ()=> setMode(!bulkOpen));
-setMode(false);
-
-/* ===================== BULK ACTIONS (writes into SAME state model) ===================== */
-function ensureDay(dateISO){
-  state[dateISO] ||= { am:"clear", pm:"clear" };
-  return state[dateISO];
-}
-
+/* ===================== BULK TOOLS ===================== */
 function setRangeDefaults(){
-  // Default range: next 28 days (starting tomorrow)
   const from = addDays(new Date(), 1);
   const to   = addDays(from, 27);
   document.getElementById("bulkFrom").value = iso(from);
   document.getElementById("bulkTo").value   = iso(to);
 }
 
-function templateWeekA(){
-  // Current week anchored Thu→Wed, uses whatever is currently in state
-  const start = startOfWeekThursday(new Date());
+function templateWeek(start){
   const out = [];
   for(let i=0;i<7;i++){
     const ds = iso(addDays(start, i));
@@ -683,44 +960,26 @@ function templateWeekA(){
   return out;
 }
 
-function templateWeekB(){
-  // Next week anchored Thu→Wed
-  const start = addDays(startOfWeekThursday(new Date()), 7);
-  const out = [];
-  for(let i=0;i<7;i++){
-    const ds = iso(addDays(start, i));
-    const v = ensureDay(ds);
-    out.push({ date: ds, am: v.am, pm: v.pm });
-  }
-  // If it's totally blank, it's okay — it means your alternating week isn’t defined yet.
-  return out;
+// current Thu→Wed template
+function templateA(){
+  return templateWeek(startOfWeekThursday(new Date()));
 }
-
-function copyWeekForward(){
-  const startA = startOfWeekThursday(new Date());
-  const startB = addDays(startA, 7);
-
-  for(let i=0;i<7;i++){
-    const src = iso(addDays(startA, i));
-    const dst = iso(addDays(startB, i));
-    const v = ensureDay(src);
-    state[dst] = { am: v.am, pm: v.pm };
-  }
+// next Thu→Wed template
+function templateB(){
+  return templateWeek(addDays(startOfWeekThursday(new Date()), 7));
 }
 
 function applyPatternToRange(){
   const fromISO = document.getElementById("bulkFrom").value;
   const toISO   = document.getElementById("bulkTo").value;
   if(!fromISO || !toISO) return;
-
   const from = parseISO(fromISO);
   const to   = parseISO(toISO);
   if(to < from) return;
 
   const pattern = document.getElementById("bulkPattern").value;
-
-  const A = templateWeekA();
-  const B = templateWeekB();
+  const A = templateA();
+  const B = templateB();
 
   const baseStart = startOfWeekThursday(from);
 
@@ -729,21 +988,37 @@ function applyPatternToRange(){
        d = addDays(d,1)){
 
     const ds = iso(d);
-
-    // Find which week block this day belongs to, relative to baseStart
     const weekStart = startOfWeekThursday(d);
     const weekIndex = Math.floor((weekStart.getTime() - baseStart.getTime()) / (7*24*60*60*1000));
-
     const dayIndex = Math.floor((d.getTime() - weekStart.getTime()) / (24*60*60*1000)); // 0..6
 
-    let src;
-    if(pattern === "week2"){
-      src = (weekIndex % 2 === 0) ? A[dayIndex] : B[dayIndex];
-    }else{
-      src = A[dayIndex];
-    }
+    const src = (pattern === "week2")
+      ? ((weekIndex % 2 === 0) ? A[dayIndex] : B[dayIndex])
+      : A[dayIndex];
 
-    state[ds] = { am: src.am, pm: src.pm };
+    stateDays[ds] = { am: src.am, pm: src.pm };
+  }
+}
+
+// copy this week forward repeatedly until "To" date
+function repeatThisWeekUntil(){
+  const toISO = document.getElementById("bulkTo").value;
+  if(!toISO) return;
+  const to = parseISO(toISO);
+
+  const srcStart = startOfWeekThursday(new Date());
+  const A = templateWeek(srcStart);
+
+  // start stamping from the next week boundary after today
+  let stampStart = addDays(srcStart, 7);
+
+  while(stampStart <= to){
+    for(let i=0;i<7;i++){
+      const ds = iso(addDays(stampStart, i));
+      if(parseISO(ds) > to) break;
+      stateDays[ds] = { am: A[i].am, pm: A[i].pm };
+    }
+    stampStart = addDays(stampStart, 7);
   }
 }
 
@@ -751,7 +1026,6 @@ function clearRange(){
   const fromISO = document.getElementById("bulkFrom").value;
   const toISO   = document.getElementById("bulkTo").value;
   if(!fromISO || !toISO) return;
-
   const from = parseISO(fromISO);
   const to   = parseISO(toISO);
   if(to < from) return;
@@ -760,44 +1034,191 @@ function clearRange(){
        d <= to;
        d = addDays(d,1)){
     const ds = iso(d);
-    state[ds] = { am:"clear", pm:"clear" };
+    stateDays[ds] = { am:"clear", pm:"clear" };
   }
 }
 
-function commitBulkChange(){
-  // Re-render UI + save once (debounced sync handles the rest)
-  build();
-  onAvailabilityChanged();
+function commitBulk(){
+  buildCalendar();
+  onAnyChange();
+  if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
 }
 
-/* Wire buttons */
-document.getElementById("btnCopyFwd")?.addEventListener("click", ()=>{
-  copyWeekForward();
-  commitBulkChange();
-});
+document.getElementById("btnRepeatUntil")?.addEventListener("click", ()=>{ repeatThisWeekUntil(); commitBulk(); });
+document.getElementById("btnApplyRange")?.addEventListener("click", ()=>{ applyPatternToRange(); commitBulk(); });
+document.getElementById("btnClearRange")?.addEventListener("click", ()=>{ clearRange(); commitBulk(); });
 
-document.getElementById("btnApplyRange")?.addEventListener("click", ()=>{
-  applyPatternToRange();
-  commitBulkChange();
-});
+/* ===================== IMPACT TAB ===================== */
+async function loadImpact(){
+  const wrap = document.getElementById("impactWrap");
+  if(!wrap) return;
 
-document.getElementById("btnClearRange")?.addEventListener("click", ()=>{
-  clearRange();
-  commitBulkChange();
-});
+  // Always render something immediately
+  wrap.innerHTML = `
+    <div class="panel">
+      <div class="panelTitle">Published view</div>
+      <div class="panelHint">Loading…</div>
+    </div>
+  `;
 
-/* ===================== STARTUP ===================== */
-build();
-setRangeDefaults();
-loadAvailability(getActiveMemberId());
+  // Best-effort fetch member assignments
+  memberAssignments = null;
+  try{
+    const p = await storeGet({ kind: ASSIGN_KIND, member_id: getActiveMemberId() });
+    if(p && p.weeks && Array.isArray(p.weeks)) memberAssignments = p;
+  }catch(e){
+    // ignore; we will render fallback
+  }
 
-document.getElementById("member")?.addEventListener("change", async ()=>{
-  // wipe current in-memory state, rebuild, then load for new member
-  for(const k of Object.keys(state)) delete state[k];
-  build();
+  if(!memberAssignments){
+    wrap.innerHTML = `
+      <div class="panel">
+        <div class="panelTitle">No published roster connected (yet)</div>
+        <div class="panelHint">
+          Beta 1 can show real impact as soon as the Wallboard/Supervisor pipeline publishes a member view
+          (recommended Drive kind: <b>${ASSIGN_KIND}</b>).
+        </div>
+        <div class="smallNote">
+          For now: your Availability + Preferences are saving and will be used by the solver.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Render weeks
+  wrap.innerHTML = "";
+  for(const w of memberAssignments.weeks){
+    wrap.appendChild(renderWeekBlock(w));
+  }
+}
+
+function renderWeekBlock(w){
+  const phase = String(w.phase || "published").toLowerCase();
+  const weekStart = String(w.week_start || "");
+  const tagLabel = phaseLabel(phase, weekStart);
+
+  const el = document.createElement("div");
+  el.className = "weekBlock";
+
+  // brackets
+  const bl = document.createElement("div");
+  bl.className = `bracket left ${phase}`;
+  const br = document.createElement("div");
+  br.className = `bracket right ${phase}`;
+  el.append(bl, br);
+
+  const inner = document.createElement("div");
+  inner.className = "weekInner";
+
+  inner.innerHTML = `
+    <div class="weekTag">${escapeHtml(tagLabel)}</div>
+    <div class="shiftList"></div>
+  `;
+
+  const list = inner.querySelector(".shiftList");
+  const items = Array.isArray(w.items) ? w.items : [];
+
+  // Sort by date then shift
+  items.sort((a,b)=>{
+    const da = String(a.date||"");
+    const db = String(b.date||"");
+    if(da !== db) return da.localeCompare(db);
+    return String(a.shift||"").localeCompare(String(b.shift||""));
+  });
+
+  for(const it of items){
+    list.appendChild(renderShiftCard(it));
+  }
+
+  // Footer note for planning-style phases
+  if(phase === "planning" && w.resolve_by){
+    const note = document.createElement("div");
+    note.className = "smallNote";
+    note.textContent = `To be resolved on Thu ${w.resolve_by}`;
+    inner.appendChild(note);
+  }
+
+  el.appendChild(inner);
+  return el;
+}
+
+function phaseLabel(phase, weekStart){
+  const d = weekStart ? ` — week of ${weekStart}` : "";
+  if(phase === "active") return `Active${d}`;
+  if(phase === "controlled") return `Controlled${d}`;
+  if(phase === "planning") return `Planning${d}`;
+  return `Published${d}`;
+}
+
+function renderShiftCard(it){
+  const dateISO = String(it.date||"");
+  const shift = String(it.shift||"");
+  const role = String(it.role||"");
+  const status = String(it.status||"OK"); // OK | ON_DECK | OPEN
+  const note = String(it.note||"");
+
+  const el = document.createElement("div");
+  el.className = "shiftCard";
+
+  const dayState = stateDays[dateISO] || { am:"clear", pm:"clear" };
+  const mySel = shift === "AM" ? dayState.am : dayState.pm;
+
+  // Warning if member marked NO against a published/controlled assignment
+  const conflicts = (mySel === "no");
+  const shouldWarn = conflicts && (status === "OK" || status === "ON_DECK");
+
+  el.innerHTML = `
+    <div class="t">${escapeHtml(dateISO)} — ${escapeHtml(shift)} ${role ? "· "+escapeHtml(role) : ""}</div>
+    <div class="s">${escapeHtml(statusDisplay(status, note))}</div>
+  `;
+
+  if(shouldWarn){
+    const warn = document.createElement("div");
+    warn.className = "badgeWarn";
+    warn.textContent = "⚠️ Availability conflict (will notify on-deck before marking OPEN)";
+    el.appendChild(warn);
+  }
+
+  return el;
+}
+
+function statusDisplay(status, note){
+  if(status === "OPEN") return note ? `OPEN — ${note}` : "OPEN";
+  if(status === "ON_DECK") return note ? `On-deck outreach — ${note}` : "On-deck outreach in progress";
+  return note ? `Scheduled — ${note}` : "Scheduled";
+}
+
+/* ===================== MEMBER SELECTOR + STARTUP ===================== */
+async function init(){
+  // build member dropdown from roster (fallback) then try refresh roster from Drive
+  const sel = document.getElementById("member");
+  sel.innerHTML = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+
+  await tryLoadRoster();
+  sel.innerHTML = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+
+  // Default selection: first
+  sel.value = roster[0]?.id || "default";
+
+  // Load current member
   setRangeDefaults();
-  await loadAvailability(getActiveMemberId());
-});
+  await loadMember(getActiveMemberId());
+
+  // Change handler
+  sel.addEventListener("change", async ()=>{
+    // reset local in-memory objects (not localStorage)
+    for(const k of Object.keys(stateDays)) delete stateDays[k];
+    prefs = { prefer_24:false, blank_ok:true, avoid_with:[] };
+    memberAssignments = null;
+
+    setRangeDefaults();
+    await loadMember(getActiveMemberId());
+  });
+}
+
+setRangeDefaults();
+init();
 </script>
 
 </body>
