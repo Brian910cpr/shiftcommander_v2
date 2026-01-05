@@ -223,14 +223,98 @@ const STORE_URL = (location.origin && location.origin.startsWith("http"))
 
 // Token is optional for GET (public read). For writes, set it via the Token button.
 let TOKEN = localStorage.getItem("SC_TOKEN") || ""; // optional if your store requires it, otherwise leave blank
-const PLANNING_WEEKS = 4; // how many planning weeks to show
+const PLANNING_WEEKS = 4; 
+
+  // ---- History (whiteboard scrape) support ----
+  // Expects static files like /web/data/history/history.index.json and YYYY-MM.normalized.json
+  const HISTORY_INDEX_URLS = [
+    "/web/data/history/history.index.json",
+    "/data/history/history.index.json",
+    "/history/history.index.json"
+  ];
+
+  const _historyMonthCache = new Map(); // month -> parsed JSON
+
+  async function fetchJson(url){
+    const r = await fetch(url, { cache: "no-store" });
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const text = await r.text();
+    if(!r.ok){
+      throw new Error(`History fetch failed ${r.status} for ${url}: ${text.slice(0,120)}`);
+    }
+    if(!ct.includes("json")){
+      throw new Error(`History returned non-JSON for ${url}: ${text.slice(0,120)}`);
+    }
+    return JSON.parse(text);
+  }
+
+  async function loadHistoryIndex(){
+    let lastErr = null;
+    for(const u of HISTORY_INDEX_URLS){
+      try{ return await fetchJson(u); }catch(e){ lastErr = e; }
+    }
+    if(lastErr) throw lastErr;
+    return null;
+  }
+
+  function monthFromIso(iso){ return iso.slice(0,7); }
+
+  async function loadHistoryMonth(index, month){
+    if(_historyMonthCache.has(month)) return _historyMonthCache.get(month);
+    const file = (index.files || []).find(f => f.month === month);
+    if(!file) return null;
+
+    // Prefer absolute/declared path if present; otherwise use base_path + filename
+    const path = file.path || ((index.base_path || "/web/data/history/") + file.filename);
+    const j = await fetchJson(path);
+    _historyMonthCache.set(month, j);
+    return j;
+  }
+
+  // Convert normalized day record to schedule-like { AM:[att,drv], PM:[att,drv] }
+  function normalizedToScheduleDay(day){
+    const out = {};
+    for(const sh of ["AM","PM"]){
+      const s = day?.[sh];
+      if(!s){ out[sh] = ["OPEN","OPEN"]; continue; }
+
+      // normalized format: { seat_medical:{status,name}, seat_driver_emt:{status,name} }
+      const att = (s.seat_medical?.status === "filled") ? s.seat_medical?.name : "OPEN";
+      const drv = (s.seat_driver_emt?.status === "filled") ? s.seat_driver_emt?.name : "OPEN";
+      out[sh] = [att || "OPEN", drv || "OPEN"];
+    }
+    return out;
+  }
+
+  async function loadHistoryScheduleForRange(weekStart){
+    // returns an object keyed by ISO date: { "2026-01-01": {AM:[...],PM:[...]} }
+    try{
+      const index = await loadHistoryIndex();
+      const sched = {};
+      for(let i=0;i<7;i++){
+        const d = addDays(weekStart, i);
+        const iso = isoDate(d);
+        const month = monthFromIso(iso);
+        const mj = await loadHistoryMonth(index, month);
+        const day = mj?.days?.[iso];
+        if(day){
+          sched[iso] = normalizedToScheduleDay(day);
+        }
+      }
+      return sched;
+    }catch(e){
+      console.warn("History unavailable:", e);
+      return {}; // fall back to live schedule only
+    }
+  }
+
+// how many planning weeks to show
 const WEEK_START = 0; // 0=Sunday (ADR matches wallboard)
 const SHOW_WEEKDAY_HEADER = true;
 
 /** kind names in Apps Script */
 const KIND_SCHEDULE = "schedule"; // should return schedule.json contents
 const KIND_MEMBERS  = "members";
-const KIND_HISTORY_INDEX = "history_index"; // optional history.index.json
 
 /** ========= TOKEN UI ========= **/
 function promptToken(){
@@ -358,97 +442,6 @@ function getDay(schedule, iso){
   return { am, pm, flags, notes };
 }
 
-/** ========= HISTORY (ARCHIVED) =========
- * History comes from whiteboard scrape outputs like:
- *   /web/data/history/history.index.json
- *   /web/data/history/2025-12.normalized.json
- *
- * We load it only to render Archived weeks. If unavailable, we fall back to schedule.json.
- */
-const HISTORY_INDEX_FALLBACK = "/web/data/history/history.index.json";
-
-async function fetchJsonAny(urls){
-  let lastErr = null;
-  for (const u of urls){
-    try{
-      const j = await fetchJson(u);
-      if(j && (j.ok === true || j.payload !== undefined || j.month || j.generated_at)) return j;
-      // Some endpoints might return raw JSON without ok/payload
-      return j;
-    }catch(e){
-      lastErr = e;
-    }
-  }
-  if(lastErr) throw lastErr;
-  throw new Error("fetchJsonAny failed");
-}
-
-async function loadHistoryIndex(){
-  // Try store (kind=history_index) first, then static path.
-  const urls = [
-    storeUrl(KIND_HISTORY_INDEX),
-    (location.origin && location.origin.startsWith("http")) ? (location.origin + HISTORY_INDEX_FALLBACK) : HISTORY_INDEX_FALLBACK
-  ];
-  const j = await fetchJsonAny(urls);
-  const payload = (j && j.payload) ? j.payload : j;
-  if(!payload || !payload.files) return null;
-  return payload;
-}
-
-function normalizeHistoryDayObj(day){
-  // day is from *.normalized.json: day.AM / day.PM each has seat_medical + seat_driver_emt.
-  const mkPair = (slot)=>{
-    if(!slot) return ["OPEN","OPEN"];
-    const a = slot.seat_medical && slot.seat_medical.status === "filled" ? (slot.seat_medical.member_id || slot.seat_medical.name || "OPEN") : "OPEN";
-    const d = slot.seat_driver_emt && slot.seat_driver_emt.status === "filled" ? (slot.seat_driver_emt.member_id || slot.seat_driver_emt.name || "OPEN") : "OPEN";
-    return [String(a||"OPEN"), String(d||"OPEN")];
-  };
-  return {
-    AM: mkPair(day.AM),
-    PM: mkPair(day.PM),
-    flags: day.flags || []
-  };
-}
-
-function createHistoryProvider(index){
-  const cache = new Map(); // month -> monthJson
-  const byMonth = new Map();
-  (index.files || []).forEach(f=>{
-    if(f && f.month && f.path) byMonth.set(String(f.month), String(f.path));
-  });
-
-  return {
-    index,
-    async loadMonth(month){
-      if(cache.has(month)) return cache.get(month);
-      const path = byMonth.get(month);
-      if(!path) { cache.set(month, null); return null; }
-      const url = (location.origin && location.origin.startsWith("http")) ? (location.origin + path) : path;
-      const j = await fetchJson(url);
-      const payload = (j && j.payload) ? j.payload : j;
-      cache.set(month, payload || null);
-      return payload || null;
-    },
-    async getDay(iso){
-      const month = String(iso).slice(0,7);
-      const mj = await this.loadMonth(month);
-      if(!mj || !mj.days || !mj.days[iso]) return null;
-      return normalizeHistoryDayObj(mj.days[iso]);
-    }
-  };
-}
-
-async function getDayMerged(iso, schedule, historyProvider, preferHistory){
-  if(preferHistory && historyProvider){
-    try{
-      const hd = await historyProvider.getDay(iso);
-      if(hd) return { am: normalizePair(hd.AM), pm: normalizePair(hd.PM), flags: hd.flags || [] };
-    }catch(_e){}
-  }
-  return getDay(schedule, iso);
-}
-
-
 /** ========= HEALTH RULES (ALL SHIFTS ARE ALS SHIFTS) ========= **/
 function shiftHealth(attId, drvId, roster){
   // Red if attendant is not ALS, or driver lacks qual_120
@@ -515,7 +508,7 @@ function healthColor(h){
   return "var(--gray)";
 }
 
-async function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
+function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
   const weekEnd = addDays(weekStartDate, 6);
   const range = fmtRange(weekStartDate, weekEnd);
 
@@ -548,7 +541,7 @@ async function renderWeekBlock(root, title, weekStartDate, schedule, roster, opt
   for(let i=0;i<7;i++){
     const d = addDays(weekStartDate, i);
     const iso = isoDate(d);
-    const dayObj = await getDayMerged(iso, schedule, opts.historyProvider || null, opts.preferHistory || false);
+    const dayObj = getDay(schedule, iso);
     const h = dayHealth(dayObj, roster);
 
     // optional caution flag if day has flags
@@ -622,13 +615,6 @@ async function main(){
       fetchJson(storeUrl(KIND_MEMBERS))
     ]);
 
-    // Optional: load whiteboard-scraped history index for Archived weeks
-    let historyProvider = null;
-    try{
-      const hIndex = await loadHistoryIndex();
-      if(hIndex) historyProvider = createHistoryProvider(hIndex);
-    }catch(e){ /* history optional */ }
-
     const roster = buildRosterIndex(members);
 
     const root = document.getElementById("root");
@@ -641,12 +627,15 @@ async function main(){
     // Planning weeks start next week
     const planningStarts = addDays(thisWeekStart, 7);
 
-    await renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Archived", preferHistory:true, historyProvider });
-    await renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Controlled", preferHistory:false, historyProvider });
+    const historyPrev = await loadHistoryScheduleForRange(prevWeekStart);
+    // For Archived week: prefer history (whiteboard scrape). If missing, falls back to live schedule.
+    const archivedSchedule = Object.keys(historyPrev).length ? historyPrev : schedule;
+    renderWeekBlock(root, "Previous Week", prevWeekStart, archivedSchedule, roster, { sub:"Archived", showNeeds:false });
+    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Controlled" });
 
     for(let w=0; w<PLANNING_WEEKS; w++){
       const ws = addDays(planningStarts, w*7);// the one right before Controlled begins
-      await renderWeekBlock(
+      renderWeekBlock(
         root,
         "",
         ws,
