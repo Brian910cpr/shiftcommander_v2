@@ -1,0 +1,805 @@
+{
+  "generated_from": [
+    "2025-11.normalized.json",
+    "2025-12.normalized.json",
+    "2026-01.normalized.json"
+  ],
+  "members": {
+    "112": {
+      "2025-11-19": {
+        "AM": false,
+        "PM": true
+      }
+    },
+    "146": {
+      "2025-11-02": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-22": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-23": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-13": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-18": {
+        "AM": false,
+        "PM": true
+      }
+    },
+    "149": {
+      "2025-11-03": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-07": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-09": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-10": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-14": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-17": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-21": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-24": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-28": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-05": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-08": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-12": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-22": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-26": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-29": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-02": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-04": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-06": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-08": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-13": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-18": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-20": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-27": {
+        "AM": false,
+        "PM": true
+      }
+    },
+    "151": {
+      "2025-11-12": {
+        "AM": false,
+        "PM": true
+      }
+    },
+    "159": {
+      "2025-11-06": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-13": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-20": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-04": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-06": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-11": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-17": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-20": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-03": {
+        "AM": true,
+        "PM": true
+      },
+      "2026-01-17": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-24": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-31": {
+        "AM": false,
+        "PM": true
+      }
+    },
+    "168": {
+      "2025-11-07": {
+        "AM": true,
+        "PM": false
+      }
+    },
+    "181": {
+      "2025-11-04": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-08": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-12": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-16": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-25": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-02": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-06": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-09": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-15": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-21": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-18": {
+        "AM": true,
+        "PM": false
+      }
+    },
+    "182": {
+      "2025-11-02": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-05": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-10": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-19": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-26": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-29": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-01": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-04": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-07": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-08": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-12": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-16": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-23": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-24": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-01": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-04": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-05": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-09": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-12": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-17": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-21": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-25": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-29": {
+        "AM": true,
+        "PM": true
+      }
+    },
+    "183": {
+      "2025-11-13": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-20": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-12": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-13": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-23": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-31": {
+        "AM": true,
+        "PM": false
+      }
+    },
+    "184": {
+      "2025-11-03": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-06": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-09": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-14": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-17": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-21": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-23": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-28": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-30": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-03": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-08": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-10": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-18": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-22": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-28": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-30": {
+        "AM": true,
+        "PM": true
+      },
+      "2026-01-02": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-05": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-11": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-13": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-17": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-19": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-20": {
+        "AM": true,
+        "PM": true
+      },
+      "2026-01-27": {
+        "AM": true,
+        "PM": true
+      },
+      "2026-01-30": {
+        "AM": true,
+        "PM": false
+      }
+    },
+    "185": {
+      "2025-11-12": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-13": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-22": {
+        "AM": true,
+        "PM": true
+      }
+    },
+    "186": {
+      "2025-11-03": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-05": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-10": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-12": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-17": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-26": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-27": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-03": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-10": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-24": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-01": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-09": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-21": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-28": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-29": {
+        "AM": false,
+        "PM": true
+      }
+    },
+    "187": {
+      "2025-11-01": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-05": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-11-11": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-18": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-24": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-11-28": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-29": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-05": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-06": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-07": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-11": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-13": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-17": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-19": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-22": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-23": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-24": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-29": {
+        "AM": true,
+        "PM": true
+      },
+      "2025-12-31": {
+        "AM": true,
+        "PM": true
+      },
+      "2026-01-03": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-04": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-06": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-10": {
+        "AM": true,
+        "PM": true
+      },
+      "2026-01-12": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-16": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-18": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-22": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-23": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-28": {
+        "AM": true,
+        "PM": true
+      },
+      "2026-01-30": {
+        "AM": false,
+        "PM": true
+      }
+    },
+    "188": {
+      "2025-11-01": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-02": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-04": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-08": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-11": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-15": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-16": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-18": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-22": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-23": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-25": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-29": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-11-30": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-02": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-05": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-07": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-09": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-12": {
+        "AM": true,
+        "PM": false
+      },
+      "2025-12-14": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-16": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-19": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-21": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-23": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-28": {
+        "AM": false,
+        "PM": true
+      },
+      "2025-12-30": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-05": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-07": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-09": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-12": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-14": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-16": {
+        "AM": true,
+        "PM": false
+      },
+      "2026-01-19": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-21": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-23": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-26": {
+        "AM": false,
+        "PM": true
+      },
+      "2026-01-30": {
+        "AM": false,
+        "PM": true
+      }
+    }
+  }
+}

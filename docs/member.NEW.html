@@ -1,0 +1,1358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Member</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1731;
+      --panel2:#0c1329;
+      --text:#e7ecff;
+      --muted:#a9b3d6;
+      --line:rgba(255,255,255,.09);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+
+      --ok:#2ee59d;
+      --warn:#ffd166;
+      --bad:#ff4d6d;
+
+      --pref:#2ee59d;     /* green border */
+      --avail:#58a6ff;    /* blue border */
+      --nosched:#ff4d6d;  /* red border */
+      --clear:rgba(255,255,255,.18); /* dashed */
+
+      --focus:#7c5cff;
+      --radius:18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 700px at 25% -20%, rgba(124,92,255,.35), transparent 55%),
+        radial-gradient(900px 600px at 90% 0%, rgba(88,166,255,.25), transparent 52%),
+        linear-gradient(180deg, #060a18, var(--bg));
+      color:var(--text);
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    button, input, select{ font:inherit; color:inherit; }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background: rgba(8,12,28,.55);
+      backdrop-filter: blur(10px);
+      position:sticky; top:0; z-index:50;
+    }
+
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      font-weight:900; letter-spacing:.3px;
+      white-space:nowrap;
+    }
+    .brand .dot{
+      width:12px; height:12px; border-radius:50%;
+      background: linear-gradient(135deg, var(--focus), #00d4ff);
+      box-shadow: 0 0 0 6px rgba(124,92,255,.12);
+      flex:0 0 auto;
+    }
+
+    .controls{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      font-weight:750;
+      font-variant-numeric: tabular-nums;
+    }
+    .pill strong{ color:var(--text); }
+
+    .select, .date{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius: 999px;
+      font-weight:800;
+      outline:none;
+    }
+
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding:9px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:850;
+      transition: transform .06s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn.primary{
+      background: rgba(124,92,255,.22);
+      border-color: rgba(124,92,255,.45);
+    }
+
+    .statusDot{
+      width:12px; height:12px; border-radius:50%;
+      border:2px solid rgba(255,255,255,.18);
+      background: var(--warn);
+      box-shadow: 0 0 0 6px rgba(255,209,102,.14);
+      flex:0 0 auto;
+    }
+    .statusDot.ok{ background: var(--ok); box-shadow: 0 0 0 6px rgba(46,229,157,.12); }
+    .statusDot.warn{ background: var(--warn); box-shadow: 0 0 0 6px rgba(255,209,102,.14); }
+    .statusDot.bad{ background: var(--bad); box-shadow: 0 0 0 6px rgba(255,77,109,.14); }
+
+    /* Page */
+    .wrap{
+      padding:14px;
+      display:grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap:12px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .cardHeader{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .cardHeader h2{ margin:0; font-size:1.05rem; letter-spacing:.2px; }
+    .hint{
+      color:var(--muted);
+      font-weight:650;
+      font-size:.95rem;
+    }
+
+    /* Member tabs */
+    .tabs{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      padding:10px 10px 0 10px;
+    }
+    .tabBtn{
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid transparent;
+      background: transparent;
+      cursor:pointer;
+      font-weight:900;
+      color:var(--muted);
+    }
+    .tabBtn[aria-selected="true"]{
+      background: rgba(124,92,255,.22);
+      border-color: rgba(124,92,255,.45);
+      color:var(--text);
+    }
+
+    .tabView{ display:none; padding:12px; }
+    .tabView.is-active{ display:block; }
+
+    /* 6-month grid */
+    .gridWrap{
+      overflow:auto;
+      padding-bottom:10px;
+    }
+
+    .weekGrid{
+      display:grid;
+      grid-template-columns: 210px repeat(7, minmax(120px, 1fr));
+      gap:10px;
+      align-items:stretch;
+      min-width: 1060px; /* prevents squish */
+    }
+
+    .weekHead{
+      height:44px;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.14);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:950;
+      letter-spacing:.3px;
+      color:var(--text);
+    }
+
+    .weekLabel{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(0,0,0,.14);
+      padding:12px 12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:6px;
+    }
+    .weekLabel .big{ font-weight:950; letter-spacing:.2px; }
+    .weekLabel .small{ color:var(--muted); font-weight:700; font-size:.9rem; }
+
+    .dayCell{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      padding:10px;
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      gap:10px;
+      position:relative;
+      min-height: 110px;
+    }
+
+    .dayTop{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .dow{
+      font-weight:950;
+      letter-spacing:.2px;
+      font-size:1rem;
+    }
+    .dom{
+      font-weight:950;
+      font-size:1.45rem;
+      letter-spacing:.2px;
+      line-height:1;
+    }
+    .dateMini{
+      color:var(--muted);
+      font-weight:750;
+      font-size:.8rem;
+      white-space:nowrap;
+    }
+
+    .pickRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      align-items:stretch;
+    }
+
+    .shiftBtn{
+      border-radius: 14px;
+      padding:10px 8px;
+      border:2px dashed var(--clear);
+      background: rgba(0,0,0,.12);
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      min-height: 54px;
+      outline:none;
+    }
+    .shiftBtn .slot{ font-weight:950; letter-spacing:.25px; }
+    .shiftBtn .mini{
+      font-size:.68rem;
+      letter-spacing:.15px;
+      text-transform:uppercase;
+      opacity:.75;
+    }
+
+    .shiftBtn.state-pref{ border-style:solid; border-color: var(--pref); }
+    .shiftBtn.state-avail{ border-style:solid; border-color: var(--avail); }
+    .shiftBtn.state-no{ border-style:solid; border-color: var(--nosched); }
+    .shiftBtn.state-clear{ border-style:dashed; border-color: var(--clear); }
+
+    .shiftBtn.state-pref .mini,
+    .shiftBtn.state-avail .mini,
+    .shiftBtn.state-no .mini{
+      opacity:.45; /* keep text tiny/secondary */
+    }
+
+    .lockedBanner{
+      position:absolute;
+      top:10px; right:10px;
+      font-size:.72rem;
+      letter-spacing:.14px;
+      text-transform:uppercase;
+      color:var(--muted);
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      padding:6px 8px;
+      border-radius: 999px;
+    }
+
+    .workedBanner{
+      position:absolute;
+      bottom:10px; right:10px;
+      font-size:.72rem;
+      letter-spacing:.14px;
+      text-transform:uppercase;
+      color:#c9ffe8;
+      border:1px solid rgba(46,229,157,.35);
+      background: rgba(46,229,157,.10);
+      padding:6px 8px;
+      border-radius: 999px;
+    }
+
+    /* Legend */
+    .legendRow{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:12px 14px;
+      border-top:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+    }
+    .legendChip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      color:var(--text);
+      font-weight:900;
+      font-size:.92rem;
+    }
+    .swatch{
+      width:14px; height:14px; border-radius:7px;
+      border:2px solid rgba(255,255,255,.18);
+      background: transparent;
+    }
+    .swatch.pref{ border-color: var(--pref); }
+    .swatch.avail{ border-color: var(--avail); }
+    .swatch.no{ border-color: var(--nosched); }
+    .swatch.clear{ border-style:dashed; border-color: var(--clear); }
+
+    .footHint{
+      color:var(--muted);
+      font-weight:650;
+      font-size:.92rem;
+    }
+
+    /* Special tab */
+    .field{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      border-radius: 16px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-width: 740px;
+    }
+    .field label{
+      color:var(--muted);
+      font-weight:900;
+      font-size:.92rem;
+    }
+    .field select, .field input{
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      outline:none;
+    }
+
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+
+    .tiny{
+      font-size:.85rem;
+      color:var(--muted);
+      font-weight:650;
+      line-height:1.35;
+    }
+
+    iframe.wallframe{
+      width:100%;
+      height: min(64vh, 720px);
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(0,0,0,.14);
+    }
+
+    @media (max-width: 980px){
+      .wrap{ padding:12px; }
+      .weekGrid{ grid-template-columns: 170px repeat(7, minmax(110px, 1fr)); }
+      .twoCol{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot" aria-hidden="true"></span>
+      <span>ShiftCommander — Member</span>
+    </div>
+
+    <div class="controls">
+      <span class="pill">Org: <strong id="orgName">—</strong></span>
+
+      <select class="select" id="memberSelect" aria-label="Select member"></select>
+
+      <button class="btn" id="prevWeekBtn" title="Previous week">◀</button>
+      <span class="pill"><strong id="focusWeekLabel">This Week</strong></span>
+      <button class="btn" id="nextWeekBtn" title="Next week">▶</button>
+
+      <input class="date" id="weekStartInput" type="date" aria-label="Week start" />
+
+      <span class="pill" title="" id="drivePill">
+        <span class="statusDot warn" id="driveDot" aria-hidden="true"></span>
+      </span>
+
+      <button class="btn primary" id="repeatToolsBtn">Repeat / Tools</button>
+      <button class="btn" id="syncBtn">Sync</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="cardHeader">
+        <div>
+          <h2 style="margin:0;">Set your availability</h2>
+          <div class="hint">Tap AM/PM to cycle: Preferred → Available → Do not schedule → Clear.</div>
+        </div>
+        <div class="hint" id="subStatus">Ready.</div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Member tabs">
+        <button class="tabBtn" role="tab" aria-selected="true" data-tab="calendar">Calendar</button>
+        <button class="tabBtn" role="tab" aria-selected="false" data-tab="repeat">Repeat</button>
+        <button class="tabBtn" role="tab" aria-selected="false" data-tab="special">Special</button>
+        <button class="tabBtn" role="tab" aria-selected="false" data-tab="wallboard">Wallboard</button>
+      </div>
+
+      <div class="tabView is-active" id="tab-calendar" role="tabpanel">
+        <div class="gridWrap">
+          <div class="weekGrid" id="weekGrid"></div>
+        </div>
+      </div>
+
+      <div class="tabView" id="tab-repeat" role="tabpanel">
+        <div class="twoCol">
+          <div class="field">
+            <label>Copy this week forward</label>
+            <div class="tiny">Take the pattern you built for the focused week and apply it to future weeks (without touching dates you already customized).</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+              <button class="btn primary" id="copyForward1">Copy → next week</button>
+              <button class="btn" id="copyForward4">Copy → next 4 weeks</button>
+              <button class="btn" id="copyForwardUntil">Copy → until date…</button>
+              <input class="date" id="copyUntilDate" type="date" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Repeat pattern</label>
+            <div class="tiny">Great for people with a repeatable schedule at another service. Set Week A, then move to Week B and set it, then repeat every 2 (or 4) weeks.</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+              <select class="select" id="repeatEvery">
+                <option value="2">Repeat every 2 weeks</option>
+                <option value="3">Repeat every 3 weeks</option>
+                <option value="4">Repeat every 4 weeks</option>
+              </select>
+              <button class="btn primary" id="repeatApply">Apply repeat forward</button>
+              <button class="btn" id="repeatClear">Clear repeat rules</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:12px; max-width:none;">
+          <label>How this behaves with custom dates</label>
+          <div class="tiny">
+            If you set specific days far in the future (holidays, birthdays, etc.), repeat/copy will <strong>skip</strong> those dates so they don’t get overwritten.
+            If you’re offline, your work saves on this device and will sync when you’re back online (don’t clear your browser storage).
+          </div>
+        </div>
+      </div>
+
+      <div class="tabView" id="tab-special" role="tabpanel">
+        <div class="twoCol">
+          <div class="field">
+            <label>Avoid working with</label>
+            <div class="tiny">Soft preference. This is not a hard rule — it just warns the supervisor and influences balancing later.</div>
+            <select class="select" id="avoidWithSelect" multiple size="10" style="border-radius:16px;"></select>
+            <div style="display:flex; gap:10px; margin-top:6px; flex-wrap:wrap;">
+              <button class="btn primary" id="saveSpecialBtn">Save</button>
+              <button class="btn" id="clearSpecialBtn">Clear</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Notes for your own calendar</label>
+            <div class="tiny">Optional. This is for <em>you</em> — so you can remember what you were protecting (vacation, other job, family).</div>
+            <input id="calendarNote" type="text" placeholder="e.g., Other job shift, family event, travel day…" />
+            <div class="tiny">We do not import your personal calendar in v1. Later we can support “import busy blocks (no titles)” as an opt-in.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabView" id="tab-wallboard" role="tabpanel">
+        <div class="tiny" style="margin-bottom:10px;">
+          Preview the active wallboard. (This is read-only here.)
+        </div>
+        <iframe class="wallframe" src="wallboard.html" title="ShiftCommander Wallboard"></iframe>
+      </div>
+
+      <div class="legendRow">
+        <span class="legendChip" title="Preferred — You WANT this shift.">
+          <span class="swatch pref"></span> Preferred
+        </span>
+        <span class="legendChip" title="Available — You CAN work this shift and will be considered if not filled by someone who PREFERS it (then weighted fairly).">
+          <span class="swatch avail"></span> Available
+        </span>
+        <span class="legendChip" title="Do not schedule — You will not be considered for this shift.">
+          <span class="swatch no"></span> Do not schedule
+        </span>
+        <span class="legendChip" title="Clear / unset — No preference stated. You may still be considered only if no one prefers or is available (and fairness allows it).">
+          <span class="swatch clear"></span> Clear
+        </span>
+
+        <span style="flex:1;"></span>
+        <span class="footHint" id="offlineHint"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ============================================================
+  // ShiftCommander — Member (single-file)
+  // - Loads: docs/data/org_settings.json + docs/data/members.json (local)
+  // - Loads member prefs from Google Drive store (Apps Script) + local fallback.
+  // - Shows 6-month grid (editing week + upcoming + past locked).
+  // ============================================================
+
+  // ---- CONFIG (keep these stable) ----
+  const STORE_EXEC = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
+  const DATA_BASE = "./data"; // on GitHub Pages: /docs/data
+  const HISTORY_PATH = `${DATA_BASE}/history/assignments_history.json`; // optional
+
+  // ---- Storage keys ----
+  const LS_TOKEN = "sc_token";
+  const LS_ORG = "sc_org";
+  const LS_MEMBER = "sc_member";
+  const LS_LOCALDIRTY = "sc_local_dirty_v1";
+  const LS_LOCALCACHE = "sc_local_cache_v1"; // last known prefs per member
+  const LS_LOCALQUEUE = "sc_local_queue_v1"; // offline queue
+
+  // ---- Availability cycle ----
+  const STATES = ["preferred", "available", "noschedule", "clear"];
+
+  // ---- In-memory ----
+  let ORG = null;
+  let MEMBERS = [];
+  let HISTORY = null; // optional: worked shifts map
+  let activeMemberId = null;
+  let focusWeekStart = startOfWeekMon(new Date());
+  let memberData = null; // { weeks: {...}, special: {...}, meta: {...} }
+
+  // ============================================================
+  // Utilities
+  // ============================================================
+  const $ = (sel, el=document)=> el.querySelector(sel);
+  const $$ = (sel, el=document)=> Array.from(el.querySelectorAll(sel));
+  const pad = (n)=> String(n).padStart(2,"0");
+  const ymd = (d)=> `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+  function startOfWeekMon(d){
+    const x = new Date(d);
+    const day = (x.getDay() + 6) % 7; // Mon=0..Sun=6
+    x.setDate(x.getDate() - day);
+    x.setHours(0,0,0,0);
+    return x;
+  }
+  function addDays(d, days){
+    const x = new Date(d);
+    x.setDate(x.getDate()+days);
+    return x;
+  }
+  function addWeeks(d, weeks){ return addDays(d, weeks*7); }
+
+  function fmtDow(d){
+    // Robust top header (Thu, Fri, ... but full word in header row)
+    return d.toLocaleDateString(undefined, { weekday:"short" });
+  }
+  function fmtDowLong(d){
+    return d.toLocaleDateString(undefined, { weekday:"long" });
+  }
+  function fmtMonDay(d){
+    // No year anywhere
+    return d.toLocaleDateString(undefined, { month:"short", day:"numeric" });
+  }
+  function rangeLabel(ws){
+    const end = addDays(ws,6);
+    return `${fmtMonDay(ws)} – ${fmtMonDay(end)}`;
+  }
+  function isPastDate(dateStr){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const d = new Date(dateStr+"T00:00:00");
+    return d < today;
+  }
+
+  function safeJsonParse(s, fallback){
+    try { return JSON.parse(s); } catch { return fallback; }
+  }
+
+  // ============================================================
+  // Drive token + status dot
+  // ============================================================
+  function getToken(){
+    let t = localStorage.getItem(LS_TOKEN) || "";
+    if(!t){
+      t = prompt("Enter ShiftCommander token (SC_TOKEN):","");
+      if(t) localStorage.setItem(LS_TOKEN, t.trim());
+    }
+    return (t||"").trim();
+  }
+
+  function setDriveStatus(kind, message){
+    const dot = $("#driveDot");
+    dot.classList.remove("ok","warn","bad");
+    dot.classList.add(kind);
+    $("#drivePill").title = message;
+  }
+
+  function setSubStatus(msg){ $("#subStatus").textContent = msg; }
+
+  function isOnline(){ return navigator.onLine; }
+
+  // ============================================================
+  // Fetch local JSON (GitHub Pages)
+  // ============================================================
+  async function fetchLocalJson(path){
+    const res = await fetch(path, { cache:"no-store" });
+    if(!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+    return await res.json();
+  }
+
+  // ============================================================
+  // Drive Store (Apps Script)
+  // ============================================================
+  async function storeGet(kind, extraParams={}){
+    const token = getToken();
+    if(!token) throw new Error("Missing token.");
+    const u = new URL(STORE_EXEC);
+    u.searchParams.set("kind", kind);
+    u.searchParams.set("token", token);
+    for(const [k,v] of Object.entries(extraParams)){
+      u.searchParams.set(k, String(v));
+    }
+    const res = await fetch(u.toString(), { method:"GET", cache:"no-store" });
+    const txt = await res.text();
+    // Apps Script sometimes returns HTML on error — detect early
+    if(txt.trim().startsWith("<!DOCTYPE html") || txt.trim().startsWith("<html")){
+      throw new Error("Store returned HTML (not JSON). Check script deployment & access.");
+    }
+    return JSON.parse(txt);
+  }
+
+  async function storePost(body){
+    const token = getToken();
+    if(!token) throw new Error("Missing token.");
+    const payload = { token, ...body };
+    const res = await fetch(STORE_EXEC, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    const txt = await res.text();
+    if(txt.trim().startsWith("<!DOCTYPE html") || txt.trim().startsWith("<html")){
+      throw new Error("Store returned HTML (not JSON). Check script deployment & access.");
+    }
+    return JSON.parse(txt);
+  }
+
+  // ============================================================
+  // Local cache / queue (offline tolerance)
+  // ============================================================
+  function localCacheRead(){
+    return safeJsonParse(localStorage.getItem(LS_LOCALCACHE), {});
+  }
+  function localCacheWrite(obj){
+    localStorage.setItem(LS_LOCALCACHE, JSON.stringify(obj));
+  }
+
+  function queueRead(){
+    return safeJsonParse(localStorage.getItem(LS_LOCALQUEUE), []);
+  }
+  function queueWrite(q){
+    localStorage.setItem(LS_LOCALQUEUE, JSON.stringify(q));
+  }
+
+  function queueEnqueue(item){
+    const q = queueRead();
+    q.push({ ...item, queued_at: new Date().toISOString() });
+    queueWrite(q);
+    localStorage.setItem(LS_LOCALDIRTY, "1");
+  }
+
+  async function flushQueue(){
+    const q = queueRead();
+    if(!q.length) return;
+
+    // send in order; stop if any fail
+    for(const item of q){
+      await storePost(item.body);
+    }
+    queueWrite([]);
+    localStorage.removeItem(LS_LOCALDIRTY);
+  }
+
+  function setOfflineHint(){
+    const dirty = localStorage.getItem(LS_LOCALDIRTY) === "1";
+    const hint = $("#offlineHint");
+    if(!isOnline()){
+      hint.textContent = dirty
+        ? "Offline — saved on this device. Will sync when back online (don’t clear browser storage)."
+        : "Offline.";
+    } else if(dirty){
+      hint.textContent = "Pending sync — saved on this device. Click Sync when ready.";
+    } else {
+      hint.textContent = "";
+    }
+  }
+
+  // ============================================================
+  // Member data schema (v1)
+  // ============================================================
+  // memberData = {
+  //   member_id: "186",
+  //   weeks: {
+  //     "2026-01-12": { "2026-01-15": { AM:"preferred", PM:"clear" }, ... }  // keyed by date inside
+  //   },
+  //   custom: { "2026-12-24": { AM:"noschedule", PM:"noschedule" } }, // per-date overrides
+  //   special: { avoid_with: ["123","456"], note:"..." },
+  //   meta: { updated_at:"..." }
+  // }
+
+  function blankMemberData(mid){
+    return { member_id: String(mid), weeks:{}, custom:{}, special:{ avoid_with:[], note:"" }, meta:{} };
+  }
+
+  function getWeekKey(dateStr){
+    return ymd(startOfWeekMon(new Date(dateStr+"T00:00:00")));
+  }
+
+  function ensureWeek(md, weekKey){
+    md.weeks[weekKey] ||= {};
+    return md.weeks[weekKey];
+  }
+
+  function getState(md, dateStr, shift){
+    // custom overrides win
+    if(md.custom?.[dateStr]?.[shift]) return md.custom[dateStr][shift];
+    const wk = getWeekKey(dateStr);
+    const week = md.weeks?.[wk];
+    const day = week?.[dateStr];
+    return day?.[shift] || "clear";
+  }
+
+  function setState(md, dateStr, shift, value){
+    // If editing a future date outside normal weeks, treat as custom.
+    // For v1 simplicity: anything outside the focused + visible window still becomes custom if user edits it.
+    const wk = getWeekKey(dateStr);
+    ensureWeek(md, wk);
+    md.weeks[wk][dateStr] ||= {};
+    md.weeks[wk][dateStr][shift] = value;
+
+    // Mark date as "customized" if it differs from "clear"
+    // (we use this to skip overwriting later)
+    if(value !== "clear"){
+      md.custom[dateStr] ||= {};
+      md.custom[dateStr][shift] = value;
+    } else {
+      // clear custom shift if exists
+      if(md.custom?.[dateStr]){
+        delete md.custom[dateStr][shift];
+        if(Object.keys(md.custom[dateStr]).length === 0) delete md.custom[dateStr];
+      }
+    }
+
+    md.meta.updated_at = new Date().toISOString();
+  }
+
+  function isCustomized(md, dateStr){
+    return !!md.custom?.[dateStr] && Object.keys(md.custom[dateStr]).length > 0;
+  }
+
+  // ============================================================
+  // UI: render member list / avoid-with list
+  // ============================================================
+  function normalizeMembers(membersRaw){
+    // Accept either:
+    // - Array of members
+    // - {members:[...]}
+    // - { "186": {...}, "187": {...} } map
+    if(Array.isArray(membersRaw)) return membersRaw;
+    if(membersRaw && Array.isArray(membersRaw.members)) return membersRaw.members;
+    if(membersRaw && typeof membersRaw === "object"){
+      // map to array
+      return Object.values(membersRaw);
+    }
+    return [];
+  }
+
+  function memberLabel(m){
+    const name = m.display_name || m.name || m.full_name || "Member";
+    const id = m.member_id ?? m.id ?? "";
+    return `${name} #${id}`;
+  }
+
+  function renderMemberSelect(){
+    const sel = $("#memberSelect");
+    sel.innerHTML = "";
+    for(const m of MEMBERS){
+      const opt = document.createElement("option");
+      opt.value = String(m.member_id ?? m.id ?? "");
+      opt.textContent = memberLabel(m);
+      sel.appendChild(opt);
+    }
+    // restore last member if available
+    const last = localStorage.getItem(LS_MEMBER);
+    const use = last && MEMBERS.some(m=> String(m.member_id??m.id)===String(last)) ? String(last) : sel.value;
+    sel.value = use;
+    activeMemberId = use;
+  }
+
+  function renderAvoidWith(){
+    const sel = $("#avoidWithSelect");
+    sel.innerHTML = "";
+    for(const m of MEMBERS){
+      const id = String(m.member_id ?? m.id ?? "");
+      if(id === String(activeMemberId)) continue;
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = memberLabel(m);
+      sel.appendChild(opt);
+    }
+  }
+
+  function applyAvoidWithFromData(){
+    const sel = $("#avoidWithSelect");
+    const set = new Set(memberData?.special?.avoid_with || []);
+    for(const opt of Array.from(sel.options)){
+      opt.selected = set.has(opt.value);
+    }
+    $("#calendarNote").value = memberData?.special?.note || "";
+  }
+
+  // ============================================================
+  // UI: tabs
+  // ============================================================
+  function setTab(tab){
+    $$(".tabBtn").forEach(b=>{
+      b.setAttribute("aria-selected", b.dataset.tab === tab ? "true":"false");
+    });
+    $$(".tabView").forEach(v=>{
+      v.classList.toggle("is-active", v.id === `tab-${tab}`);
+    });
+    if(tab === "repeat"){
+      // ensure copyUntilDate defaults
+      if(!$("#copyUntilDate").value){
+        const d = addWeeks(focusWeekStart, 8);
+        $("#copyUntilDate").value = ymd(d);
+      }
+    }
+  }
+
+  // ============================================================
+  // UI: 6-month grid render
+  // ============================================================
+  function buildGrid(){
+    const grid = $("#weekGrid");
+    grid.innerHTML = "";
+
+    // Header row
+    grid.appendChild(makeHead("Week"));
+    for(let i=0;i<7;i++){
+      const d = addDays(focusWeekStart, i);
+      const h = makeHead(fmtDowLong(d));
+      grid.appendChild(h);
+    }
+
+    // Show 6 months (26 weeks) with:
+    // - a few weeks before focus (locked)
+    // - focus week (editable)
+    // - upcoming weeks (editable)
+    const weeksBefore = 6;
+    const weeksTotal = 26;
+    const firstWeek = addWeeks(focusWeekStart, -weeksBefore);
+
+    for(let w=0; w<weeksTotal; w++){
+      const ws = addWeeks(firstWeek, w);
+      const wkKey = ymd(ws);
+      const wkEnd = ymd(addDays(ws,6));
+
+      const isFocus = (wkKey === ymd(focusWeekStart));
+      const isPast = (ws < startOfWeekMon(new Date()));
+
+      const label = document.createElement("div");
+      label.className = "weekLabel";
+      label.innerHTML = `
+        <div class="big">${isFocus ? "Editing Week" : (isPast ? "Past" : "Upcoming")}</div>
+        <div class="small">${wkKey} – ${wkEnd}</div>
+      `;
+      grid.appendChild(label);
+
+      for(let i=0;i<7;i++){
+        const d = addDays(ws, i);
+        const dateStr = ymd(d);
+        const cell = document.createElement("div");
+        cell.className = "dayCell";
+        cell.dataset.date = dateStr;
+        cell.dataset.week = wkKey;
+
+        const top = document.createElement("div");
+        top.className = "dayTop";
+        top.innerHTML = `
+          <div>
+            <div class="dow">${fmtDow(d)}</div>
+            <div class="dateMini">${fmtMonDay(d)}</div>
+          </div>
+          <div class="dom">${d.getDate()}</div>
+        `;
+        cell.appendChild(top);
+
+        const picks = document.createElement("div");
+        picks.className = "pickRow";
+        picks.appendChild(makeShiftBtn(dateStr, "AM", isPast && !isFocus));
+        picks.appendChild(makeShiftBtn(dateStr, "PM", isPast && !isFocus));
+        cell.appendChild(picks);
+
+        // Past locked banner
+        if(isPast && !isFocus){
+          const b = document.createElement("div");
+          b.className = "lockedBanner";
+          b.textContent = "Past / locked";
+          cell.appendChild(b);
+        }
+
+        // Worked banner from history (optional)
+        const worked = didMemberWork(activeMemberId, dateStr);
+        if(worked){
+          const wb = document.createElement("div");
+          wb.className = "workedBanner";
+          wb.textContent = "Worked";
+          cell.appendChild(wb);
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function didMemberWork(memberId, dateStr){
+    if(!HISTORY || !memberId) return false;
+    const rec = HISTORY.members?.[String(memberId)]?.[dateStr];
+    if(!rec) return false;
+    return !!(rec.AM || rec.PM);
+  }
+
+  function makeHead(text){
+    const h = document.createElement("div");
+    h.className = "weekHead";
+    h.textContent = text;
+    return h;
+  }
+
+  function makeShiftBtn(dateStr, shift, locked){
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "shiftBtn";
+    btn.dataset.date = dateStr;
+    btn.dataset.shift = shift;
+
+    const stateVal = getState(memberData, dateStr, shift);
+    applyShiftBtnState(btn, stateVal);
+
+    btn.innerHTML = `
+      <div class="slot">${shift}</div>
+      <div class="mini">${stateMiniLabel(stateVal)}</div>
+    `;
+
+    const title = stateTooltip(stateVal);
+    btn.title = title;
+
+    if(locked){
+      btn.disabled = true;
+      btn.style.opacity = ".75";
+      btn.style.cursor = "not-allowed";
+      return btn;
+    }
+
+    btn.addEventListener("click", ()=>{
+      const cur = getState(memberData, dateStr, shift);
+      const next = nextState(cur);
+      setState(memberData, dateStr, shift, next);
+      applyShiftBtnState(btn, next);
+      btn.querySelector(".mini").textContent = stateMiniLabel(next);
+      btn.title = stateTooltip(next);
+
+      // local save immediately (offline-safe)
+      localUpdateCache();
+      queueEnqueue({ body: { kind:"member", memberId: String(activeMemberId), payload: memberData } });
+      setOfflineHint();
+      setSubStatus("Saved locally.");
+    });
+
+    return btn;
+  }
+
+  function nextState(cur){
+    const norm = (cur && STATES.includes(cur)) ? cur : "clear";
+    const idx = STATES.indexOf(norm);
+    return STATES[(idx + 1) % STATES.length];
+  }
+
+  function applyShiftBtnState(btn, v){
+    btn.classList.remove("state-pref","state-avail","state-no","state-clear");
+    const st = v === "preferred" ? "state-pref" :
+               v === "available" ? "state-avail" :
+               v === "noschedule" ? "state-no" : "state-clear";
+    btn.classList.add(st);
+    btn.dataset.state = v;
+  }
+
+  function stateMiniLabel(v){
+    // Tiny only, border color does the work
+    if(v === "preferred") return "PREF";
+    if(v === "available") return "AVAIL";
+    if(v === "noschedule") return "NO";
+    return "—";
+  }
+
+  function stateTooltip(v){
+    if(v === "preferred") return "Preferred — You WANT this shift.";
+    if(v === "available") return "Available — You CAN work this shift and will be considered if not filled by someone who PREFERS it (then weighted fairly).";
+    if(v === "noschedule") return "Do not schedule — You will not be considered for this shift.";
+    return "Clear / unset — No preference stated. You may still be considered only if no one prefers or is available (and fairness allows it).";
+  }
+
+  // ============================================================
+  // Repeat / Copy logic (skip customized dates)
+  // ============================================================
+  function copyWeekPattern(fromWeekStart, toWeekStart){
+    const fromKey = ymd(fromWeekStart);
+    const toKey = ymd(toWeekStart);
+    const fromWeek = memberData.weeks?.[fromKey] || {};
+
+    for(let i=0;i<7;i++){
+      const fromDate = ymd(addDays(fromWeekStart, i));
+      const toDate = ymd(addDays(toWeekStart, i));
+
+      // skip if user already customized that date
+      if(isCustomized(memberData, toDate)) continue;
+
+      const fromDay = fromWeek[fromDate] || {};
+      const am = fromDay.AM || "clear";
+      const pm = fromDay.PM || "clear";
+
+      // Apply
+      setState(memberData, toDate, "AM", am);
+      setState(memberData, toDate, "PM", pm);
+    }
+  }
+
+  function applyCopyForward(weeksCount, untilDateStr=null){
+    const from = new Date(ymd(focusWeekStart)+"T00:00:00");
+
+    if(untilDateStr){
+      const until = new Date(untilDateStr+"T00:00:00");
+      const start = addWeeks(from, 1);
+      for(let ws = start; ws <= until; ws = addWeeks(ws, 1)){
+        copyWeekPattern(from, ws);
+      }
+    } else {
+      for(let k=1; k<=weeksCount; k++){
+        copyWeekPattern(from, addWeeks(from, k));
+      }
+    }
+
+    localUpdateCache();
+    queueEnqueue({ body: { kind:"member", memberId: String(activeMemberId), payload: memberData } });
+    buildGrid();
+    setSubStatus("Copied forward (saved locally).");
+    setOfflineHint();
+  }
+
+  function applyRepeatForward(everyN){
+    // Find the pattern week offset (Week A = focused week).
+    // Apply A->A+N, A+2N...
+    const from = new Date(ymd(focusWeekStart)+"T00:00:00");
+    const end = addWeeks(from, 26); // within our 6-month window
+
+    for(let ws = addWeeks(from, everyN); ws <= end; ws = addWeeks(ws, everyN)){
+      copyWeekPattern(from, ws);
+    }
+
+    localUpdateCache();
+    queueEnqueue({ body: { kind:"member", memberId: String(activeMemberId), payload: memberData } });
+    buildGrid();
+    setSubStatus("Repeat applied (saved locally).");
+    setOfflineHint();
+  }
+
+  // ============================================================
+  // Load + Sync flows
+  // ============================================================
+  function localUpdateCache(){
+    const cache = localCacheRead();
+    cache[String(activeMemberId)] = memberData;
+    localCacheWrite(cache);
+  }
+
+  async function loadAll(){
+    setSubStatus("Loading…");
+    try{
+      // Local data
+      ORG = await fetchLocalJson(`${DATA_BASE}/org_settings.json`);
+      const membersRaw = await fetchLocalJson(`${DATA_BASE}/members.json`);
+      MEMBERS = normalizeMembers(membersRaw);
+
+      $("#orgName").textContent = ORG.org_name || ORG.name || "Org";
+
+      renderMemberSelect();
+      renderAvoidWith();
+
+      // Optional history
+      try{
+        HISTORY = await fetchLocalJson(HISTORY_PATH);
+      } catch {
+        HISTORY = null;
+      }
+
+      // Focus week start input
+      $("#weekStartInput").value = ymd(focusWeekStart);
+
+      // Load member data (Drive preferred, local fallback)
+      await loadMember(activeMemberId);
+
+      bindUI();
+      buildGrid();
+      setOfflineHint();
+
+      // initial drive status
+      await refreshDriveHealth();
+      setSubStatus("Ready.");
+    } catch (e){
+      console.error(e);
+      alert("Member page failed to load required data:\n\n" + e.message);
+      setDriveStatus("bad", "Load error.");
+      setSubStatus("Load error.");
+    }
+  }
+
+  async function refreshDriveHealth(){
+    if(!isOnline()){
+      setDriveStatus("warn", "Offline — saved on this device. Will sync when back online. Don’t clear your browser storage.");
+      return;
+    }
+    try{
+      // Lightweight “ping” to Drive store by reading org or member (small).
+      await storeGet("ping", {});
+      setDriveStatus("ok", "Connected — saving to Google Drive.");
+    } catch (e){
+      console.warn("Drive health failed:", e);
+      setDriveStatus("warn", "Offline fallback — saved on this device. Will sync when back online. Don’t clear your browser storage.");
+    }
+  }
+
+  async function loadMember(memberId){
+    activeMemberId = String(memberId);
+    localStorage.setItem(LS_MEMBER, activeMemberId);
+
+    // Try Drive
+    let fromDrive = null;
+
+    if(isOnline()){
+      try{
+        fromDrive = await storeGet("member", { memberId: activeMemberId });
+      } catch (e){
+        console.warn("Drive load failed; using local cache.", e);
+      }
+    }
+
+    // Use drive if valid
+    if(fromDrive && typeof fromDrive === "object" && (fromDrive.member_id || fromDrive.weeks)){
+      memberData = fromDrive.member_id ? fromDrive : { ...fromDrive, member_id: activeMemberId };
+      localUpdateCache();
+      setDriveStatus("ok", "Connected — saving to Google Drive.");
+    } else {
+      // Local cache fallback
+      const cache = localCacheRead();
+      memberData = cache[activeMemberId] || blankMemberData(activeMemberId);
+      setDriveStatus(isOnline() ? "warn" : "warn", "Offline fallback — saved on this device. Will sync when back online. Don’t clear your browser storage.");
+    }
+
+    renderAvoidWith();
+    applyAvoidWithFromData();
+  }
+
+  async function doSync(){
+    setSubStatus("Syncing…");
+    await refreshDriveHealth();
+    if(!isOnline()){
+      setSubStatus("Offline — cannot sync.");
+      setOfflineHint();
+      return;
+    }
+
+    try{
+      // Flush queued writes
+      await flushQueue();
+
+      // Persist current state once (authoritative)
+      await storePost({ kind:"member", memberId: String(activeMemberId), payload: memberData });
+
+      localStorage.removeItem(LS_LOCALDIRTY);
+      setDriveStatus("ok", "Connected — saving to Google Drive.");
+      setSubStatus("Synced.");
+      setOfflineHint();
+    } catch (e){
+      console.error(e);
+      setDriveStatus("warn", "Offline fallback — saved on this device. Will sync when back online. Don’t clear your browser storage.");
+      setSubStatus("Sync failed (saved locally).");
+      setOfflineHint();
+    }
+  }
+
+  // ============================================================
+  // Bind UI events
+  // ============================================================
+  let uiBound = false;
+  function bindUI(){
+    if(uiBound) return;
+    uiBound = true;
+
+    // Tabs
+    $$(".tabBtn").forEach(b=>{
+      b.addEventListener("click", ()=> setTab(b.dataset.tab));
+    });
+
+    // Member select
+    $("#memberSelect").addEventListener("change", async (e)=>{
+      await loadMember(e.target.value);
+      buildGrid();
+      setSubStatus("Ready.");
+      setOfflineHint();
+    });
+
+    // Week nav
+    $("#prevWeekBtn").addEventListener("click", async ()=>{
+      focusWeekStart = addWeeks(focusWeekStart, -1);
+      $("#weekStartInput").value = ymd(focusWeekStart);
+      buildGrid();
+    });
+    $("#nextWeekBtn").addEventListener("click", async ()=>{
+      focusWeekStart = addWeeks(focusWeekStart, 1);
+      $("#weekStartInput").value = ymd(focusWeekStart);
+      buildGrid();
+    });
+    $("#weekStartInput").addEventListener("change", (e)=>{
+      const v = e.target.value;
+      if(v){
+        focusWeekStart = startOfWeekMon(new Date(v+"T00:00:00"));
+        e.target.value = ymd(focusWeekStart);
+        buildGrid();
+      }
+    });
+
+    // Repeat / Tools button jumps tab
+    $("#repeatToolsBtn").addEventListener("click", ()=> setTab("repeat"));
+
+    // Copy forward actions
+    $("#copyForward1").addEventListener("click", ()=> applyCopyForward(1));
+    $("#copyForward4").addEventListener("click", ()=> applyCopyForward(4));
+    $("#copyForwardUntil").addEventListener("click", ()=>{
+      const until = $("#copyUntilDate").value;
+      if(!until) return;
+      applyCopyForward(0, until);
+    });
+
+    $("#repeatApply").addEventListener("click", ()=>{
+      const n = parseInt($("#repeatEvery").value, 10) || 2;
+      applyRepeatForward(n);
+    });
+
+    $("#repeatClear").addEventListener("click", ()=>{
+      // no complex repeat rules stored in v1; this just informs the user.
+      alert("Repeat rules cleared (v1). This does not change existing selections.");
+    });
+
+    // Special
+    $("#saveSpecialBtn").addEventListener("click", ()=>{
+      const sel = $("#avoidWithSelect");
+      const picks = Array.from(sel.selectedOptions).map(o=> o.value);
+      memberData.special.avoid_with = picks;
+      memberData.special.note = ($("#calendarNote").value || "").trim();
+      localUpdateCache();
+      queueEnqueue({ body: { kind:"member", memberId: String(activeMemberId), payload: memberData } });
+      setSubStatus("Saved locally.");
+      setOfflineHint();
+      alert("Saved.");
+    });
+
+    $("#clearSpecialBtn").addEventListener("click", ()=>{
+      memberData.special.avoid_with = [];
+      memberData.special.note = "";
+      localUpdateCache();
+      queueEnqueue({ body: { kind:"member", memberId: String(activeMemberId), payload: memberData } });
+      applyAvoidWithFromData();
+      setSubStatus("Saved locally.");
+      setOfflineHint();
+    });
+
+    // Sync
+    $("#syncBtn").addEventListener("click", doSync);
+
+    // Online/offline listeners
+    window.addEventListener("online", async ()=>{
+      setOfflineHint();
+      await refreshDriveHealth();
+    });
+    window.addEventListener("offline", ()=>{
+      setOfflineHint();
+      setDriveStatus("warn", "Offline — saved on this device. Will sync when back online. Don’t clear your browser storage.");
+    });
+  }
+
+  // ============================================================
+  // Boot
+  // ============================================================
+  (function(){
+    setDriveStatus("warn", "Offline fallback — saved on this device. Will sync when back online. Don’t clear your browser storage.");
+    setOfflineHint();
+    loadAll();
+  })();
+
+  </script>
+</body>
+</html>
