@@ -1,88 +1,98 @@
-<style>
-  .wb-grid{
-    display:grid;
-    grid-template-columns: repeat(7, minmax(140px, 1fr));
-    gap:10px;
-    padding:10px;
-  }
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wallboard Tile Demo</title>
+  <style>
+    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#f6f7fb; }
+    .wb-grid{
+      display:grid;
+      grid-template-columns: repeat(7, minmax(140px, 1fr));
+      gap:10px;
+      padding:10px;
+    }
+    .wb-day{
+      border:1px solid #d7dbe2;
+      border-radius:10px;
+      background:#fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      overflow:hidden;
+      min-height:132px;
+      display:grid;
+      grid-template-rows: 34px 49px 49px; /* header + AM row + PM row */
+    }
+    .wb-dayhead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:8px 10px;
+      border-bottom:1px solid #eef1f5;
+      background: linear-gradient(#fbfcfe, #ffffff);
+    }
+    .wb-daynum{ font-size:18px; font-weight:800; line-height:1; }
+    .wb-weekday{ font-size:12px; color:#6b7280; font-weight:600; }
 
-  .wb-day{
-    border:1px solid #d7dbe2;
-    border-radius:10px;
-    background:#fff;
-    box-shadow: 0 1px 2px rgba(0,0,0,.05);
-    overflow:hidden;
-    min-height:132px;
-    display:grid;
-    grid-template-rows: 34px 49px 49px; /* header + AM row + PM row */
-  }
+    .wb-slot{
+      display:grid;
+      grid-template-columns: 26px 1fr; /* tiny AM/PM tag + big names */
+      gap:8px;
+      padding:8px 10px;
+      border-top:1px solid #f3f5f8;
+      align-items:start;
+    }
+    .wb-tag{
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.08em;
+      color:#6b7280;
+      text-transform:uppercase;
+      line-height:1.1;
+      padding-top:2px;
+    }
+    .wb-lines{
+      font-size:12px;
+      font-weight:700;
+      color:#111827;
+      line-height:1.15;
+      overflow:hidden;
+    }
+    .wb-line{
+      display:flex;
+      gap:6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
+    .wb-role{
+      font-size:11px;
+      font-weight:900;
+      color:#6b7280;
+      flex:0 0 auto;
+    }
+    .wb-name{
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .muted{ color:#9ca3af; font-weight:900; }
 
-  .wb-dayhead{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:8px 10px;
-    border-bottom:1px solid #eef1f5;
-    background: linear-gradient(#fbfcfe, #ffffff);
-  }
-  .wb-daynum{ font-size:18px; font-weight:800; line-height:1; }
-  .wb-weekday{ font-size:12px; color:#6b7280; font-weight:600; }
+    .wb-day.is-today{ outline:2px solid #111827; outline-offset:1px; }
+    .wb-day.is-open{ border-color:#f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.15); }
+  </style>
+</head>
+<body>
 
-  /* AM/PM row */
-  .wb-slot{
-    display:grid;
-    grid-template-columns: 26px 1fr; /* tiny AM/PM tag + big names */
-    gap:8px;
-    padding:8px 10px;
-    border-top:1px solid #f3f5f8;
-    align-items:start;
-  }
-
-  .wb-tag{
-    font-size:10px;
-    font-weight:900;
-    letter-spacing:.08em;
-    color:#6b7280;
-    text-transform:uppercase;
-    line-height:1.1;
-    padding-top:2px;
-  }
-
-  .wb-lines{
-    font-size:12px;
-    font-weight:700;
-    color:#111827;
-    line-height:1.15;
-    overflow:hidden;
-  }
-
-  .wb-line{
-    display:flex;
-    gap:6px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    max-width:100%;
-  }
-  .wb-role{
-    font-size:11px;
-    font-weight:900;
-    color:#6b7280;
-    flex:0 0 auto;
-  }
-  .wb-name{
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-
-  .muted{ color:#9ca3af; font-weight:900; }
-
-  /* optional accents */
-  .wb-day.is-today{ outline:2px solid #111827; outline-offset:1px; }
-  .wb-day.is-open{ border-color:#f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.15); }
-</style>
+<div id="wallboardGrid" class="wb-grid"></div>
 
 <script>
+  // Demo data (swap this for your real published schedule object)
+  const demo = {
+    "2026-01-04": { am:{ attendant:"Benson", driver:"OPEN" }, pm:{ attendant:"Tripp", driver:"Ennis" } },
+    "2026-01-05": { am:{ attendant:"OPEN", driver:"OPEN" }, pm:{ attendant:"Burr", driver:"OPEN" } },
+    "2026-01-06": { am:{ attendant:"Amy Arnold", driver:"Nick Tripp" }, pm:{ attendant:"OPEN", driver:"OPEN" } },
+  };
+
   function showName(v){
     if(!v) return `<span class="muted">OPEN</span>`;
     const t = String(v).trim();
@@ -90,7 +100,6 @@
     if(t.toLowerCase().includes("open")) return `<span class="muted">${t.toUpperCase()}</span>`;
     return t;
   }
-
   function slotIsOpen(slot){
     const a = (slot?.attendant ?? "").toLowerCase();
     const d = (slot?.driver ?? "").toLowerCase();
@@ -98,7 +107,8 @@
   }
 
   function buildDayTile(isoDate, dayNum, weekday, slots){
-    const isToday = (new Date().toISOString().slice(0,10) === isoDate);
+    const todayIso = new Date().toISOString().slice(0,10);
+    const isToday = (todayIso === isoDate);
     const anyOpen = slotIsOpen(slots?.am) || slotIsOpen(slots?.pm);
 
     const div = document.createElement("div");
@@ -107,7 +117,7 @@
     div.innerHTML = `
       <div class="wb-dayhead">
         <div class="wb-daynum">${dayNum}</div>
-        <div class="wb-weekday">${weekday || ""}</div>
+        <div class="wb-weekday">${weekday}</div>
       </div>
 
       <div class="wb-slot">
@@ -128,4 +138,27 @@
     `;
     return div;
   }
+
+  function renderWallboard(data){
+    const grid = document.getElementById("wallboardGrid");
+    if(!grid){
+      console.error("Missing #wallboardGrid element");
+      return;
+    }
+    grid.innerHTML = "";
+
+    const keys = Object.keys(data).sort();
+    for(const iso of keys){
+      const d = new Date(iso + "T00:00:00");
+      const dayNum = d.getDate();
+      const weekday = d.toLocaleDateString(undefined, { weekday:"short" });
+      grid.appendChild(buildDayTile(iso, dayNum, weekday, data[iso]));
+    }
+  }
+
+  // IMPORTANT: render AFTER DOM exists (we're at bottom of body, so OK)
+  renderWallboard(demo);
 </script>
+
+</body>
+</html>
