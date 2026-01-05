@@ -2,143 +2,556 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>ShiftCommander — Wallboard</title>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-
+<title>ShiftCommander — Wallboard</title>
 <style>
-:root{
-  --bg:#f4f7fb;
-  --card:#ffffff;
-  --line:#d9e1ee;
-  --text:#0f172a;
-  --muted:#64748b;
-  --open:#9aa5b1;
-  --shadow:0 1px 2px rgba(0,0,0,.06);
-}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
-  background:var(--bg);
-  color:var(--text);
-}
+  :root{
+    --bg:#f4f7fb;
+    --card:#ffffff;
+    --line:#d9e1ee;
+    --line2:#eef2f7;
+    --text:#0f172a;
+    --muted:#64748b;
+    --muted2:#94a3b8;
+    --open:#9aa5b1;
+    --shadow:0 1px 2px rgba(0,0,0,.06);
+    --r:10px;
 
-header{
-  background:linear-gradient(#fff,#f8fafc);
-  border-bottom:1px solid var(--line);
-  padding:10px 14px;
-  font-weight:900;
-}
+    --g:#16a34a;   /* green */
+    --y:#f59e0b;   /* yellow */
+    --red:#dc2626; /* red */
+    --gray:#94a3b8;
+  }
 
-.calendar{
-  padding:12px;
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:10px;
-}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
 
-.day{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:10px;
-  box-shadow:var(--shadow);
-  overflow:hidden;
-  display:grid;
-  grid-template-rows:32px 1fr 1fr;
-}
+  .top{
+    position:sticky; top:0; z-index:10;
+    background:linear-gradient(#fff,#fbfdff);
+    border-bottom:1px solid var(--line);
+    box-shadow:var(--shadow);
+  }
+  .top-inner{
+    max-width:1500px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+    padding:10px 12px;
+  }
+  .title{
+    font-weight:1000;
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .sub{
+    font-size:12px; color:var(--muted);
+    font-weight:900;
+  }
 
-.dayhead{
-  padding:6px 8px;
-  font-weight:900;
-  border-bottom:1px solid var(--line);
-}
+  .pill{
+    font-size:12px;
+    font-weight:900;
+    color:var(--muted);
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:999px;
+    padding:6px 10px;
+  }
 
-.slot{
-  display:grid;
-  grid-template-columns:26px 1fr;
-  padding:6px 8px;
-  gap:6px;
-  border-top:1px solid #eef2f7;
-}
+  .wrap{
+    max-width:1500px;
+    margin:0 auto;
+    padding:12px;
+  }
 
-.tag{
-  font-size:10px;
-  font-weight:900;
-  color:var(--muted);
-}
+  .week-block{
+    border:1px solid var(--line);
+    border-radius:var(--r);
+    background:var(--card);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    margin-bottom:12px;
+  }
 
-.line{
-  font-size:12px;
-  font-weight:800;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
+  .week-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line2);
+    background:linear-gradient(#fbfdff,#fff);
+    gap:12px;
+  }
+  .week-head .left{
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .week-title{
+    font-weight:1000;
+  }
+  .week-dates{
+    font-size:12px; color:var(--muted); font-weight:900;
+  }
 
-.role{ color:var(--muted); margin-right:4px; }
-.open{ color:var(--open); font-weight:900; letter-spacing:.05em; }
+  .weekday-row{
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap:10px;
+    padding:10px 12px 0 12px;
+    color:var(--muted);
+    font-weight:1000;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(7, minmax(165px, 1fr));
+    gap:10px;
+    padding:10px 12px 12px 12px;
+  }
+
+  /* Day tile */
+  .day{
+    display:grid;
+    grid-template-columns: 8px 1fr; /* health strip + tile */
+    gap:0;
+    border-radius:var(--r);
+    overflow:hidden;
+    border:1px solid var(--line);
+    background:var(--card);
+  }
+  .health{
+    background:var(--gray);
+  }
+  .tile{
+    display:grid;
+    grid-template-rows: 30px 1fr 1fr; /* head + AM + PM */
+    min-height: 142px;
+  }
+  .dayhead{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 10px;
+    border-bottom:1px solid var(--line2);
+    background:linear-gradient(#fbfdff,#fff);
+  }
+  .daynum{ font-size:16px; font-weight:1000; line-height:1; }
+  .iso{ font-size:11px; color:var(--muted2); font-weight:1000; }
+
+  .slot{
+    display:grid;
+    grid-template-columns: 22px 1fr; /* tiny AM/PM + names */
+    gap:8px;
+    padding:8px 10px;
+    border-top:1px solid var(--line2);
+    align-items:start;
+  }
+  .slot:first-of-type{ border-top:none; }
+
+  .tag{
+    font-size:10px;
+    font-weight:1000;
+    color:var(--muted);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding-top:2px;
+  }
+
+  .lines{ display:flex; flex-direction:column; gap:5px; min-width:0; }
+  .line{
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    min-width:0;
+  }
+  .open{
+    color:var(--open);
+    font-weight:1000;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+
+  .note{
+    margin-top:4px;
+    font-size:11px;
+    font-weight:1000;
+    color:var(--muted);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .note strong{ color:var(--text); }
+
+  .flag{
+    font-size:12px;
+    font-weight:1000;
+    color:var(--y);
+    margin-left:8px;
+  }
+
+  .today .tile{ outline:2px solid #0f172a; outline-offset:-2px; }
+
+  @media (max-width: 980px){
+    .weekday-row{ display:none; }
+    .grid{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+  }
 </style>
 </head>
-
 <body>
 
-<header>Wallboard</header>
-<div id="cal" class="calendar"></div>
+<div class="top">
+  <div class="top-inner">
+    <div class="title">
+      <div>Wallboard</div>
+      <div class="sub" id="rangeLabel">Prev + This + Planning</div>
+    </div>
+    <div class="pill" id="statusPill">Loading…</div>
+  </div>
+</div>
+
+<div class="wrap" id="root"></div>
 
 <script>
-const SCHEDULE_URL = "schedule.json";
+/** ========= CONFIG ========= **/
+const STORE_URL = "https://YOUR-WORKER-URL-HERE"; // <- set to your Cloudflare Worker endpoint
+const TOKEN = ""; // optional if your store requires it, otherwise leave blank
+const PLANNING_WEEKS = 4; // how many planning weeks to show
+const WEEK_START = 0; // 0=Sunday (ADR matches wallboard)
+const SHOW_WEEKDAY_HEADER = true;
 
-function normalize(slot){
-  return {
-    attendant: slot?.attendant || "OPEN",
-    driver: slot?.driver || "OPEN"
-  };
+/** kind names in Apps Script */
+const KIND_SCHEDULE = "schedule"; // should return schedule.json contents
+const KIND_MEMBERS  = "members";  // should return members.json contents (tiers + qual_120)
+
+/** ========= DATE UTILS ========= **/
+function isoDate(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function startOfWeek(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = (x.getDay() - WEEK_START + 7) % 7;
+  x.setDate(x.getDate() - diff);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function addDays(d, n){
+  const x = new Date(d);
+  x.setDate(x.getDate()+n);
+  return x;
+}
+function fmtRange(a,b){
+  const opt = { month:"short", day:"numeric" };
+  const left = a.toLocaleDateString(undefined, opt);
+  const right = b.toLocaleDateString(undefined, opt);
+  const yr = b.getFullYear();
+  return `${left} – ${right}, ${yr}`;
 }
 
-function nameHTML(v){
-  if(v === "OPEN") return `<span class="open">OPEN</span>`;
-  return v;
+/** ========= FETCH ========= **/
+function storeUrl(kind){
+  const u = new URL(STORE_URL);
+  u.searchParams.set("kind", kind);
+  if(TOKEN) u.searchParams.set("token", TOKEN);
+  return u.toString();
+}
+async function fetchJson(url){
+  const r = await fetch(url, { cache:"no-store" });
+  const t = await r.text();
+  // Worker may wrap HTML errors in JSON {ok:false,...}
+  try{
+    const j = JSON.parse(t);
+    if(j && j.ok === false) throw new Error(j.error || "Store error");
+    return j;
+  }catch(e){
+    // if it wasn't JSON, surface first bytes
+    if(t.trim().startsWith("<!DOCTYPE html")) throw new Error("Upstream returned HTML (auth/cors/drive).");
+    throw e;
+  }
 }
 
-async function load(){
-  const resp = await fetch(SCHEDULE_URL,{cache:"no-store"});
-  const schedule = await resp.json();
+/** ========= ROSTER MAP ========= **/
+/**
+ * We need:
+ *  - tier: ALS if AEMT/P, EMT if EMT-B
+ *  - qual_120: true/false
+ *
+ * Adapt this mapper once we see your exact members.json format.
+ */
+function buildRosterIndex(membersJson){
+  const byId = {};
+  const list = Array.isArray(membersJson) ? membersJson : (membersJson.members || membersJson.data || []);
+  for(const m of list){
+    const id = String(m.member_id ?? m.id ?? m.memberId ?? "").trim();
+    if(!id) continue;
 
-  const cal = document.getElementById("cal");
-  cal.innerHTML="";
+    // ALS tier based on your rule: AEMT/P = ALS; EMT-B = EMT
+    const quals = m.quals || m.qualifications || m.qual || {};
+    const cert = (m.medical || m.medical_level || m.level || m.ems_level || "").toString().toUpperCase();
 
-  const dates = Object.keys(schedule).sort();
-  for(const iso of dates){
-    const d = new Date(iso+"T00:00");
+    // Best-effort detection:
+    const isALS =
+      cert.includes("AEMT") || cert.includes("PARAMEDIC") || cert.includes("EMT-P") || cert.includes("EMT P") ||
+      cert.includes("EMT-PARAMEDIC") || cert.includes("EMT-PAR") ||
+      (Array.isArray(quals) && quals.some(q => String(q).toUpperCase().includes("AEMT") || String(q).toUpperCase().includes("PARAMEDIC")));
+
+    const isEMT =
+      cert.includes("EMT") && !isALS; // EMT-B style will land here typically
+
+    // qual_120 detection:
+    const has120 =
+      m.qual_120 === true ||
+      m.qual120 === true ||
+      (Array.isArray(quals) && quals.some(q => String(q).includes("120"))) ||
+      (typeof quals === "object" && (quals.qual_120 || quals["120"]));
+
+    byId[id] = {
+      name: (m.name || m.full_name || m.display_name || m.last_first || id).toString(),
+      tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"),
+      has120: !!has120
+    };
+  }
+  return byId;
+}
+
+/** ========= SCHEDULE NORMALIZE ========= **/
+function normalizePair(pair){
+  // pair is ["203","115"] or ["210","OPEN"]
+  const a = (pair && pair[0]) ? String(pair[0]).trim() : "OPEN";
+  const d = (pair && pair[1]) ? String(pair[1]).trim() : "OPEN";
+  return [a || "OPEN", d || "OPEN"];
+}
+function getDay(schedule, iso){
+  const obj = schedule[iso] || {};
+  const am = normalizePair(obj.AM || obj.am || obj.Am || ["OPEN","OPEN"]);
+  const pm = normalizePair(obj.PM || obj.pm || obj.Pm || ["OPEN","OPEN"]);
+  const flags = obj.flags || []; // optional: day-level flags
+  const notes = obj.notes || {}; // optional: { AM:"...", PM:"..." }
+  return { am, pm, flags, notes };
+}
+
+/** ========= HEALTH RULES (ALL SHIFTS ARE ALS SHIFTS) ========= **/
+function shiftHealth(attId, drvId, roster){
+  // Red if attendant is not ALS, or driver lacks qual_120
+  const att = roster[attId];
+  const drv = roster[drvId];
+
+  const attTier = (attId === "OPEN") ? "OPEN" : (att?.tier || "UNK");
+  const drvTier = (drvId === "OPEN") ? "OPEN" : (drv?.tier || "UNK");
+  const drvHas120 = (drvId !== "OPEN") && !!(drv?.has120);
+
+  // Missing or non-ALS attendant => RED
+  if(attId === "OPEN" || attTier !== "ALS") return "RED";
+
+  // Missing driver or no 120 => RED
+  if(drvId === "OPEN" || !drvHas120) return "RED";
+
+  // Ideal: ALS attendant + EMT driver w/ 120 => GREEN
+  if(drvTier === "EMT") return "GREEN";
+
+  // Driver is ALS (still ok, less ideal) => YELLOW
+  if(drvTier === "ALS") return "YELLOW";
+
+  // Unknown tier but has120 => waiver-minimum => YELLOW
+  return "YELLOW";
+}
+
+function dayHealth(dayObj, roster){
+  const [amA, amD] = dayObj.am;
+  const [pmA, pmD] = dayObj.pm;
+
+  // Worst-of (RED beats YELLOW beats GREEN)
+  const ranks = { RED:3, YELLOW:2, GREEN:1 };
+  const amH = shiftHealth(amA, amD, roster);
+  const pmH = shiftHealth(pmA, pmD, roster);
+  return (ranks[amH] >= ranks[pmH]) ? amH : pmH;
+}
+
+/** ========= NEEDS HINTS (ONLY IN LAST PLANNING WEEK) ========= **/
+function needsHint(attId, drvId, roster){
+  // Based on your preferences:
+  // - If 2 ALS scheduled (ALS attendant + ALS driver w/ 120) => Needs EMT
+  // - If ALS attendant but driver missing or lacks 120 => Need Driver
+  // - If attendant missing or not ALS => Need ALS
+  if(attId === "OPEN" || (roster[attId]?.tier !== "ALS")) return "Needs ALS";
+  if(drvId === "OPEN" || !roster[drvId]?.has120) return "Need Driver";
+  if(roster[drvId]?.tier === "ALS") return "Needs EMT";
+  return ""; // already ideal
+}
+
+/** ========= RENDER ========= **/
+function nameFor(id, roster){
+  if(!id || id === "OPEN") return `<span class="open">OPEN</span>`;
+  const r = roster[id];
+  const nm = (r?.name || id).toString();
+  return escapeHtml(nm);
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function healthColor(h){
+  if(h==="GREEN") return "var(--g)";
+  if(h==="YELLOW") return "var(--y)";
+  if(h==="RED") return "var(--red)";
+  return "var(--gray)";
+}
+
+function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
+  const weekEnd = addDays(weekStartDate, 6);
+  const range = fmtRange(weekStartDate, weekEnd);
+
+  const block = document.createElement("div");
+  block.className = "week-block";
+
+  const head = document.createElement("div");
+  head.className = "week-head";
+  head.innerHTML = `
+    <div class="left">
+      <div class="week-title">${escapeHtml(title)}</div>
+      <div class="week-dates">${escapeHtml(range)}</div>
+    </div>
+    <div class="sub">${opts.sub || ""}</div>
+  `;
+  block.appendChild(head);
+
+  if(SHOW_WEEKDAY_HEADER){
+    const wd = document.createElement("div");
+    wd.className = "weekday-row";
+    wd.innerHTML = `<div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>`;
+    block.appendChild(wd);
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "grid";
+
+  const todayIso = isoDate(new Date());
+
+  for(let i=0;i<7;i++){
+    const d = addDays(weekStartDate, i);
+    const iso = isoDate(d);
+    const dayObj = getDay(schedule, iso);
+    const h = dayHealth(dayObj, roster);
+
+    // optional caution flag if day has flags
+    const hasCaution = Array.isArray(dayObj.flags) && dayObj.flags.length > 0;
+
     const day = document.createElement("div");
-    day.className="day";
+    day.className = "day" + (iso===todayIso ? " today" : "");
 
-    const am = normalize(schedule[iso]?.AM);
-    const pm = normalize(schedule[iso]?.PM);
+    const health = document.createElement("div");
+    health.className = "health";
+    health.style.background = healthColor(h);
 
-    day.innerHTML=`
-      <div class="dayhead">${d.getDate()}</div>
+    const tile = document.createElement("div");
+    tile.className = "tile";
+
+    const [amA, amD] = dayObj.am;
+    const [pmA, pmD] = dayObj.pm;
+
+    // Planning “Needs …” only in last planning week block
+    const amNeed = opts.showNeeds ? needsHint(amA, amD, roster) : "";
+    const pmNeed = opts.showNeeds ? needsHint(pmA, pmD, roster) : "";
+
+    tile.innerHTML = `
+      <div class="dayhead">
+        <div class="daynum">${d.getDate()}${hasCaution ? `<span class="flag">⚠</span>` : ""}</div>
+        <div class="iso">${iso}</div>
+      </div>
 
       <div class="slot">
         <div class="tag">AM</div>
-        <div>
-          <div class="line"><span class="role">Att:</span>${nameHTML(am.attendant)}</div>
-          <div class="line"><span class="role">Drv:</span>${nameHTML(am.driver)}</div>
+        <div class="lines">
+          <div class="line">${nameFor(amA, roster)}</div>
+          <div class="line">${nameFor(amD, roster)}</div>
+          ${amNeed ? `<div class="note"><strong>${escapeHtml(amNeed)}</strong></div>` : ""}
         </div>
       </div>
 
       <div class="slot">
         <div class="tag">PM</div>
-        <div>
-          <div class="line"><span class="role">Att:</span>${nameHTML(pm.attendant)}</div>
-          <div class="line"><span class="role">Drv:</span>${nameHTML(pm.driver)}</div>
+        <div class="lines">
+          <div class="line">${nameFor(pmA, roster)}</div>
+          <div class="line">${nameFor(pmD, roster)}</div>
+          ${pmNeed ? `<div class="note"><strong>${escapeHtml(pmNeed)}</strong></div>` : ""}
         </div>
       </div>
     `;
-    cal.appendChild(day);
+
+    day.appendChild(health);
+    day.appendChild(tile);
+    grid.appendChild(day);
+  }
+
+  block.appendChild(grid);
+  root.appendChild(block);
+}
+
+/** ========= MAIN ========= **/
+async function main(){
+  const pill = document.getElementById("statusPill");
+  try{
+    if(!STORE_URL || STORE_URL.includes("YOUR-WORKER-URL-HERE")){
+      pill.textContent = "Set STORE_URL";
+      pill.style.color = "#b45309";
+      return;
+    }
+
+    pill.textContent = "Loading schedule + roster…";
+
+    const [schedule, members] = await Promise.all([
+      fetchJson(storeUrl(KIND_SCHEDULE)),
+      fetchJson(storeUrl(KIND_MEMBERS))
+    ]);
+
+    const roster = buildRosterIndex(members);
+
+    const root = document.getElementById("root");
+    root.innerHTML = "";
+
+    const now = new Date();
+    const thisWeekStart = startOfWeek(now);
+    const prevWeekStart = addDays(thisWeekStart, -7);
+
+    // Planning weeks start next week
+    const planningStarts = addDays(thisWeekStart, 7);
+
+    renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Context" });
+    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Operational" });
+
+    for(let w=0; w<PLANNING_WEEKS; w++){
+      const ws = addDays(planningStarts, w*7);
+      const isLastPlanningWeek = (w === PLANNING_WEEKS-1); // the one right before Controlled begins
+      renderWeekBlock(
+        root,
+        `Planning Week ${w+1}`,
+        ws,
+        schedule,
+        roster,
+        { sub: isLastPlanningWeek ? "Notes + Needs" : "Planning", showNeeds: isLastPlanningWeek }
+      );
+    }
+
+    pill.textContent = "Live";
+    pill.style.color = "#166534";
+    document.getElementById("rangeLabel").textContent =
+      `Prev + This + ${PLANNING_WEEKS} Planning week(s)`;
+  }catch(err){
+    console.error(err);
+    pill.textContent = "Load failed";
+    pill.style.color = "#b91c1c";
+    const root = document.getElementById("root");
+    root.innerHTML = `<div class="pill" style="border-color:#fecaca;color:#b91c1c">
+      ${escapeHtml(String(err.message || err))}
+    </div>`;
   }
 }
 
-load();
+main();
 </script>
 </body>
 </html>
