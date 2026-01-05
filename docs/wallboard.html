@@ -230,6 +230,7 @@ const SHOW_WEEKDAY_HEADER = true;
 /** kind names in Apps Script */
 const KIND_SCHEDULE = "schedule"; // should return schedule.json contents
 const KIND_MEMBERS  = "members";
+const KIND_HISTORY_INDEX = "history_index"; // optional history.index.json
 
 /** ========= TOKEN UI ========= **/
 function promptToken(){
@@ -357,6 +358,97 @@ function getDay(schedule, iso){
   return { am, pm, flags, notes };
 }
 
+/** ========= HISTORY (ARCHIVED) =========
+ * History comes from whiteboard scrape outputs like:
+ *   /web/data/history/history.index.json
+ *   /web/data/history/2025-12.normalized.json
+ *
+ * We load it only to render Archived weeks. If unavailable, we fall back to schedule.json.
+ */
+const HISTORY_INDEX_FALLBACK = "/web/data/history/history.index.json";
+
+async function fetchJsonAny(urls){
+  let lastErr = null;
+  for (const u of urls){
+    try{
+      const j = await fetchJson(u);
+      if(j && (j.ok === true || j.payload !== undefined || j.month || j.generated_at)) return j;
+      // Some endpoints might return raw JSON without ok/payload
+      return j;
+    }catch(e){
+      lastErr = e;
+    }
+  }
+  if(lastErr) throw lastErr;
+  throw new Error("fetchJsonAny failed");
+}
+
+async function loadHistoryIndex(){
+  // Try store (kind=history_index) first, then static path.
+  const urls = [
+    storeUrl(KIND_HISTORY_INDEX),
+    (location.origin && location.origin.startsWith("http")) ? (location.origin + HISTORY_INDEX_FALLBACK) : HISTORY_INDEX_FALLBACK
+  ];
+  const j = await fetchJsonAny(urls);
+  const payload = (j && j.payload) ? j.payload : j;
+  if(!payload || !payload.files) return null;
+  return payload;
+}
+
+function normalizeHistoryDayObj(day){
+  // day is from *.normalized.json: day.AM / day.PM each has seat_medical + seat_driver_emt.
+  const mkPair = (slot)=>{
+    if(!slot) return ["OPEN","OPEN"];
+    const a = slot.seat_medical && slot.seat_medical.status === "filled" ? (slot.seat_medical.member_id || slot.seat_medical.name || "OPEN") : "OPEN";
+    const d = slot.seat_driver_emt && slot.seat_driver_emt.status === "filled" ? (slot.seat_driver_emt.member_id || slot.seat_driver_emt.name || "OPEN") : "OPEN";
+    return [String(a||"OPEN"), String(d||"OPEN")];
+  };
+  return {
+    AM: mkPair(day.AM),
+    PM: mkPair(day.PM),
+    flags: day.flags || []
+  };
+}
+
+function createHistoryProvider(index){
+  const cache = new Map(); // month -> monthJson
+  const byMonth = new Map();
+  (index.files || []).forEach(f=>{
+    if(f && f.month && f.path) byMonth.set(String(f.month), String(f.path));
+  });
+
+  return {
+    index,
+    async loadMonth(month){
+      if(cache.has(month)) return cache.get(month);
+      const path = byMonth.get(month);
+      if(!path) { cache.set(month, null); return null; }
+      const url = (location.origin && location.origin.startsWith("http")) ? (location.origin + path) : path;
+      const j = await fetchJson(url);
+      const payload = (j && j.payload) ? j.payload : j;
+      cache.set(month, payload || null);
+      return payload || null;
+    },
+    async getDay(iso){
+      const month = String(iso).slice(0,7);
+      const mj = await this.loadMonth(month);
+      if(!mj || !mj.days || !mj.days[iso]) return null;
+      return normalizeHistoryDayObj(mj.days[iso]);
+    }
+  };
+}
+
+async function getDayMerged(iso, schedule, historyProvider, preferHistory){
+  if(preferHistory && historyProvider){
+    try{
+      const hd = await historyProvider.getDay(iso);
+      if(hd) return { am: normalizePair(hd.AM), pm: normalizePair(hd.PM), flags: hd.flags || [] };
+    }catch(_e){}
+  }
+  return getDay(schedule, iso);
+}
+
+
 /** ========= HEALTH RULES (ALL SHIFTS ARE ALS SHIFTS) ========= **/
 function shiftHealth(attId, drvId, roster){
   // Red if attendant is not ALS, or driver lacks qual_120
@@ -423,7 +515,7 @@ function healthColor(h){
   return "var(--gray)";
 }
 
-function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
+async function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
   const weekEnd = addDays(weekStartDate, 6);
   const range = fmtRange(weekStartDate, weekEnd);
 
@@ -456,7 +548,7 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
   for(let i=0;i<7;i++){
     const d = addDays(weekStartDate, i);
     const iso = isoDate(d);
-    const dayObj = getDay(schedule, iso);
+    const dayObj = await getDayMerged(iso, schedule, opts.historyProvider || null, opts.preferHistory || false);
     const h = dayHealth(dayObj, roster);
 
     // optional caution flag if day has flags
@@ -530,6 +622,13 @@ async function main(){
       fetchJson(storeUrl(KIND_MEMBERS))
     ]);
 
+    // Optional: load whiteboard-scraped history index for Archived weeks
+    let historyProvider = null;
+    try{
+      const hIndex = await loadHistoryIndex();
+      if(hIndex) historyProvider = createHistoryProvider(hIndex);
+    }catch(e){ /* history optional */ }
+
     const roster = buildRosterIndex(members);
 
     const root = document.getElementById("root");
@@ -542,12 +641,12 @@ async function main(){
     // Planning weeks start next week
     const planningStarts = addDays(thisWeekStart, 7);
 
-    renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Archived" });
-    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Controlled" });
+    await renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Archived", preferHistory:true, historyProvider });
+    await renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Controlled", preferHistory:false, historyProvider });
 
     for(let w=0; w<PLANNING_WEEKS; w++){
       const ws = addDays(planningStarts, w*7);// the one right before Controlled begins
-      renderWeekBlock(
+      await renderWeekBlock(
         root,
         "",
         ws,
