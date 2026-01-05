@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ShiftCommander — Member</title>
+  <style>
+    :root{
+      --bg0:#070b14;
+      --bg1:#0b1428;
+      --card:#0c1a34;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.16);
+      --text:#e9f1ff;
+      --muted:rgba(233,241,255,.72);
+      --muted2:rgba(233,241,255,.50);
+      --green:#26d07c;
+      --blue:#5c8dff;
+      --red:#ff5d5d;
+      --amber:#f4c542;
+      --shadow:0 16px 50px rgba(0,0,0,.35);
+      --r:16px;
+      --r2:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background: radial-gradient(1100px 700px at 35% -20%, #163a86 0%, rgba(22,58,134,0) 55%),
+                  radial-gradient(900px 600px at 90% 0%, #2a0e6e 0%, rgba(42,14,110,0) 60%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+
+    /* Header */
+    .top{
+      position:sticky; top:0; z-index:20;
+      background: linear-gradient(180deg, rgba(5,8,16,.92), rgba(5,8,16,.55));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .topInner{
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 14px 14px 12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand{ font-weight:900; letter-spacing:.2px; margin-right:auto; white-space:nowrap; }
+    .controls{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .pill{
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      box-shadow: 0 8px 26px rgba(0,0,0,.18);
+    }
+    .pill label{font-size:12px; color:var(--muted2)}
+    select, input[type="date"]{
+      background: transparent;
+      color: var(--text);
+      border: 0;
+      outline: 0;
+      font-size: 14px;
+    }
+    option{color:#000}
+    .btn{
+      cursor:pointer;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-weight: 800;
+      box-shadow: 0 8px 26px rgba(0,0,0,.18);
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn:hover{background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22)}
+    .btn.secondary{font-weight:800; opacity:.95}
+
+    .dot{ width:10px; height:10px; border-radius:999px; background: rgba(233,241,255,.26); box-shadow: 0 0 0 3px rgba(255,255,255,.06); }
+    .dot.ok{ background: var(--green); box-shadow: 0 0 0 3px rgba(38,208,124,.16) }
+    .dot.warn{ background: var(--amber); box-shadow: 0 0 0 3px rgba(244,197,66,.16) }
+
+    /* Layout */
+    .wrap{ max-width: 1280px; margin: 0 auto; padding: 16px 14px 18px; }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .headline{ display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+    .headline h2{ margin:0; font-size: 16px; line-height:1.25; letter-spacing:.2px; }
+    .headline .sub{ margin:2px 0 0; font-size: 12px; color: var(--muted); }
+    .headline .right{ margin-left:auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .statusPill{
+      display:flex; align-items:center; gap:10px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      padding: 8px 10px;
+      min-height: 36px;
+    }
+    .statusPill .tiny{ font-size:12px; color: var(--muted); }
+
+    /* Months grid (Enrollware-inspired) */
+    .monthsWrap{ margin-top: 14px; }
+    .monthsGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      align-items:start;
+    }
+    .monthCard{
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      background: rgba(0,0,0,.10);
+      padding: 10px;
+      box-shadow: 0 10px 34px rgba(0,0,0,.22);
+    }
+    .monthTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 2px 2px 8px;
+    }
+    .monthTitle b{ font-size: 13px; letter-spacing:.25px; }
+    .monthTitle span{ font-size: 11px; color: var(--muted2); }
+    .dowRow{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      padding: 0 2px 6px;
+    }
+    .dow{ text-align:center; font-size:10px; color: var(--muted2); font-weight:900; letter-spacing:.2px; }
+
+    .monthGrid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .dayCell{
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      padding: 6px 5px 5px;
+      min-height: 54px;
+      position: relative;
+    }
+    .dayCell.blank{
+      background: transparent;
+      border-color: transparent;
+      box-shadow:none;
+    }
+    .dayCell.past{ opacity:.55; }
+    .dayNum{ font-weight:950; font-size: 12px; line-height:1; }
+    .dayNum .tinyDate{ font-weight:800; font-size: 9px; color: var(--muted2); margin-left:4px; }
+
+    .segRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .seg{
+      cursor:pointer;
+      border-radius: 10px;
+      border: 1px solid rgba(233,241,255,.14);
+      background: rgba(255,255,255,.02);
+      padding: 6px 0 5px;
+      text-align:center;
+      user-select:none;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing:.35px;
+      text-transform: uppercase;
+      line-height:1;
+    }
+    .seg:active{ transform: translateY(1px); }
+    .seg.locked{ cursor:not-allowed; opacity:.65; }
+
+    /* states (fills) */
+    .seg[data-state="clear"]{ background: rgba(233,241,255,.03); border-style:dashed; }
+    .seg[data-state="preferred"]{ background: rgba(38,208,124,.22); border-color: rgba(38,208,124,.55); }
+    .seg[data-state="available"]{ background: rgba(92,141,255,.22); border-color: rgba(92,141,255,.55); }
+    .seg[data-state="nosched"]{ background: rgba(255,93,93,.22); border-color: rgba(255,93,93,.55); }
+
+    /* pending dot */
+    .seg[data-pending="1"]{ position:relative; }
+    .seg[data-pending="1"]::after{
+      content:"";
+      position:absolute; right:3px; top:3px;
+      width:6px; height:6px; border-radius:99px;
+      background: rgba(255,168,54,.95);
+      box-shadow: 0 0 0 3px rgba(255,168,54,.14);
+    }
+
+    /* Legend */
+    .legend{
+      margin-top: 12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 14px;
+      align-items:center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .legItem{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      cursor: help;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .swatch{ width: 10px; height: 10px; border-radius: 999px; background: rgba(233,241,255,.26); box-shadow: 0 0 0 3px rgba(255,255,255,.05); }
+    .swatch.pref{ background: var(--green); box-shadow: 0 0 0 3px rgba(38,208,124,.16) }
+    .swatch.av{ background: var(--blue); box-shadow: 0 0 0 3px rgba(92,141,255,.16) }
+    .swatch.no{ background: var(--red); box-shadow: 0 0 0 3px rgba(255,93,93,.16) }
+    .swatch.cl{ background: rgba(233,241,255,.26) }
+
+    /* Modal */
+    dialog{
+      border:none; padding:0;
+      border-radius: 18px;
+      background: #0b1730;
+      color: var(--text);
+      width: min(780px, calc(100vw - 24px));
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+    }
+    dialog::backdrop{ background: rgba(0,0,0,.55) }
+    .modalHead{ padding: 14px 14px 10px; border-bottom: 1px solid var(--line); display:flex; align-items:center; gap:10px; }
+    .modalHead h3{ margin:0; font-size: 15px }
+    .modalBody{ padding: 14px }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
+    .note{ font-size: 12px; color: var(--muted); line-height: 1.35 }
+    .danger{ border-color: rgba(255,93,93,.55) }
+
+    .toast{
+      position:fixed; left:50%; bottom:18px;
+      transform: translateX(-50%);
+      background: rgba(10,16,30,.92);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-weight: 900;
+      font-size: 12px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.50);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+      z-index:999;
+    }
+    .toast.show{ opacity:1 }
+
+    @media (max-width: 520px){
+      .monthsGrid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div style="position:fixed;bottom:6px;right:8px;z-index:9999;font-size:10px;color:#9ff;opacity:.55;pointer-events:none">
+    MEMBER BUILD: enrollware-calendar 2026-01-02
+  </div>
+
+  <div class="top">
+    <div class="topInner">
+      <div class="brand">ShiftCommander — Member</div>
+
+      <div class="controls">
+        <div class="pill" title="Organization">
+          <label>Org:</label>
+          <span id="orgName" style="font-weight:900"></span>
+        </div>
+
+        <div class="pill" title="Select yourself">
+          <label>Member:</label>
+          <select id="memberSel"></select>
+        </div>
+
+        <div class="pill" title="How far out to show">
+          <label>Months:</label>
+          <select id="monthsAhead">
+            <option value="6">6</option>
+            <option value="9">9</option>
+            <option value="12" selected>12</option>
+            <option value="18">18</option>
+          </select>
+        </div>
+
+        <button class="btn" id="btnTools">Repeat / Tools</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="headline">
+        <div>
+          <h2>Set your availability (Enrollware-style)</h2>
+          <div class="sub">Tap AM / PM / 24 to cycle: Preferred → Available → Do not schedule → Clear.</div>
+        </div>
+
+        <div class="right">
+          <div class="statusPill" id="savepill" title="Drive status">
+            <span class="dot warn" id="driveDot"></span>
+            <span class="tiny" id="driveTip">Checking…</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="monthsWrap">
+        <div class="monthsGrid" id="months"></div>
+      </div>
+
+      <div class="legend" aria-label="Availability legend">
+        <span class="legItem" title="Preferred — You WANT this shift.">
+          <span class="swatch pref"></span> Preferred
+        </span>
+        <span class="legItem" title="Available — You CAN work this shift and will be considered if not filled by someone who PREFERS it (then weighted fairly).">
+          <span class="swatch av"></span> Available
+        </span>
+        <span class="legItem" title="Do not schedule — You will not be considered for this shift.">
+          <span class="swatch no"></span> Do not schedule
+        </span>
+        <span class="legItem" title="Clear / unset — No preference stated.">
+          <span class="swatch cl"></span> Clear
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="toolsDlg">
+    <div class="modalHead">
+      <h3>Repeat / Tools</h3>
+      <div style="margin-left:auto"></div>
+      <button class="btn secondary" id="btnCloseDlg">Close</button>
+    </div>
+    <div class="modalBody">
+      <div class="note">
+        Pick a <b>Pattern Week</b> (week start) and repeat it forward. This copies AM/PM/24 states by weekday.
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="row" style="align-items:center">
+        <div class="pill" title="Week used as the source for repeats">
+          <label>Pattern week start:</label>
+          <input type="date" id="patternPick" />
+        </div>
+        <div class="pill" title="Week range display">
+          <label>Range:</label>
+          <span id="patternLabel" style="font-weight:900"></span>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div style="border:1px solid var(--line); border-radius:16px; padding:12px; background: rgba(255,255,255,.03);">
+        <div style="font-weight:900; margin-bottom:6px;">Repeat into future</div>
+        <div class="note" style="margin-bottom:10px;">
+          Copies Pattern Week into future weeks every X weeks until your chosen end date.
+        </div>
+
+        <div class="row" style="align-items:center">
+          <label class="note">Every</label>
+          <select id="repeatEvery" title="Repeat interval">
+            <option value="1">1 week</option>
+            <option value="2" selected>2 weeks</option>
+            <option value="4">4 weeks</option>
+          </select>
+
+          <label class="note">until</label>
+          <input type="date" id="repeatUntil" title="Last date to fill (inclusive)"/>
+
+          <button class="btn" id="btnRepeat">Repeat</button>
+          <button class="btn danger" id="btnClearPattern">Clear Pattern Week</button>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <label class="note" style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none">
+        <input type="checkbox" id="overwriteLocks" style="transform:scale(1.1)" />
+        Overwrite future manual picks (ignore locks)
+      </label>
+
+      <div style="height:12px"></div>
+
+      <div class="row" style="align-items:center; gap:10px">
+        <span class="note">Published safety:</span>
+        <button class="btn secondary" id="btnPostPending" title="Commit pending Published changes now (sync to Drive)">Post pending now</button>
+        <button class="btn secondary" id="btnUndoPending" title="Undo any pending Published changes (revert locally)">Undo pending</button>
+        <span class="note" id="pendingHint" style="margin-left:auto"></span>
+      </div>
+
+      <div style="height:10px"></div>
+      <div class="note">
+        By default, repeats won’t overwrite future dates you already touched. Check “Overwrite…” only when you mean it.
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/* =========================
+   Config
+========================= */
+const ORG_SETTINGS_URL = "/data/org_settings.json";
+const MEMBERS_URL      = "/data/members.json";
+const STORE_URL        = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
+
+/* Published undo window */
+const UNDO_MINUTES_PUBLISHED = 30;
+
+/* =========================
+   Helpers
+========================= */
+const $ = (id)=>document.getElementById(id);
+
+function todayISO(){
+  const t = new Date();
+  return new Date(t.getFullYear(), t.getMonth(), t.getDate()).toISOString().slice(0,10);
+}
+function addDaysISO(dateISO, days){
+  const d = new Date(dateISO + "T00:00:00");
+  d.setDate(d.getDate()+days);
+  return d.toISOString().slice(0,10);
+}
+function weekStartISO(anyDateISO){
+  // week starts Thu (ADR cadence)
+  const d = new Date(anyDateISO + "T00:00:00");
+  const dow = d.getDay(); // 0 Sun..6 Sat
+  const THU = 4;
+  const delta = (dow - THU + 7) % 7;
+  d.setDate(d.getDate() - delta);
+  return d.toISOString().slice(0,10);
+}
+function daysBetweenISO(aISO, bISO){
+  const a = new Date(aISO + "T00:00:00Z").getTime();
+  const b = new Date(bISO + "T00:00:00Z").getTime();
+  return Math.round((b - a) / 86400000);
+}
+function isPast(dateISO){ return dateISO < todayISO(); }
+function fmtMD(dateISO){
+  const d = new Date(dateISO + "T00:00:00");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return mm + "/" + dd;
+}
+function monthKey(d){ // Date -> YYYY-MM
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  return `${y}-${m}`;
+}
+function monthName(d){
+  return d.toLocaleString(undefined, { month:"long", year:"numeric" });
+}
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>t.classList.remove("show"), 1600);
+}
+
+/* =========================
+   Local + Remote State
+========================= */
+function lsKey(memberId){ return "sc_member_" + memberId; }
+function lsMetaKey(memberId){ return "sc_member_meta_" + memberId; }
+
+function getLocal(memberId){
+  try{ return JSON.parse(localStorage.getItem(lsKey(memberId)) || "{}"); }catch(e){ return {}; }
+}
+function setLocal(memberId, obj){ localStorage.setItem(lsKey(memberId), JSON.stringify(obj)); }
+function getMeta(memberId){
+  try{ return JSON.parse(localStorage.getItem(lsMetaKey(memberId)) || "{}"); }catch(e){ return {}; }
+}
+function setMeta(memberId, meta){ localStorage.setItem(lsMetaKey(memberId), JSON.stringify(meta)); }
+
+async function storeGet(kind, memberId){
+  try{
+    const url = new URL(STORE_URL);
+    url.searchParams.set("kind", kind);
+    if(memberId) url.searchParams.set("memberId", memberId);
+    const r = await fetch(url.toString(), { method:"GET", cache:"no-store" });
+    if(!r.ok) throw new Error("store GET " + r.status);
+    return await r.json();
+  }catch(e){
+    return { __error: String(e?.message || e) };
+  }
+}
+async function storePut(kind, memberId, payload){
+  try{
+    const body = { kind, memberId, payload };
+    const r = await fetch(STORE_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body),
+    });
+    if(!r.ok) throw new Error("store POST " + r.status);
+    return await r.json();
+  }catch(e){
+    return { __error: String(e?.message || e) };
+  }
+}
+async function trySync(memberId){
+  const meta = getMeta(memberId);
+  if(!meta.dirty) return true;
+
+  const payload = getLocal(memberId);
+  const res = await storePut("member", memberId, payload);
+  if(res && res.__error){
+    meta.lastError = res.__error;
+    setMeta(memberId, meta);
+    setDriveStatus(meta);
+    return false;
+  }
+
+  meta.dirty = false;
+  meta.lastError = "";
+  meta.lastPushISO = new Date().toISOString();
+  setMeta(memberId, meta);
+  setDriveStatus(meta);
+  return true;
+}
+
+function setDriveStatus(meta){
+  const tip = $("driveTip");
+  const online = navigator.onLine !== false;
+
+  let short = "Saved";
+  if(meta && hasPending(meta)) short = "Pending";
+  tip.textContent = short;
+
+  const dot = $("driveDot");
+  const warn = (!online) || (meta && meta.lastError);
+  dot.className = "dot " + (warn ? "warn" : "ok");
+
+  const parts = [];
+  parts.push("Saved locally on this device.");
+  if(meta && hasPending(meta)){
+    const ms = pendingRemainingMs(meta);
+    parts.push(`Published changes pending (undo ${formatMinSec(ms)}).`);
+    parts.push("Will sync after the undo window, or if you click ‘Post pending now’.");
+  }else if(!online){
+    parts.push("Offline: will sync when internet returns.");
+  }else if(meta && meta.dirty){
+    parts.push("Sync to Drive pending.");
+  }else if(meta && meta.lastError){
+    parts.push("Drive not reachable right now (still saved locally).");
+  }else{
+    parts.push("Synced to Drive.");
+  }
+  if(meta && meta.lastPushISO) parts.push("Last Drive sync: " + new Date(meta.lastPushISO).toLocaleString());
+  if(meta && meta.lastError) parts.push("Drive sync issue: " + meta.lastError);
+  $("savepill").title = parts.join(" ");
+}
+
+/* =========================
+   Pending (Published undo)
+========================= */
+function getPendingMap(meta){
+  if(!meta.pending || typeof meta.pending !== "object") meta.pending = {};
+  return meta.pending;
+}
+function hasPending(meta){ return Object.keys(getPendingMap(meta)).length > 0; }
+function pendingRemainingMs(meta){
+  const pending = getPendingMap(meta);
+  let min = Infinity;
+  for(const k in pending){
+    const ms = (pending[k]?.expiresAt || 0) - Date.now();
+    if(ms > 0 && ms < min) min = ms;
+  }
+  return (min===Infinity) ? 0 : min;
+}
+function formatMinSec(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const m = Math.floor(s/60);
+  const r = s%60;
+  return m>0 ? `${m}m ${String(r).padStart(2,'0')}s` : `${r}s`;
+}
+function markPending(meta, dateISO, slot, prevVal, nextVal){
+  const key = `${dateISO}|${slot}`;
+  const now = Date.now();
+  const expiresAt = now + UNDO_MINUTES_PUBLISHED*60*1000;
+  const pending = getPendingMap(meta);
+  if(!pending[key]){
+    pending[key] = { prev: prevVal, next: nextVal, createdAt: now, expiresAt };
+  }else{
+    pending[key].next = nextVal;
+    pending[key].expiresAt = expiresAt;
+  }
+  return key;
+}
+async function flushExpiredPending(memberId){
+  const meta = getMeta(memberId);
+  const pending = getPendingMap(meta);
+  let changed = false;
+
+  for(const key of Object.keys(pending)){
+    const item = pending[key];
+    if(!item) { delete pending[key]; changed = true; continue; }
+    if(Date.now() >= (item.expiresAt || 0)){ delete pending[key]; changed = true; }
+  }
+
+  if(changed){
+    setMeta(memberId, meta);
+    await trySync(memberId);
+  }
+}
+function updatePendingHint(){
+  const meta = getMeta(memberId);
+  const keys = Object.keys(getPendingMap(meta));
+  if(!$("pendingHint")) return;
+  if(keys.length === 0){ $("pendingHint").textContent = ""; return; }
+  const ms = pendingRemainingMs(meta);
+  $("pendingHint").textContent = `${keys.length} pending • undo ${formatMinSec(ms)}`;
+}
+
+/* =========================
+   Locks (don’t overwrite manually touched dates)
+========================= */
+function getLocks(memberId){
+  const meta = getMeta(memberId);
+  return meta.locks || {};
+}
+function setLocked(memberId, dateISO){
+  const meta = getMeta(memberId);
+  meta.locks = meta.locks || {};
+  meta.locks[dateISO] = true;
+  setMeta(memberId, meta);
+}
+
+/* =========================
+   Availability Model
+========================= */
+const cycle = ["preferred","available","nosched","clear"];
+const slotLabels = {
+  AM: "AM",
+  PM: "PM",
+  D24: "24"
+};
+function getStateFor(memberState, dateISO, slot){
+  // backward compat: if older payload only had AM/PM keys, keep reading those
+  return (memberState?.[dateISO]?.[slot]) || "clear";
+}
+function setStateFor(memberState, dateISO, slot, val){
+  if(!memberState[dateISO]) memberState[dateISO] = {};
+  memberState[dateISO][slot] = val;
+}
+
+/* =========================
+   Staging / Week tags (for Published)
+========================= */
+let managedWeekStart = weekStartISO(todayISO());
+function weekTag(startISO){
+  const t = todayISO();
+  const managedStart = managedWeekStart;
+  const end = addDaysISO(startISO, 6);
+  if(end < t) return "Past";
+
+  const diffDays = daysBetweenISO(managedStart, startISO);
+  const w = Math.floor(diffDays / 7);
+
+  const MANAGED_WEEKS = 3;
+  const PUBLISHED_WEEKS = 3;
+
+  if(w >= 0 && w < MANAGED_WEEKS) return "Managed";
+  if(w >= MANAGED_WEEKS && w < (MANAGED_WEEKS + PUBLISHED_WEEKS)) return "Published";
+  return "Planning";
+}
+function stageForDateISO(dateISO){ return weekTag(weekStartISO(dateISO)); }
+
+/* =========================
+   Render (months)
+========================= */
+let orgSettings = null;
+let members = [];
+let memberId = null;
+
+let memberState = {};
+let locks = {};
+
+let suppressEditPast = true;
+
+function buildMonthCard(container, year, month){
+  // month: 0-11
+  const first = new Date(year, month, 1);
+  const title = monthName(first);
+
+  const monthCard = document.createElement("div");
+  monthCard.className = "monthCard";
+
+  const head = document.createElement("div");
+  head.className = "monthTitle";
+  head.innerHTML = `<b>${title}</b><span>${monthKey(first)}</span>`;
+  monthCard.appendChild(head);
+
+  const dow = document.createElement("div");
+  dow.className = "dowRow";
+  for(const d of ["S","M","T","W","T","F","S"]){
+    const el = document.createElement("div");
+    el.className = "dow";
+    el.textContent = d;
+    dow.appendChild(el);
+  }
+  monthCard.appendChild(dow);
+
+  const grid = document.createElement("div");
+  grid.className = "monthGrid";
+
+  // blanks before first day
+  const startDow = first.getDay();
+  for(let i=0;i<startDow;i++) {
+    const b = document.createElement("div");
+    b.className = "dayCell blank";
+    grid.appendChild(b);
+  }
+
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(year, month, day);
+    const dateISO = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0,10);
+
+    const cell = document.createElement("div");
+    cell.className = "dayCell";
+    if(isPast(dateISO) && suppressEditPast) cell.classList.add("past");
+    if(locks[dateISO]) cell.style.borderColor = "rgba(233,241,255,.18)";
+
+    const dn = document.createElement("div");
+    dn.className = "dayNum";
+    dn.innerHTML = `${day} <span class="tinyDate">${fmtMD(dateISO)}</span>`;
+    cell.appendChild(dn);
+
+    const row = document.createElement("div");
+    row.className = "segRow";
+
+    for(const slot of ["AM","PM","D24"]){
+      const seg = document.createElement("div");
+      seg.className = "seg";
+      seg.dataset.date = dateISO;
+      seg.dataset.slot = slot;
+
+      const state = getStateFor(memberState, dateISO, slot);
+      seg.dataset.state = state;
+      seg.dataset.pending = "0";
+      seg.textContent = slotLabels[slot] || slot;
+
+      const stage = stageForDateISO(dateISO);
+      const locked = (isPast(dateISO) && suppressEditPast);
+      if(locked) seg.classList.add("locked");
+
+      // tooltips: keep short but informative
+      const stageNote = (stage==="Published") ? "Published (30m undo window)" : stage;
+      seg.title = `${fmtMD(dateISO)} • ${slotLabels[slot]} — ${state.toUpperCase()} • ${stageNote}`;
+
+      seg.addEventListener("click", async ()=>{
+        if(locked) return;
+
+        const cur = seg.dataset.state || "clear";
+        const nxt = cycle[(cycle.indexOf(cur)+1) % cycle.length];
+
+        seg.dataset.state = nxt;
+
+        // local update
+        setStateFor(memberState, dateISO, slot, nxt);
+        setLocal(memberId, memberState);
+        setLocked(memberId, dateISO);
+
+        const meta = getMeta(memberId);
+        meta.dirty = true;
+
+        if(stage === "Published"){
+          markPending(meta, dateISO, slot, cur, nxt);
+          seg.dataset.pending = "1";
+          setMeta(memberId, meta);
+          setDriveStatus(meta);
+          updatePendingHint();
+          toast("Pending (undo 30m)");
+          return;
+        }
+
+        setMeta(memberId, meta);
+        setDriveStatus(meta);
+
+        const ok = await trySync(memberId);
+        toast(ok ? "Saved" : "Saved (local)");
+      });
+
+      row.appendChild(seg);
+    }
+
+    cell.appendChild(row);
+    grid.appendChild(cell);
+  }
+
+  // trailing blanks to finish row
+  const totalCells = startDow + daysInMonth;
+  const rem = totalCells % 7;
+  if(rem !== 0){
+    for(let i=0;i<(7-rem);i++) {
+      const b = document.createElement("div");
+      b.className = "dayCell blank";
+      grid.appendChild(b);
+    }
+  }
+
+  monthCard.appendChild(grid);
+  container.appendChild(monthCard);
+}
+
+function applyPendingMarkers(){
+  const meta = getMeta(memberId);
+  const pending = getPendingMap(meta);
+  document.querySelectorAll(".seg").forEach(seg=>{
+    const k = `${seg.dataset.date}|${seg.dataset.slot}`;
+    seg.dataset.pending = pending[k] ? "1" : "0";
+  });
+}
+
+function renderMonths(){
+  const monthsEl = $("months");
+  monthsEl.innerHTML = "";
+
+  const ahead = parseInt($("monthsAhead")?.value || "12", 10);
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  for(let i=0;i<ahead;i++) {
+    const d = new Date(start.getFullYear(), start.getMonth()+i, 1);
+    buildMonthCard(monthsEl, d.getFullYear(), d.getMonth());
+  }
+
+  applyPendingMarkers();
+}
+
+/* =========================
+   Repeat / Tools
+========================= */
+let patternWeekStart = weekStartISO(todayISO());
+
+function weekRangeLabel(startISO){
+  const end = addDaysISO(startISO, 6);
+  return `${fmtMD(startISO)} – ${fmtMD(end)}`;
+}
+function getPatternWeek(memberId){
+  const meta = getMeta(memberId);
+  return meta.patternWeekStart || patternWeekStart;
+}
+function setPatternWeek(startISO){
+  patternWeekStart = weekStartISO(startISO);
+  const meta = getMeta(memberId);
+  meta.patternWeekStart = patternWeekStart;
+  setMeta(memberId, meta);
+  $("patternPick").value = patternWeekStart;
+  $("patternLabel").textContent = weekRangeLabel(patternWeekStart);
+}
+
+function copyWeekPattern(srcWeekStartISO, dstWeekStartISO, respectLocks=true){
+  for(let i=0;i<7;i++) {
+    const srcDay = addDaysISO(srcWeekStartISO, i);
+    const dstDay = addDaysISO(dstWeekStartISO, i);
+    if(respectLocks && locks[dstDay]) continue;
+    for(const slot of ["AM","PM","D24"]){
+      const v = getStateFor(memberState, srcDay, slot);
+      setStateFor(memberState, dstDay, slot, v);
+    }
+  }
+}
+
+async function persistAfterBulkEdit(){
+  setLocal(memberId, memberState);
+  const meta = getMeta(memberId);
+  meta.dirty = true;
+  setMeta(memberId, meta);
+  setDriveStatus(meta);
+  renderMonths();
+  const ok = await trySync(memberId);
+  toast(ok ? "Saved" : "Saved (local)");
+}
+
+$("btnTools").addEventListener("click", ()=> {
+  $("toolsDlg").showModal();
+  updatePendingHint();
+});
+$("btnCloseDlg").addEventListener("click", ()=> $("toolsDlg").close());
+
+$("btnRepeat").addEventListener("click", async ()=> {
+  const overwrite = $("overwriteLocks")?.checked === true;
+  const every = parseInt($("repeatEvery")?.value || "2", 10);
+  const until = $("repeatUntil")?.value || "";
+  if(!until) { toast("Pick an 'until' date"); return; }
+
+  const untilWeek = weekStartISO(until);
+  let wStart = patternWeekStart;
+
+  while(true){
+    wStart = addDaysISO(wStart, every*7);
+    if(wStart > untilWeek) break;
+    if(addDaysISO(wStart, 6) < todayISO()) continue;
+    copyWeekPattern(patternWeekStart, wStart, !overwrite);
+  }
+
+  await persistAfterBulkEdit();
+  $("toolsDlg").close();
+});
+
+$("btnClearPattern").addEventListener("click", async ()=> {
+  const overwrite = $("overwriteLocks")?.checked === true;
+  for(let i=0;i<7;i++) {
+    const day = addDaysISO(patternWeekStart, i);
+    if(!overwrite && locks[day]) continue;
+    for(const slot of ["AM","PM","D24"]) setStateFor(memberState, day, slot, "clear");
+  }
+  await persistAfterBulkEdit();
+  $("toolsDlg").close();
+});
+
+$("btnPostPending")?.addEventListener("click", async ()=>{
+  const meta = getMeta(memberId);
+  const keys = Object.keys(getPendingMap(meta));
+  if(keys.length === 0){ toast("No pending changes"); return; }
+  meta.pending = {};
+  setMeta(memberId, meta);
+  setDriveStatus(meta);
+  const ok = await trySync(memberId);
+  renderMonths();
+  toast(ok ? "Posted" : "Posted (local), sync pending");
+  $("toolsDlg").close();
+});
+
+$("btnUndoPending")?.addEventListener("click", async ()=>{
+  const meta = getMeta(memberId);
+  const p = getPendingMap(meta);
+  const keys = Object.keys(p);
+  if(keys.length === 0){ toast("No pending changes"); return; }
+
+  for(const k of keys){
+    const [dateISO, slot] = k.split("|");
+    const item = p[k];
+    if(!dateISO || !slot || !item) continue;
+    setStateFor(memberState, dateISO, slot, item.prev || "clear");
+  }
+  meta.pending = {};
+  setLocal(memberId, memberState);
+  setMeta(memberId, meta);
+  setDriveStatus(meta);
+  renderMonths();
+  toast("Undone");
+  $("toolsDlg").close();
+});
+
+/* =========================
+   Boot
+========================= */
+async function loadRequired(){
+  const [orgR, memR] = await Promise.all([
+    fetch(ORG_SETTINGS_URL, {cache:"no-store"}),
+    fetch(MEMBERS_URL, {cache:"no-store"})
+  ]);
+  if(!orgR.ok) throw new Error("Fetch failed " + orgR.status + ": " + ORG_SETTINGS_URL);
+  if(!memR.ok) throw new Error("Fetch failed " + memR.status + ": " + MEMBERS_URL);
+
+  orgSettings = await orgR.json();
+  const memJson = await memR.json();
+
+  let rawMembers = memJson;
+  if(Array.isArray(memJson)) rawMembers = memJson;
+  else if(memJson && Array.isArray(memJson.members)) rawMembers = memJson.members;
+  else throw new Error("members is not iterable (unexpected members.json shape)");
+
+  members = rawMembers.map(m => ({
+    id: String(m.id ?? m.member_id ?? ""),
+    first: (m.first ?? m.first_name ?? "").trim(),
+    last: (m.last ?? m.last_name ?? "").trim(),
+    active: (m.active !== false),
+    _raw: m
+  })).filter(m => m.id);
+
+  const orgName = orgSettings?.org_name || orgSettings?.org?.name || "Org";
+  $("orgName").textContent = orgName;
+
+  const sel = $("memberSel");
+  sel.innerHTML = "";
+  for(const m of members){
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = `${m.last || ""}, ${m.first || ""} #${m.id}`;
+    sel.appendChild(opt);
+  }
+  memberId = String(members?.[0]?.id || "");
+  sel.value = memberId;
+}
+
+async function loadMember(){
+  managedWeekStart = weekStartISO(todayISO());
+  locks = getLocks(memberId);
+  patternWeekStart = getPatternWeek(memberId);
+
+  $("patternPick").value = patternWeekStart;
+  $("patternLabel").textContent = weekRangeLabel(patternWeekStart);
+
+  memberState = getLocal(memberId) || {};
+  let meta = getMeta(memberId);
+  setDriveStatus(meta);
+
+  // pull remote if available, but do NOT clobber local if dirty
+  try{
+    const remote = await storeGet("member", memberId);
+    if(remote && remote.__error){
+      meta.lastError = remote.__error;
+      setMeta(memberId, meta);
+      setDriveStatus(meta);
+    } else if(remote && remote.payload){
+      if(!meta.dirty){
+        memberState = remote.payload;
+        setLocal(memberId, memberState);
+      }
+      meta.lastError = "";
+      setMeta(memberId, meta);
+      setDriveStatus(meta);
+    }
+  }catch(e){
+    meta.lastError = String(e.message || e);
+    setMeta(memberId, meta);
+    setDriveStatus(meta);
+  }
+
+  await trySync(memberId);
+  renderMonths();
+  updatePendingHint();
+}
+
+$("memberSel").addEventListener("change", async (e)=>{
+  memberId = String(e.target.value);
+  await loadMember();
+});
+$("monthsAhead").addEventListener("change", ()=> renderMonths());
+
+$("patternPick").addEventListener("change", (e)=> {
+  if(e.target.value) setPatternWeek(e.target.value);
+});
+
+// Online/offline events
+window.addEventListener("online", ()=> { if(memberId) trySync(memberId); });
+window.addEventListener("offline", ()=> { if(memberId){ const m=getMeta(memberId); setDriveStatus(m); } });
+
+(async function boot(){
+  try{
+    await loadRequired();
+
+    // default repeat-until = 6 months out
+    const ru = $("repeatUntil");
+    if(ru){
+      const d = new Date();
+      d.setMonth(d.getMonth()+6);
+      ru.value = d.toISOString().slice(0,10);
+    }
+
+    await loadMember();
+
+    // Pending countdown + auto-flush
+    const tick = async ()=>{
+      const meta = getMeta(memberId);
+      if(hasPending(meta)){
+        updatePendingHint();
+        await flushExpiredPending(memberId);
+        applyPendingMarkers();
+      }
+      setDriveStatus(meta);
+    };
+    setInterval(()=>{ tick().catch(()=>{}); }, 15000);
+    tick().catch(()=>{});
+  }catch(e){
+    alert("Member page failed to load required data:\n\n" + (e.message || e));
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
