@@ -1,0 +1,1034 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Member</title>
+  <style>
+    :root{
+      --bg0:#070b12;
+      --bg1:#0b1220;
+      --card:#0d172b;
+      --card2:#0f1c35;
+      --ink:#e9f0ff;
+      --muted:#9ab0d6;
+
+      --accent:#7aa8ff;
+      --line:rgba(122,168,255,.18);
+
+      --pref:#2ee08f;
+      --avail:#69a8ff;
+      --nos:#ff4d6d;
+      --clear:rgba(255,255,255,.22);
+
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --r:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 500px at 40% 10%, rgba(122,168,255,.18), transparent 60%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(160,110,255,.12), transparent 55%),
+                  linear-gradient(180deg,var(--bg0),var(--bg1));
+      color:var(--ink);
+      font: 14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    a{color:var(--accent);text-decoration:none}
+    .topbar{
+      position:sticky;top:0;z-index:50;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(7,11,18,.92), rgba(7,11,18,.70));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .topbar-inner{
+      max-width:1180px;margin:0 auto;
+      padding:14px 14px 10px;
+      display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    }
+    .brand{font-weight:800;letter-spacing:.2px;font-size:18px;white-space:nowrap;}
+    .pill{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:999px;
+      padding:8px 10px;
+      display:flex;align-items:center;gap:8px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.18);
+    }
+    select, button, input{font: inherit;color:var(--ink);}
+    select, input{
+      background: transparent;border:none;outline:none;min-width: 140px;
+    }
+    .btn{
+      background: rgba(122,168,255,.10);
+      border:1px solid rgba(122,168,255,.35);
+      padding:9px 12px;border-radius:12px;
+      cursor:pointer;
+      transition:.12s transform ease, .12s background ease;
+      white-space:nowrap;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(122,168,255,.14)}
+    .btn:active{transform: translateY(0)}
+    .btn.ghost{background: rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);}
+    .btn.danger{background: rgba(255,77,109,.10);border:1px solid rgba(255,77,109,.35);}
+    .navbtn{
+      width:38px;height:38px;border-radius:12px;
+      display:grid;place-items:center;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:99px;
+      background: #f2c14d;
+      box-shadow: 0 0 0 3px rgba(242,193,77,.15);
+      flex:0 0 auto;
+    }
+    .dot.ok{
+      background: #35e08a;
+      box-shadow: 0 0 0 3px rgba(53,224,138,.15);
+    }
+
+    .wrap{max-width:1180px;margin:0 auto;padding:16px 14px 28px;}
+    .card{
+      background: linear-gradient(180deg, rgba(13,23,43,.78), rgba(13,23,43,.55));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-h{
+      padding:16px 16px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .title{font-size:16px;font-weight:800;margin:0 0 4px;}
+    .subtitle{margin:0;color:var(--muted);font-size:12.5px;}
+
+    .toolbar{
+      display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+      padding:12px 16px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background: linear-gradient(90deg, rgba(122,168,255,.10), rgba(160,110,255,.07));
+    }
+    .toolbar .hint{color:var(--muted);font-size:12.5px}
+
+    .legend{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+      padding:10px 16px 14px;
+    }
+    .leg{
+      display:flex;align-items:center;gap:8px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.09);
+      border-radius:999px;padding:6px 10px;
+      color:var(--ink);
+      font-size:12px;
+    }
+    .sw{width:10px;height:10px;border-radius:99px}
+    .sw.pref{background:var(--pref)}
+    .sw.avail{background:var(--avail)}
+    .sw.nos{background:var(--nos)}
+    .sw.clear{background:rgba(255,255,255,.18)}
+
+    .grid{padding:14px 12px 16px;overflow:auto;}
+
+    .wk{
+      display:grid;
+      grid-template-columns: 180px repeat(7, minmax(120px, 1fr));
+      gap:10px;
+      align-items:stretch;
+      margin-bottom:10px;
+    }
+    .wk .wklabel{
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:10px 10px;
+      display:flex;flex-direction:column;gap:6px;
+      justify-content:center;
+      min-height:88px;
+    }
+    .wklabel .k{font-weight:900;letter-spacing:.2px;font-size:13px;}
+    .wklabel .rng{color:var(--muted);font-size:12px}
+    .wklabel .lock{color: rgba(255,255,255,.55);font-size:11.5px;display:flex;align-items:center;gap:8px;}
+
+    .day{
+      background: rgba(10,16,30,.55);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:10px;
+      min-height:88px;
+      display:flex;flex-direction:column;gap:8px;
+      position:relative;
+    }
+    .day .dow{
+      font-weight:900;
+      font-size:12px;
+      letter-spacing:.5px;
+      color: rgba(255,255,255,.92);
+      text-transform:uppercase;
+    }
+    .day .dnum{
+      position:absolute;
+      top:10px;right:10px;
+      font-weight:900;
+      font-size:18px;
+      color: rgba(255,255,255,.88);
+    }
+    .slots{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      margin-top:18px;
+    }
+
+    .slot{
+      border-radius:14px;
+      padding:10px 10px;
+      min-height:44px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+      user-select:none;
+      background: rgba(255,255,255,.03);
+      border:3px solid rgba(255,255,255,.14);
+      transition: .10s transform ease, .10s background ease, .10s border-color ease;
+      position:relative;
+    }
+    .slot:hover{transform: translateY(-1px); background: rgba(255,255,255,.05)}
+    .slot .mini{
+      font-size:10px;
+      opacity:.35;
+      letter-spacing:.5px;
+      font-weight:900;
+      text-transform:uppercase;
+      position:absolute;
+      bottom:6px;right:10px;
+    }
+    .slot .big{
+      font-weight:900;
+      letter-spacing:.3px;
+      font-size:12px;
+      text-transform:uppercase;
+      opacity:.25;
+    }
+
+    .slot.pref{border-color: rgba(46,224,143,.95); box-shadow: 0 0 0 2px rgba(46,224,143,.08) inset}
+    .slot.avail{border-color: rgba(105,168,255,.95); box-shadow: 0 0 0 2px rgba(105,168,255,.08) inset}
+    .slot.nos{border-color: rgba(255,77,109,.95); box-shadow: 0 0 0 2px rgba(255,77,109,.08) inset}
+    .slot.clear{border-color: rgba(255,255,255,.14); border-style:dashed}
+
+    .wkhead{
+      display:grid;
+      grid-template-columns: 180px repeat(7, minmax(120px, 1fr));
+      gap:10px;
+      padding:10px 12px 0;
+    }
+    .wkhead .hcell{
+      height:40px;
+      display:flex;align-items:center;justify-content:center;
+      border-radius:14px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.85);
+      font-weight:900;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      font-size:12px;
+    }
+    .wkhead .blank{background:transparent;border:none}
+
+    .modal-back{
+      position:fixed;inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;justify-content:center;
+      padding:16px;
+      z-index:999;
+    }
+    .modal{
+      width:min(720px, 100%);
+      background: linear-gradient(180deg, rgba(14,24,46,.96), rgba(10,16,30,.96));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modal h3{
+      margin:0;
+      padding:14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+    .modal .body{padding:14px 16px;display:grid;gap:12px}
+    .row{display:grid;grid-template-columns: 180px 1fr;gap:10px;align-items:center}
+    .row label{color:rgba(255,255,255,.80);font-weight:800}
+    .row .in{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:10px 10px;
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    }
+    .row .in input, .row .in select{min-width: 120px;}
+    .modal .foot{
+      padding:12px 16px;
+      border-top:1px solid rgba(255,255,255,.08);
+      display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+    }
+
+    .statusline{
+      color: rgba(255,255,255,.65);
+      font-size:12px;
+      padding:0 16px 12px;
+    }
+    .statusline b{color:rgba(255,255,255,.92)}
+    .warn{color:#ffd28a}
+    .ok{color:#9dffcf}
+
+    @media (max-width: 980px){
+      .wk, .wkhead{grid-template-columns: 140px repeat(7, minmax(110px, 1fr))}
+      .wklabel{min-height:86px}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">ShiftCommander — Member</div>
+
+      <div class="pill" title="Organization">
+        <span style="opacity:.7;font-weight:800">Org:</span>
+        <select id="orgSel"></select>
+      </div>
+
+      <div class="pill" title="Member">
+        <span style="opacity:.7;font-weight:800">Member:</span>
+        <select id="memberSel"></select>
+      </div>
+
+      <button class="navbtn" id="prevBtn" title="Previous week">◀</button>
+      <div class="pill" title="Editing week">
+        <b id="wkTitle">This Week</b>
+      </div>
+      <button class="navbtn" id="nextBtn" title="Next week">▶</button>
+
+      <div class="pill" title="Week start">
+        <span style="opacity:.7;font-weight:800">Week start:</span>
+        <input id="wkStart" type="date" />
+      </div>
+
+      <div class="pill" style="margin-left:auto" title="" id="storeTip">
+        <div class="dot" id="storeDot"></div>
+      </div>
+
+      <button class="btn" id="toolsBtn">Repeat / Tools</button>
+      <button class="btn ghost" id="syncBtn" title="Force sync now">Sync</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="card-h">
+        <p class="title">Set your availability</p>
+        <p class="subtitle">Tap AM/PM to cycle: Preferred → Available → Do not schedule → Clear.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="hint" id="hintLine">Showing editing week + upcoming weeks.</div>
+      </div>
+
+      <div class="legend">
+        <div class="leg" title="Preferred — You WANT this shift."><span class="sw pref"></span> Preferred</div>
+        <div class="leg" title="Available — You CAN work this shift; considered if not filled by Preferred (then weighted fairly)."><span class="sw avail"></span> Available</div>
+        <div class="leg" title="Do not schedule — You will not be considered for this shift."><span class="sw nos"></span> Do not schedule</div>
+        <div class="leg" title="Clear / unset — No preference stated. Only considered if nobody prefers or is available (and fairness allows it)."><span class="sw clear"></span> Clear</div>
+      </div>
+
+      <div class="wkhead" id="wkHead"></div>
+      <div class="grid" id="grid"></div>
+
+      <div class="statusline" id="statusLine"></div>
+    </div>
+  </div>
+
+  <div class="modal-back" id="modalBack">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Repeat / Tools</h3>
+      <div class="body">
+        <div class="row">
+          <label>Copy forward</label>
+          <div class="in">
+            <button class="btn" id="copy1">Copy this week → next week</button>
+            <button class="btn ghost" id="copy4">Copy this week → next 4 weeks</button>
+            <span style="color:rgba(255,255,255,.60);font-size:12px">Does not overwrite already-set dates.</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Repeat pattern</label>
+          <div class="in">
+            <span style="opacity:.75;font-weight:800">Every</span>
+            <select id="repEvery">
+              <option value="2">2 weeks</option>
+              <option value="3">3 weeks</option>
+              <option value="4" selected>4 weeks</option>
+            </select>
+
+            <span style="opacity:.75;font-weight:800">Until</span>
+            <input id="repUntil" type="date" />
+
+            <button class="btn" id="savePattern">Save repeat for this week</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Materialize</label>
+          <div class="in">
+            <button class="btn" id="materialize">Apply repeats into future weeks</button>
+            <span style="color:rgba(255,255,255,.60);font-size:12px">Fills only Clear/unset. Your holiday blocks stay.</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Manage repeats</label>
+          <div class="in" style="display:block">
+            <div id="patternList" style="display:grid;gap:8px"></div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Local safety</label>
+          <div class="in" style="display:block;color:rgba(255,255,255,.70);font-size:12px;line-height:1.35">
+            If you go offline, changes are saved on <b>this device</b>. When you’re back online, hit <b>Sync</b> (or reload) to upload.
+            Don’t clear browser data until you’re synced.
+          </div>
+        </div>
+      </div>
+      <div class="foot">
+        <button class="btn ghost" id="closeTools">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ==========================
+   CONFIG + HELPERS
+========================== */
+const DAYS = ["Thu","Fri","Sat","Sun","Mon","Tue","Wed"];
+const STATE = { CLEAR:0, PREF:1, AVAIL:2, NOS:3 };
+const STATE_CLASS = ["clear","pref","avail","nos"];
+const STATE_NAME  = ["Clear","Preferred","Available","Do not schedule"];
+
+function iso(d){ return d.toISOString().slice(0,10); }
+function d0(dateISO){ return new Date(dateISO+"T00:00:00"); }
+function addDays(dateISO, n){ const d = d0(dateISO); d.setDate(d.getDate()+n); return iso(d); }
+function startOfWeek(dateISO){
+  const d = d0(dateISO);
+  const day = d.getDay(); // Sun=0..Sat=6
+  const offset = (day - 4 + 7) % 7; // Thu=4
+  d.setDate(d.getDate() - offset);
+  return iso(d);
+}
+function fmtRange(startISO){ return `${startISO} → ${addDays(startISO, 6)}`; }
+function mmdd(dateISO){
+  const d = d0(dateISO);
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${mm}/${dd}`;
+}
+function dom(dateISO){ return String(d0(dateISO).getDate()); }
+function todayISO(){ return iso(new Date()); }
+function isPastWeek(weekStartISO){ return d0(addDays(weekStartISO,6)).getTime() < d0(todayISO()).getTime(); }
+
+/* ==========================
+   NORMALIZERS (fix your MEMBERS.map issue)
+========================== */
+function normalizeMembers(raw){
+  // Accept: [..] OR {members:[..]} OR {data:[..]} OR {rows:[..]} OR {items:[..]} OR object keyed by ids
+  if (Array.isArray(raw)) return raw;
+
+  if (raw && typeof raw === "object"){
+    const keys = ["members","data","rows","items","list","people"];
+    for (const k of keys){
+      if (Array.isArray(raw[k])) return raw[k];
+    }
+    // if it's an object keyed by ids => convert to array
+    const vals = Object.values(raw);
+    if (vals.length && vals.every(v => v && typeof v === "object" && !Array.isArray(v))) return vals;
+  }
+  return null;
+}
+
+function normalizeOrgs(orgSettings){
+  // Accept: {orgs:[..]} OR {org:{...}} OR {id,name} single org
+  if (!orgSettings || typeof orgSettings !== "object") return [{ id:"org", name:"Org" }];
+  if (Array.isArray(orgSettings.orgs) && orgSettings.orgs.length) return orgSettings.orgs;
+  if (orgSettings.org && typeof orgSettings.org === "object"){
+    const o = orgSettings.org;
+    return [{ id: o.id || "org", name: o.name || "Org" }];
+  }
+  if (orgSettings.id || orgSettings.name){
+    return [{ id: orgSettings.id || "org", name: orgSettings.name || "Org" }];
+  }
+  return [{ id:"org", name:"Org" }];
+}
+
+function memberIdOf(m){
+  return m.member_id ?? m.id ?? m.memberId ?? m.member ?? null;
+}
+function memberLabel(m){
+  const fn = m.first_name ?? m.firstName ?? m.first ?? "";
+  const ln = m.last_name ?? m.lastName ?? m.last ?? "";
+  const id = memberIdOf(m);
+  const name = (ln && fn) ? `${ln}, ${fn}` : (m.name || `${fn} ${ln}`.trim() || "Member");
+  return `${name} #${id ?? "?"}`;
+}
+
+/* ==========================
+   STORE: local + Google Script
+========================== */
+const STORE_EXEC = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
+
+let ORG_SETTINGS = null;
+let MEMBERS = [];
+let ORGS = [];
+
+function lsKey(orgId, memberId){ return `sc_member_v2_${orgId}_${memberId}`; }
+function lsToolsKey(orgId, memberId){ return `sc_member_v2_tools_${orgId}_${memberId}`; }
+
+function loadLocal(orgId, memberId){
+  try{
+    const raw = localStorage.getItem(lsKey(orgId, memberId));
+    if(!raw) return { prefs:{} };
+    return JSON.parse(raw);
+  }catch(e){ return { prefs:{} }; }
+}
+function saveLocal(orgId, memberId, obj){ localStorage.setItem(lsKey(orgId, memberId), JSON.stringify(obj)); }
+
+function loadToolsLocal(orgId, memberId){
+  try{
+    const raw = localStorage.getItem(lsToolsKey(orgId, memberId));
+    if(!raw) return { patterns:[] };
+    const o = JSON.parse(raw);
+    if(!o.patterns) o.patterns=[];
+    return o;
+  }catch(e){ return { patterns:[] }; }
+}
+function saveToolsLocal(orgId, memberId, obj){ localStorage.setItem(lsToolsKey(orgId, memberId), JSON.stringify(obj)); }
+
+function getToken(){
+  // token location variations:
+  // org_settings.store.token OR org_settings.token OR org_settings.SC_TOKEN
+  return (ORG_SETTINGS?.store?.token) || ORG_SETTINGS?.token || ORG_SETTINGS?.SC_TOKEN || "";
+}
+
+async function storeGetMember(memberId){
+  const token = getToken();
+  if(!token) throw new Error("Missing store token");
+  const u = new URL(STORE_EXEC);
+  u.searchParams.set("kind","member");
+  u.searchParams.set("memberId", String(memberId));
+  u.searchParams.set("token", token);
+  const r = await fetch(u.toString(), { method:"GET", cache:"no-store" });
+  if(!r.ok) throw new Error(`Store GET failed ${r.status}`);
+  return await r.json();
+}
+async function storePostMember(memberId, payload){
+  const token = getToken();
+  if(!token) throw new Error("Missing store token");
+  const r = await fetch(STORE_EXEC, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ token, kind:"member", memberId:String(memberId), payload })
+  });
+  if(!r.ok) throw new Error(`Store POST failed ${r.status}`);
+  return await r.json();
+}
+async function pingStore(){
+  const token = getToken();
+  if(!token) return false;
+  try{
+    const u = new URL(STORE_EXEC);
+    u.searchParams.set("kind","ping");
+    u.searchParams.set("token", token);
+    const r = await fetch(u.toString(), { method:"GET", cache:"no-store" });
+    return r.ok;
+  }catch(e){
+    return false;
+  }
+}
+
+/* ==========================
+   MERGE LOGIC
+========================== */
+function ensureCell(obj, dateISO){
+  if(!obj.prefs) obj.prefs = {};
+  if(!obj.prefs[dateISO]) obj.prefs[dateISO] = {};
+  return obj.prefs[dateISO];
+}
+function getCellVal(obj, dateISO, half){
+  const c = obj.prefs?.[dateISO]?.[half];
+  return c ? c.v : STATE.CLEAR;
+}
+function setCellVal(obj, dateISO, half, v){
+  const cell = ensureCell(obj, dateISO);
+  cell[half] = { v, t: Date.now() };
+}
+function mergeLocalRemote(localObj, remoteObj){
+  const out = { prefs:{} };
+  const dates = new Set([
+    ...Object.keys(localObj?.prefs||{}),
+    ...Object.keys(remoteObj?.prefs||{})
+  ]);
+  for(const dt of dates){
+    out.prefs[dt] = {};
+    const halves = new Set([
+      ...Object.keys(localObj?.prefs?.[dt]||{}),
+      ...Object.keys(remoteObj?.prefs?.[dt]||{})
+    ]);
+    for(const h of halves){
+      const a = localObj?.prefs?.[dt]?.[h];
+      const b = remoteObj?.prefs?.[dt]?.[h];
+      if(!a && b) out.prefs[dt][h] = b;
+      else if(a && !b) out.prefs[dt][h] = a;
+      else out.prefs[dt][h] = ((a.t||0) >= (b.t||0)) ? a : b;
+    }
+  }
+  return out;
+}
+
+/* ==========================
+   UI STATE
+========================== */
+const el = id => document.getElementById(id);
+const orgSel = el("orgSel");
+const memberSel = el("memberSel");
+const wkStartIn = el("wkStart");
+const wkTitle = el("wkTitle");
+const grid = el("grid");
+const wkHead = el("wkHead");
+const statusLine = el("statusLine");
+const storeDot = el("storeDot");
+const storeTip = el("storeTip");
+const toolsBtn = el("toolsBtn");
+const syncBtn = el("syncBtn");
+const prevBtn = el("prevBtn");
+const nextBtn = el("nextBtn");
+
+const modalBack = el("modalBack");
+const closeTools = el("closeTools");
+
+const repEvery = el("repEvery");
+const repUntil = el("repUntil");
+const savePatternBtn = el("savePattern");
+const patternList = el("patternList");
+const copy1 = el("copy1");
+const copy4 = el("copy4");
+const materializeBtn = el("materialize");
+
+let currentOrgId = null;
+let currentMemberId = null;
+let editWeekStart = startOfWeek(todayISO());
+
+let localData = null;
+let localTools = null;
+
+async function loadJSON(path){
+  const r = await fetch(path, { cache:"no-store" });
+  if(!r.ok) throw new Error(`Fetch failed ${r.status}: ${path}`);
+  return await r.json();
+}
+
+/* ==========================
+   BOOT
+========================== */
+async function boot(){
+  try{
+    ORG_SETTINGS = await loadJSON("./data/org_settings.json");
+
+    const rawMembers = await loadJSON("./data/members.json");
+    const normalized = normalizeMembers(rawMembers);
+    if(!normalized){
+      console.error("members.json raw:", rawMembers);
+      throw new Error("members.json format not recognized. Expected an array, or {members:[...]}, {data:[...]}, etc.");
+    }
+    MEMBERS = normalized;
+
+    ORGS = normalizeOrgs(ORG_SETTINGS);
+
+    // Fill org select
+    orgSel.innerHTML = ORGS.map(o=>`<option value="${o.id}">${o.name}</option>`).join("");
+    currentOrgId = ORGS[0].id;
+
+    // Fill member select
+    const opts = MEMBERS
+      .map(m=>{
+        const id = memberIdOf(m);
+        if(id===null || id===undefined) return null;
+        return `<option value="${id}">${memberLabel(m)}</option>`;
+      })
+      .filter(Boolean);
+
+    if(opts.length === 0){
+      console.error("members normalized:", MEMBERS);
+      throw new Error("No members with a usable member_id/id found in members.json.");
+    }
+
+    memberSel.innerHTML = opts.join("");
+    currentMemberId = memberSel.value;
+
+    wkStartIn.value = editWeekStart;
+
+    orgSel.addEventListener("change", ()=>{ currentOrgId = orgSel.value; reloadMember(); });
+    memberSel.addEventListener("change", ()=>{ currentMemberId = memberSel.value; reloadMember(); });
+
+    wkStartIn.addEventListener("change", ()=>{
+      editWeekStart = startOfWeek(wkStartIn.value || todayISO());
+      wkStartIn.value = editWeekStart;
+      render();
+    });
+
+    prevBtn.addEventListener("click", ()=>{
+      editWeekStart = addDays(editWeekStart, -7);
+      wkStartIn.value = editWeekStart;
+      render();
+    });
+    nextBtn.addEventListener("click", ()=>{
+      editWeekStart = addDays(editWeekStart, 7);
+      wkStartIn.value = editWeekStart;
+      render();
+    });
+
+    toolsBtn.addEventListener("click", openTools);
+    closeTools.addEventListener("click", closeToolsModal);
+    modalBack.addEventListener("click", (e)=>{ if(e.target===modalBack) closeToolsModal(); });
+
+    syncBtn.addEventListener("click", ()=> syncNow(true));
+
+    copy1.addEventListener("click", ()=>{ copyWeekForward(1); });
+    copy4.addEventListener("click", ()=>{ copyWeekForward(4); });
+    savePatternBtn.addEventListener("click", saveRepeatPattern);
+    materializeBtn.addEventListener("click", materializeRepeats);
+
+    await reloadMember();
+
+    window.addEventListener("online", ()=> syncNow(false));
+    window.addEventListener("offline", ()=> setOfflineUI());
+    setInterval(()=> refreshStoreLight(), 4500);
+
+  }catch(e){
+    alert("Member page failed to load required data:\n\n"+ e.message);
+    console.error(e);
+  }
+}
+
+/* ==========================
+   ONLINE/OFFLINE INDICATOR
+========================== */
+function setOnlineUI(){ storeDot.classList.add("ok"); storeTip.title = "Online — syncing to Drive"; }
+function setOfflineUI(){ storeDot.classList.remove("ok"); storeTip.title = "Offline — saved on this device. Sync when back online."; }
+async function refreshStoreLight(){
+  if(!navigator.onLine){ setOfflineUI(); return; }
+  if(!getToken()){ setOfflineUI(); return; }
+  const ok = await pingStore();
+  if(ok) setOnlineUI(); else setOfflineUI();
+}
+
+/* ==========================
+   SYNC
+========================== */
+async function syncNow(showToast){
+  if(!navigator.onLine){
+    setOfflineUI();
+    if(showToast) toast("Offline — saved locally", "warn");
+    return;
+  }
+  if(!getToken()){
+    setOfflineUI();
+    if(showToast) toast("Missing token in org_settings.json", "warn");
+    return;
+  }
+  try{
+    const remote = await storeGetMember(currentMemberId);
+    const remotePayload = remote?.payload || remote || {prefs:{}};
+
+    const merged = mergeLocalRemote(localData || {prefs:{}}, remotePayload);
+    localData = merged;
+    saveLocal(currentOrgId, currentMemberId, localData);
+
+    await storePostMember(currentMemberId, localData);
+
+    setOnlineUI();
+    if(showToast) toast("Synced ✓", "ok");
+  }catch(e){
+    setOfflineUI();
+    if(showToast) toast("Sync failed — saved locally", "warn");
+    console.warn(e);
+  }
+  renderStatus();
+}
+
+/* ==========================
+   LOAD/RELOAD
+========================== */
+async function reloadMember(){
+  if(!currentOrgId || !currentMemberId) return;
+
+  orgSel.value = currentOrgId;
+  memberSel.value = String(currentMemberId);
+
+  localData = loadLocal(currentOrgId, currentMemberId);
+  localTools = loadToolsLocal(currentOrgId, currentMemberId);
+
+  if(!repUntil.value){
+    const d = d0(todayISO()); d.setMonth(d.getMonth()+3);
+    repUntil.value = iso(d);
+  }
+
+  await syncNow(false);
+  render();
+}
+
+/* ==========================
+   RENDER
+========================== */
+function render(){
+  renderWeekHeader();
+  renderGrid();
+  renderPatterns();
+  renderStatus();
+}
+
+function renderWeekHeader(){
+  wkTitle.textContent = mmdd(editWeekStart) + " week";
+  const headCells = ['<div class="hcell blank"></div>']
+    .concat(DAYS.map(d=>`<div class="hcell">${d}</div>`));
+  wkHead.innerHTML = headCells.join("");
+}
+
+function weekRowLabel(text, startISO){
+  const past = isPastWeek(startISO);
+  const lock = past ? '🔒 Past (read-only)' : '✎ Editable';
+  return `
+    <div class="wklabel">
+      <div class="k">${text}</div>
+      <div class="rng">${fmtRange(startISO)}</div>
+      <div class="lock">${lock}</div>
+    </div>`;
+}
+
+function renderGrid(){
+  grid.innerHTML = "";
+
+  const weeksToShow = 6; // editing + 5
+  const blocks = [];
+  for(let w=0; w<weeksToShow; w++){
+    const ws = addDays(editWeekStart, w*7);
+    const label = (w===0) ? "Editing Week" : (isPastWeek(ws) ? "Past" : "Upcoming");
+    blocks.push(renderWeek(ws, label));
+  }
+  grid.innerHTML = blocks.join("");
+  wireTileHandlers();
+}
+
+function renderWeek(weekStartISO, label){
+  const past = isPastWeek(weekStartISO);
+  let html = `<div class="wk">${weekRowLabel(label, weekStartISO)}`;
+  for(let i=0;i<7;i++){
+    const dateISO = addDays(weekStartISO, i);
+    html += renderDay(dateISO, past);
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderDay(dateISO, locked){
+  const d = d0(dateISO);
+  const dow = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+  const dn = dom(dateISO);
+
+  const am = getCellVal(localData, dateISO, "AM");
+  const pm = getCellVal(localData, dateISO, "PM");
+
+  const amCls = STATE_CLASS[am];
+  const pmCls = STATE_CLASS[pm];
+
+  const lockAttr = locked ? 'data-locked="1"' : 'data-locked="0"';
+
+  return `
+    <div class="day" data-date="${dateISO}">
+      <div class="dow">${dow}</div>
+      <div class="dnum">${dn}</div>
+      <div class="slots">
+        <div class="slot ${amCls}" ${lockAttr} data-half="AM" title="AM">
+          <div class="big">AM</div>
+          <div class="mini">${STATE_NAME[am]}</div>
+        </div>
+        <div class="slot ${pmCls}" ${lockAttr} data-half="PM" title="PM">
+          <div class="big">PM</div>
+          <div class="mini">${STATE_NAME[pm]}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function wireTileHandlers(){
+  grid.querySelectorAll(".slot").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const locked = btn.getAttribute("data-locked")==="1";
+      if(locked) return;
+
+      const dayEl = btn.closest(".day");
+      const dateISO = dayEl.getAttribute("data-date");
+      const half = btn.getAttribute("data-half");
+      const cur = getCellVal(localData, dateISO, half);
+
+      const next = (cur===STATE.PREF) ? STATE.AVAIL :
+                   (cur===STATE.AVAIL) ? STATE.NOS :
+                   (cur===STATE.NOS) ? STATE.CLEAR :
+                   STATE.PREF;
+
+      setCellVal(localData, dateISO, half, next);
+      saveLocal(currentOrgId, currentMemberId, localData);
+      renderGrid();
+      renderStatus();
+
+      syncNow(false);
+    });
+  });
+}
+
+function renderStatus(){
+  const who = memberSel.options[memberSel.selectedIndex]?.textContent || "";
+  statusLine.innerHTML = `<b>${who}</b> — Editing week: <b>${fmtRange(editWeekStart)}</b>`;
+}
+
+/* ==========================
+   TOOLS / REPEATS
+========================== */
+function openTools(){ modalBack.style.display = "flex"; renderPatterns(); }
+function closeToolsModal(){ modalBack.style.display = "none"; }
+
+function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+function saveRepeatPattern(){
+  const every = parseInt(repEvery.value,10);
+  const untilISO = repUntil.value || addDays(todayISO(), 90);
+  const ws = editWeekStart;
+
+  const patterns = localTools.patterns || [];
+  const existingIdx = patterns.findIndex(p=>p.weekStart===ws);
+  const p = { id: existingIdx>=0 ? patterns[existingIdx].id : uid(), weekStart: ws, everyWeeks: every, untilISO };
+
+  if(existingIdx>=0) patterns[existingIdx]=p;
+  else patterns.push(p);
+
+  localTools.patterns = patterns;
+  saveToolsLocal(currentOrgId, currentMemberId, localTools);
+  renderPatterns();
+  toast("Repeat saved", "ok");
+}
+
+function renderPatterns(){
+  const patterns = (localTools && localTools.patterns) ? localTools.patterns.slice() : [];
+  if(patterns.length===0){
+    patternList.innerHTML = `<div style="color:rgba(255,255,255,.65);font-size:12px">No repeat patterns yet.</div>`;
+    return;
+  }
+  patterns.sort((a,b)=> (a.weekStart<b.weekStart?-1:1));
+  patternList.innerHTML = patterns.map(p=>{
+    return `
+      <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;
+                  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);
+                  border-radius:12px;padding:10px 10px;">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="font-weight:900">Pattern week ${mmdd(p.weekStart)} • every ${p.everyWeeks}w</div>
+          <div style="color:rgba(255,255,255,.65);font-size:12px">until ${p.untilISO}</div>
+        </div>
+        <button class="btn danger" data-del="${p.id}">Remove</button>
+      </div>`;
+  }).join("");
+
+  patternList.querySelectorAll("button[data-del]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const id = b.getAttribute("data-del");
+      localTools.patterns = (localTools.patterns||[]).filter(x=>x.id!==id);
+      saveToolsLocal(currentOrgId, currentMemberId, localTools);
+      renderPatterns();
+    });
+  });
+}
+
+function copyWeekForward(weeksCount){
+  const src = editWeekStart;
+  for(let w=1; w<=weeksCount; w++){
+    const dst = addDays(src, w*7);
+    applyWeekTemplate(src, dst, true);
+  }
+  saveLocal(currentOrgId, currentMemberId, localData);
+  render();
+  toast(`Copied forward (${weeksCount})`, "ok");
+  syncNow(false);
+}
+
+function materializeRepeats(){
+  const patterns = localTools.patterns || [];
+  if(patterns.length===0){
+    toast("No repeat patterns to apply", "warn");
+    return;
+  }
+  for(const p of patterns){
+    const base = p.weekStart;
+    const every = p.everyWeeks;
+    const until = p.untilISO;
+
+    let ws = addDays(base, every*7);
+    while(d0(ws).getTime() <= d0(until).getTime()){
+      applyWeekTemplate(base, ws, true); // only fill clear
+      ws = addDays(ws, every*7);
+    }
+  }
+  saveLocal(currentOrgId, currentMemberId, localData);
+  render();
+  toast("Repeats applied", "ok");
+  syncNow(false);
+}
+
+function applyWeekTemplate(srcWeekStart, dstWeekStart, onlyFillClear){
+  for(let i=0;i<7;i++){
+    const srcDay = addDays(srcWeekStart, i);
+    const dstDay = addDays(dstWeekStart, i);
+
+    for(const half of ["AM","PM"]){
+      const v = getCellVal(localData, srcDay, half);
+      if(v===STATE.CLEAR) continue;
+
+      if(onlyFillClear){
+        const existing = getCellVal(localData, dstDay, half);
+        if(existing!==STATE.CLEAR) continue;
+      }
+      setCellVal(localData, dstDay, half, v);
+    }
+  }
+}
+
+/* ==========================
+   TOAST
+========================== */
+let toastTimer=null;
+function toast(msg, kind){
+  const s = el("statusLine");
+  const cls = (kind==="ok") ? "ok" : (kind==="warn") ? "warn" : "";
+  const prev = s.innerHTML;
+  s.innerHTML = prev + ` <span class="${cls}" style="margin-left:8px">• ${msg}</span>`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> renderStatus(), 1800);
+}
+
+/* ==========================
+   START
+========================== */
+boot();
+</script>
+</body>
+</html>
