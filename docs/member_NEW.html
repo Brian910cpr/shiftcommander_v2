@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ShiftCommander — Member</title>
+<title>ShiftCommander — Member Availability</title>
 
 <style>
 :root{
   --bg:#0b1020;
-  --card:#101a33;
+  --card:#111a33;
   --line:rgba(255,255,255,.12);
   --text:#eaf1ff;
   --muted:rgba(234,241,255,.55);
@@ -37,12 +37,25 @@ header .pill{
   padding:6px 10px;
   font-size:13px;
   white-space:nowrap;
+  flex-shrink:0;
+}
+
+header select{
+  min-width:220px;
+  font-size:14px;
+}
+
+.status{
+  margin-left:auto;
+  font-size:12px;
+  color:var(--muted);
 }
 
 main{
   padding:12px;
 }
 
+/* MONTH LAYOUT */
 .monthRow{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
@@ -55,9 +68,6 @@ main{
   border:1px solid var(--line);
   border-radius:14px;
   padding:8px;
-  height:calc(100vh - 110px);
-  display:flex;
-  flex-direction:column;
 }
 
 .month h3{
@@ -77,22 +87,24 @@ main{
 }
 
 .grid{
-  flex:1;
   display:grid;
   grid-template-columns:repeat(7,1fr);
   gap:4px;
+  align-content:start;
 }
 
+/* DAY CELLS — HARD LOCKED */
 .day{
+  height:42px;
   border:1px solid var(--line);
   border-radius:10px;
   padding:4px;
   display:flex;
   flex-direction:column;
-  justify-content:space-between;
 }
 
 .day.blank{border:none;background:none}
+.day.past{opacity:.35;pointer-events:none}
 
 .dayNum{
   font-size:11px;
@@ -102,6 +114,7 @@ main{
 }
 
 .bars{
+  margin-top:auto;
   display:flex;
   flex-direction:column;
   gap:2px;
@@ -123,9 +136,17 @@ main{
 <body>
 
 <header>
-  <div class="pill">Org: ADR Fire/Rescue</div>
-  <div class="pill">Member: <select id="member"></select></div>
-  <div class="pill">Months: 6</div>
+  <div class="pill">Availability</div>
+
+  <div class="pill">
+    Member:
+    <select id="member">
+      <option>Lynnsey Benson</option>
+      <option>Brian Ennis</option>
+    </select>
+  </div>
+
+  <div class="status" id="status">Saved</div>
 </header>
 
 <main id="months"></main>
@@ -134,15 +155,21 @@ main{
 /* ===== CONFIG ===== */
 const MONTHS_AHEAD = 6;
 const STATES = ["clear","pref","avail","no"];
-const STORE = {}; // local demo store
+const today = new Date();
+
+/* ===== STATE ===== */
+const state = {}; // { dateISO: { am, pm } }
 
 /* ===== HELPERS ===== */
-const today = new Date();
 const iso = d => d.toISOString().slice(0,10);
 const cycle = s => STATES[(STATES.indexOf(s)+1)%STATES.length];
+const isPast = isoDate => isoDate < iso(new Date());
 
-/* ===== DATA ===== */
-let state = {}; // { "YYYY-MM-DD": { am, pm } }
+function setStatus(msg){
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  setTimeout(()=>el.textContent="Saved",800);
+}
 
 /* ===== BUILD ===== */
 function build(){
@@ -197,6 +224,7 @@ function dayCell(dateISO,day){
 
   const d=document.createElement("div");
   d.className="day";
+  if(isPast(dateISO)) d.classList.add("past");
 
   const num=document.createElement("div");
   num.className="dayNum";
@@ -205,23 +233,24 @@ function dayCell(dateISO,day){
     const next = cycle(state[dateISO].am);
     state[dateISO].am = next;
     state[dateISO].pm = next;
-    renderBars();
+    render();
   };
 
   const bars=document.createElement("div");
   bars.className="bars";
 
-  const am=bar(()=>{state[dateISO].am=cycle(state[dateISO].am);renderBars();});
-  const pm=bar(()=>{state[dateISO].pm=cycle(state[dateISO].pm);renderBars();});
+  const am=bar(()=>{state[dateISO].am=cycle(state[dateISO].am);render();});
+  const pm=bar(()=>{state[dateISO].pm=cycle(state[dateISO].pm);render();});
 
   bars.append(am,pm);
   d.append(num,bars);
 
-  function renderBars(){
+  function render(){
     am.className=`bar ${state[dateISO].am}`;
     pm.className=`bar ${state[dateISO].pm}`;
+    setStatus("Saving…");
   }
-  renderBars();
+  render();
   return d;
 }
 
