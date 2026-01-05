@@ -1,49 +1,1418 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>ShiftCommander – Supervisor</title>
-  <style>
-    body { font-family: sans-serif; margin: 20px; }
-    textarea { width: 100%; height: 300px; }
-    button { font-size: 16px; margin-top: 10px; }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ShiftCommander — Supervisor</title>
+<style>
+
+/* =========================
+   THEME TOKENS (edit here)
+   ========================= */
+:root{
+  --bg: #0b1220;
+  --panel: rgba(255,255,255,.06);
+  --panel2: rgba(255,255,255,.10);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.62);
+  --border: rgba(255,255,255,.14);
+  --accent: #5aa7ff;
+  --good: #22c55e;
+  --warn: #f59e0b;
+  --bad: #ef4444;
+
+  --radius: 16px;
+  --radius2: 12px;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --sidebarW: 248px;
+}
+
+/* =========================
+   APP SHELL LAYOUT
+   ========================= */
+.appShell{display:flex; min-height:100vh; background: var(--bg); color: var(--text);}
+.sidebar{
+  width: var(--sidebarW);
+  padding: 14px 12px;
+  border-right: 1px solid var(--border);
+  background: rgba(7,18,37,.86);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.appMain{flex:1; min-width:0;}
+.topbar{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7,18,37,.92);
+  backdrop-filter: blur(10px);
+}
+.brand{
+  font-weight: 800;
+  letter-spacing: .3px;
+  text-decoration:none;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+}
+.crumb{margin-left:10px; color: var(--muted); font-size: 13px;}
+.modechip{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.06);
+  font-size: 12px;
+  font-weight: 700;
+}
+.modechip[data-mode="view"]{color: var(--muted);}
+.modechip[data-mode="edit"]{color: var(--accent);}
+.modechip[data-mode="dirty"]{color: var(--warn);}
+.modechip[data-mode="saved"]{color: var(--good);}
+
+
+/* Drive/Connectivity light (matches Member) */
+.drivePill{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(10,16,30,.75);
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(233,241,255,.86);
+  white-space:nowrap;
+}
+.driveDot{
+  width:10px; height:10px; border-radius:999px;
+  background: var(--good);
+  box-shadow: 0 0 0 4px rgba(34,197,94,.14);
+  flex:0 0 auto;
+}
+.driveDot.warn{
+  background: var(--warn);
+  box-shadow: 0 0 0 4px rgba(245,158,11,.14);
+}
+
+.side-section{margin-bottom: 14px;}
+.side-title{
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--muted);
+  margin: 8px 10px;
+}
+.navbtn{
+  width:100%;
+  text-align:left;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  cursor:pointer;
+  font-weight: 700;
+}
+.navbtn:hover{background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08);}
+.navbtn[aria-current="page"]{background: rgba(90,167,255,.18); border-color: rgba(90,167,255,.35);}
+.navbtn:disabled{opacity:.45; cursor:not-allowed;}
+.navlink{
+  display:block;
+  padding: 10px 10px;
+  border-radius: 12px;
+  text-decoration:none;
+  color: var(--text);
+  font-weight:700;
+}
+.navlink:hover{background: rgba(255,255,255,.06);}
+.pill{
+  display:inline-block;
+  margin-left:8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.14);
+  font-size: 11px;
+  color: var(--muted);
+}
+.side-footer{position:absolute; bottom: 12px; left: 12px; right: 12px;}
+/* Ensure the existing page content has breathing room under the topbar */
+main{padding-top: 10px;}
+/* Hide the old in-page tab row (sidebar replaces it) */
+#tabPopularity, #tabStaffing{display:none !important;}
+
+
+  :root{
+    --bg:#071225; --panel:#0b1730; --line:rgba(233,241,255,.14);
+    --text:#eaf2ff; --muted:rgba(233,241,255,.72);
+    --green:#26d07c; --red:#ff5d5d; --amber:#ffa836; --blue:#5c8dff;
+  }
+  body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background: radial-gradient(1200px 700px at 25% 10%, rgba(92,141,255,.12), transparent 55%), var(--bg); color:var(--text); }
+  header{ padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; position:sticky; top:0; background:rgba(7,18,37,.92); backdrop-filter: blur(10px); z-index:5;}
+  h1{ font-size:16px; margin:0; letter-spacing:.2px; }
+  .pill{ margin-left:auto; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); background:rgba(233,241,255,.05); border-radius:999px; font-size:12px; }
+  .dot{ width:10px; height:10px; border-radius:99px; background:var(--green); box-shadow:0 0 0 4px rgba(38,208,124,.12); }
+  .dot.warn{ background:var(--amber); box-shadow:0 0 0 4px rgba(255,168,54,.14); }
+  main{ padding:16px; max-width:1100px; margin:0 auto; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  select, button{ background:rgba(233,241,255,.06); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:13px; }
+  button{ cursor:pointer; }
+  button:hover{ border-color:rgba(233,241,255,.24); }
+  .card{ margin-top:14px; border:1px solid var(--line); border-radius:16px; background:rgba(11,23,48,.72); overflow:hidden; }
+  .cardHead{ padding:12px 12px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; }
+  .muted{ color:var(--muted); font-size:12px; }
+  table{ width:100%; border-collapse:collapse; }
+  th, td{ padding:10px 12px; border-bottom:1px solid rgba(233,241,255,.08); font-size:13px; }
+  th{ text-align:left; font-size:12px; color:var(--muted); letter-spacing:.2px; text-transform:uppercase; }
+  .heat{ display:inline-flex; align-items:center; gap:8px; }
+  .bar{ width:12px; height:12px; border-radius:4px; border:2px solid rgba(233,241,255,.18); }
+  .bar.need2{ border-color: rgba(38,208,124,.95); }
+  .bar.need1{ border-color: rgba(38,208,124,.55); }
+  .bar.neutral{ border-color: rgba(233,241,255,.18); }
+  .bar.crowd1{ border-color: rgba(255,168,54,.55); }
+  .bar.crowd2{ border-color: rgba(255,93,93,.92); }
+  .kpi{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .kpi .box{ padding:10px 12px; border:1px solid rgba(233,241,255,.10); border-radius:14px; background:rgba(233,241,255,.04); font-size:12px; }
+  .kpi b{ font-size:14px; }
+
+  .tabs{ display:flex; gap:8px; padding:12px 16px; align-items:center; border-bottom:1px solid var(--line); position:sticky; top:54px; background:rgba(7,18,37,.72); backdrop-filter: blur(10px); z-index:4;}
+  .tab{ padding:8px 12<main>
+  <div class="tabs">
+    <button class="tab active" id="tabPopularity">Popularity</button>
+    <button class="tab" id="tabStaffing">Staffing (1 Unit)</button>
+    <span class="tabsSpacer"></span>
+    <span class="muted" id="saveState"></span>
+  </div>
+
+  <!-- Popularity (existing) -->
+  <section id="panelPopularity">
+    <div class="row">
+      <button id="btnRefresh">Refresh</button>
+      <span class="muted">Eligibility filter (for popularity math):</span>
+      <select id="qualFilter">
+        <option value="ALL">All active</option>
+        <option value="ALS">ALS only</option>
+        <option value="EMT">EMT only</option>
+        <option value="DRIVER">DRIVER only</option>
+        <option value="EMT_DRIVER">EMT + DRIVER</option>
+        <option value="ALS_DRIVER">ALS + DRIVER</option>
+      </select>
+      <span class="muted">Weeks shown:</span>
+      <select id="weeks">
+        <option value="6">6</option>
+        <option value="8">8</option>
+        <option value="10">10</option>
+        <option value="12">12</option>
+      </select>
+      <span class="muted">Start:</span>
+      <input id="start" type="date"/>
+    </div>
+
+    <div class="card">
+      <div class="cardHead">
+        <b>Shift popularity (Preferred-only, Model A)</b>
+        <span class="muted" id="subtitle"></span>
+      </div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:170px">Date</th>
+              <th style="width:80px">Half</th>
+              <th style="width:140px">Stage</th>
+              <th>Popularity</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Staffing (new) -->
+  <section id="panelStaffing" style="display:none">
+    <div class="row" style="flex-wrap:wrap">
+      <div class="pill" style="margin-left:0">
+        <span class="muted">Date</span>
+        <input id="staffDate" type="date"/>
+      </div>
+      <div class="pill">
+        <span class="muted">Unit</span>
+        <select id="unitPick"></select>
+      </div>
+      <button id="btnLoadStaff">Load</button>
+      <button class="secondary" id="btnClearStaff">Clear</button>
+      <span class="muted" id="staffHint">Saved locally by default. Publish tries the Store URL if it supports POST.</span>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="cardHead">
+          <b>Available members</b>
+          <span class="muted" id="poolCount"></span>
+        </div>
+        <div class="list" id="memberPool"></div>
+      </div>
+
+      <div class="card">
+        <div class="cardHead">
+          <b id="unitTitle">Unit</b>
+          <span id="readyBadge" class="badge warn">NOT READY</span>
+        </div>
+
+        <div class="seatList" id="seatList"></div>
+
+        <div class="row" style="margin-top:12px; justify-content:flex-end">
+          <button class="secondary" id="btnSaveStaff">Save</button>
+          <button id="btnPublishStaff">Publish</button>
+        </div>
+        <div class="muted" id="validateMsg" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Inbox (v1) -->
+  <section id="panelInbox" style="display:none">
+    <div class="row" style="align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap">
+      <div>
+        <h2 style="margin:0 0 6px 0">Inbox</h2>
+        <div class="muted">Only exceptions that need a supervisor. Managed items first.</div>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="secondary" id="btnInboxRefresh">Refresh Inbox</button>
+      </div>
+    </div>
+    <div id="inboxEmpty" class="muted" style="margin-top:12px; display:none">No issues found.</div>
+    <div id="inboxList" class="inboxList" style="margin-top:12px"></div>
+  </section>
+
+</main>ine); background:rgba(233,241,255,.04); }
+  .badge.ok{ border-color:rgba(38,208,124,.45); background:rgba(38,208,124,.12); }
+  .badge.warn{ border-color:rgba(255,168,54,.45); background:rgba(255,168,54,.12); }
+  .seatList{ display:flex; flex-direction:column; gap:10px; padding:10px; }
+  .seatRow{ display:flex; gap:10px; align-items:center; border:1px solid var(--line); background:rgba(233,241,255,.03); border-radius:12px; padding:10px; }
+  .seatRow .seatName{ width:140px; font-weight:700; }
+  .seatRow select{ flex:1; }
+  button.secondary{ background:rgba(233,241,255,.04); color:var(--text); border:1px solid var(--line); }
+
+
+  /* Week resolve (press-and-hold) */
+  .weekButtons{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .weekBtn{ padding:8px 10px; border-radius:12px; font-size:12px; user-select:none; }
+/* Stage chips */
+.stageChip{
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; letter-spacing:.3px;
+  padding:2px 8px; border-radius:999px; margin-left:10px;
+  border:1px solid rgba(255,255,255,.16);
+}
+.stageChip.draft{ background: rgba(120,120,120,.18); color: rgba(255,255,255,.85); }
+.stageChip.published{ background: rgba(90,167,255,.18); color: rgba(180,220,255,.95); border-color: rgba(90,167,255,.30); }
+.stageChip.managed{ background: rgba(255,170,0,.18); color: rgba(255,220,160,.95); border-color: rgba(255,170,0,.30); }
+
+.seatMeta{ font-size:12px; color: var(--muted); margin-top:3px; }
+
+  .weekBtn.resolving{ border-color: rgba(38,208,124,.55); background: rgba(38,208,124,.12); }
+  tr.weekHi{ outline:1px solid rgba(38,208,124,.35); background: rgba(38,208,124,.06); }
+
+
+  /* Inbox */
+  .inboxList{ display:flex; flex-direction:column; gap:10px; }
+  .inboxCard{
+    border:1px solid var(--line);
+    background: rgba(233,241,255,.03);
+    border-radius: var(--radius);
+    padding: 12px;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    justify-content:space-between;
+  }
+  .inboxLeft{ display:flex; flex-direction:column; gap:6px; }
+  .inboxTitle{ font-weight:800; }
+  .sev{ font-size:11px; font-weight:800; letter-spacing:.35px; padding:3px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.16); display:inline-flex; }
+  .sev.critical{ background: rgba(255,82,82,.14); color: rgba(255,200,200,.95); border-color: rgba(255,82,82,.25); }
+  .sev.warn{ background: rgba(255,168,54,.12); color: rgba(255,224,190,.95); border-color: rgba(255,168,54,.25); }
+  .sev.info{ background: rgba(90,167,255,.14); color: rgba(200,230,255,.95); border-color: rgba(90,167,255,.25); }
+  .inboxMeta{ font-size:12px; color: rgba(255,255,255,.70); }
+
+</style>
 </head>
 <body>
+<div class="appShell">
+  <aside class="sidebar">
+    <div class="side-section">
+      <div class="side-title">Supervisor</div>
+      <button class="navbtn" data-nav="dashboard" id="navDashboard">Dashboard</button>
+      <button class="navbtn" data-nav="staffing" id="navStaffing">Staffing</button>
+      <button class="navbtn" data-nav="inbox" id="navInbox">Inbox <span class="pill" id="inboxCount" style="display:none">0</span></button>
+    </div>
 
-<h1>Supervisor Panel</h1>
+    <div class="side-section">
+      <div class="side-title">Configuration</div>
+      <button class="navbtn" data-nav="members" id="navMembers" disabled title="Coming next">Members</button>
+      <button class="navbtn" data-nav="units" id="navUnits" disabled title="Coming next">Units</button>
+      <button class="navbtn" data-nav="settings" id="navSettings" disabled title="Coming next">Settings</button>
+    </div>
 
-<button onclick="load()">Load Assignments</button>
-<button onclick="save()">Save Assignments</button>
+    <div class="side-section">
+      <div class="side-title">Tools</div>
+      <a class="navlink" href="#/wallboard" id="navWallboard">Wallboard</a>
+      <a class="navlink" href="#/member" id="navMemberPortal">Member Portal</a>
+    </div>
 
-<textarea id="editor"></textarea>
+    <div class="side-footer">
+      <div class="muted" style="font-size:12px">v1 shell • View vs Edit mode</div>
+    </div>
+  </aside>
+
+  <div class="appMain">
+
+<header class="topbar">
+  <div class="topbar-left">
+    <a class="brand" href="#/dashboard" title="Back to Dashboard">ShiftCommander</a>
+    <span class="crumb" id="crumb">Supervisor ▸ Dashboard</span>
+  </div>
+  <div class="topbar-right">
+    <span class="drivePill" id="statusPill" title="Drive status">
+  <span class="driveDot warn" id="dot"></span>
+  <span id="statusText">Checking…</span>
+</span>
+<span class="modechip" id="modeChip" data-mode="view">Viewing</span>
+  </div>
+</header>
+
+<main>
+  <div class="row">
+    <button id="btnRefresh">Refresh</button>
+    <span class="muted">Eligibility filter (for popularity math):</span>
+    <select id="qualFilter">
+      <option value="ALL">All active</option>
+      <option value="ALS">ALS only</option>
+      <option value="EMT">EMT only</option>
+      <option value="DRIVER">DRIVER only</option>
+      <option value="EMT_DRIVER">EMT + DRIVER</option>
+      <option value="ALS_DRIVER">ALS + DRIVER</option>
+    </select>
+    <span class="muted">Weeks shown:</span>
+    <select id="weeks">
+      <option value="6">6</option>
+      <option value="8">8</option>
+      <option value="12">12</option>
+    </select>
+  </div>
+
+  <div class="kpi" id="kpi"></div>
+
+  <div class="weekButtons" id="weekButtons" title="Press-and-hold to temporarily mark a week as resolved (visual only)"></div>
+
+  <div class="card">
+    <div class="cardHead">
+      <b>Shift popularity (Preferred-only, Model A)</b>
+      <span class="muted" id="subtitle"></span>
+    </div>
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:170px">Date</th>
+            <th style="width:80px">Half</th>
+            <th style="width:140px">Stage</th>
+            <th>Popularity</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
 
 <script>
-const STORE = "https://adr-fr.org/api/store";
 
-async function load() {
-  const res = await fetch(`${STORE}?kind=assignments`);
-  const data = await res.json();
-  document.getElementById("editor").value =
-    JSON.stringify(data.payload || {}, null, 2);
+const MEMBERS_URL = "/data/members.json";
+const STORE_URL = "https://script.google.com/macros/s/AKfycbyHus2_cZOds7sCMxNlGzcJq0nEEtdZwS7JwKdlV-h0o_hctGCz1OpwANZ3nHLgOIa-ug/exec";
+
+const $ = (id)=>document.getElementById(id);
+const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+const getVal = (id, fallback="") => { const el = $(id); return el ? (el.value ?? fallback) : fallback; };
+
+// --- Supervisor tabs ---
+function showPanel(which){
+  const pop=$("panelPopularity");
+  const staff=$("panelStaffing");
+  const tPop=$("tabPopularity");
+  const tStaff=$("tabStaffing");
+  if(which==="staff"){
+    pop.style.display="none";
+    staff.style.display="block";
+    tPop.classList.remove("active");
+    tStaff.classList.add("active");
+  }else{
+    pop.style.display="block";
+    staff.style.display="none";
+    tStaff.classList.remove("active");
+    tPop.classList.add("active");
+  }
 }
 
-async function save() {
-  const payload = JSON.parse(document.getElementById("editor").value);
+// --- One-unit staffing (Release 1) ---
+const DEFAULT_SEATS = {
+  version: 1,
+  seats: [
+    { seat_id: "ALS", label: "ALS Medic", requires_any: ["ALS"] },
+    { seat_id: "EMT", label: "EMT", requires_any: ["EMT","ALS"] },
+    { seat_id: "DRIVER", label: "Driver (optional)", requires_any: ["DRIVER"] }
+  ]
+};
+const DEFAULT_UNITS = {
+  version: 1,
+  units: [
+    { unit_id: "AMB120", label: "Ambulance 120", status:"ACTIVE", min_required:["ALS","EMT"], optional:["DRIVER"] }
+  ]
+};
 
-  await fetch(STORE, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      kind: "assignments",
-      payload
-    })
+function memberLabel(m){
+  return (m.first_name||"") + " " + (m.last_name||"");
+}
+function hasQual(m, q){
+  const qs = m.qualifications || m.quals || [];
+  return qs.includes(q);
+}
+
+function memberCredsSet(m){
+  const s = new Set();
+  const quals = Array.isArray(m.qualifications) ? m.qualifications : [];
+  for(const q of quals){ s.add(String(q)); }
+  // Lightweight aliasing to bridge current data into credential language
+  if(s.has("ALS")){
+    s.add("AEMT"); s.add("Paramedic"); s.add("ALS");
+  }
+  if(s.has("DRIVER")){
+    s.add("Ops-120"); s.add("EVOC"); s.add("DRIVER");
+  }
+  return s;
+}
+
+function normalizeSeat(seat){
+  if(!seat) return null;
+  const id = seat.id || seat.seat_id || seat.seatId;
+  const label = seat.label || seat.name || id;
+  const required = (typeof seat.required === "boolean") ? seat.required : null;
+  let credential_sets = seat.credential_sets;
+
+  // Legacy formats:
+  // - {requires_any:[...]} or {requires_all:[...]} at top-level
+  // - {requires:{certs_any:[...], endorse_all:[...]}}
+  // - {requires_any:[...], requires_all:[...]} inside "requires"
+  if(!Array.isArray(credential_sets)){
+    const r = seat.requires || {};
+    const any = seat.requires_any || r.requires_any || r.certs_any || [];
+    const all = seat.requires_all || r.requires_all || r.endorse_all || [];
+    if((any && any.length) || (all && all.length)){
+      credential_sets = [{ label:"Legacy", requires_any:any, requires_all:all }];
+    } else {
+      credential_sets = [];
+    }
+  }
+  return { id, label, required, credential_sets };
+}
+
+function satisfiesSeat(m, seat){
+  const s = normalizeSeat(seat);
+  const creds = memberCredsSet(m);
+  const sets = Array.isArray(s.credential_sets) ? s.credential_sets : [];
+  if(sets.length === 0) return true; // no rules means allow (admin-controlled)
+  return sets.some(set=>{
+    const allOk = !set.requires_all || set.requires_all.every(c=>creds.has(String(c)));
+    const anyOk = !set.requires_any || set.requires_any.some(c=>creds.has(String(c)));
+    return allOk && anyOk;
+  });
+}
+
+
+// local-only persistence key
+function lsKey(dateISO, unitId){ return `sc_assign_${dateISO}_${unitId}`; }
+
+async function safeGet(kind){
+  try{ return await storeGet(kind); }catch(_e){ return null; }
+}
+async function storeSet(kind, payload){
+  try{
+    // Match Member.html’s contract: JSON body wrapper
+    const body = { kind, payload };
+    const r = await fetch(STORE_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error("store POST " + r.status);
+    return await r.json();
+  }catch(e){
+    return { __error: String(e?.message || e) };
+  }
+}
+
+let seats = DEFAULT_SEATS;
+let units = DEFAULT_UNITS;
+let currentAssignments = {}; // seat_id -> member_id
+
+function setSaveState(text){ $("saveState").textContent = text || ""; }
+
+function getActiveMembers(){
+  return (members||[]).filter(m=>m && m.active!==false);
+}
+
+function renderMemberPool(){
+  const pool = $("memberPool");
+  pool.innerHTML = "";
+  const active = getActiveMembers();
+  $("poolCount").textContent = `${active.length} active`;
+  for(const m of active){
+    const div=document.createElement("div");
+    div.className="person";
+    const name=document.createElement("b");
+    name.textContent = memberLabel(m);
+    const sub=document.createElement("div");
+    sub.className="muted";
+    sub.style.fontSize="12px";
+    sub.textContent = m.rank ? m.rank : "";
+    const left=document.createElement("div");
+    left.style.display="flex";
+    left.style.flexDirection="column";
+    left.appendChild(name);
+    left.appendChild(sub);
+
+    const chips=document.createElement("div");
+    chips.className="chips";
+    for(const q of ["ALS","EMT","DRIVER"]){
+      const c=document.createElement("span");
+      c.className="chip " + (hasQual(m,q) ? "good":"");
+      c.textContent=q;
+      chips.appendChild(c);
+    }
+    div.appendChild(left);
+    div.appendChild(chips);
+    pool.appendChild(div);
+  }
+}
+
+
+function getUnitSeatBuckets(unit){
+  // Supports both v1 (min_required/optional) and v2 (seat_plan + min_crew)
+  if(Array.isArray(unit.seat_plan) && unit.seat_plan.length){
+    const minCrew = Number(unit.min_crew||2);
+    const req = unit.seat_plan.slice(0, Math.min(minCrew, unit.seat_plan.length));
+    const opt = unit.seat_plan.slice(req.length);
+    return { required:req, optional:opt };
+  }
+  const req = Array.isArray(unit.min_required) ? unit.min_required : [];
+  const opt = Array.isArray(unit.optional) ? unit.optional : [];
+  return { required:req, optional:opt };
+}
+
+function findSeatById(seatId){
+  return (seats.seats||[]).find(s => (s.id||s.seat_id||s.seatId) === seatId) || null;
+}
+
+function renderSeatList(unit){
+  $("unitTitle").textContent = `${unit.label} — Seat Assignments`;
+  const list=$("seatList");
+  list.innerHTML="";
+  const buckets = getUnitSeatBuckets(unit);
+  const seatIds=[...buckets.required, ...buckets.optional];
+
+  for(const sid of seatIds){
+    const seatRaw = findSeatById(sid) || {id:sid,label:sid,credential_sets:[]};
+    const seat = normalizeSeat(seatRaw);
+    const isOptional = buckets.optional.includes(sid);
+
+    const row=document.createElement("div");
+    row.className="seatRow";
+
+    const name=document.createElement("div");
+    name.className="seatName";
+    name.textContent = seat.label || sid;
+
+    const meta=document.createElement("div");
+    meta.className="seatMeta";
+    meta.textContent = isOptional ? "Optional" : "Required";
+
+    const left=document.createElement("div");
+    left.appendChild(name);
+    left.appendChild(meta);
+
+    const sel=document.createElement("select");
+    sel.dataset.seat_id = sid;
+
+    const opt0=document.createElement("option");
+    opt0.value="";
+    opt0.textContent = isOptional ? "— Optional —" : "— Select —";
+    sel.appendChild(opt0);
+
+    const active = getActiveMembers().slice().sort((a,b)=>memberLabel(a).localeCompare(memberLabel(b)));
+    for(const m of active){
+      const ok = satisfiesSeat(m, seatRaw);
+      if(!ok) continue;
+
+      const o=document.createElement("option");
+      o.value = m.member_id;
+      o.textContent = memberLabel(m) + (m.rank ? ` (${m.rank})` : "");
+      if(currentAssignments[sid] && String(currentAssignments[sid])===String(m.member_id)){
+        o.selected = true;
+      }
+      sel.appendChild(o);
+    }
+
+    sel.addEventListener("change", ()=>{
+      currentAssignments[sid] = sel.value;
+      validateUnit(unit);
+      window.SC_SHELL && window.SC_SHELL.markDirty && window.SC_SHELL.markDirty();
+    });
+
+    row.appendChild(left);
+    row.appendChild(sel);
+    list.appendChild(row);
+  }
+}
+
+
+
+function validateUnit(unit){
+  const buckets = getUnitSeatBuckets(unit);
+  const missing = [];
+  const notes = [];
+
+  for(const sid of buckets.required){
+    const mid = String(currentAssignments[sid]||"");
+    if(!mid){
+      missing.push(sid);
+      continue;
+    }
+    const m = (members.members||[]).find(x=>String(x.member_id)===mid);
+    const seatRaw = findSeatById(sid);
+    if(m && seatRaw && !satisfiesSeat(m, seatRaw)){
+      missing.push(sid);
+      notes.push(`${sid}: assigned member does not meet requirements`);
+    }
+  }
+
+  const ready = missing.length===0;
+  const badge = $("readyBadge");
+  badge.className = "badge " + (ready ? "ok" : "warn");
+  badge.textContent = ready ? "READY" : "NOT READY";
+
+  const msg = [];
+  if(!ready){
+    msg.push(`Missing required: ${missing.join(", ")}`);
+  }
+  msg.push(...notes);
+  $("validateMsg").textContent = msg.join(" • ");
+}
+
+
+function loadAssignmentsLocal(dateISO, unitId){
+  const raw=localStorage.getItem(lsKey(dateISO, unitId));
+  if(!raw) return null;
+  try{ return JSON.parse(raw); }catch(_e){ return null; }
+}
+
+function saveAssignmentsLocal(dateISO, unitId, payload){
+  localStorage.setItem(lsKey(dateISO, unitId), JSON.stringify(payload));
+}
+
+async function loadStaffing(){
+  const dateISO = $("staffDate")?.value || todayISO();
+  const unitId = $("unitPick")?.value || ((units.units||[])[0]?.unit_id || (units.units||[])[0]?.id || "");
+
+  const unit = (units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0];
+  if(!unit) return;
+
+  // Try store first, fallback to local
+  let payload = null;
+  const remote = await safeGet("assignments");
+  if(remote && remote.items){
+    // expected shape: {date, items:[{date,unit_id,seat_id,member_id}]}
+    const found = (remote.items||[]).filter(it=>it && it.date===dateISO && it.unit_id===unitId);
+    if(found.length){
+      payload = { date: dateISO, unit_id: unitId, items: found };
+    }
+  }
+  if(!payload){
+    payload = loadAssignmentsLocal(dateISO, unitId);
+  }
+  currentAssignments = {};
+  if(payload && Array.isArray(payload.items)){
+    for(const it of payload.items){
+      if(it && it.seat_id) currentAssignments[it.seat_id] = String(it.member_id||"");
+    }
+  }
+
+  renderMemberPool();
+  renderSeatList(unit);
+  validateUnit(unit);
+  setSaveState("Loaded");
+}
+
+function currentPayload(dateISO, unitId){
+  const items=[];
+  for(const [seat_id, member_id] of Object.entries(currentAssignments)){
+    if(!member_id) continue;
+    items.push({ date: dateISO, unit_id: unitId, seat_id, member_id });
+  }
+  return { version:1, date:dateISO, unit_id:unitId, items };
+}
+
+async function saveStaffing({publish=false}={}){
+  const dateISO = $("staffDate")?.value || todayISO();
+  const unitId = $("unitPick")?.value || ((units.units||[])[0]?.unit_id || (units.units||[])[0]?.id || "");
+  const payload = currentPayload(dateISO, unitId);
+
+  // always save local
+  saveAssignmentsLocal(dateISO, unitId, payload);
+
+  if(publish){
+    try{
+      const res = await storeSet("assignments", payload);
+      if(res && res.__error) throw new Error(res.__error);
+      setSaveState("Published (store)");
+    }catch(e){
+      console.warn(e);
+      setSaveState("Saved locally (store POST failed)");
+      alert("Saved locally. Store publish failed (likely read-only endpoint).");
+    }
+  }else{
+    setSaveState("Saved locally");
+  }
+}
+
+function clearStaffing(){
+  const dateISO = $("staffDate")?.value || todayISO();
+  const unitId = $("unitPick")?.value || ((units.units||[])[0]?.unit_id || (units.units||[])[0]?.id || "");
+  currentAssignments = {};
+  renderSeatList((units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0]);
+  validateUnit((units.units||[]).find(u=>((u.unit_id||u.id)||u.id)===unitId) || (units.units||[])[0]);
+  localStorage.removeItem(lsKey(dateISO, unitId));
+  setSaveState("Cleared");
+}
+
+function todayISO(){ const t=new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()).toISOString().slice(0,10); }
+function addDaysISO(iso,days){ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10); }
+
+/* =========================
+   Week stage model
+   ========================= */
+const MANAGED_WEEKS = 3;
+// Published window starts this many weeks out (change here). Weeks between MANAGED and PUBLISHED are "Published".
+const PUBLISHED_WEEKS = 6;
+
+function weekStartMon(d){
+  const x = new Date(d);
+  const day = (x.getDay()+6)%7; // Mon=0..Sun=6
+  x.setDate(x.getDate()-day);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function weekStartISOFromDate(d){
+  const ws = weekStartMon(d);
+  const y=ws.getFullYear();
+  const m=String(ws.getMonth()+1).padStart(2,'0');
+  const da=String(ws.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+function weekOffsetFromCurrent(weekStartISO){
+  const nowWs = weekStartISOFromDate(new Date());
+  const a = new Date(nowWs+"T00:00:00");
+  const b = new Date(weekStartISO+"T00:00:00");
+  return Math.round((b-a)/(7*24*3600*1000));
+}
+function stageForWeek(weekStartISO){
+  const off = weekOffsetFromCurrent(weekStartISO);
+  if(off <= (MANAGED_WEEKS-1)) return "MANAGED";
+  if(off <= (PUBLISHED_WEEKS-1)) return "PUBLISHED";
+  return "DRAFT";
+}
+
+function weekStartISO(iso){ const d=new Date(iso+"T00:00:00"); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return d.toISOString().slice(0,10); }
+function daysBetweenISO(a,b){ return Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000); }
+function weekTag(startISO){
+  const t=todayISO();
+  const managedStart=weekStartISO(t);
+  const end=addDaysISO(startISO,6);
+  if(end<t) return "Past";
+  const w=Math.floor(daysBetweenISO(managedStart,startISO)/7);
+  const MANAGED_WEEKS=3, PUBLISHED_WEEKS=3;
+  if(w>=0 && w<MANAGED_WEEKS) return "Managed";
+  if(w>=MANAGED_WEEKS && w<(MANAGED_WEEKS+PUBLISHED_WEEKS)) return "Published";
+  return "Planning";
+}
+async function storeGet(kind){
+  try{
+    const url = new URL(STORE_URL);
+    url.searchParams.set("kind", kind);
+    const r = await fetch(url.toString(), { method:"GET", cache:"no-store" });
+    if(!r.ok) throw new Error("store GET " + r.status);
+    return await r.json();
+  }catch(e){
+    return { __error: String(e?.message || e) };
+  }
+}
+
+let members=[];
+function eligibleMembers(){
+  const f=$("\1")?.value;
+  const act=members.filter(m=>m && m.active!==false);
+  if(f==="ALL") return act;
+  const has=(m,q)=> (m.qualifications||[]).includes(q);
+  if(f==="ALS") return act.filter(m=>has(m,"ALS"));
+  if(f==="EMT") return act.filter(m=>has(m,"EMT"));
+  if(f==="DRIVER") return act.filter(m=>has(m,"DRIVER"));
+  if(f==="EMT_DRIVER") return act.filter(m=>has(m,"EMT") && has(m,"DRIVER"));
+  if(f==="ALS_DRIVER") return act.filter(m=>has(m,"ALS") && has(m,"DRIVER"));
+  return act;
+}
+function classifyHeat(ratio,E,R){
+  if(E<4){
+    if(R<=0) return "need2";
+    if(R==1) return "need1";
+    if(R==2) return "neutral";
+    return "crowd2";
+  }
+  if(ratio<0.10) return "need2";
+  if(ratio<0.25) return "need1";
+  if(ratio<0.50) return "neutral";
+  if(ratio<0.75) return "crowd1";
+  return "crowd2";
+}
+function fmtMD(iso){
+  const d=new Date(iso+"T00:00:00");
+  return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+}
+
+async function refresh(){
+  try{
+    $("statusText").textContent="Loading…";
+    $("dot").classList.remove("warn");
+    $("statusPill").title="";
+
+    const memR=await fetch(MEMBERS_URL,{cache:"no-store"});
+    const memJ=await memR.json();
+    members=memJ.members || memJ || [];
+    const elig=eligibleMembers();
+    const E=elig.length;
+
+    const all=await storeGet("member");
+    if(all && all.__error) throw new Error(all.__error);
+    const payloads=[];
+    if(Array.isArray(all)){ for(const it of all){ if(it&&it.payload) payloads.push(it.payload);} }
+    else if(all && Array.isArray(all.items)){ for(const it of all.items){ if(it&&it.payload) payloads.push(it.payload);} }
+    else if(all && typeof all==="object"){ for(const k of Object.keys(all)){ const it=all[k]; if(it&&it.payload) payloads.push(it.payload);} }
+
+    // count preferred per date|half
+    const counts={};
+    for(const st of payloads){
+      if(!st||typeof st!=="object") continue;
+      for(const dateISO of Object.keys(st)){
+        const day=st[dateISO];
+        if(!day||typeof day!=="object") continue;
+        for(const half of Object.keys(day)){
+          if(day[half]==="preferred"){
+            const k=`${dateISO}|${half}`;
+            counts[k]=(counts[k]||0)+1;
+          }
+        }
+      }
+    }
+
+    // Build rows for upcoming weeks
+    const weeks=parseInt($("\1")?.value,10);
+    const start=weekStartISO(todayISO());
+    const shifts=[];
+    for(let w=0; w<weeks; w++){
+      const ws=addDaysISO(start,w*7);
+      for(let i=0;i<7;i++){
+        const date=addDaysISO(ws,i);
+        if(new Date(date+"T00:00:00") < new Date(todayISO()+"T00:00:00") && weekTag(ws)!=="Managed") continue;
+        shifts.push({date, half:"AM"});
+        shifts.push({date, half:"PM"});
+      }
+    }
+    // Week "resolve" buttons (press-and-hold, visual only)
+    const weekStarts = Array.from(new Set(shifts.map(x=>weekStartISO(x.date))))
+      .sort((a,b)=>a.localeCompare(b));
+    const wb = $("weekButtons");
+    if(wb){
+      wb.innerHTML = "";
+      const setWeekHighlight = (ws, on)=>{
+        for(const row of document.querySelectorAll('#rows tr')){
+          if((row.dataset.week||"")===ws){
+            row.classList.toggle('weekHi', !!on);
+          }
+        }
+      };
+      for(const ws of weekStarts){
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'weekBtn';
+        const tag = weekTag(ws);
+        const st = stageForWeek(ws);
+        btn.innerHTML = `Week of ${fmtMD(ws)}${tag?` • ${tag}`:""} <span class="stageChip ${st.toLowerCase()}">${st}</span>`;
+
+        const startResolve = ()=>{
+          btn.classList.add('resolving');
+          setWeekHighlight(ws,true);
+        };
+        const endResolve = ()=>{
+          btn.classList.remove('resolving');
+          setWeekHighlight(ws,false);
+        };
+
+        btn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); startResolve(); });
+        btn.addEventListener('pointerup', endResolve);
+        btn.addEventListener('pointercancel', endResolve);
+        btn.addEventListener('pointerleave', endResolve);
+        wb.appendChild(btn);
+      }
+    }
+
+
+const tbody=$("rows"); tbody.innerHTML="";
+    let need=0, crowd=0;
+    for(const sh of shifts){
+      const k=`${sh.date}|${sh.half}`;
+      const R=counts[k]||0;
+      const ratio=E? (R/E):0;
+      const level=classifyHeat(ratio,E,R);
+      if(level.startsWith("need")) need++;
+      if(level.startsWith("crowd")) crowd++;
+
+      const tr=document.createElement("tr");
+      const ws = weekStartISO(sh.date);
+      tr.dataset.week = ws;
+      tr.innerHTML = `
+        <td>${fmtMD(sh.date)} <span class="muted">(${sh.date})</span></td>
+        <td>${sh.half}</td>
+        <td>${weekTag(weekStartISO(sh.date))}</td>
+        <td>
+          <span class="heat" title="Preferred-only popularity among eligible members">
+            <span class="bar ${level}"></span>
+            <span>${R}/${E} prefer (${E?Math.round(ratio*100):0}%)</span>
+          </span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    $("subtitle").textContent = `• Eligible: ${E} • Filter: ${$("\1")?.value}`;
+    $("kpi").innerHTML = `
+      <div class="box"><b>${E}</b><div class="muted">Eligible members</div></div>
+      <div class="box"><b>${need}</b><div class="muted">Need (green)</div></div>
+      <div class="box"><b>${crowd}</b><div class="muted">Crowded (red)</div></div>
+      <div class="box"><b>${shifts.length}</b><div class="muted">Shifts shown</div></div>
+    `;
+
+    $("statusText").textContent="Connected";
+    $("statusPill").title="Loaded from Drive store.";
+  }catch(e){
+    console.error(e);
+    $("statusText").textContent="Offline / no Drive";
+    $("dot").classList.add("warn");
+    $("statusPill").title=String(e?.message||e);
+  }
+}
+
+
+// Tabs
+on("tabPopularity","click", ()=>showPanel("pop"));
+on("tabStaffing","click", ()=>showPanel("staff"));
+
+// Staffing controls
+(function initStaffing(){
+  // Default date
+  if($("staffDate")) $("staffDate").value = todayISO();
+
+  // Load members for staffing uses the same members[] already loaded in refresh(); but we also want to load members even if you open Staffing first.
+  // We'll populate units/seats from store if available; fallback to defaults.
+  (async ()=>{
+    const memR=await fetch(MEMBERS_URL,{cache:"no-store"});
+    const memJ=await memR.json();
+    members=memJ.members || memJ || [];
+
+    const s = await safeGet("seats");
+    if(s && s.seats) seats = s;
+
+    const u = await safeGet("units");
+    if(u && u.units) units = u;
+
+    const pick=$("unitPick");
+    pick.innerHTML="";
+    for(const unit of (units.units||[])){
+      const o=document.createElement("option");
+      o.value=unit.unit_id;
+      o.textContent=unit.label;
+      pick.appendChild(o);
+    }
+    if((units.units||[]).length) pick.value=(units.units||[])[0].unit_id;
+
+    $("btnLoadStaff").addEventListener("click", loadStaffing);
+    $("unitPick").addEventListener("change", loadStaffing);
+    $("staffDate").addEventListener("change", loadStaffing);
+    $("btnSaveStaff").addEventListener("click", ()=>saveStaffing({publish:false}));
+    $("btnPublishStaff").addEventListener("click", ()=>saveStaffing({publish:true}));
+    $("btnClearStaff").addEventListener("click", clearStaffing);
+
+    // Initial render
+    await loadStaffing();
+  })().catch(e=>{
+    console.error(e);
+    setSaveState("Staffing init failed");
+  });
+})();
+
+$("btnRefresh").addEventListener("click", refresh);
+$("qualFilter").addEventListener("change", refresh);
+$("weeks").addEventListener("change", refresh);
+refresh();
+
+</script>
+  </div>
+</div>
+
+<script>
+
+/* =========================
+   Inbox v1 (exceptions only)
+   ========================= */
+async function refreshInbox(){
+  const list = document.getElementById('inboxList');
+  const empty = document.getElementById('inboxEmpty');
+  const badge = document.getElementById('inboxCount');
+  if(!list) return;
+
+  list.innerHTML = '';
+  if(empty) empty.style.display = 'none';
+
+  // Ensure base data loaded (members, seats, units)
+  try{
+    // members load is driven by refresh() in Dashboard/Staffing, but Inbox can be opened first
+    if(!window.members || !Array.isArray(window.members)){
+      // fall back to existing refresh pipeline if available
+      if(typeof refresh === 'function') await refresh();
+    }
+  }catch(_e){}
+
+  // Pull remote assignments once (best effort), fall back to localStorage per-day
+  let remoteAssignments = null;
+  try{ remoteAssignments = await safeGet("assignments"); }catch(_e){ remoteAssignments = null; }
+
+  const weeksShown = Number(document.getElementById('weeks')?.value || 6);
+  const today = new Date();
+  const currentWeekStart = weekStartISO(today);
+  const issues = [];
+
+  // Helper: load assignments for a date/unit
+  function getAssignmentsFor(dateISO, unitId){
+    // remote shape: {date, items:[{date,unit_id,seat_id,member_id}]}
+    if(remoteAssignments && Array.isArray(remoteAssignments.items)){
+      const found = remoteAssignments.items.filter(it => it && it.date===dateISO && it.unit_id===unitId);
+      if(found.length){
+        const map = {};
+        for(const it of found){
+          if(it && it.seat_id) map[it.seat_id] = it.member_id || "";
+        }
+        return map;
+      }
+    }
+    // localStorage shape used by staffing: {date,unit_id,items:[{seat_id,member_id}]}
+    const local = loadAssignmentsLocal(dateISO, unitId);
+    if(local && Array.isArray(local.items)){
+      const map = {};
+      for(const it of local.items){
+        if(it && it.seat_id) map[it.seat_id] = it.member_id || "";
+      }
+      return map;
+    }
+    return null;
+  }
+
+  // Evaluate one unit on one day
+  function evaluateUnitDay(unit, dateISO){
+    const buckets = getUnitSeatBuckets(unit);
+    const required = buckets.required || [];
+    const assigns = getAssignmentsFor(dateISO, unit.id || unit.unit_id || unit.unitId || unit.label || "");
+    if(!assigns) return { hasData:false, missing: required.slice(), invalid: [] };
+
+    const missing = [];
+    const invalid = [];
+
+    for(const seatId of required){
+      const seat = findSeatById(seatId);
+      const memberId = assigns[seatId];
+      if(!memberId){
+        missing.push(seatId);
+        continue;
+      }
+      const member = (getActiveMembers()||[]).find(m => (m.member_id||m.id) === memberId);
+      if(!member){
+        invalid.push({seatId, reason:"member not found/active"});
+        continue;
+      }
+      const creds = memberCredsSet(member);
+      if(seat && !satisfiesSeat(creds, seat)){
+        invalid.push({seatId, reason:"not qualified"});
+      }
+    }
+    return { hasData:true, missing, invalid };
+  }
+
+  const activeUnits = (units.units||units||[]).filter(u => (u.status||u.active||"ACTIVE")==="ACTIVE");
+
+  for(let w=0; w<weeksShown; w++){
+    const weekStart = addDays(currentWeekStart, w*7);
+    const weekStartISOstr = weekStart.toISOString().slice(0,10);
+    const stage = stageForWeek(weekStartISOstr);
+
+    // Inbox priorities: Managed + Published only (Draft stays quiet)
+    if(stage === "DRAFT") continue;
+
+    // Look across the week (Mon-Sun) but keep it light: only surface first day with problems per unit
+    for(const unit of activeUnits){
+      let surfaced = false;
+      for(let d=0; d<7; d++){
+        const day = addDays(weekStart, d);
+        const dayISO = day.toISOString().slice(0,10);
+        const res = evaluateUnitDay(unit, dayISO);
+
+        const unitId = unit.id || unit.unit_id || unit.unitId || unit.label || "UNIT";
+        const unitLabel = unit.label || unitId;
+
+        // If no data at all for this unit on this day, only flag in MANAGED (because it’s close-in)
+        if(!res.hasData){
+          if(stage === "MANAGED"){
+            issues.push({
+              severity: "warn",
+              title: `${unitLabel}: no assignments saved`,
+              meta: `${dayISO} • ${stage}`,
+              actionHash: `#/staffing?date=${encodeURIComponent(dayISO)}&unit=${encodeURIComponent(unitId)}`
+            });
+            surfaced = true;
+          }
+          continue;
+        }
+
+        if(res.missing.length || res.invalid.length){
+          const missingText = res.missing.length ? `Missing: ${res.missing.join(", ")}` : "";
+          const invalidText = res.invalid.length ? `Invalid: ${res.invalid.map(x=>x.seatId).join(", ")}` : "";
+          const details = [missingText, invalidText].filter(Boolean).join(" • ");
+
+          issues.push({
+            severity: (stage==="MANAGED" ? "critical" : "warn"),
+            title: `${unitLabel}: coverage issue`,
+            meta: `${dayISO} • ${stage} • ${details}`,
+            actionHash: `#/staffing?date=${encodeURIComponent(dayISO)}&unit=${encodeURIComponent(unitId)}`
+          });
+          surfaced = true;
+        }
+
+        if(surfaced) break; // keep inbox readable
+      }
+    }
+  }
+
+  // Render
+  if(!issues.length){
+    if(empty) empty.style.display = '';
+    if(badge){ badge.style.display = 'none'; badge.textContent = '0'; }
+    return;
+  }
+
+  // Update sidebar badge
+  if(badge){
+    badge.textContent = String(issues.length);
+    badge.style.display = '';
+  }
+
+  // Render cards
+  for(const it of issues){
+    const card = document.createElement('div');
+    card.className = 'inboxCard';
+    const left = document.createElement('div');
+    left.className = 'inboxLeft';
+
+    const top = document.createElement('div');
+    top.className = 'row';
+    top.style.gap = '8px';
+
+    const sev = document.createElement('span');
+    sev.className = 'sev ' + (it.severity||'info');
+    sev.textContent = (it.severity||'INFO').toUpperCase();
+
+    const title = document.createElement('div');
+    title.className = 'inboxTitle';
+    title.textContent = it.title;
+
+    top.appendChild(sev);
+    top.appendChild(title);
+
+    const meta = document.createElement('div');
+    meta.className = 'inboxMeta';
+    meta.textContent = it.meta;
+
+    left.appendChild(top);
+    left.appendChild(meta);
+
+    const btn = document.createElement('button');
+    btn.className = 'secondary';
+    btn.textContent = 'Open Staffing';
+    btn.addEventListener('click', ()=>{
+      // Deep-link via hash and let shell route
+      location.hash = it.actionHash;
+    });
+
+    card.appendChild(left);
+    card.appendChild(btn);
+    list.appendChild(card);
+  }
+}
+
+// Inbox refresh button
+document.addEventListener('click', (e)=>{
+  if(e.target && e.target.id === 'btnInboxRefresh'){
+    refreshInbox();
+  }
+});
+
+
+/* =========================
+   Shell routing + mode state
+   ========================= */
+(function(){
+  const nav = {
+    dashboard: document.getElementById('navDashboard'),
+    staffing: document.getElementById('navStaffing'),
+    inbox: document.getElementById('navInbox'),
+    members: document.getElementById('navMembers'),
+    units: document.getElementById('navUnits'),
+    settings: document.getElementById('navSettings'),
+  };
+  const crumb = document.getElementById('crumb');
+  const modeChip = document.getElementById('modeChip');
+
+  // Existing panels from your page
+  const panelPopularity = document.getElementById('panelPopularity');
+  const panelStaffing = document.getElementById('panelStaffing');
+  const panelInbox = document.getElementById('panelInbox');
+
+  // Lightweight edit-state flags (we’ll wire “real” dirty tracking into staffing editors next)
+  let editMode = false;
+  let dirty = false;
+
+  function setMode(mode){
+    modeChip.dataset.mode = mode;
+    modeChip.textContent =
+      mode === 'view' ? 'Viewing' :
+      mode === 'edit' ? 'Editing' :
+      mode === 'dirty' ? 'Unsaved' :
+      mode === 'saved' ? 'Saved' : mode;
+  }
+
+  // Expose helpers for later modules
+  window.SC_SHELL = {
+    enterEdit(){ editMode = true; dirty = false; setMode('edit'); },
+    markDirty(){ if(editMode){ dirty = true; setMode('dirty'); } },
+    markSaved(){ if(editMode){ dirty = false; setMode('saved'); setTimeout(()=>setMode('edit'), 800); } },
+    exitEdit(){ editMode = false; dirty = false; setMode('view'); }
+  };
+
+  function show(route){
+    // Default: hide everything "view-like"
+    if(panelPopularity) panelPopularity.style.display = 'none';
+    if(panelStaffing) panelStaffing.style.display = 'none';
+    if(panelInbox) panelInbox.style.display = 'none';
+
+    // Nav highlighting
+    Object.entries(nav).forEach(([k, el])=>{
+      if(!el) return;
+      if(k===route) el.setAttribute('aria-current','page');
+      else el.removeAttribute('aria-current');
+    });
+
+    // Breadcrumb + panel mapping
+    if(route === 'dashboard'){
+      crumb.textContent = 'Supervisor ▸ Dashboard';
+      if(panelPopularity) panelPopularity.style.display = '';
+    } else if(route === 'staffing'){
+      crumb.textContent = 'Supervisor ▸ Staffing ▸ AMB120';
+      if(panelStaffing) panelStaffing.style.display = '';
+      // Apply deep-link params (e.g., #/staffing?date=YYYY-MM-DD&unit=AMB120)
+      try{
+        const qs = window.__SC_HASH_QS || '';
+        if(qs){
+          const p = new URLSearchParams(qs);
+          const d = p.get('date');
+          const u = p.get('unit');
+          const staffDate = document.getElementById('staffDate');
+          const unitPick = document.getElementById('unitPick');
+          if(d && staffDate) staffDate.value = d;
+          if(u && unitPick) unitPick.value = u;
+        }
+      }catch(_e){}
+      if(typeof loadStaffing === 'function') loadStaffing();
+      return;
+    } else if(route === 'inbox'){
+      crumb.textContent = 'Supervisor ▸ Inbox';
+      if(panelInbox) panelInbox.style.display = '';
+      // Update count + render
+      refreshInbox();
+      return;
+    } else {
+      crumb.textContent = 'Supervisor';
+      alert('This section is coming next.');
+      location.hash = '#/dashboard';
+      return;
+    }
+  }
+
+  function routeFromHash(){
+    const hfull = (location.hash || '#/dashboard').replace('#/','');
+    const [base, qs] = hfull.split('?');
+    window.__SC_HASH_QS = qs || '';
+    return (base || 'dashboard');
+  }
+
+  // Click handlers
+  Object.entries(nav).forEach(([k, el])=>{
+    if(!el) return;
+    el.addEventListener('click', ()=>{
+      // Prevent accidental nav while dirty (simple guard)
+      if(editMode && dirty){
+        const ok = confirm('You have unsaved changes. Leave this page and lose them?');
+        if(!ok) return;
+        window.SC_SHELL.exitEdit();
+      }
+      location.hash = '#/' + k;
+    });
   });
 
-  alert("Assignments saved to Drive");
-}
+  window.addEventListener('hashchange', ()=>show(routeFromHash()));
 
-load();
+  // Initial
+  setMode('view');
+  show(routeFromHash());
+})();
 </script>
 
 </body>
