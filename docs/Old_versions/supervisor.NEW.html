@@ -654,37 +654,46 @@
     localStorage.setItem(LS_LAST_DRAFT, JSON.stringify(draft));
   }
 
-  // ---- SAVE ----
-  async function saveAll(){
-    // Always save a local draft first (protect against outage)
-    saveDraft();
+// ---- SAVE ----
+async function saveAll(){
+  // Always save a local draft first (protect against outage)
+  saveDraft();
 
-    if(!app.token){
-      alert("No token set. Click Token, paste SC_TOKEN, then Save again.");
-      return;
-    }
-
-    try{
-      const payload = {
-        members: app.data.members,
-        org_settings: app.data.org_settings,
-        overrides: app.data.overrides
-      };
-      const res = await storePost({ kind:"supervisor", payload });
-      if(res && res.ok === false) throw new Error(res.error || "Save failed");
-
-      app.lastSaveAt = new Date();
-      setDriveStatus("ok", "Drive", `Saved ${app.lastSaveAt.toLocaleString()}`);
-      setDataStatus("ok", `Saved`, `Saved at ${app.lastSaveAt.toLocaleString()}`);
-
-      // If save succeeded, keep draft but mark it's safe; optionally remove.
-      // We'll keep it as a safety net.
-      alert("Saved to Drive ✅");
-    }catch(e){
-      setDriveStatus("warn", "Drive", `Save failed; kept local draft.\n${e.message}`);
-      alert("Save failed — kept local draft in this browser.\n\n" + e.message);
-    }
+  if(!app.token){
+    alert("No token set. Click Token, paste SC_TOKEN, then Save again.");
+    return;
   }
+
+  try{
+    // Write canonical kinds (so Wallboard/Member pages can read consistent files)
+    const r1 = await storePost({ kind: "members", payload: app.data.members });
+    if (r1 && r1.ok === false) throw new Error(r1.error || "Save members failed");
+
+    const r2 = await storePost({ kind: "org_settings", payload: app.data.org_settings });
+    if (r2 && r2.ok === false) throw new Error(r2.error || "Save org_settings failed");
+
+    const r3 = await storePost({ kind: "overrides", payload: app.data.overrides });
+    if (r3 && r3.ok === false) throw new Error(r3.error || "Save overrides failed");
+
+    // OPTIONAL during transition: also keep the old bundle write so older pages still work
+    const payload = {
+      members: app.data.members,
+      org_settings: app.data.org_settings,
+      overrides: app.data.overrides
+    };
+    const r4 = await storePost({ kind: "supervisor", payload });
+    if (r4 && r4.ok === false) throw new Error(r4.error || "Save supervisor bundle failed");
+
+    app.lastSaveAt = new Date();
+    setDriveStatus("ok", "Drive", `Saved ${app.lastSaveAt.toLocaleString()}`);
+    setDataStatus("ok", `Saved`, `Saved at ${app.lastSaveAt.toLocaleString()}`);
+
+    alert("Saved to Drive ✅");
+  }catch(e){
+    setDriveStatus("warn", "Drive", `Save failed; kept local draft.\n${e.message}`);
+    alert("Save failed — kept local draft in this browser.\n\n" + e.message);
+  }
+}
 
   // ---- RENDER ----
   function render(){

@@ -228,7 +228,7 @@ const PLANNING_WEEKS = 4;
   // ---- History (whiteboard scrape) support ----
   // Expects flat static files at site root: /history.index.json and /YYYY-MM.normalized.json
   const HISTORY_INDEX_URLS = [
-    "/history.index.json"
+    () => storeUrl("history_index")
   ];
 
   const _historyMonthCache = new Map(); // month -> parsed JSON
@@ -247,9 +247,14 @@ const PLANNING_WEEKS = 4;
   }
 
   async function loadHistoryIndex(){
+    // Prefer Drive-backed store (kind=history_index). HISTORY_INDEX_URLS holds candidate URLs.
     let lastErr = null;
     for(const u of HISTORY_INDEX_URLS){
-      try{ return await fetchJson(u); }catch(e){ lastErr = e; }
+      const url = (typeof u === "function") ? u() : u;
+      try{
+        const j = await fetchJson(url);
+        return j && j.payload ? j.payload : j;
+      }catch(e){ lastErr = e; }
     }
     if(lastErr) throw lastErr;
     return null;
@@ -259,15 +264,25 @@ const PLANNING_WEEKS = 4;
 
   async function loadHistoryMonth(index, month){
     if(_historyMonthCache.has(month)) return _historyMonthCache.get(month);
-    const file = (index.files || []).find(f => f.month === month);
-    if(!file) return null;
 
-    // Prefer absolute/declared path if present; otherwise use base_path + filename
-    const path = file.path || ((index.base_path || "/") + file.filename);
-    const j = await fetchJson(path);
-    _historyMonthCache.set(month, j);
-    return j;
+    // Primary: Drive-backed store (kind=history_month&month=YYYY-MM)
+    try{
+      const j = await fetchJson(storeUrl("history_month", { month }));
+      const data = (j && j.payload) ? j.payload : j;
+      _historyMonthCache.set(month, data);
+      return data;
+    }catch(e){
+      // Fallback: index-declared static path (if you ever host these as flat files)
+      const file = (index && index.files) ? (index.files || []).find(f => f.month === month) : null;
+      if(!file) throw e;
+      const path = file.path || ((index.base_path || "/") + file.filename);
+      const j2 = await fetchJson(path);
+      const data2 = (j2 && j2.payload) ? j2.payload : j2;
+      _historyMonthCache.set(month, data2);
+      return data2;
+    }
   }
+
 
   // Convert normalized day record to schedule-like { AM:[att,drv], PM:[att,drv] }
   function normalizedToScheduleDay(day){
@@ -359,10 +374,13 @@ function fmtRange(a,b){
 }
 
 /** ========= FETCH ========= **/
-function storeUrl(kind){
+function storeUrl(kind, params={}){
   const u = new URL(STORE_URL);
   u.searchParams.set("kind", kind);
   if(TOKEN) u.searchParams.set("token", TOKEN);
+  for(const [k,v] of Object.entries(params||{})){
+    if(v !== undefined && v !== null && String(v).length) u.searchParams.set(k, String(v));
+  }
   return u.toString();
 }
 async function fetchJson(url){
