@@ -89,7 +89,8 @@
   .week-title{
     font-weight:1000;
   }
-  .week-dates{
+    .week-title:empty{display:none;}
+.week-dates{
     font-size:12px; color:var(--muted); font-weight:900;
   }
 
@@ -216,15 +217,36 @@
 
 <script>
 /** ========= CONFIG ========= **/
-const STORE_URL = (location.origin + "/api/store"); // Cloudflare Worker route
-const TOKEN = "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741"; // token used by the store (or leave blank if worker injects it)
+const STORE_URL = (location.origin && location.origin.startsWith("http"))
+  ? (location.origin + "/api/store")
+  : "https://adr-fr.org/api/store";
+
+// Token is optional for GET (public read). For writes, set it via the Token button.
+let TOKEN = localStorage.getItem("SC_TOKEN") || ""; // optional if your store requires it, otherwise leave blank
 const PLANNING_WEEKS = 4; // how many planning weeks to show
 const WEEK_START = 0; // 0=Sunday (ADR matches wallboard)
 const SHOW_WEEKDAY_HEADER = true;
 
 /** kind names in Apps Script */
 const KIND_SCHEDULE = "schedule"; // should return schedule.json contents
-const KIND_MEMBERS  = "members";  // should return members.json contents (tiers + qual_120)
+const KIND_MEMBERS  = "members";
+
+/** ========= TOKEN UI ========= **/
+function promptToken(){
+  const cur = localStorage.getItem("SC_TOKEN") || "";
+  const next = prompt("Enter SC_TOKEN (leave blank to clear):", cur || "");
+  if(next === null) return;
+  const cleaned = String(next).trim();
+  if(cleaned){
+    localStorage.setItem("SC_TOKEN", cleaned);
+  }else{
+    localStorage.removeItem("SC_TOKEN");
+  }
+  TOKEN = localStorage.getItem("SC_TOKEN") || "";
+  // reload
+  refresh().catch(()=>{});
+}
+  // should return members.json contents (tiers + qual_120)
 
 /** ========= DATE UTILS ========= **/
 function isoDate(d){
@@ -262,23 +284,17 @@ function storeUrl(kind){
 }
 async function fetchJson(url){
   const r = await fetch(url, { cache:"no-store" });
-  const text = await r.text();
-  const head = text.slice(0,160).replace(/\s+/g," ").trim();
-
-  if(text.trim().startsWith("<!DOCTYPE html")){
-    throw new Error(`UPSTREAM_RETURNED_HTML (status ${r.status}) :: ${head}`);
+  const t = await r.text();
+  // Worker may wrap HTML errors in JSON {ok:false,...}
+  try{
+    const j = JSON.parse(t);
+    if(j && j.ok === false) throw new Error(j.error || "Store error");
+    return j;
+  }catch(e){
+    // if it wasn't JSON, surface first bytes
+    if(t.trim().startsWith("<!DOCTYPE html")) throw new Error("Upstream returned HTML (auth/cors/drive).");
+    throw e;
   }
-
-  let j;
-  try{ j = JSON.parse(text); }
-  catch(e){
-    throw new Error(`UPSTREAM_RETURNED_NON_JSON (status ${r.status}) :: ${head}`);
-  }
-
-  // Apps Script convention: { ok:true, payload:... }
-  if(j && j.ok === false) throw new Error(j.error || "STORE_ERROR");
-  if(j && Object.prototype.hasOwnProperty.call(j, "payload")) return j.payload;
-  return j;
 }
 
 /** ========= ROSTER MAP ========= **/
@@ -526,21 +542,23 @@ async function main(){
     // Planning weeks start next week
     const planningStarts = addDays(thisWeekStart, 7);
 
-    renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Context" });
-    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Operational" });
+    renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Archived" });
+    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Controlled" });
 
     for(let w=0; w<PLANNING_WEEKS; w++){
-      const ws = addDays(planningStarts, w*7);
-      const isLastPlanningWeek = (w === PLANNING_WEEKS-1); // the one right before Controlled begins
+      const ws = addDays(planningStarts, w*7);// the one right before Controlled begins
       renderWeekBlock(
         root,
-        `Planning Week ${w+1}`,
+        "",
         ws,
         schedule,
         roster,
-        { sub: isLastPlanningWeek ? "Notes + Needs" : "Planning", showNeeds: isLastPlanningWeek }
-      );
-    }
+        {
+          sub: (w === 0) ? "Controlled" : "Planning",
+          // Needs hints only on the first two future weeks (what used to be Planning Week 1 & 2)
+          showNeeds: (w === 0 || w === 1)
+        }
+      );}
 
     pill.textContent = "Live";
     pill.style.color = "#166534";
