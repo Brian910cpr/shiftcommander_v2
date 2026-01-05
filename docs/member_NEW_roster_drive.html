@@ -1316,21 +1316,6 @@ async function init(){
 }
 
 setRangeDefaults();
-  await loadMember(getActiveMemberId());
-
-  // Change handler
-  sel.addEventListener("change", async ()=>{
-    // reset local in-memory objects (not localStorage)
-    for(const k of Object.keys(stateDays)) delete stateDays[k];
-    prefs = { prefer_24:false, blank_ok:true, avoid_with:[] };
-    memberAssignments = null;
-
-    setRangeDefaults();
-    await loadMember(getActiveMemberId());
-  });
-}
-
-setRangeDefaults();
 init();
 </script>
 
