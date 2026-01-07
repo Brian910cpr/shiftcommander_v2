@@ -397,7 +397,7 @@
   // ============================================================
 
   // ---- CONFIG ----
-  const STORE_EXEC = (location.origin + "/api/store");
+  const STORE_EXEC = ((location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store");
   const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
   const LOCAL_PATHS = {
     members: `${DATA_BASE}/members.json`,

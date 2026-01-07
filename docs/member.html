@@ -43,6 +43,7 @@ header{
   white-space:nowrap;
   flex-shrink:0;
 }
+  .pill.btn{ cursor:pointer; user-select:none; }
 
 select{
   min-width:240px;
@@ -377,6 +378,7 @@ main{ padding:12px; }
     <span class="dot warn" id="driveDot"></span>
     <span class="tiny" id="driveTip">Checking…</span>
   </div>
+  <button class="pill btn" id="btnToken" title="Set/clear SC_TOKEN for Drive saves">Token</button>
 </header>
 
 <div class="tabbar">
@@ -491,10 +493,10 @@ main{ padding:12px; }
 /* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
   // Apps Script Web App (/exec) that reads/writes to Google Drive
-  url: (location.origin + "/api/store"),
+  url: (location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store",
 
   // Shared secret expected by Apps Script (keep private)
-  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741",
+  token: (localStorage.getItem("SC_TOKEN") || ""),
 
   // Optional: Drive folder id (if your Apps Script supports it). Safe to ignore server-side.
   folder_id: "11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK"
@@ -541,10 +543,16 @@ function isPast(isoDate){ return isoDate < iso(new Date()); }
 
 function getActiveMemberId(){
   const sel = document.getElementById("member");
+  const btnToken = document.getElementById("btnToken");
+  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
+
   return sel ? String(sel.value || "").trim() : "default";
 }
 function getActiveMemberName(){
   const sel = document.getElementById("member");
+  const btnToken = document.getElementById("btnToken");
+  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
+
   if(!sel) return "";
   return sel.options[sel.selectedIndex]?.textContent || "";
 }
@@ -1277,8 +1285,23 @@ function statusDisplay(status, note){
 }
 
 /* ===================== MEMBER SELECTOR + STARTUP ===================== */
+function setTokenUI(){
+  const cur = localStorage.getItem("SC_TOKEN") || "";
+  const next = prompt("Enter SC_TOKEN (leave blank to clear):", cur || "");
+  if(next === null) return;
+  const cleaned = String(next).trim();
+  if(cleaned) localStorage.setItem("SC_TOKEN", cleaned);
+  else localStorage.removeItem("SC_TOKEN");
+  STORE.token = (localStorage.getItem("SC_TOKEN") || "");
+  // Re-check Drive and attempt sync
+  trySync(getActiveMemberId()).catch(()=>{});
+}
+
 async function init(){
   const sel = document.getElementById("member");
+  const btnToken = document.getElementById("btnToken");
+  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
+
 
   // 0) Paint fallback roster immediately so page is usable even if Drive is down
   setRosterPill("fallback", "Using built-in roster (Drive not checked yet)");
