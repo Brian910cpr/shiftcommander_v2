@@ -376,9 +376,7 @@ function fmtRange(a,b){
 /** ========= FETCH ========= **/
 function storeUrl(kind, params={}){
   const u = new URL(STORE_URL);
-  u.searchParams.set("kind", kind);
-  if(TOKEN) u.searchParams.set("token", TOKEN);
-  for(const [k,v] of Object.entries(params||{})){
+  u.searchParams.set("kind", kind);  for(const [k,v] of Object.entries(params||{})){
     if(v !== undefined && v !== null && String(v).length) u.searchParams.set(k, String(v));
   }
   return u.toString();
