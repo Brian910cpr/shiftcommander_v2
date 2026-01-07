@@ -220,6 +220,7 @@
 const STORE_URL = (location.hostname.endsWith("adr-fr.org"))
   ? "/api/store"
   : "https://adr-fr.org/api/store";
+const USE_FIRST_NAME = true; // wallboard display: first name only
 const PLANNING_WEEKS = 4; // how many planning weeks to show
 const WEEK_START = 0; // 0=Sunday (ADR matches wallboard)
 const SHOW_WEEKDAY_HEADER = true;
@@ -325,7 +326,7 @@ function buildRosterIndex(membersJson){
     const nm =
       (m.name || m.full_name || m.display_name || m.last_first || `${first} ${last}`.trim() || id).toString().trim();
 
-    byId[id] = { name: nm, tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"), has120: !!has120 };
+    byId[id] = { name: nm, first: first || nm.split(" ")[0] || nm, tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"), has120: !!has120 };
   }
   return byId;
 }
@@ -399,7 +400,9 @@ function needsHint(attId, drvId, roster){
 function nameFor(id, roster){
   if(!id || id === "OPEN") return `<span class="open">OPEN</span>`;
   const r = roster[id];
-  const nm = (r?.name || id).toString();
+  let nm = (r?.name || id).toString();
+  if(USE_FIRST_NAME && r?.first) nm = String(r.first);
+
   return escapeHtml(nm);
 }
 function escapeHtml(s){
@@ -506,12 +509,6 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
 async function main(){
   const pill = document.getElementById("statusPill");
   try{
-    if(!STORE_URL || STORE_URL.includes("YOUR-WORKER-URL-HERE")){
-      pill.textContent = "Set STORE_URL";
-      pill.style.color = "#b45309";
-      return;
-    }
-
     pill.textContent = "Loading schedule + roster…";
 
     const [scheduleResp, membersResp] = await Promise.all([
@@ -520,36 +517,44 @@ async function main(){
     ]);
 
     const schedule = (scheduleResp && scheduleResp.payload) ? scheduleResp.payload : scheduleResp;
-    const roster   = buildRosterIndex(membersResp);const root = document.getElementById("root");
+    const roster   = buildRosterIndex(membersResp);
+
+    const root = document.getElementById("root");
     root.innerHTML = "";
 
     const now = new Date();
     const thisWeekStart = startOfWeek(now);
-    const prevWeekStart = addDays(thisWeekStart, -7);
 
-    // Planning weeks start next week
-    const planningStarts = addDays(thisWeekStart, 7);
+    // Week offsets (from "this week")
+    const archivedStart   = addDays(thisWeekStart, -7);   // -1
+    const controlled0     = thisWeekStart;                // 0
+    const controlled1     = addDays(thisWeekStart,  7);   // +1 (show Needs)
+    const published2      = addDays(thisWeekStart, 14);   // +2
+    const published3      = addDays(thisWeekStart, 21);   // +3
 
-    renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Context" });
-    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Operational" });
+    // Planning begins AFTER published weeks
+    const planningStart   = addDays(thisWeekStart, 28);   // +4
+
+    // Header label
+    document.getElementById("rangeLabel").textContent =
+      `Archived (-1) • Controlled (0,+1) • Published (+2,+3) • Planning (+4..+${3+PLANNING_WEEKS})`;
+
+    // Render blocks — no "Planning Week #" headers; dates are the primary header
+    renderWeekBlock(root, "", archivedStart, schedule, roster, { sub:"Archived" });
+    renderWeekBlock(root, "", controlled0,   schedule, roster, { sub:"Controlled" });
+    renderWeekBlock(root, "", controlled1,   schedule, roster, { sub:"Controlled", showNeeds:true });
+
+    renderWeekBlock(root, "", published2,    schedule, roster, { sub:"Published" });
+    renderWeekBlock(root, "", published3,    schedule, roster, { sub:"Published" });
 
     for(let w=0; w<PLANNING_WEEKS; w++){
-      const ws = addDays(planningStarts, w*7);
-      const isLastPlanningWeek = (w === PLANNING_WEEKS-1); // the one right before Controlled begins
-      renderWeekBlock(
-        root,
-        `Planning Week ${w+1}`,
-        ws,
-        schedule,
-        roster,
-        { sub: isLastPlanningWeek ? "Notes + Needs" : "Planning", showNeeds: isLastPlanningWeek }
-      );
+      const ws = addDays(planningStart, w*7);
+      const isFirstPlanning = (w === 0); // show Needs only here
+      renderWeekBlock(root, "", ws, schedule, roster, { sub:"Planning", showNeeds:isFirstPlanning });
     }
 
     pill.textContent = "Live";
     pill.style.color = "#166534";
-    document.getElementById("rangeLabel").textContent =
-      `Prev + This + ${PLANNING_WEEKS} Planning week(s)`;
   }catch(err){
     console.error(err);
     pill.textContent = "Load failed";
