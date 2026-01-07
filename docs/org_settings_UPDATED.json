@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "weeks": {
+    "archived": 1,
+    "controlled": 2,
+    "published": 2,
+    "planning": 6
+  },
+  "ui": {
+    "use_first_name_only": true,
+    "grey_past_days": true,
+    "show_health_for_past_days": false,
+    "show_needs_in": {
+      "controlled_week_index": 1,
+      "planning_week_index": 0
+    }
+  }
+}

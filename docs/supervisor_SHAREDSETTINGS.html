@@ -1,0 +1,1621 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Supervisor</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1731;
+      --panel2:#0c1329;
+      --text:#e7ecff;
+      --muted:#a9b3d6;
+      --line:rgba(255,255,255,.09);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+
+      --ok:#2ee59d;
+      --warn:#ffd166;
+      --bad:#ff4d6d;
+      --idle:#95a3c7;
+
+      --focus:#7c5cff;
+      --radius:18px;
+
+      --chipBg: rgba(0,0,0,.18);
+      --chipBr: rgba(255,255,255,.10);
+
+      --btnBg: rgba(255,255,255,.04);
+      --btnBr: rgba(255,255,255,.12);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 25% -20%, rgba(124,92,255,.35), transparent 55%),
+                  radial-gradient(900px 600px at 90% 0%, rgba(88,166,255,.25), transparent 52%),
+                  linear-gradient(180deg, #060a18, var(--bg));
+      color:var(--text);
+      overflow:hidden;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    button, input, select, textarea{ font:inherit; color:inherit; }
+
+    .app{ height:100%; display:grid; grid-template-rows:auto 1fr; }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background: rgba(8,12,28,.55);
+      backdrop-filter: blur(10px);
+      gap:10px;
+    }
+
+    .brand{ display:flex; gap:10px; align-items:center; font-weight:900; letter-spacing:.2px; }
+    .brand .logoDot{
+      width:14px; height:14px; border-radius:50%;
+      background: linear-gradient(135deg, var(--focus), #00d4ff);
+      box-shadow: 0 0 0 6px rgba(124,92,255,.12);
+    }
+    .brand small{ display:block; color:var(--muted); font-weight:650; letter-spacing:0; }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+      font-weight:750;
+      color:var(--muted);
+    }
+
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--idle);
+      box-shadow: 0 0 0 4px rgba(149,163,199,.12);
+    }
+    .dot.ok{ background: var(--ok); box-shadow: 0 0 0 4px rgba(46,229,157,.12); }
+    .dot.warn{ background: var(--warn); box-shadow: 0 0 0 4px rgba(255,209,102,.14); }
+    .dot.bad{ background: var(--bad); box-shadow: 0 0 0 4px rgba(255,77,109,.14); }
+
+    .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .btn{
+      border:1px solid var(--btnBr);
+      background: var(--btnBg);
+      padding:9px 11px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:800;
+      transition: transform .06s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ background: rgba(124,92,255,.22); border-color: rgba(124,92,255,.45); }
+    .btn.danger{ background: rgba(255,77,109,.14); border-color: rgba(255,77,109,.34); }
+    .btn.ghost{ background: transparent; border-color: transparent; }
+
+    .main{
+      height:100%;
+      padding:14px;
+      display:grid;
+      grid-template-columns: 330px 1fr;
+      gap:14px;
+      min-height:0;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+    .cardHeader{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .cardHeader h2{ margin:0; font-size:1.02rem; letter-spacing:.2px; }
+    .cardBody{ padding:12px 14px; min-height:0; }
+    .hint{ color:var(--muted); line-height:1.35; font-size:.95rem; margin:0; }
+
+    .nav{
+      height:100%;
+      display:grid;
+      grid-template-rows:auto auto 1fr auto;
+      min-height:0;
+    }
+    .navGroup{ padding:12px; padding-bottom:0; }
+    .navItem{
+      width:100%;
+      text-align:left;
+      border:1px solid transparent;
+      background: transparent;
+      padding:11px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-weight:900;
+      margin-bottom:8px;
+      white-space:nowrap;
+    }
+    .navItem[aria-selected="true"]{
+      background: rgba(124,92,255,.20);
+      border-color: rgba(124,92,255,.45);
+      color: var(--text);
+    }
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 9px;
+      border-radius:999px;
+      border:1px solid var(--chipBr);
+      background: var(--chipBg);
+      color:var(--muted);
+      font-weight:800;
+      font-size:.88rem;
+      white-space:nowrap;
+    }
+    .chip strong{ color:var(--text); }
+
+    .panel{
+      height:100%;
+      display:grid;
+      grid-template-rows:auto 1fr;
+      min-height:0;
+    }
+    .panelBody{
+      padding:12px 14px;
+      overflow:auto;
+      background: rgba(0,0,0,.10);
+      min-height:0;
+    }
+
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .spacer{ flex:1; }
+    .field{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      border-radius: 16px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .field label{ color:var(--muted); font-weight:850; font-size:.92rem; }
+    .field input, .field select, .field textarea{
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      outline:none;
+    }
+    textarea{ min-height: 90px; resize: vertical; }
+
+    table{ width:100%; border-collapse:separate; border-spacing:0; }
+    th, td{ text-align:left; padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.08); vertical-align:top; }
+    th{ color:var(--muted); font-weight:900; font-size:.9rem; }
+    tr:hover td{ background: rgba(255,255,255,.02); }
+    .small{ font-size:.9rem; color:var(--muted); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    .tag{
+      display:inline-flex;
+      padding:6px 9px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      font-weight:800;
+      font-size:.86rem;
+      color: var(--muted);
+      margin: 2px 4px 2px 0;
+      white-space:nowrap;
+    }
+
+    /* Modal */
+    .modalBackdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:50;
+    }
+    .modalBackdrop.is-open{ display:flex; }
+    .modal{
+      width:min(980px, 96vw);
+      border-radius: 20px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modalHeader{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      background: rgba(0,0,0,.16);
+    }
+    .modalHeader h3{ margin:0; font-size:1.02rem; }
+    .modalBody{
+      padding:14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .modalFooter{
+      padding:12px 14px;
+      border-top:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      background: rgba(0,0,0,.14);
+    }
+    .modalBody .full{ grid-column: 1 / -1; }
+
+    @media (max-width: 980px){
+      body{ overflow:auto; }
+      .main{ grid-template-columns: 1fr; }
+      .modalBody{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand" aria-label="ShiftCommander header">
+        <span class="logoDot" aria-hidden="true"></span>
+        <div>
+          <div>ShiftCommander <span class="small">— Supervisor</span></div>
+          <small id="envLabel">Loading…</small>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <span class="pill" id="drivePill" title="Hover for details">
+          <span class="dot warn" id="driveDot"></span>
+          <span class="mono" id="driveShort">Drive</span>
+        </span>
+        <span class="pill" id="clockPill">—</span>
+        <button class="btn" id="btnReload">Reload</button>
+        <button class="btn primary" id="btnSaveAll">Save</button>
+        <button class="btn" id="btnToken">Token</button>
+      </div>
+    </header>
+
+    <div class="main">
+
+      <!-- LEFT NAV -->
+      <aside class="card nav" aria-label="Supervisor navigation">
+        <div class="cardHeader">
+          <h2>Supervisor</h2>
+          <div class="row">
+            <span class="chip" title="This page edits the core JSON used by all views."><span class="dot idle"></span> Data</span>
+          </div>
+        </div>
+
+        <div class="navGroup">
+          <button class="navItem" data-tab="schedule" aria-selected="true">
+            Schedule
+            <span class="chip">Review</span>
+          </button>
+          <button class="navItem" data-tab="overrides" aria-selected="false">
+            Overrides
+            <span class="chip">Exceptions</span>
+          </button>
+          <button class="navItem" data-tab="members" aria-selected="false">
+            Members
+            <span class="chip">Builder</span>
+          </button>
+          <button class="navItem" data-tab="units" aria-selected="false">
+            Units & Seats
+            <span class="chip">Builder</span>
+          </button>
+          <button class="navItem" data-tab="quals" aria-selected="false">
+            Qualifications
+            <span class="chip">List</span>
+          </button>
+          <button class="navItem" data-tab="ideas" aria-selected="false">
+            Planned
+            <span class="chip">Notes</span>
+          </button>
+        </div>
+
+        <div class="navGroup" style="padding-bottom:0;">
+          <div class="field">
+            <label for="searchBox">Quick search</label>
+            <input id="searchBox" placeholder="Member name, unit, qualification…" />
+            <div class="hint" style="margin-top:2px;">
+              Search applies to the active tab (Members / Units / Quals).
+            </div>
+          </div>
+        </div>
+
+        <div class="navGroup" style="padding-bottom:12px;">
+          <button class="btn danger" style="width:100%;" id="btnExportJson">Export JSON</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT PANEL -->
+      <section class="card panel" aria-label="Supervisor panel">
+        <div class="cardHeader">
+          <h2 id="panelTitle">Schedule</h2>
+          <div class="row" style="gap:8px;">
+            <span class="chip" id="dataChip" title="Hover for details">
+              <span class="dot idle" id="dataDot"></span>
+              <span id="dataText">Loading…</span>
+            </span>
+          </div>
+        </div>
+        <div class="panelBody" id="panelBody"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Member editor -->
+  <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3 id="modalTitle">Edit</h3>
+        <button class="btn ghost" id="btnCloseModal">Close</button>
+      </div>
+      <div class="modalBody" id="modalBody"></div>
+      <div class="modalFooter">
+        <button class="btn" id="btnCancelModal">Cancel</button>
+        <button class="btn primary" id="btnApplyModal">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ============================================================
+  // ShiftCommander — Supervisor
+  //
+  // ✅ Works from GitHub Pages (/docs) OR local file open (file://)
+  // ✅ Uses Google Drive store (Apps Script) when token is set
+  // ✅ Falls back to local JSON (./data/*.json) if Drive unavailable
+  //
+  // IMPORTANT:
+  // - We intentionally do NOT depend on any /api/* endpoints.
+  // - This page edits "core data" (members, org_settings, overrides).
+  // ============================================================
+
+  // ---- CONFIG ----
+  const STORE_EXEC = (location.origin + "/api/store");
+  
+// ---- org_settings (shared config) ----
+const DEFAULT_ORG = {
+  weeks: { archived: 1, controlled: 2, published: 2, planning: 6 },
+  ui: {
+    use_first_name_only: true,
+    grey_past_days: true,
+    show_health_for_past_days: false,
+    show_needs_in: { controlled_week_index: 1, planning_week_index: 0 }
+  }
+};
+let ORG = structuredClone(DEFAULT_ORG);
+
+async function loadOrgSettings(){
+  try{
+    const resp = await fetch(`${STORE_EXEC}?kind=org_settings`, { cache:"no-store" });
+    const j = await resp.json();
+    const p = j?.payload || {};
+    ORG = {
+      ...DEFAULT_ORG,
+      ...p,
+      weeks: { ...DEFAULT_ORG.weeks, ...(p.weeks||{}) },
+      ui: { ...DEFAULT_ORG.ui, ...(p.ui||{}), show_needs_in: { ...DEFAULT_ORG.ui.show_needs_in, ...(p.ui?.show_needs_in||{}) } }
+    };
+  }catch(_e){
+    ORG = structuredClone(DEFAULT_ORG);
+  }
+}
+
+const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
+  const LOCAL_PATHS = {
+    members: `${DATA_BASE}/members.json`,
+    org: `${DATA_BASE}/org_settings.json`,
+    overrides: `${DATA_BASE}/overrides.json`,           // optional
+    history: `${DATA_BASE}/assignments_history.json`,   // optional (flat model)
+  };
+
+  // Local storage keys
+  // token is injected by worker; no browser token
+  const LS_TOKEN = null;
+  const LS_LAST_DRAFT = "sc_supervisor_draft_v1";
+
+  // ---- APP STATE ----
+  const app = {
+    token: null,
+    connected: false,
+    lastSaveAt: null,
+    data: {
+      members: [],
+      org_settings: null,
+      overrides: [],
+      history: null
+    },
+    ui: {
+      activeTab: "schedule",
+      modal: { mode:null, payload:null }
+    }
+  };
+
+  // ---- DOM ----
+  const $ = (sel)=> document.querySelector(sel);
+  const $$ = (sel)=> Array.from(document.querySelectorAll(sel));
+
+  const el = {
+    envLabel: $("#envLabel"),
+    driveDot: $("#driveDot"),
+    drivePill: $("#drivePill"),
+    driveShort: $("#driveShort"),
+    clockPill: $("#clockPill"),
+    btnReload: $("#btnReload"),
+    btnSaveAll: $("#btnSaveAll"),
+    btnToken: $("#btnToken"),
+    btnExportJson: $("#btnExportJson"),
+    panelTitle: $("#panelTitle"),
+    panelBody: $("#panelBody"),
+    dataDot: $("#dataDot"),
+    dataText: $("#dataText"),
+    dataChip: $("#dataChip"),
+    searchBox: $("#searchBox"),
+
+    modalBackdrop: $("#modalBackdrop"),
+    modalTitle: $("#modalTitle"),
+    modalBody: $("#modalBody"),
+    btnCloseModal: $("#btnCloseModal"),
+    btnCancelModal: $("#btnCancelModal"),
+    btnApplyModal: $("#btnApplyModal"),
+  };
+
+  // ---- UTIL ----
+  const nowIso = ()=> new Date().toISOString();
+  const safeJson = async (resp)=>{
+    const txt = await resp.text();
+    try{ return JSON.parse(txt); }catch(e){ throw new Error(`Non-JSON response: ${txt.slice(0,160)}`); }
+  };
+  const deepCopy = (x)=> JSON.parse(JSON.stringify(x));
+  const uid = ()=> Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+  function setDriveStatus(stateName, short, detail){
+    // stateName: ok|warn|bad
+    el.driveDot.className = "dot " + (stateName || "warn");
+    el.driveShort.textContent = short || "Drive";
+    el.drivePill.title = detail || "";
+  }
+
+  function setDataStatus(stateName, text, detail){
+    el.dataDot.className = "dot " + (stateName || "idle");
+    el.dataText.textContent = text || "—";
+    el.dataChip.title = detail || "";
+  }
+
+  function tickClock(){
+    const d = new Date();
+    el.clockPill.textContent = d.toLocaleString(undefined, { weekday:"short", month:"short", day:"numeric" }) +
+      " • " + d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
+  }
+
+  function envText(){
+    const isFile = location.protocol === "file:";
+    const host = location.host || "(local file)";
+    return isFile ? "Running local file — using Drive store if token set" : `Host: ${host}`;
+  }
+
+  // ---- TOKEN ----
+  function loadToken(){
+    app.token = null;
+if(!app.token){
+      setDriveStatus("warn", "Drive", "Token not set. Click Token to set your SC_TOKEN.");
+    }
+  }
+
+  function promptToken(){
+    const current = (app.token || "").trim();
+    const input = prompt("Paste SC_TOKEN (saved in this browser).", current);
+    if(input === null) return;
+    const trimmed = input.trim();
+    if(!trimmed){
+      localStorage.removeItem(LS_TOKEN);
+      app.token = "";
+      setDriveStatus("warn", "Drive", "Token cleared.");
+      return;
+    }
+    app.token = trimmed;
+    setDriveStatus("warn", "Drive", "Token set. Reload to connect.");
+  }
+
+  // ---- STORE CLIENT ----
+  async function storeGet(params){
+    if(!app.token) throw new Error("No token set.");
+    const u = new URL(STORE_EXEC);
+    Object.entries({ ...params, }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
+    const resp = await fetch(u.toString(), { method:"GET", cache:"no-store" });
+    if(!resp.ok) throw new Error(`Store GET ${resp.status}`);
+    return await safeJson(resp);
+  }
+
+  async function storePost(body){
+    if(!app.token) throw new Error("No token set.");
+    const resp = await fetch(STORE_EXEC, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({  ...body })
+    });
+    if(!resp.ok) throw new Error(`Store POST ${resp.status}`);
+    return await safeJson(resp);
+  }
+
+  async function checkDrive(){
+    try{
+      // lightweight ping: store ping
+      const res = await storeGet({ kind:"ping" });
+      app.connected = true;
+      setDriveStatus("ok", "Drive", "Connected. Data can save to Drive.");
+      return res;
+    }catch(e){
+      app.connected = false;
+      setDriveStatus("warn", "Drive", `Offline (or token missing). Using local JSON.\n${e.message}`);
+      return null;
+    }
+  }
+
+  // ---- LOCAL JSON ----
+  async function fetchLocalJson(path){
+    try{
+      const resp = await fetch(path, { cache:"no-store" });
+      if(!resp.ok) throw new Error(`${resp.status}`);
+      return await resp.json();
+    }catch(e){
+      return null;
+    }
+  }
+
+  // ---- LOAD ----
+  async function loadAll(){
+    setDataStatus("idle", "Loading…", "");
+    const drive = await checkDrive();
+
+    let members = null, org = null, overrides = null, history = null;
+
+    // Drive payload format is yours; we tolerate a few shapes.
+    if(drive && drive.ok !== false){
+      const payload = drive.payload || drive.data || drive;
+      members = payload.members || payload.members_json || payload.membersJson || payload.membersList || null;
+      org = payload.org_settings || payload.orgSettings || payload.org || null;
+      overrides = payload.overrides || null;
+      history = payload.history || payload.assignments_history || null;
+    }
+
+    // Local fallback (or supplement)
+    if(!members) members = await fetchLocalJson(LOCAL_PATHS.members);
+    if(!org) org = await fetchLocalJson(LOCAL_PATHS.org);
+    if(!overrides) overrides = await fetchLocalJson(LOCAL_PATHS.overrides);
+    if(!history) history = await fetchLocalJson(LOCAL_PATHS.history);
+
+    // Normalize
+    app.data.members = Array.isArray(members) ? members : (members && members.members) ? members.members : [];
+    app.data.org_settings = org || { qualifications: [], units: [], seat_templates: [] };
+    app.data.overrides = Array.isArray(overrides) ? overrides : (overrides && overrides.overrides) ? overrides.overrides : [];
+    app.data.history = history || null;
+
+    // Ensure qualifications list exists (grows over time)
+    app.data.org_settings.qualifications ||= [];
+    app.data.org_settings.units ||= [];
+    app.data.org_settings.seat_templates ||= [];
+
+    // Add any quals referenced in members
+    const qualSet = new Set(app.data.org_settings.qualifications.map(q => (q.code || q).toString()));
+    for(const m of app.data.members){
+      const qs = Array.isArray(m.qualifications) ? m.qualifications : [];
+      for(const q of qs) qualSet.add(String(q));
+    }
+    // Keep org list as objects {code,label} when possible
+    app.data.org_settings.qualifications = normalizeQualList(Array.from(qualSet));
+
+    // Draft restore (optional)
+    restoreDraftIfAny();
+
+    setDataStatus("ok", `Members: ${app.data.members.length}`, "Loaded members + org settings.");
+    render();
+  }
+
+  function normalizeQualList(list){
+    // Accept mix of strings/objects; output array of {code,label}
+    const out = [];
+    const seen = new Set();
+    for(const item of list){
+      const code = (typeof item === "string") ? item : (item && item.code) ? String(item.code) : "";
+      if(!code) continue;
+      if(seen.has(code)) continue;
+      seen.add(code);
+      out.push({
+        code,
+        label: (typeof item === "object" && item && item.label) ? String(item.label) : code
+      });
+    }
+    // stable sort
+    out.sort((a,b)=> a.code.localeCompare(b.code));
+    return out;
+  }
+
+  function restoreDraftIfAny(){
+    // If a user edited while Drive was offline, we keep a draft in this browser.
+    const raw = localStorage.getItem(LS_LAST_DRAFT);
+    if(!raw) return;
+    try{
+      const draft = JSON.parse(raw);
+      if(draft && draft.members && draft.org_settings){
+        // only restore if it matches same-ish dataset shape
+        app.data.members = draft.members;
+        app.data.org_settings = draft.org_settings;
+        app.data.overrides = draft.overrides || app.data.overrides;
+        setDataStatus("warn", "Draft restored", "A local draft was restored (previous offline edits). Save to Drive when connected.");
+      }
+    }catch(_){}
+  }
+
+  function saveDraft(){
+    const draft = {
+      savedAt: nowIso(),
+      members: app.data.members,
+      org_settings: app.data.org_settings,
+      overrides: app.data.overrides
+    };
+    localStorage.setItem(LS_LAST_DRAFT, JSON.stringify(draft));
+  }
+
+  // ---- SAVE ----
+  async function saveAll(){
+    // Always save a local draft first (protect against outage)
+    saveDraft();
+
+    if(!app.token){
+      alert("No token set. Click Token, paste SC_TOKEN, then Save again.");
+      return;
+    }
+
+    try{
+      const payload = {
+        members: app.data.members,
+        org_settings: app.data.org_settings,
+        overrides: app.data.overrides
+      };
+      const res = await storePost({ kind:"supervisor_patch", payload });
+      if(res && res.ok === false) throw new Error(res.error || "Save failed");
+
+      app.lastSaveAt = new Date();
+      setDriveStatus("ok", "Drive", `Saved ${app.lastSaveAt.toLocaleString()}`);
+      setDataStatus("ok", `Saved`, `Saved at ${app.lastSaveAt.toLocaleString()}`);
+
+      // If save succeeded, keep draft but mark it's safe; optionally remove.
+      // We'll keep it as a safety net.
+      alert("Saved to Drive ✅");
+    }catch(e){
+      setDriveStatus("warn", "Drive", `Save failed; kept local draft.\n${e.message}`);
+      alert("Save failed — kept local draft in this browser.\n\n" + e.message);
+    }
+  }
+
+  // ---- RENDER ----
+  function render(){
+    // nav selection
+    $$(".navItem").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === app.ui.activeTab ? "true":"false"));
+
+    const t = app.ui.activeTab;
+    el.panelTitle.textContent =
+      t === "schedule" ? "Schedule" :
+      t === "overrides" ? "Overrides" :
+      t === "members" ? "Members" :
+      t === "units" ? "Units & Seats" :
+      t === "quals" ? "Qualifications" : "Planned";
+
+    if(t === "schedule") renderSchedule();
+    else if(t === "overrides") renderOverrides();
+    else if(t === "members") renderMembers();
+    else if(t === "units") renderUnits();
+    else if(t === "quals") renderQuals();
+    else renderIdeas();
+  }
+
+  function matchesSearch(str){
+    const q = (el.searchBox.value || "").trim().toLowerCase();
+    if(!q) return true;
+    return String(str || "").toLowerCase().includes(q);
+  }
+
+  function renderSchedule(){
+    const history = app.data.history;
+    const hasHistory = !!history;
+
+    el.panelBody.innerHTML = `
+      <div class="row" style="margin-bottom:10px;">
+        <span class="chip"><span class="dot ${app.connected ? "ok":"warn"}"></span>
+          <span title="Drive connection status">Drive</span>: <strong>${app.connected ? "Connected":"Offline"}</strong>
+        </span>
+        <span class="chip" title="History file is optional (assignment log).">
+          <span class="dot ${hasHistory ? "ok":"warn"}"></span>
+          History: <strong>${hasHistory ? "Loaded":"Missing"}</strong>
+        </span>
+        <span class="chip" title="This page is not a schedule calculator yet; it is a supervisor review surface.">
+          <span class="dot idle"></span> Review surface
+        </span>
+        <span class="spacer"></span>
+        <button class="btn" id="btnOpenAudit">Audit / History</button>
+      </div>
+
+      <div class="field">
+        <label>What this tab is for (v1)</label>
+        <div class="hint">
+          <div style="margin-bottom:6px;">Supervisor responsibilities:</div>
+          <div class="row" style="gap:8px;">
+            <span class="tag">Review past weeks</span>
+            <span class="tag">Approve / lock</span>
+            <span class="tag">Apply overrides (documented)</span>
+            <span class="tag">Export for reporting</span>
+          </div>
+          <div style="margin-top:10px;">
+            We are intentionally holding off on aggressive “Needs” predictions until closer to the shift window
+            (ex: 3-week lead).
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <div class="field" style="flex:1; min-width:260px;">
+          <label>Lead window (display only for now)</label>
+          <div class="hint">
+            We can keep suggestions & warnings hidden until <strong>21 days</strong> out.
+            (This is the same idea we discussed in member view: “don’t stress people out months in advance.”)
+          </div>
+        </div>
+
+        <div class="field" style="flex:1; min-width:260px;">
+          <label>3rd Rider seat (policy)</label>
+          <div class="hint">
+            Default: <strong>OFF</strong>. Supervisor can enable per-shift (FTO / student riding).
+            This is a seat toggle, not an always-on requirement.
+          </div>
+        </div>
+      </div>
+    `;
+
+    $("#btnOpenAudit").onclick = () => openModalAudit();
+  }
+
+  function renderOverrides(){
+    el.panelBody.innerHTML = `
+      <div class="row" style="margin-bottom:10px;">
+        <span class="chip"><span class="dot idle"></span> Overrides are exceptions</span>
+        <span class="chip" title="Overrides should be saved to Drive under 'overrides'."><span class="dot ${app.connected?"ok":"warn"}"></span> Save target: <strong>${app.connected?"Drive":"Local draft"}</strong></span>
+        <span class="spacer"></span>
+        <button class="btn primary" id="btnAddOverride">Add override</button>
+      </div>
+
+      <div class="field">
+        <label>Override guidelines</label>
+        <div class="hint">
+          Keep this guided and documented — no free-form JSON editing.
+          Each override should have: <span class="tag">date</span><span class="tag">shift</span><span class="tag">member</span><span class="tag">reason</span><span class="tag">created_by</span>.
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <label>Existing overrides</label>
+        <div id="overrideTableWrap" class="small">—</div>
+      </div>
+    `;
+
+    $("#btnAddOverride").onclick = () => openModalOverrideCreate();
+    renderOverrideTable();
+  }
+
+  function renderOverrideTable(){
+    const wrap = $("#overrideTableWrap");
+    const rows = app.data.overrides || [];
+    if(!rows.length){
+      wrap.innerHTML = `<div class="hint">No overrides yet.</div>`;
+      return;
+    }
+
+    const filtered = rows.filter(o => {
+      if(app.ui.activeTab !== "overrides") return true;
+      const blob = [o.date, o.shift, o.member_id, o.member_name, o.reason].join(" ");
+      return matchesSearch(blob);
+    });
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Shift</th><th>Member</th><th>Reason</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map((o,i)=>`
+            <tr>
+              <td class="mono">${esc(o.date || "")}</td>
+              <td class="mono">${esc(o.shift || "")}</td>
+              <td>${esc(o.member_name || o.member_id || "")}</td>
+              <td>${esc(o.reason || "")}</td>
+              <td><button class="btn" data-ov-edit="${i}">Edit</button> <button class="btn danger" data-ov-del="${i}">Delete</button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      <div class="hint" style="margin-top:8px;">
+        Tip: overrides are reviewed later in the Schedule tab (and in audit history).
+      </div>
+    `;
+
+    $$("[data-ov-edit]").forEach(b => b.onclick = ()=> openModalOverrideEdit(Number(b.dataset.ovEdit)));
+    $$("[data-ov-del]").forEach(b => b.onclick = ()=> deleteOverride(Number(b.dataset.ovDel)));
+  }
+
+  function deleteOverride(idx){
+    if(!confirm("Delete this override?")) return;
+    app.data.overrides.splice(idx, 1);
+    setDataStatus("warn", "Unsaved changes", "You have local edits. Click Save.");
+    saveDraft();
+    renderOverrideTable();
+  }
+
+  function renderMembers(){
+    const members = app.data.members || [];
+    const filtered = members.filter(m => {
+      const blob = [m.member_id, m.last_name, m.first_name, m.name, (m.qualifications||[]).join(" "), m.rank].join(" ");
+      return matchesSearch(blob);
+    });
+
+    el.panelBody.innerHTML = `
+      <div class="row" style="margin-bottom:10px;">
+        <span class="chip"><span class="dot idle"></span> Guided editor</span>
+        <span class="chip" title="The qualifications list grows over time."><span class="dot idle"></span> Quals: <strong>${(app.data.org_settings.qualifications||[]).length}</strong></span>
+        <span class="spacer"></span>
+        <button class="btn primary" id="btnAddMember">Add member</button>
+      </div>
+
+      <div class="field">
+        <label>Members</label>
+        <div class="hint" style="margin-bottom:8px;">
+          Add / edit members here (IDs, names, qualifications). Avoid free-form JSON.
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>Rank</th><th>Qualifications</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered.map((m,i)=>`
+              <tr>
+                <td class="mono">${esc(m.member_id ?? "")}</td>
+                <td>${esc(displayName(m))}</td>
+                <td>${esc(m.rank || "")}</td>
+                <td>${renderQualBadges(m.qualifications || [])}</td>
+                <td>
+                  <button class="btn" data-m-edit="${i}">Edit</button>
+                  <button class="btn danger" data-m-del="${i}">Delete</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        <div class="hint" style="margin-top:8px;">
+          Deleting a member is destructive. (Later: soft-disable).
+        </div>
+      </div>
+    `;
+
+    $("#btnAddMember").onclick = ()=> openModalMemberCreate();
+    $$("[data-m-edit]").forEach(b => b.onclick = ()=> openModalMemberEdit(Number(b.dataset.mEdit)));
+    $$("[data-m-del]").forEach(b => b.onclick = ()=> deleteMember(Number(b.dataset.mDel)));
+  }
+
+  function deleteMember(idx){
+    const m = app.data.members[idx];
+    if(!m) return;
+    if(!confirm(`Delete member ${displayName(m)} (${m.member_id})?`)) return;
+    app.data.members.splice(idx, 1);
+    setDataStatus("warn", "Unsaved changes", "You have local edits. Click Save.");
+    saveDraft();
+    renderMembers();
+  }
+
+  function renderUnits(){
+    const org = app.data.org_settings || {};
+    const units = Array.isArray(org.units) ? org.units : [];
+    const seatTemplates = Array.isArray(org.seat_templates) ? org.seat_templates : [];
+
+    const uFiltered = units.filter(u => matchesSearch([u.unit_id,u.name,u.type].join(" ")));
+    const sFiltered = seatTemplates.filter(s => matchesSearch([s.code,s.label,s.required_qual].join(" ")));
+
+    el.panelBody.innerHTML = `
+      <div class="row" style="margin-bottom:10px;">
+        <span class="chip"><span class="dot idle"></span> Guided builders</span>
+        <span class="spacer"></span>
+        <button class="btn primary" id="btnAddUnit">Add unit</button>
+        <button class="btn primary" id="btnAddSeat">Add seat template</button>
+      </div>
+
+      <div class="row" style="align-items:stretch;">
+        <div class="field" style="flex:1; min-width:320px;">
+          <label>Units</label>
+          <div class="hint" style="margin-bottom:8px;">Example: AMB-1, AMB-2, QRV, Utility…</div>
+          <table>
+            <thead><tr><th>Unit ID</th><th>Name</th><th>Type</th><th></th></tr></thead>
+            <tbody>
+              ${uFiltered.map((u,i)=>`
+                <tr>
+                  <td class="mono">${esc(u.unit_id||"")}</td>
+                  <td>${esc(u.name||"")}</td>
+                  <td>${esc(u.type||"")}</td>
+                  <td><button class="btn" data-u-edit="${i}">Edit</button> <button class="btn danger" data-u-del="${i}">Delete</button></td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="field" style="flex:1; min-width:320px;">
+          <label>Seat templates</label>
+          <div class="hint" style="margin-bottom:8px;">
+            Keep this small & stable: attendant, operator, third_rider, firefighter, officer.
+          </div>
+          <table>
+            <thead><tr><th>Code</th><th>Label</th><th>Required qual</th><th></th></tr></thead>
+            <tbody>
+              ${sFiltered.map((s,i)=>`
+                <tr>
+                  <td class="mono">${esc(s.code||"")}</td>
+                  <td>${esc(s.label||"")}</td>
+                  <td class="mono">${esc(s.required_qual||"")}</td>
+                  <td><button class="btn" data-s-edit="${i}">Edit</button> <button class="btn danger" data-s-del="${i}">Delete</button></td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    $("#btnAddUnit").onclick = ()=> openModalUnitCreate();
+    $("#btnAddSeat").onclick = ()=> openModalSeatCreate();
+
+    $$("[data-u-edit]").forEach(b => b.onclick = ()=> openModalUnitEdit(Number(b.dataset.uEdit)));
+    $$("[data-u-del]").forEach(b => b.onclick = ()=> deleteUnit(Number(b.dataset.uDel)));
+
+    $$("[data-s-edit]").forEach(b => b.onclick = ()=> openModalSeatEdit(Number(b.dataset.sEdit)));
+    $$("[data-s-del]").forEach(b => b.onclick = ()=> deleteSeat(Number(b.dataset.sDel)));
+  }
+
+  function deleteUnit(idx){
+    if(!confirm("Delete this unit?")) return;
+    app.data.org_settings.units.splice(idx, 1);
+    setDataStatus("warn", "Unsaved changes", "You have local edits. Click Save.");
+    saveDraft();
+    renderUnits();
+  }
+  function deleteSeat(idx){
+    if(!confirm("Delete this seat template?")) return;
+    app.data.org_settings.seat_templates.splice(idx, 1);
+    setDataStatus("warn", "Unsaved changes", "You have local edits. Click Save.");
+    saveDraft();
+    renderUnits();
+  }
+
+  function renderQuals(){
+    const quals = app.data.org_settings.qualifications || [];
+    const filtered = quals.filter(q => matchesSearch([q.code,q.label].join(" ")));
+
+    el.panelBody.innerHTML = `
+      <div class="row" style="margin-bottom:10px;">
+        <span class="chip"><span class="dot idle"></span> Growing list</span>
+        <span class="chip"><span class="dot idle"></span> Count: <strong>${quals.length}</strong></span>
+        <span class="spacer"></span>
+        <button class="btn primary" id="btnAddQual">Add qualification</button>
+      </div>
+
+      <div class="field">
+        <label>Qualifications</label>
+        <div class="hint" style="margin-bottom:8px;">
+          These are referenced by members and by seat requirements. Keep codes stable.
+        </div>
+        <table>
+          <thead><tr><th>Code</th><th>Label</th><th></th></tr></thead>
+          <tbody>
+            ${filtered.map((q,i)=>`
+              <tr>
+                <td class="mono">${esc(q.code)}</td>
+                <td>${esc(q.label || q.code)}</td>
+                <td><button class="btn" data-q-edit="${i}">Edit</button> <button class="btn danger" data-q-del="${i}">Delete</button></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        <div class="hint" style="margin-top:8px;">
+          Later: tie “FTO” to enabling third-rider selection in member view.
+        </div>
+      </div>
+    `;
+
+    $("#btnAddQual").onclick = ()=> openModalQualCreate();
+    $$("[data-q-edit]").forEach(b => b.onclick = ()=> openModalQualEdit(Number(b.dataset.qEdit)));
+    $$("[data-q-del]").forEach(b => b.onclick = ()=> deleteQual(Number(b.dataset.qDel)));
+  }
+
+  function deleteQual(idx){
+    const q = app.data.org_settings.qualifications[idx];
+    if(!q) return;
+    if(!confirm(`Delete qualification ${q.code}?`)) return;
+    app.data.org_settings.qualifications.splice(idx, 1);
+    setDataStatus("warn", "Unsaved changes", "You have local edits. Click Save.");
+    saveDraft();
+    renderQuals();
+  }
+
+  function renderIdeas(){
+    el.panelBody.innerHTML = `
+      <div class="field">
+        <label>Completed / tested</label>
+        <div class="hint">
+          <div class="row" style="gap:8px; margin:8px 0;">
+            <span class="tag">Drive store read/write (Apps Script)</span>
+            <span class="tag">Local draft fallback</span>
+            <span class="tag">Members/org builders (guided)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <label>Planned (in this Supervisor UI)</label>
+        <div class="hint">
+          <div class="row" style="gap:8px; margin:8px 0;">
+            <span class="tag">Shift-level toggle: enable 3rd rider</span>
+            <span class="tag">Supervisor overrides as structured records</span>
+            <span class="tag">Archive past weeks</span>
+            <span class="tag">Conflict warnings inside 21-day lead</span>
+            <span class="tag">Import “busy blocks” (no titles)</span>
+          </div>
+          <div style="margin-top:10px;">
+            We’ll keep “nice-to-have” options tucked away (modals + tabs), not always visible.
+          </div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <label>UX notes (from you)</label>
+        <div class="hint">
+          <ul style="margin:8px 0 0 18px; padding:0; color:var(--muted);">
+            <li>Managers should be able to push a selections pattern forward.</li>
+            <li>Members need “repeat every X weeks” + exceptions (specific dates).</li>
+            <li>Keep supervisor editing guided (builders), not raw JSON.</li>
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---- Helpers for rendering ----
+  function displayName(m){
+    if(!m) return "";
+    if(m.name) return m.name;
+    const first = m.first_name || "";
+    const last = m.last_name || "";
+    const joined = (first + " " + last).trim();
+    return joined || last || first || String(m.member_id || "");
+  }
+
+  function renderQualBadges(list){
+    const set = Array.isArray(list) ? list : [];
+    if(!set.length) return `<span class="small">—</span>`;
+    return set.map(q => `<span class="tag mono">${esc(q)}</span>`).join("");
+  }
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, (c)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+
+  // ---- MODALS ----
+  function openModal(title, bodyHtml, onApply){
+    el.modalTitle.textContent = title;
+    el.modalBody.innerHTML = bodyHtml;
+    el.modalBackdrop.classList.add("is-open");
+    el.modalBackdrop.setAttribute("aria-hidden","false");
+    app.ui.modal.onApply = onApply || null;
+  }
+  function closeModal(){
+    el.modalBackdrop.classList.remove("is-open");
+    el.modalBackdrop.setAttribute("aria-hidden","true");
+    el.modalBody.innerHTML = "";
+    app.ui.modal.onApply = null;
+  }
+
+  el.btnCloseModal.onclick = closeModal;
+  el.btnCancelModal.onclick = closeModal;
+  el.modalBackdrop.addEventListener("click", (e)=>{ if(e.target === el.modalBackdrop) closeModal(); });
+  document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeModal(); });
+
+  el.btnApplyModal.onclick = ()=>{
+    if(typeof app.ui.modal.onApply === "function"){
+      app.ui.modal.onApply();
+    }
+  };
+
+  function openModalMemberCreate(){
+    const nextId = suggestNextMemberId();
+    const body = `
+      <div class="field">
+        <label>Member ID</label>
+        <input id="m_id" value="${esc(nextId)}" class="mono" />
+      </div>
+      <div class="field">
+        <label>First name</label>
+        <input id="m_first" placeholder="First" />
+      </div>
+      <div class="field">
+        <label>Last name</label>
+        <input id="m_last" placeholder="Last" />
+      </div>
+      <div class="field">
+        <label>Rank (optional)</label>
+        <input id="m_rank" placeholder="FF / LT / CPT / Chief…" />
+      </div>
+      <div class="field full">
+        <label>Qualifications</label>
+        ${qualMultiSelect("m_quals")}
+      </div>
+    `;
+    openModal("Add member", body, ()=>{
+      const m = collectMemberFromModal();
+      if(!m) return;
+      app.data.members.push(m);
+      setDataStatus("warn","Unsaved changes","Member added. Click Save.");
+      saveDraft();
+      closeModal();
+      renderMembers();
+    });
+  }
+
+  function openModalMemberEdit(idx){
+    const m = app.data.members[idx];
+    if(!m) return;
+
+    const body = `
+      <div class="field">
+        <label>Member ID</label>
+        <input id="m_id" value="${esc(m.member_id ?? "")}" class="mono" />
+      </div>
+      <div class="field">
+        <label>First name</label>
+        <input id="m_first" value="${esc(m.first_name || "")}" />
+      </div>
+      <div class="field">
+        <label>Last name</label>
+        <input id="m_last" value="${esc(m.last_name || "")}" />
+      </div>
+      <div class="field">
+        <label>Rank (optional)</label>
+        <input id="m_rank" value="${esc(m.rank || "")}" />
+      </div>
+      <div class="field full">
+        <label>Qualifications</label>
+        ${qualMultiSelect("m_quals", m.qualifications || [])}
+      </div>
+    `;
+
+    openModal(`Edit member — ${displayName(m)}`, body, ()=>{
+      const updated = collectMemberFromModal();
+      if(!updated) return;
+      app.data.members[idx] = updated;
+      // Add quals to org list if new
+      app.data.org_settings.qualifications = normalizeQualList([
+        ...app.data.org_settings.qualifications,
+        ...(updated.qualifications||[]).map(code => ({code, label: code}))
+      ]);
+      setDataStatus("warn","Unsaved changes","Member updated. Click Save.");
+      saveDraft();
+      closeModal();
+      renderMembers();
+    });
+  }
+
+  function suggestNextMemberId(){
+    const ids = (app.data.members || []).map(m => Number(m.member_id)).filter(n => Number.isFinite(n));
+    if(!ids.length) return "101";
+    return String(Math.max(...ids) + 1);
+  }
+
+  function collectMemberFromModal(){
+    const id = ($("#m_id").value || "").trim();
+    if(!id){
+      alert("Member ID is required.");
+      return null;
+    }
+    const first = ($("#m_first").value || "").trim();
+    const last = ($("#m_last").value || "").trim();
+    const rank = ($("#m_rank").value || "").trim();
+    const quals = getMultiSelected("m_quals");
+
+    return {
+      member_id: id,
+      first_name: first,
+      last_name: last,
+      rank: rank || "",
+      qualifications: quals
+    };
+  }
+
+  function qualMultiSelect(id, selectedList){
+    const selected = new Set((selectedList||[]).map(String));
+    const opts = (app.data.org_settings.qualifications || []).map(q => {
+      const code = q.code;
+      const label = q.label || code;
+      const sel = selected.has(code) ? "selected" : "";
+      return `<option value="${esc(code)}" ${sel}>${esc(code)} — ${esc(label)}</option>`;
+    }).join("");
+
+    return `
+      <select id="${esc(id)}" multiple size="10" style="width:100%;">
+        ${opts}
+      </select>
+      <div class="hint" style="margin-top:8px;">
+        Hold <strong>Ctrl</strong> (Windows) to multi-select.
+      </div>
+    `;
+  }
+
+  function getMultiSelected(id){
+    const sel = document.getElementById(id);
+    if(!sel) return [];
+    return Array.from(sel.selectedOptions).map(o => o.value);
+  }
+
+  // Overrides modal
+  function openModalOverrideCreate(){
+    const body = `
+      <div class="field">
+        <label>Date (YYYY-MM-DD)</label>
+        <input id="o_date" class="mono" placeholder="2026-01-04" />
+      </div>
+      <div class="field">
+        <label>Shift</label>
+        <select id="o_shift">
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Member</label>
+        ${memberSelect("o_member")}
+      </div>
+      <div class="field full">
+        <label>Reason</label>
+        <textarea id="o_reason" placeholder="Short, factual reason."></textarea>
+      </div>
+    `;
+    openModal("Add override", body, ()=>{
+      const o = collectOverrideFromModal();
+      if(!o) return;
+      app.data.overrides.push(o);
+      setDataStatus("warn","Unsaved changes","Override added. Click Save.");
+      saveDraft();
+      closeModal();
+      renderOverrides();
+    });
+  }
+
+  function openModalOverrideEdit(idx){
+    const o = app.data.overrides[idx];
+    if(!o) return;
+
+    const body = `
+      <div class="field">
+        <label>Date (YYYY-MM-DD)</label>
+        <input id="o_date" class="mono" value="${esc(o.date||"")}" />
+      </div>
+      <div class="field">
+        <label>Shift</label>
+        <select id="o_shift">
+          <option value="AM" ${o.shift==="AM"?"selected":""}>AM</option>
+          <option value="PM" ${o.shift==="PM"?"selected":""}>PM</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Member</label>
+        ${memberSelect("o_member", o.member_id || "")}
+      </div>
+      <div class="field full">
+        <label>Reason</label>
+        <textarea id="o_reason">${esc(o.reason||"")}</textarea>
+      </div>
+    `;
+    openModal("Edit override", body, ()=>{
+      const updated = collectOverrideFromModal();
+      if(!updated) return;
+      app.data.overrides[idx] = { ...updated, id: o.id || updated.id };
+      setDataStatus("warn","Unsaved changes","Override updated. Click Save.");
+      saveDraft();
+      closeModal();
+      renderOverrides();
+    });
+  }
+
+  function collectOverrideFromModal(){
+    const date = ($("#o_date").value || "").trim();
+    const shift = ($("#o_shift").value || "").trim();
+    const memberId = ($("#o_member").value || "").trim();
+    const reason = ($("#o_reason").value || "").trim();
+
+    if(!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)){
+      alert("Date must be YYYY-MM-DD.");
+      return null;
+    }
+    if(!memberId){
+      alert("Select a member.");
+      return null;
+    }
+    const m = (app.data.members || []).find(x => String(x.member_id) === String(memberId));
+    return {
+      id: uid(),
+      date,
+      shift: shift || "AM",
+      member_id: String(memberId),
+      member_name: m ? displayName(m) : String(memberId),
+      reason,
+      created_at: nowIso(),
+      created_by: "Supervisor"
+    };
+  }
+
+  function memberSelect(id, selectedId){
+    const options = (app.data.members || []).map(m => {
+      const mid = String(m.member_id);
+      const sel = String(selectedId||"") === mid ? "selected" : "";
+      return `<option value="${esc(mid)}" ${sel}>${esc(mid)} — ${esc(displayName(m))}</option>`;
+    }).join("");
+    return `<select id="${esc(id)}"><option value="">Select…</option>${options}</select>`;
+  }
+
+  // Unit / seat / qual modals
+  function openModalUnitCreate(){
+    const body = `
+      <div class="field"><label>Unit ID</label><input id="u_id" class="mono" placeholder="AMB-1" /></div>
+      <div class="field"><label>Name</label><input id="u_name" placeholder="Ambulance 1" /></div>
+      <div class="field full"><label>Type</label>
+        <select id="u_type">
+          <option value="ambulance">ambulance</option>
+          <option value="qrv">qrv</option>
+          <option value="utility">utility</option>
+          <option value="engine">engine</option>
+          <option value="truck">truck</option>
+        </select>
+      </div>
+    `;
+    openModal("Add unit", body, ()=>{
+      const unit = {
+        unit_id: ($("#u_id").value||"").trim(),
+        name: ($("#u_name").value||"").trim(),
+        type: ($("#u_type").value||"").trim()
+      };
+      if(!unit.unit_id){ alert("Unit ID required."); return; }
+      app.data.org_settings.units.push(unit);
+      setDataStatus("warn","Unsaved changes","Unit added. Click Save.");
+      saveDraft();
+      closeModal();
+      renderUnits();
+    });
+  }
+
+  function openModalUnitEdit(idx){
+    const u = app.data.org_settings.units[idx];
+    if(!u) return;
+    const body = `
+      <div class="field"><label>Unit ID</label><input id="u_id" class="mono" value="${esc(u.unit_id||"")}" /></div>
+      <div class="field"><label>Name</label><input id="u_name" value="${esc(u.name||"")}" /></div>
+      <div class="field full"><label>Type</label>
+        <select id="u_type">
+          ${["ambulance","qrv","utility","engine","truck"].map(t=>`<option value="${t}" ${u.type===t?"selected":""}>${t}</option>`).join("")}
+        </select>
+      </div>
+    `;
+    openModal("Edit unit", body, ()=>{
+      const unit = {
+        unit_id: ($("#u_id").value||"").trim(),
+        name: ($("#u_name").value||"").trim(),
+        type: ($("#u_type").value||"").trim()
+      };
+      if(!unit.unit_id){ alert("Unit ID required."); return; }
+      app.data.org_settings.units[idx] = unit;
+      setDataStatus("warn","Unsaved changes","Unit updated. Click Save.");
+      saveDraft();
+      closeModal();
+      renderUnits();
+    });
+  }
+
+  function openModalSeatCreate(){
+    const body = `
+      <div class="field"><label>Code</label><input id="s_code" class="mono" placeholder="third_rider" /></div>
+      <div class="field"><label>Label</label><input id="s_label" placeholder="3rd Rider" /></div>
+      <div class="field full"><label>Required qualification (optional)</label>
+        <input id="s_req" class="mono" placeholder="qual_FTO or qual_student (optional)" />
+        <div class="hint" style="margin-top:8px;">Leave blank if no strict requirement. Keep strict rules rare.</div>
+      </div>
+    `;
+    openModal("Add seat template", body, ()=>{
+      const s = {
+        code: ($("#s_code").value||"").trim(),
+        label: ($("#s_label").value||"").trim(),
+        required_qual: ($("#s_req").value||"").trim()
+      };
+      if(!s.code){ alert("Seat code required."); return; }
+      app.data.org_settings.seat_templates.push(s);
+      setDataStatus("warn","Unsaved changes","Seat template added. Click Save.");
+      saveDraft();
+      closeModal();
+      renderUnits();
+    });
+  }
+
+  function openModalSeatEdit(idx){
+    const s = app.data.org_settings.seat_templates[idx];
+    if(!s) return;
+    const body = `
+      <div class="field"><label>Code</label><input id="s_code" class="mono" value="${esc(s.code||"")}" /></div>
+      <div class="field"><label>Label</label><input id="s_label" value="${esc(s.label||"")}" /></div>
+      <div class="field full"><label>Required qualification (optional)</label>
+        <input id="s_req" class="mono" value="${esc(s.required_qual||"")}" />
+        <div class="hint" style="margin-top:8px;">Leave blank if no strict requirement.</div>
+      </div>
+    `;
+    openModal("Edit seat template", body, ()=>{
+      const updated = {
+        code: ($("#s_code").value||"").trim(),
+        label: ($("#s_label").value||"").trim(),
+        required_qual: ($("#s_req").value||"").trim()
+      };
+      if(!updated.code){ alert("Seat code required."); return; }
+      app.data.org_settings.seat_templates[idx] = updated;
+      setDataStatus("warn","Unsaved changes","Seat template updated. Click Save.");
+      saveDraft();
+      closeModal();
+      renderUnits();
+    });
+  }
+
+  function openModalQualCreate(){
+    const body = `
+      <div class="field"><label>Code</label><input id="q_code" class="mono" placeholder="qual_EMT" /></div>
+      <div class="field full"><label>Label</label><input id="q_label" placeholder="EMT" /></div>
+    `;
+    openModal("Add qualification", body, ()=>{
+      const code = ($("#q_code").value||"").trim();
+      const label = ($("#q_label").value||"").trim();
+      if(!code){ alert("Code required."); return; }
+      app.data.org_settings.qualifications.push({ code, label: label || code });
+      app.data.org_settings.qualifications = normalizeQualList(app.data.org_settings.qualifications);
+      setDataStatus("warn","Unsaved changes","Qualification added. Click Save.");
+      saveDraft();
+      closeModal();
+      renderQuals();
+    });
+  }
+
+  function openModalQualEdit(idx){
+    const q = app.data.org_settings.qualifications[idx];
+    if(!q) return;
+    const body = `
+      <div class="field"><label>Code</label><input id="q_code" class="mono" value="${esc(q.code||"")}" /></div>
+      <div class="field full"><label>Label</label><input id="q_label" value="${esc(q.label||"")}" /></div>
+      <div class="field full"><div class="hint">Changing codes can break references. Prefer keeping codes stable.</div></div>
+    `;
+    openModal("Edit qualification", body, ()=>{
+      const code = ($("#q_code").value||"").trim();
+      const label = ($("#q_label").value||"").trim();
+      if(!code){ alert("Code required."); return; }
+      app.data.org_settings.qualifications[idx] = { code, label: label || code };
+      app.data.org_settings.qualifications = normalizeQualList(app.data.org_settings.qualifications);
+      setDataStatus("warn","Unsaved changes","Qualification updated. Click Save.");
+      saveDraft();
+      closeModal();
+      renderQuals();
+    });
+  }
+
+  // Audit modal (read-only for now)
+  function openModalAudit(){
+    const hasHistory = !!app.data.history;
+    const body = `
+      <div class="field full">
+        <label>History / audit</label>
+        <div class="hint">
+          ${hasHistory ? "History loaded." : "No history file found (optional)."}
+          <div style="margin-top:10px;">
+            Next: show “previous shift note writer” fill logic and review tools here.
+          </div>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Raw (first 50 lines)</label>
+        <textarea readonly class="mono">${esc(hasHistory ? JSON.stringify(app.data.history, null, 2).split("\n").slice(0,50).join("\n") : "—")}</textarea>
+      </div>
+    `;
+    openModal("Audit / History", body, ()=> closeModal());
+  }
+
+  // ---- ACTIONS ----
+  function bindUi(){
+    $$(".navItem").forEach(btn=>{
+      btn.onclick = ()=>{
+        app.ui.activeTab = btn.dataset.tab;
+        render();
+      };
+    });
+
+    el.searchBox.addEventListener("input", ()=>{
+      // re-render only relevant tab
+      if(app.ui.activeTab === "members") renderMembers();
+      else if(app.ui.activeTab === "units") renderUnits();
+      else if(app.ui.activeTab === "quals") renderQuals();
+      else if(app.ui.activeTab === "overrides") renderOverrides();
+    });
+
+    el.btnReload.onclick = loadAll;
+    el.btnSaveAll.onclick = saveAll;
+    el.btnToken.onclick = ()=>{ promptToken(); };
+    el.btnExportJson.onclick = exportJson;
+
+    el.envLabel.textContent = envText();
+  }
+
+  function exportJson(){
+    const blob = new Blob([JSON.stringify({
+      exported_at: nowIso(),
+      members: app.data.members,
+      org_settings: app.data.org_settings,
+      overrides: app.data.overrides
+    }, null, 2)], { type:"application/json" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `shiftcommander_export_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // ---- INIT ----
+  (function init(){
+    tickClock();
+    setInterval(tickClock, 10_000);
+
+    loadToken();
+    bindUi();
+    loadAll();
+  })();
+
+  </script>
+</body>
+</html>
