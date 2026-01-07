@@ -257,9 +257,8 @@ function fmtRange(a,b){
 
 /** ========= FETCH ========= **/
 function storeUrl(kind){
-  const u = new URL(STORE_URL);
+  const u = new URL(STORE_URL, location.origin);
   u.searchParams.set("kind", kind);
-  if(TOKEN) u.searchParams.set("token", TOKEN);
   return u.toString();
 }
 async function fetchJson(url){
@@ -287,43 +286,46 @@ async function fetchJson(url){
  */
 function buildRosterIndex(membersJson){
   const byId = {};
-  const list = Array.isArray(membersJson) ? membersJson : (membersJson.members || membersJson.data || []);
+  // Accept either the full store response {ok, kind, payload:{...}}
+  // or the payload itself.
+  const payload = (membersJson && membersJson.payload) ? membersJson.payload : membersJson;
+
+  const list =
+    Array.isArray(payload) ? payload :
+    (payload && Array.isArray(payload.members)) ? payload.members :
+    (payload && Array.isArray(payload.data)) ? payload.data :
+    [];
+
   for(const m of list){
     const id = String(m.member_id ?? m.id ?? m.memberId ?? "").trim();
     if(!id) continue;
 
-    // ALS tier based on your rule: AEMT/P = ALS; EMT-B = EMT
-    const quals = m.quals || m.qualifications || m.qual || {};
+    // ALS tier: AEMT or Paramedic => ALS; EMT-B => EMT
+    const quals = m.quals || m.qualifications || m.qual || [];
     const cert = (m.medical || m.medical_level || m.level || m.ems_level || "").toString().toUpperCase();
 
-    // Best-effort detection:
     const isALS =
-      cert.includes("AEMT") || cert.includes("PARAMEDIC") || cert.includes("EMT-P") || cert.includes("EMT P") ||
-      cert.includes("EMT-PARAMEDIC") || cert.includes("EMT-PAR") ||
-      (Array.isArray(quals) && quals.some(q => String(q).toUpperCase().includes("AEMT") || String(q).toUpperCase().includes("PARAMEDIC")));
+      cert.includes("AEMT") || cert.includes("PARAMEDIC") || cert.includes("EMT-P") ||
+      (Array.isArray(quals) && quals.some(q => {
+        const s = String(q).toUpperCase();
+        return s.includes("AEMT") || s.includes("PARAMEDIC");
+      }));
 
     const isEMT =
-      cert.includes("EMT") && !isALS; // EMT-B style will land here typically
+      (!isALS) && (cert.includes("EMT") || (Array.isArray(quals) && quals.some(q => String(q).toUpperCase().includes("EMT"))));
 
-    // qual_120 detection:
     const has120 =
       m.qual_120 === true ||
       m.qual120 === true ||
       (Array.isArray(quals) && quals.some(q => String(q).includes("120"))) ||
       (typeof quals === "object" && (quals.qual_120 || quals["120"]));
 
-    byId[id] = {
-      name: (
-          m.name ||
-          m.full_name ||
-          m.display_name ||
-          m.last_first ||
-          (((m.first_name || m.firstName || "").toString().trim()) + " " + ((m.last_name || m.lastName || "").toString().trim())).trim() ||
-          id
-        ).toString(),
-      tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"),
-      has120: !!has120
-    };
+    const first = (m.first_name || m.firstName || "").toString().trim();
+    const last  = (m.last_name  || m.lastName  || "").toString().trim();
+    const nm =
+      (m.name || m.full_name || m.display_name || m.last_first || `${first} ${last}`.trim() || id).toString().trim();
+
+    byId[id] = { name: nm, tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"), has120: !!has120 };
   }
   return byId;
 }
@@ -512,14 +514,13 @@ async function main(){
 
     pill.textContent = "Loading schedule + roster…";
 
-    const [schedule, members] = await Promise.all([
+    const [scheduleResp, membersResp] = await Promise.all([
       fetchJson(storeUrl(KIND_SCHEDULE)),
       fetchJson(storeUrl(KIND_MEMBERS))
     ]);
 
-    const roster = buildRosterIndex(members);
-
-    const root = document.getElementById("root");
+    const schedule = (scheduleResp && scheduleResp.payload) ? scheduleResp.payload : scheduleResp;
+    const roster   = buildRosterIndex(membersResp);const root = document.getElementById("root");
     root.innerHTML = "";
 
     const now = new Date();
