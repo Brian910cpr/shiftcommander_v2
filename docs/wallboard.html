@@ -220,6 +220,7 @@
 const STORE_URL = (location.hostname.endsWith("adr-fr.org"))
   ? "/api/store"
   : "https://adr-fr.org/api/store";
+const USE_FIRST_NAME = true; // wallboard display: first name only
 const PLANNING_WEEKS = 4; // how many planning weeks to show
 const WEEK_START = 0; // 0=Sunday (ADR matches wallboard)
 const SHOW_WEEKDAY_HEADER = true;
@@ -257,9 +258,8 @@ function fmtRange(a,b){
 
 /** ========= FETCH ========= **/
 function storeUrl(kind){
-  const u = new URL(STORE_URL);
+  const u = new URL(STORE_URL, location.origin);
   u.searchParams.set("kind", kind);
-  if(TOKEN) u.searchParams.set("token", TOKEN);
   return u.toString();
 }
 async function fetchJson(url){
@@ -287,43 +287,46 @@ async function fetchJson(url){
  */
 function buildRosterIndex(membersJson){
   const byId = {};
-  const list = Array.isArray(membersJson) ? membersJson : (membersJson.members || membersJson.data || []);
+  // Accept either the full store response {ok, kind, payload:{...}}
+  // or the payload itself.
+  const payload = (membersJson && membersJson.payload) ? membersJson.payload : membersJson;
+
+  const list =
+    Array.isArray(payload) ? payload :
+    (payload && Array.isArray(payload.members)) ? payload.members :
+    (payload && Array.isArray(payload.data)) ? payload.data :
+    [];
+
   for(const m of list){
     const id = String(m.member_id ?? m.id ?? m.memberId ?? "").trim();
     if(!id) continue;
 
-    // ALS tier based on your rule: AEMT/P = ALS; EMT-B = EMT
-    const quals = m.quals || m.qualifications || m.qual || {};
+    // ALS tier: AEMT or Paramedic => ALS; EMT-B => EMT
+    const quals = m.quals || m.qualifications || m.qual || [];
     const cert = (m.medical || m.medical_level || m.level || m.ems_level || "").toString().toUpperCase();
 
-    // Best-effort detection:
     const isALS =
-      cert.includes("AEMT") || cert.includes("PARAMEDIC") || cert.includes("EMT-P") || cert.includes("EMT P") ||
-      cert.includes("EMT-PARAMEDIC") || cert.includes("EMT-PAR") ||
-      (Array.isArray(quals) && quals.some(q => String(q).toUpperCase().includes("AEMT") || String(q).toUpperCase().includes("PARAMEDIC")));
+      cert.includes("AEMT") || cert.includes("PARAMEDIC") || cert.includes("EMT-P") ||
+      (Array.isArray(quals) && quals.some(q => {
+        const s = String(q).toUpperCase();
+        return s.includes("AEMT") || s.includes("PARAMEDIC");
+      }));
 
     const isEMT =
-      cert.includes("EMT") && !isALS; // EMT-B style will land here typically
+      (!isALS) && (cert.includes("EMT") || (Array.isArray(quals) && quals.some(q => String(q).toUpperCase().includes("EMT"))));
 
-    // qual_120 detection:
     const has120 =
       m.qual_120 === true ||
       m.qual120 === true ||
       (Array.isArray(quals) && quals.some(q => String(q).includes("120"))) ||
       (typeof quals === "object" && (quals.qual_120 || quals["120"]));
 
-    byId[id] = {
-      name: (
-          m.name ||
-          m.full_name ||
-          m.display_name ||
-          m.last_first ||
-          (((m.first_name || m.firstName || "").toString().trim()) + " " + ((m.last_name || m.lastName || "").toString().trim())).trim() ||
-          id
-        ).toString(),
-      tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"),
-      has120: !!has120
-    };
+    const first = (m.first_name || m.firstName || "").toString().trim();
+    const last  = (m.last_name  || m.lastName  || "").toString().trim();
+    const nm =
+      (m.name || m.full_name || m.display_name || m.last_first || `${first} ${last}`.trim() || id).toString().trim();
+
+    byId[id] = { name: nm, first: first || nm.split(" ")[0] || nm, tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"), has120: !!has120 };
   }
   return byId;
 }
@@ -397,7 +400,9 @@ function needsHint(attId, drvId, roster){
 function nameFor(id, roster){
   if(!id || id === "OPEN") return `<span class="open">OPEN</span>`;
   const r = roster[id];
-  const nm = (r?.name || id).toString();
+  let nm = (r?.name || id).toString();
+  if(USE_FIRST_NAME && r?.first) nm = String(r.first);
+
   return escapeHtml(nm);
 }
 function escapeHtml(s){
@@ -504,51 +509,52 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
 async function main(){
   const pill = document.getElementById("statusPill");
   try{
-    if(!STORE_URL || STORE_URL.includes("YOUR-WORKER-URL-HERE")){
-      pill.textContent = "Set STORE_URL";
-      pill.style.color = "#b45309";
-      return;
-    }
-
     pill.textContent = "Loading schedule + roster…";
 
-    const [schedule, members] = await Promise.all([
+    const [scheduleResp, membersResp] = await Promise.all([
       fetchJson(storeUrl(KIND_SCHEDULE)),
       fetchJson(storeUrl(KIND_MEMBERS))
     ]);
 
-    const roster = buildRosterIndex(members);
+    const schedule = (scheduleResp && scheduleResp.payload) ? scheduleResp.payload : scheduleResp;
+    const roster   = buildRosterIndex(membersResp);
 
     const root = document.getElementById("root");
     root.innerHTML = "";
 
     const now = new Date();
     const thisWeekStart = startOfWeek(now);
-    const prevWeekStart = addDays(thisWeekStart, -7);
 
-    // Planning weeks start next week
-    const planningStarts = addDays(thisWeekStart, 7);
+    // Week offsets (from "this week")
+    const archivedStart   = addDays(thisWeekStart, -7);   // -1
+    const controlled0     = thisWeekStart;                // 0
+    const controlled1     = addDays(thisWeekStart,  7);   // +1 (show Needs)
+    const published2      = addDays(thisWeekStart, 14);   // +2
+    const published3      = addDays(thisWeekStart, 21);   // +3
 
-    renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Context" });
-    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Operational" });
+    // Planning begins AFTER published weeks
+    const planningStart   = addDays(thisWeekStart, 28);   // +4
+
+    // Header label
+    document.getElementById("rangeLabel").textContent =
+      `Archived (-1) • Controlled (0,+1) • Published (+2,+3) • Planning (+4..+${3+PLANNING_WEEKS})`;
+
+    // Render blocks — no "Planning Week #" headers; dates are the primary header
+    renderWeekBlock(root, "", archivedStart, schedule, roster, { sub:"Archived" });
+    renderWeekBlock(root, "", controlled0,   schedule, roster, { sub:"Controlled" });
+    renderWeekBlock(root, "", controlled1,   schedule, roster, { sub:"Controlled", showNeeds:true });
+
+    renderWeekBlock(root, "", published2,    schedule, roster, { sub:"Published" });
+    renderWeekBlock(root, "", published3,    schedule, roster, { sub:"Published" });
 
     for(let w=0; w<PLANNING_WEEKS; w++){
-      const ws = addDays(planningStarts, w*7);
-      const isLastPlanningWeek = (w === PLANNING_WEEKS-1); // the one right before Controlled begins
-      renderWeekBlock(
-        root,
-        `Planning Week ${w+1}`,
-        ws,
-        schedule,
-        roster,
-        { sub: isLastPlanningWeek ? "Notes + Needs" : "Planning", showNeeds: isLastPlanningWeek }
-      );
+      const ws = addDays(planningStart, w*7);
+      const isFirstPlanning = (w === 0); // show Needs only here
+      renderWeekBlock(root, "", ws, schedule, roster, { sub:"Planning", showNeeds:isFirstPlanning });
     }
 
     pill.textContent = "Live";
     pill.style.color = "#166534";
-    document.getElementById("rangeLabel").textContent =
-      `Prev + This + ${PLANNING_WEEKS} Planning week(s)`;
   }catch(err){
     console.error(err);
     pill.textContent = "Load failed";

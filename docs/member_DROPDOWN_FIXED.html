@@ -43,7 +43,6 @@ header{
   white-space:nowrap;
   flex-shrink:0;
 }
-  .pill.btn{ cursor:pointer; user-select:none; }
 
 select{
   min-width:240px;
@@ -359,6 +358,7 @@ main{ padding:12px; }
   color: rgba(244,197,66,.95);
 }
 .smallNote{ font-size: 11px; color: var(--muted); margin-top: 8px; line-height:1.25; }
+#btnToken{display:none!important}
 </style>
 </head>
 
@@ -378,7 +378,7 @@ main{ padding:12px; }
     <span class="dot warn" id="driveDot"></span>
     <span class="tiny" id="driveTip">Checking…</span>
   </div>
-  </header>
+</header>
 
 <div class="tabbar">
   <div class="tabbtn active" data-tab="tabAvail">Availability</div>
@@ -491,8 +491,14 @@ main{ padding:12px; }
 <script>
 /* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
-  // ALWAYS talk to the Cloudflare Worker (it injects SC_TOKEN server-side).
-  url: (location.hostname.endsWith("adr-fr.org")) ? "/api/store" : "https://adr-fr.org/api/store"
+  // Apps Script Web App (/exec) that reads/writes to Google Drive
+  url: (location.origin + "/api/store"),
+
+  // Shared secret expected by Apps Script (keep private)
+  token: "BC3BD023C58CB9B909CCDC6C8D4EDCE3EFFD1EC2BC2571F8A0D2B0F6974E6741",
+
+  // Optional: Drive folder id (if your Apps Script supports it). Safe to ignore server-side.
+  folder_id: "11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK"
 };
 
 /* ===================== CONFIG ===================== */
@@ -536,12 +542,10 @@ function isPast(isoDate){ return isoDate < iso(new Date()); }
 
 function getActiveMemberId(){
   const sel = document.getElementById("member");
-
   return sel ? String(sel.value || "").trim() : "default";
 }
 function getActiveMemberName(){
   const sel = document.getElementById("member");
-
   if(!sel) return "";
   return sel.options[sel.selectedIndex]?.textContent || "";
 }
@@ -573,12 +577,14 @@ async function readJsonOrThrow(resp){
 }
 
 function withStoreDefaults(obj){
-  // Worker injects token; Drive folder is configured in Apps Script properties.
-  return obj || {};
+  const out = { ...obj };
+  out.token = STORE.token;
+  if(STORE.folder_id) out.folder_id = STORE.folder_id;
+  return out;
 }
 
 async function storeGet(params){
-  const u = new URL(STORE.url, location.origin);
+  const u = new URL(STORE.url);
   const all = withStoreDefaults(params || {});
   Object.entries(all).forEach(([k,v]) => u.searchParams.set(k, String(v)));
   const resp = await fetch(u.toString(), { cache:"no-store" });
@@ -588,7 +594,7 @@ async function storeGet(params){
 }
 
 async function storePut(body){
-  const resp = await fetch(new URL(STORE.url, location.origin).toString(), {
+  const resp = await fetch(STORE.url, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(withStoreDefaults(body || {}))
@@ -803,14 +809,23 @@ function saveRosterCache(list){
 
 function normalizeRoster(list){
   return (list || [])
-    .map(x => ({
-      id: String(x.id ?? x.member_id ?? x.memberId ?? x.member ?? "").trim(),
-      name: String(x.name ?? x.full_name ?? x.display ?? x.callsign ?? x.id ?? "").trim(),
-      meta: String(x.meta ?? x.role ?? x.rank ?? "").trim()
-    }))
+    .map(x => {
+      const id = String(x.id ?? x.member_id ?? x.memberId ?? x.member ?? "").trim();
+      const explicit =
+        String(x.name ?? x.full_name ?? x.display ?? x.callsign ?? "").trim();
+
+      const first = String(x.first_name ?? x.first ?? "").trim();
+      const last  = String(x.last_name ?? x.last ?? "").trim();
+      const derived = (first + " " + last).trim();
+
+      const name = (explicit || derived || id).trim();
+      const meta = String(x.meta ?? x.role ?? x.rank ?? "").trim();
+      return { id, name, meta };
+    })
     .filter(x => x.id && x.name)
     .sort((a,b)=> a.name.localeCompare(b.name));
 }
+
 
 async function tryLoadRoster({force=false} = {}){
   // 1) Cache first (fast)
@@ -825,19 +840,17 @@ async function tryLoadRoster({force=false} = {}){
   // 2) Drive authoritative (best effort)
   try{
     const r = await storeGet({ kind:"members" });
-    const list =
-        Array.isArray(r) ? r :
-        (r && Array.isArray(r.members)) ? r.members :
-        (r && r.payload && Array.isArray(r.payload.members)) ? r.payload.members :
-        (r && Array.isArray(r.payload)) ? r.payload :
-        (r && r.data && Array.isArray(r.data.members)) ? r.data.members :
-        (r && Array.isArray(r.data)) ? r.data :
-        [];
+    const list = Array.isArray(r) ? r : (r && Array.isArray(r.members) ? r.members : (r && Array.isArray(r.payload) ? r.payload : null));
     if(list && list.length){
-      roster = normalizeRoster(list);
-      saveRosterCache(roster);
-      setRosterPill("Drive", "Roster loaded from Google Drive");
-      return true;
+      const next = normalizeRoster(list);
+      if(next.length){
+        roster = next;
+        saveRosterCache(roster);
+        setRosterPill("Drive", "Roster loaded from Google Drive");
+        return true;
+      }
+      setRosterPill("Drive", "Drive roster loaded but could not normalize names");
+      return false;
     }
     setRosterPill("empty", "Drive returned no roster records");
   }catch(e){
@@ -1279,13 +1292,8 @@ function statusDisplay(status, note){
 }
 
 /* ===================== MEMBER SELECTOR + STARTUP ===================== */
-function setTokenUI(){
-  // No-op: token is handled server-side in the Worker.
-}
-
 async function init(){
   const sel = document.getElementById("member");
-
 
   // 0) Paint fallback roster immediately so page is usable even if Drive is down
   setRosterPill("fallback", "Using built-in roster (Drive not checked yet)");
@@ -1295,8 +1303,13 @@ async function init(){
   const lastMember = localStorage.getItem("sc:last_member") || "";
   await tryLoadRoster();
 
-  // Rebuild dropdown from refreshed roster
-  sel.innerHTML = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+  // Rebuild dropdown from refreshed roster (never blank)
+  if(!Array.isArray(roster) || roster.length===0){
+    setRosterPill("fallback", "Roster empty after load — using built-in fallback");
+  }
+  sel.innerHTML = (roster && roster.length)
+    ? roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("")
+    : `<option value="default">default</option>`;
 
   // Restore last selection if still present
   if(lastMember && roster.some(r=> r.id === lastMember)){
