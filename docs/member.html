@@ -65,7 +65,7 @@ select{
   min-height:34px;
   cursor: default;
   margin-left:auto;
-  max-width: 220px;
+  max-width: 180px;
 }
 .savePill .tiny{
   font-size:12px;
@@ -490,36 +490,27 @@ main{ padding:12px; }
 </main>
 
 <script>
-/* ============================================================
-   MEMBER.HTML — updated to load roster the SAME way as supervisor
-   - Drive store via /api/store
-   - Primary roster source: store kind=ping payload.members (like supervisor)
-   - Fallback: local ./data/members.json (flat)
-   - Never blanks the dropdown; keeps last good roster if Drive fails
-   ============================================================ */
+/* ===================== DRIVE STORE CONFIG ===================== */
+const STORE = {
+  // Apps Script Web App (/exec) that reads/writes to Google Drive
+  url: (location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store",
 
-/* -------------------- CONFIG -------------------- */
-const STORE_EXEC = ((location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store");
-const DATA_BASE = "./data"; // keep flat
-const LOCAL_PATHS = {
-  members: `${DATA_BASE}/members.json`
+  // Shared secret expected by Apps Script (keep private)
+  token: "",
+
+  // Optional: Drive folder id (if your Apps Script supports it). Safe to ignore server-side.
+  folder_id: "11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK"
 };
 
-// Token keys (keep compatible with both pages)
-const LS_TOKEN_NEW = "sc_token";  // supervisor uses this
-const LS_TOKEN_OLD = "SC_TOKEN";  // older member versions used this
-const LS_ROSTER_KEY = "sc:roster:cache:v2";
-const LS_LAST_MEMBER = "sc:last_member";
-
-// availability data kinds
-const AV_KIND = "member_availability";
-const ASSIGN_KIND = "member_assignments"; // optional (Impact tab)
-
-/* -------------------- CALENDAR CONFIG -------------------- */
+/* ===================== CONFIG ===================== */
 const MONTHS_AHEAD = 6;
 const STATES = ["clear","pref","avail","no"];
+const AV_KIND = "member_availability";
 
-/* -------------------- STATE -------------------- */
+// Optional (Impact tab) kinds. Beta1 reads if present; otherwise shows “not connected”
+const ASSIGN_KIND = "member_assignments"; // suggested format below
+
+/* ===================== STATE ===================== */
 const today = new Date();
 
 // availability state: dateISO -> {am, pm}
@@ -528,44 +519,98 @@ const stateDays = {};
 // prefs state
 let prefs = {
   prefer_24: false,
-  blank_ok: true,
-  avoid_with: []
+  blank_ok: true,     // if false, blank becomes slight penalty in solver later
+  avoid_with: []      // array of member_ids
 };
 
-// roster list: {id,name,meta}
+// roster (for avoid list)
 let roster = [
-  { id:"203", name:"(fallback) Lynnsey Benson", meta:"" },
-  { id:"brian", name:"(fallback) Brian Ennis", meta:"" }
+  { id:"203", name:"Lynnsey Benson", meta:"" },
+  { id:"brian", name:"Brian Ennis", meta:"" }
 ];
 
+// published assignments for member (Impact tab), if available
+// expected structure:
+// { weeks: [ { phase:"published|controlled|active|planning", week_start:"YYYY-MM-DD", items:[{date:"YYYY-MM-DD", shift:"AM|PM", role:"EMT|ALS|Driver", status:"OK|ON_DECK|OPEN", note:"..."} ] } ] }
 let memberAssignments = null;
-let syncTimer = null;
 
-/* -------------------- HELPERS -------------------- */
+/* ===================== HELPERS ===================== */
 function iso(d){ return d.toISOString().slice(0,10); }
 function parseISO(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
 function addDays(d,n){ const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
 function cycle(s){ return STATES[(STATES.indexOf(s)+1)%STATES.length]; }
 function isPast(isoDate){ return isoDate < iso(new Date()); }
 
-function escapeHtml(s){
-  return String(s ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+function getActiveMemberId(){
+  const sel = document.getElementById("member");
+  const btnToken = document.getElementById("btnToken");
+  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
+
+  return sel ? String(sel.value || "").trim() : "default";
+}
+function getActiveMemberName(){
+  const sel = document.getElementById("member");
+  const btnToken = document.getElementById("btnToken");
+  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
+
+  if(!sel) return "";
+  return sel.options[sel.selectedIndex]?.textContent || "";
 }
 
-function displayNameFromMember(m){
-  const name = (m.name || m.full_name || m.display || m.callsign || "").trim();
-  if(name) return name;
-  const first = String(m.first_name || m.first || "").trim();
-  const last = String(m.last_name || m.last || "").trim();
-  const joined = (first + " " + last).trim();
-  return joined || String(m.member_id ?? m.id ?? "").trim();
+/* Thu→Wed week anchor */
+function startOfWeekThursday(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dow = x.getDay(); // 0..6
+  const target = 4; // Thu
+  const delta = (dow - target + 7) % 7;
+  return addDays(x, -delta);
 }
 
+/* ===================== STORE HELPERS ===================== */
+async function readJsonOrThrow(resp){
+  // Google sometimes returns an HTML login/error page with status 200.
+  const ct = (resp.headers.get("content-type") || "").toLowerCase();
+  const text = await resp.text();
+  if(!ct.includes("application/json")){
+    const head = text.slice(0, 200).replace(/\s+/g," ").trim();
+    throw new Error(`Store returned non-JSON (${resp.status}). First 200 chars: ${head}`);
+  }
+  try{
+    return JSON.parse(text);
+  }catch(e){
+    const head = text.slice(0, 200).replace(/\s+/g," ").trim();
+    throw new Error(`Store JSON parse failed (${resp.status}). First 200 chars: ${head}`);
+  }
+}
+
+function withStoreDefaults(obj){
+  const out = { ...obj };
+  if(STORE.folder_id) out.folder_id = STORE.folder_id;
+  return out;
+}
+
+async function storeGet(params){
+  const u = new URL(STORE.url);
+  const all = withStoreDefaults(params || {});
+  Object.entries(all).forEach(([k,v]) => u.searchParams.set(k, String(v)));
+  const resp = await fetch(u.toString(), { cache:"no-store" });
+  const j = await readJsonOrThrow(resp);
+  if(!j.ok) throw new Error(j.error || "Store GET failed");
+  return j.payload;
+}
+
+async function storePut(body){
+  const resp = await fetch(STORE.url, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(withStoreDefaults(body || {}))
+  });
+  const j = await readJsonOrThrow(resp);
+  if(!j.ok) throw new Error(j.error || "Store PUT failed");
+  return j.payload;
+}
+
+/* ===================== SAVE PILL ===================== */
 function setDrivePill({state, label, tooltip}){
   const dot = document.getElementById("driveDot");
   const tip = document.getElementById("driveTip");
@@ -577,228 +622,10 @@ function setDrivePill({state, label, tooltip}){
   pill.title = tooltip || label;
 }
 
-function setRosterPill(text, title){
-  const tip = document.getElementById("rosterTip");
-  const pill = document.getElementById("rosterPill");
-  if(tip) tip.textContent = text;
-  if(pill) pill.title = title || text;
-}
-
-function getToken(){
-  return (localStorage.getItem(LS_TOKEN_NEW) || localStorage.getItem(LS_TOKEN_OLD) || "").trim();
-}
-function setToken(val){
-  const cleaned = String(val || "").trim();
-  if(cleaned){
-    localStorage.setItem(LS_TOKEN_NEW, cleaned);
-    localStorage.setItem(LS_TOKEN_OLD, cleaned);
-  }else{
-    localStorage.removeItem(LS_TOKEN_NEW);
-    localStorage.removeItem(LS_TOKEN_OLD);
-  }
-}
-function promptToken(){
-  const cur = getToken();
-  const next = prompt("Enter SC_TOKEN (leave blank to clear):", cur || "");
-  if(next === null) return;
-  setToken(next);
-  // Update pill + attempt sync
-  setDrivePill({ state: getToken() ? "warn" : "warn", label: getToken() ? "Token set" : "No token", tooltip:"Reloading Drive checks…" });
-}
-
-async function safeJson(resp){
-  const txt = await resp.text();
-  try{
-    return JSON.parse(txt);
-  }catch(e){
-    const head = txt.slice(0, 200).replace(/\s+/g," ").trim();
-    throw new Error(`Non-JSON response (${resp.status}). First 200 chars: ${head}`);
-  }
-}
-
-async function storeGet(params){
-  const token = getToken();
-  if(!token) throw new Error("No token set.");
-  const u = new URL(STORE_EXEC);
-  Object.entries({ ...params, token }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
-  const resp = await fetch(u.toString(), { method:"GET", cache:"no-store" });
-  if(!resp.ok) throw new Error(`Store GET ${resp.status}`);
-  const j = await safeJson(resp);
-  if(j && j.ok === false) throw new Error(j.error || "Store GET failed");
-  return j;
-}
-
-async function storePut(body){
-  const token = getToken();
-  if(!token) throw new Error("No token set.");
-  const resp = await fetch(STORE_EXEC, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ token, ...body })
-  });
-  if(!resp.ok) throw new Error(`Store POST ${resp.status}`);
-  const j = await safeJson(resp);
-  if(j && j.ok === false) throw new Error(j.error || "Store POST failed");
-  return j;
-}
-
-async function fetchLocalJson(path){
-  try{
-    const resp = await fetch(path, { cache:"no-store" });
-    if(!resp.ok) throw new Error(String(resp.status));
-    return await resp.json();
-  }catch(e){
-    return null;
-  }
-}
-
-/* -------------------- ROSTER CACHE -------------------- */
-function loadRosterCache(){
-  try{
-    const raw = localStorage.getItem(LS_ROSTER_KEY);
-    const j = raw ? JSON.parse(raw) : null;
-    if(j && Array.isArray(j.roster) && j.roster.length) return j;
-  }catch(e){}
-  return null;
-}
-function saveRosterCache(list, source){
-  try{
-    localStorage.setItem(LS_ROSTER_KEY, JSON.stringify({
-      cached_at: new Date().toISOString(),
-      source: source || "unknown",
-      roster: list
-    }));
-  }catch(e){}
-}
-
-function normalizeRosterFromMembers(list){
-  return (list || [])
-    .map(m => ({
-      id: String(m.member_id ?? m.id ?? m.memberId ?? m.member ?? "").trim(),
-      name: displayNameFromMember(m),
-      meta: String(m.rank ?? m.role ?? m.meta ?? "").trim()
-    }))
-    .filter(x => x.id && x.name)
-    .sort((a,b)=> a.name.localeCompare(b.name));
-}
-
-/* -------------------- MEMBER SELECTOR -------------------- */
-function getActiveMemberId(){
-  const sel = document.getElementById("member");
-  return sel ? String(sel.value || "").trim() : "";
-}
-
-function setMemberDropdown(list){
-  const sel = document.getElementById("member");
-  if(!sel) return;
-
-  // Never blank the UI: if list empty, keep existing options
-  if(!Array.isArray(list) || list.length === 0){
-    if(sel.options.length === 0){
-      sel.innerHTML = `<option value="default">default</option>`;
-    }
-    return;
-  }
-
-  const prev = localStorage.getItem(LS_LAST_MEMBER) || "";
-  sel.innerHTML = list.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
-
-  if(prev && list.some(x => x.id === prev)) sel.value = prev;
-  else sel.value = list[0].id;
-
-  localStorage.setItem(LS_LAST_MEMBER, String(sel.value || ""));
-}
-
-/* -------------------- ROSTER LOADING (SUPERVISOR-STYLE) -------------------- */
-async function loadRoster(){
-  // 1) Cache first (fast)
-  const cached = loadRosterCache();
-  if(cached){
-    roster = Array.isArray(cached.roster) ? cached.roster : roster;
-    setRosterPill("cached", `Roster from cache (${cached.cached_at})`);
-    setMemberDropdown(roster);
-  }else{
-    // Paint fallback immediately
-    setRosterPill("fallback", "Using built-in roster (Drive not checked yet)");
-    setMemberDropdown(roster);
-  }
-
-  // 2) Drive primary: ping payload (matches supervisor’s shape)
-  const token = getToken();
-  if(!token){
-    setDrivePill({ state:"warn", label:"No token", tooltip:"Click Token to set SC_TOKEN. Using cache/local." });
-  }else{
-    try{
-      setDrivePill({ state:"warn", label:"Checking…", tooltip:"Checking Drive…" });
-      const ping = await storeGet({ kind:"ping" });
-
-      const payload = ping.payload || ping.data || ping;
-      const members =
-        payload.members ||
-        payload.members_json ||
-        payload.membersJson ||
-        payload.membersList ||
-        null;
-
-      if(members && Array.isArray(members) && members.length){
-        const next = normalizeRosterFromMembers(members);
-        if(next.length){
-          roster = next;
-          saveRosterCache(roster, "Drive(ping)");
-          setRosterPill("Drive", "Roster loaded from Google Drive (ping)");
-          setDrivePill({ state:"ok", label:"Drive OK", tooltip:"Connected to Drive store." });
-          setMemberDropdown(roster);
-          return;
-        }
-      }
-
-      // If ping didn’t include members, try legacy kind
-      try{
-        const r = await storeGet({ kind:"members" });
-        const p = r.payload || r.data || r;
-        const list = Array.isArray(p) ? p : (p && Array.isArray(p.members) ? p.members : null);
-        if(list && list.length){
-          const next = normalizeRosterFromMembers(list);
-          if(next.length){
-            roster = next;
-            saveRosterCache(roster, "Drive(kind=members)");
-            setRosterPill("Drive", "Roster loaded from Google Drive (kind=members)");
-            setDrivePill({ state:"ok", label:"Drive OK", tooltip:"Connected to Drive store." });
-            setMemberDropdown(roster);
-            return;
-          }
-        }
-      }catch(_){ /* ignore */ }
-
-      // If Drive reachable but no roster
-      setDrivePill({ state:"warn", label:"Drive (no roster)", tooltip:"Drive responded but roster not found. Falling back to local/cache." });
-
-    }catch(err){
-      setDrivePill({ state:"warn", label:"Local only", tooltip:`Drive not reachable.\n${err.message || err}\nUsing cache/local.` });
-      setRosterPill("offline", `Drive not reachable — using cache/local. (${String(err.message||err)})`);
-    }
-  }
-
-  // 3) Local JSON fallback: ./data/members.json (flat)
-  const localMembers = await fetchLocalJson(LOCAL_PATHS.members);
-  const list = Array.isArray(localMembers) ? localMembers : (localMembers && Array.isArray(localMembers.members) ? localMembers.members : null);
-  if(list && list.length){
-    const next = normalizeRosterFromMembers(list);
-    if(next.length){
-      roster = next;
-      saveRosterCache(roster, "Local(./data/members.json)");
-      setRosterPill("Local JSON", "Roster loaded from ./data/members.json");
-      setMemberDropdown(roster);
-      return;
-    }
-  }
-
-  // 4) If everything failed, keep fallback roster already painted
-}
-
-/* -------------------- LOCAL + DRIVE PERSISTENCE (availability) -------------------- */
+/* ===================== LOCAL + DRIVE PERSISTENCE ===================== */
 const LS_PREFIX = "sc:avail:";
 const LS_META_PREFIX = "sc:availmeta:";
+
 function nowISO(){ return new Date().toISOString(); }
 function lsKey(memberId){ return LS_PREFIX + memberId; }
 function lsMetaKey(memberId){ return LS_META_PREFIX + memberId; }
@@ -844,6 +671,8 @@ function applyPayload(payload){
   }
 }
 
+let syncTimer = null;
+
 function markDirty(memberId){
   const meta = getMeta(memberId);
   meta.dirty = true;
@@ -878,12 +707,6 @@ async function trySync(memberId){
     return;
   }
 
-  const token = getToken();
-  if(!token){
-    setDrivePill({ state:"warn", label:"Saved locally", tooltip:"No token set. Click Token to enable Drive sync." });
-    return;
-  }
-
   try{
     await storePut({ kind: AV_KIND, member_id: memberId, payload });
 
@@ -902,14 +725,11 @@ async function trySync(memberId){
 
 function onAnyChange(){
   const memberId = getActiveMemberId();
-  if(!memberId) return;
   markDirty(memberId);
   scheduleSync(memberId);
 }
 
 async function loadMember(memberId){
-  if(!memberId) return;
-
   // local first
   const local = getLocalPayload(memberId);
   if(local){
@@ -919,14 +739,11 @@ async function loadMember(memberId){
     setDrivePill({ state:"warn", label:"Checking…", tooltip:"Checking Drive…" });
   }
 
-  // drive authoritative (best effort)
+  // drive authoritative
   try{
-    const token = getToken();
-    if(!token) throw new Error("No token set.");
-    const j = await storeGet({ kind: AV_KIND, member_id: memberId });
-    const remote = j.payload ?? j.data ?? null;
-
+    const remote = await storeGet({ kind: AV_KIND, member_id: memberId });
     if(remote){
+      // reset local state then apply
       for(const k of Object.keys(stateDays)) delete stateDays[k];
       prefs = { prefer_24:false, blank_ok:true, avoid_with:[] };
       applyPayload(remote);
@@ -946,27 +763,104 @@ async function loadMember(memberId){
     setDrivePill({ state:"warn", label:"Local only", tooltip:`Couldn’t reach Drive.\n${err.message || err}\nWorking locally.` });
   }
 
+  // refresh UI
   syncPrefsUI();
   buildCalendar();
   renderAvoidRoster();
-  await loadImpact();
+  await loadImpact(); // best effort
 }
 
 window.addEventListener("online", ()=> trySync(getActiveMemberId()));
 
-/* -------------------- TAB UI -------------------- */
+/* ===================== TAB UI ===================== */
 function setTab(id){
   document.querySelectorAll(".tab").forEach(el=> el.classList.remove("active"));
   document.querySelectorAll(".tabbtn").forEach(el=> el.classList.remove("active"));
   document.getElementById(id)?.classList.add("active");
   document.querySelector(`.tabbtn[data-tab="${id}"]`)?.classList.add("active");
-  if(id === "tabImpact") loadImpact();
+  if(id === "tabImpact") loadImpact(); // refresh when opening
 }
 document.querySelectorAll(".tabbtn").forEach(btn=>{
   btn.addEventListener("click", ()=> setTab(btn.dataset.tab));
 });
 
-/* -------------------- PREFS UI -------------------- */
+/* ===================== ROSTER LOAD (optional) ===================== */
+/* ===================== ROSTER LOAD (Drive + cache) ===================== */
+const LS_ROSTER_KEY = "sc:roster:cache:v1";
+
+function setRosterPill(text, title){
+  const tip = document.getElementById("rosterTip");
+  const pill = document.getElementById("rosterPill");
+  if(tip) tip.textContent = text;
+  if(pill) pill.title = title || text;
+}
+
+function loadRosterCache(){
+  try{
+    const raw = localStorage.getItem(LS_ROSTER_KEY);
+    const j = raw ? JSON.parse(raw) : null;
+    if(j && Array.isArray(j.roster) && j.roster.length) return j;
+  }catch(e){}
+  return null;
+}
+
+function saveRosterCache(list){
+  try{
+    localStorage.setItem(LS_ROSTER_KEY, JSON.stringify({
+      cached_at: nowISO(),
+      roster: list
+    }));
+  }catch(e){}
+}
+
+function normalizeRoster(list){
+  return (list || [])
+    .map(x => ({
+      id: String(x.id ?? x.member_id ?? x.memberId ?? x.member ?? "").trim(),
+      name: String(x.name ?? x.full_name ?? x.display ?? x.callsign ?? x.id ?? "").trim(),
+      meta: String(x.meta ?? x.role ?? x.rank ?? "").trim()
+    }))
+    .filter(x => x.id && x.name)
+    .sort((a,b)=> a.name.localeCompare(b.name));
+}
+
+async function tryLoadRoster({force=false} = {}){
+  // 1) Cache first (fast)
+  if(!force){
+    const cached = loadRosterCache();
+    if(cached){
+      roster = normalizeRoster(cached.roster);
+      setRosterPill("cached", `Roster from cache (${cached.cached_at})`);
+    }
+  }
+
+  // 2) Drive authoritative (best effort)
+  try{
+    const r = await storeGet({ kind:"members" });
+    const list =
+        Array.isArray(r) ? r :
+        (r && Array.isArray(r.members)) ? r.members :
+        (r && r.payload && Array.isArray(r.payload.members)) ? r.payload.members :
+        (r && Array.isArray(r.payload)) ? r.payload :
+        (r && r.data && Array.isArray(r.data.members)) ? r.data.members :
+        (r && Array.isArray(r.data)) ? r.data :
+        [];
+    if(list && list.length){
+      roster = normalizeRoster(list);
+      saveRosterCache(roster);
+      setRosterPill("Drive", "Roster loaded from Google Drive");
+      return true;
+    }
+    setRosterPill("empty", "Drive returned no roster records");
+  }catch(e){
+    // keep whatever we have (fallback or cache)
+    setRosterPill("offline", `Roster not reachable — using fallback/cache. (${String(e.message||e)})`);
+  }
+  return false;
+}
+
+
+/* ===================== PREFS UI ===================== */
 function syncPrefsUI(){
   const chk24 = document.getElementById("chkPrefer24");
   const chkBlank = document.getElementById("chkBlankOk");
@@ -982,7 +876,7 @@ document.getElementById("chkBlankOk")?.addEventListener("change", (e)=>{
   onAnyChange();
 });
 
-/* -------------------- AVOID LIST UI -------------------- */
+/* ===================== AVOID LIST UI ===================== */
 function renderAvoidRoster(){
   const wrap = document.getElementById("avoidRoster");
   if(!wrap) return;
@@ -1020,6 +914,7 @@ function renderAvoidRoster(){
     wrap.appendChild(el);
   }
 }
+
 document.getElementById("avoidSearch")?.addEventListener("input", renderAvoidRoster);
 document.getElementById("btnAvoidClear")?.addEventListener("click", ()=>{
   prefs.avoid_with = [];
@@ -1027,7 +922,16 @@ document.getElementById("btnAvoidClear")?.addEventListener("click", ()=>{
   onAnyChange();
 });
 
-/* -------------------- CALENDAR BUILD -------------------- */
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* ===================== CALENDAR BUILD ===================== */
 function ensureDay(dateISO){
   stateDays[dateISO] ||= { am:"clear", pm:"clear" };
   return stateDays[dateISO];
@@ -1099,6 +1003,7 @@ function dayCell(dateISO, day){
     stateDays[dateISO].pm = next;
     render();
     onAnyChange();
+    // Impact updates should reflect changes
     if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
   };
 
@@ -1138,20 +1043,14 @@ function bar(fn, label){
   return b;
 }
 
-/* -------------------- BULK TOOLS -------------------- */
-function startOfWeekThursday(d){
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const dow = x.getDay();
-  const target = 4; // Thu
-  const delta = (dow - target + 7) % 7;
-  return addDays(x, -delta);
-}
+/* ===================== BULK TOOLS ===================== */
 function setRangeDefaults(){
   const from = addDays(new Date(), 1);
   const to   = addDays(from, 27);
   document.getElementById("bulkFrom").value = iso(from);
   document.getElementById("bulkTo").value   = iso(to);
 }
+
 function templateWeek(start){
   const out = [];
   for(let i=0;i<7;i++){
@@ -1161,8 +1060,15 @@ function templateWeek(start){
   }
   return out;
 }
-function templateA(){ return templateWeek(startOfWeekThursday(new Date())); }
-function templateB(){ return templateWeek(addDays(startOfWeekThursday(new Date()), 7)); }
+
+// current Thu→Wed template
+function templateA(){
+  return templateWeek(startOfWeekThursday(new Date()));
+}
+// next Thu→Wed template
+function templateB(){
+  return templateWeek(addDays(startOfWeekThursday(new Date()), 7));
+}
 
 function applyPatternToRange(){
   const fromISO = document.getElementById("bulkFrom").value;
@@ -1185,7 +1091,7 @@ function applyPatternToRange(){
     const ds = iso(d);
     const weekStart = startOfWeekThursday(d);
     const weekIndex = Math.floor((weekStart.getTime() - baseStart.getTime()) / (7*24*60*60*1000));
-    const dayIndex = Math.floor((d.getTime() - weekStart.getTime()) / (24*60*60*1000));
+    const dayIndex = Math.floor((d.getTime() - weekStart.getTime()) / (24*60*60*1000)); // 0..6
 
     const src = (pattern === "week2")
       ? ((weekIndex % 2 === 0) ? A[dayIndex] : B[dayIndex])
@@ -1195,6 +1101,7 @@ function applyPatternToRange(){
   }
 }
 
+// copy this week forward repeatedly until "To" date
 function repeatThisWeekUntil(){
   const toISO = document.getElementById("bulkTo").value;
   if(!toISO) return;
@@ -1203,6 +1110,7 @@ function repeatThisWeekUntil(){
   const srcStart = startOfWeekThursday(new Date());
   const A = templateWeek(srcStart);
 
+  // start stamping from the next week boundary after today
   let stampStart = addDays(srcStart, 7);
 
   while(stampStart <= to){
@@ -1241,11 +1149,12 @@ document.getElementById("btnRepeatUntil")?.addEventListener("click", ()=>{ repea
 document.getElementById("btnApplyRange")?.addEventListener("click", ()=>{ applyPatternToRange(); commitBulk(); });
 document.getElementById("btnClearRange")?.addEventListener("click", ()=>{ clearRange(); commitBulk(); });
 
-/* -------------------- IMPACT TAB -------------------- */
+/* ===================== IMPACT TAB ===================== */
 async function loadImpact(){
   const wrap = document.getElementById("impactWrap");
   if(!wrap) return;
 
+  // Always render something immediately
   wrap.innerHTML = `
     <div class="panel">
       <div class="panelTitle">Published view</div>
@@ -1253,15 +1162,13 @@ async function loadImpact(){
     </div>
   `;
 
+  // Best-effort fetch member assignments
   memberAssignments = null;
   try{
-    const token = getToken();
-    if(!token) throw new Error("No token set.");
-    const j = await storeGet({ kind: ASSIGN_KIND, member_id: getActiveMemberId() });
-    const p = j.payload ?? j.data ?? null;
+    const p = await storeGet({ kind: ASSIGN_KIND, member_id: getActiveMemberId() });
     if(p && p.weeks && Array.isArray(p.weeks)) memberAssignments = p;
   }catch(e){
-    // ignore
+    // ignore; we will render fallback
   }
 
   if(!memberAssignments){
@@ -1269,14 +1176,18 @@ async function loadImpact(){
       <div class="panel">
         <div class="panelTitle">No published roster connected (yet)</div>
         <div class="panelHint">
-          Availability + Preferences are saving. As soon as the Wallboard/Supervisor pipeline publishes
-          a member view (Drive kind: <b>${ASSIGN_KIND}</b>), this tab can show real impact.
+          Beta 1 can show real impact as soon as the Wallboard/Supervisor pipeline publishes a member view
+          (recommended Drive kind: <b>${ASSIGN_KIND}</b>).
+        </div>
+        <div class="smallNote">
+          For now: your Availability + Preferences are saving and will be used by the solver.
         </div>
       </div>
     `;
     return;
   }
 
+  // Render weeks
   wrap.innerHTML = "";
   for(const w of memberAssignments.weeks){
     wrap.appendChild(renderWeekBlock(w));
@@ -1291,6 +1202,7 @@ function renderWeekBlock(w){
   const el = document.createElement("div");
   el.className = "weekBlock";
 
+  // brackets
   const bl = document.createElement("div");
   bl.className = `bracket left ${phase}`;
   const br = document.createElement("div");
@@ -1308,6 +1220,7 @@ function renderWeekBlock(w){
   const list = inner.querySelector(".shiftList");
   const items = Array.isArray(w.items) ? w.items : [];
 
+  // Sort by date then shift
   items.sort((a,b)=>{
     const da = String(a.date||"");
     const db = String(b.date||"");
@@ -1319,6 +1232,7 @@ function renderWeekBlock(w){
     list.appendChild(renderShiftCard(it));
   }
 
+  // Footer note for planning-style phases
   if(phase === "planning" && w.resolve_by){
     const note = document.createElement("div");
     note.className = "smallNote";
@@ -1342,7 +1256,7 @@ function renderShiftCard(it){
   const dateISO = String(it.date||"");
   const shift = String(it.shift||"");
   const role = String(it.role||"");
-  const status = String(it.status||"OK");
+  const status = String(it.status||"OK"); // OK | ON_DECK | OPEN
   const note = String(it.note||"");
 
   const el = document.createElement("div");
@@ -1350,6 +1264,8 @@ function renderShiftCard(it){
 
   const dayState = stateDays[dateISO] || { am:"clear", pm:"clear" };
   const mySel = shift === "AM" ? dayState.am : dayState.pm;
+
+  // Warning if member marked NO against a published/controlled assignment
   const conflicts = (mySel === "no");
   const shouldWarn = conflicts && (status === "OK" || status === "ON_DECK");
 
@@ -1374,31 +1290,52 @@ function statusDisplay(status, note){
   return note ? `Scheduled — ${note}` : "Scheduled";
 }
 
-/* -------------------- STARTUP -------------------- */
+/* ===================== MEMBER SELECTOR + STARTUP ===================== */
+function setTokenUI(){
+  const cur = localStorage.getItem("SC_TOKEN") || "";
+  const next = prompt("Enter SC_TOKEN (leave blank to clear):", cur || "");
+  if(next === null) return;
+  const cleaned = String(next).trim();
+  if(cleaned) localStorage.setItem("SC_TOKEN", cleaned);
+  else localStorage.removeItem("SC_TOKEN");
+  STORE.token = (localStorage.getItem("SC_TOKEN") || "");
+  // Re-check Drive and attempt sync
+  trySync(getActiveMemberId()).catch(()=>{});
+}
+
 async function init(){
   const sel = document.getElementById("member");
   const btnToken = document.getElementById("btnToken");
+  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
 
-  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); promptToken(); });
 
-  setRangeDefaults();
+  // 0) Paint fallback roster immediately so page is usable even if Drive is down
+  setRosterPill("fallback", "Using built-in roster (Drive not checked yet)");
+  sel.innerHTML = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
 
-  // Load roster (cache -> Drive ping -> local JSON -> fallback)
-  await loadRoster();
+  // 1) Try Drive roster (will also use cache if present)
+  const lastMember = localStorage.getItem("sc:last_member") || "";
+  await tryLoadRoster();
 
-  // Ensure selection is valid even if roster load changed
-  if(!sel.value && sel.options.length){
-    sel.value = sel.options[0].value;
-    localStorage.setItem(LS_LAST_MEMBER, String(sel.value || ""));
+  // Rebuild dropdown from refreshed roster
+  sel.innerHTML = roster.map(p=> `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+
+  // Restore last selection if still present
+  if(lastMember && roster.some(r=> r.id === lastMember)){
+    sel.value = lastMember;
+  }else{
+    sel.value = roster[0]?.id || "default";
   }
 
   // Load current member
+  setRangeDefaults();
   await loadMember(getActiveMemberId());
 
   // Change handler
   sel.addEventListener("change", async ()=>{
-    localStorage.setItem(LS_LAST_MEMBER, getActiveMemberId());
+    localStorage.setItem("sc:last_member", getActiveMemberId());
 
+    // reset in-memory (but keep localStorage)
     for(const k of Object.keys(stateDays)) delete stateDays[k];
     prefs = { prefer_24:false, blank_ok:true, avoid_with:[] };
     memberAssignments = null;
@@ -1408,6 +1345,7 @@ async function init(){
   });
 }
 
+setRangeDefaults();
 init();
 </script>
 

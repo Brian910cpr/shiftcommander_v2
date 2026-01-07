@@ -89,8 +89,7 @@
   .week-title{
     font-weight:1000;
   }
-    .week-title:empty{display:none;}
-.week-dates{
+  .week-dates{
     font-size:12px; color:var(--muted); font-weight:900;
   }
 
@@ -217,135 +216,15 @@
 
 <script>
 /** ========= CONFIG ========= **/
-const STORE_URL = (location.origin && location.origin.startsWith("http"))
-  ? (location.origin + "/api/store")
-  : "https://adr-fr.org/api/store";
-
-// Token is injected by the Cloudflare Worker. Do not send tokens from the browser.
-const BUILD = "2026-01-07T02:40:53Z";
-const TOKEN = "";
-const PLANNING_WEEKS = 4; 
-
-  // ---- History (whiteboard scrape) support ----
-  // Expects flat static files at site root: /history.index.json and /YYYY-MM.normalized.json
-  const HISTORY_INDEX_URLS = [
-    () => storeUrl("history_index")
-  ];
-
-  const _historyMonthCache = new Map(); // month -> parsed JSON
-
-  async function fetchJson(url){
-    const r = await fetch(url, { cache: "no-store" });
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-    const text = await r.text();
-    if(!r.ok){
-      throw new Error(`History fetch failed ${r.status} for ${url}: ${text.slice(0,120)}`);
-    }
-    if(!ct.includes("json")){
-      throw new Error(`History returned non-JSON for ${url}: ${text.slice(0,120)}`);
-    }
-    return JSON.parse(text);
-  }
-
-  async function loadHistoryIndex(){
-    // Prefer Drive-backed store (kind=history_index). HISTORY_INDEX_URLS holds candidate URLs.
-    let lastErr = null;
-    for(const u of HISTORY_INDEX_URLS){
-      const url = (typeof u === "function") ? u() : u;
-      try{
-        const j = await fetchJson(url);
-        return j && j.payload ? j.payload : j;
-      }catch(e){ lastErr = e; }
-    }
-    if(lastErr) throw lastErr;
-    return null;
-  }
-
-  function monthFromIso(iso){ return iso.slice(0,7); }
-
-  async function loadHistoryMonth(index, month){
-    if(_historyMonthCache.has(month)) return _historyMonthCache.get(month);
-
-    // Primary: Drive-backed store (kind=history_month&month=YYYY-MM)
-    try{
-      const j = await fetchJson(storeUrl("history_month", { month }));
-      const data = (j && j.payload) ? j.payload : j;
-      _historyMonthCache.set(month, data);
-      return data;
-    }catch(e){
-      // Fallback: index-declared static path (if you ever host these as flat files)
-      const file = (index && index.files) ? (index.files || []).find(f => f.month === month) : null;
-      if(!file) throw e;
-      const path = file.path || ((index.base_path || "/") + file.filename);
-      const j2 = await fetchJson(path);
-      const data2 = (j2 && j2.payload) ? j2.payload : j2;
-      _historyMonthCache.set(month, data2);
-      return data2;
-    }
-  }
-
-
-  // Convert normalized day record to schedule-like { AM:[att,drv], PM:[att,drv] }
-  function normalizedToScheduleDay(day){
-    const out = {};
-    for(const sh of ["AM","PM"]){
-      const s = day?.[sh];
-      if(!s){ out[sh] = ["OPEN","OPEN"]; continue; }
-
-      // normalized format: { seat_medical:{status,name}, seat_driver_emt:{status,name} }
-      const att = (s.seat_medical?.status === "filled") ? s.seat_medical?.name : "OPEN";
-      const drv = (s.seat_driver_emt?.status === "filled") ? s.seat_driver_emt?.name : "OPEN";
-      out[sh] = [att || "OPEN", drv || "OPEN"];
-    }
-    return out;
-  }
-
-  async function loadHistoryScheduleForRange(weekStart){
-    // returns an object keyed by ISO date: { "2026-01-01": {AM:[...],PM:[...]} }
-    try{
-      const index = await loadHistoryIndex();
-      const sched = {};
-      for(let i=0;i<7;i++){
-        const d = addDays(weekStart, i);
-        const iso = isoDate(d);
-        const month = monthFromIso(iso);
-        const mj = await loadHistoryMonth(index, month);
-        const day = mj?.days?.[iso];
-        if(day){
-          sched[iso] = normalizedToScheduleDay(day);
-        }
-      }
-      return sched;
-    }catch(e){
-      console.warn("History unavailable:", e);
-      return {}; // fall back to live schedule only
-    }
-  }
-
-// how many planning weeks to show
+const STORE_URL = "https://YOUR-WORKER-URL-HERE"; // <- set to your Cloudflare Worker endpoint
+const TOKEN = ""; // optional if your store requires it, otherwise leave blank
+const PLANNING_WEEKS = 4; // how many planning weeks to show
 const WEEK_START = 0; // 0=Sunday (ADR matches wallboard)
 const SHOW_WEEKDAY_HEADER = true;
 
 /** kind names in Apps Script */
 const KIND_SCHEDULE = "schedule"; // should return schedule.json contents
-const KIND_MEMBERS  = "members";
-
-/** ========= TOKEN UI ========= **/
-function promptToken(){
-  const cur = localStorage.getItem("SC_TOKEN") || "";
-  const next = prompt("Enter SC_TOKEN (leave blank to clear):", cur || "");
-  if(next === null) return;
-  const cleaned = String(next).trim();
-  if(cleaned){
-    localStorage.setItem("SC_TOKEN", cleaned);
-  }else{
-    localStorage.removeItem("SC_TOKEN");
-  }
-  TOKEN = localStorage.getItem("SC_TOKEN") || "";
-  // reload
-  refresh().catch(()=>{});
-}
-  // should return members.json contents (tiers + qual_120)
+const KIND_MEMBERS  = "members";  // should return members.json contents (tiers + qual_120)
 
 /** ========= DATE UTILS ========= **/
 function isoDate(d){
@@ -375,12 +254,10 @@ function fmtRange(a,b){
 }
 
 /** ========= FETCH ========= **/
-function storeUrl(kind, params={}){
+function storeUrl(kind){
   const u = new URL(STORE_URL);
   u.searchParams.set("kind", kind);
-    for(const [k,v] of Object.entries(params||{})){
-    if(v !== undefined && v !== null && String(v).length) u.searchParams.set(k, String(v));
-  }
+  if(TOKEN) u.searchParams.set("token", TOKEN);
   return u.toString();
 }
 async function fetchJson(url){
@@ -434,7 +311,14 @@ function buildRosterIndex(membersJson){
       (typeof quals === "object" && (quals.qual_120 || quals["120"]));
 
     byId[id] = {
-      name: (m.name || m.full_name || m.display_name || m.last_first || id).toString(),
+      name: (
+          m.name ||
+          m.full_name ||
+          m.display_name ||
+          m.last_first ||
+          (((m.first_name || m.firstName || "").toString().trim()) + " " + ((m.last_name || m.lastName || "").toString().trim())).trim() ||
+          id
+        ).toString(),
       tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"),
       has120: !!has120
     };
@@ -615,6 +499,18 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
 }
 
 /** ========= MAIN ========= **/
+async function boot(){
+  const [membersJson, scheduleJson] = await Promise.all([
+    apiGet("members"),
+    apiGet("schedule"),
+  ]);
+
+  const rosterById = buildRosterIndex(membersJson);
+  renderWallboard(scheduleJson, rosterById);
+}
+
+boot().catch(showFatal);
+
 async function main(){
   const pill = document.getElementById("statusPill");
   try{
@@ -626,14 +522,10 @@ async function main(){
 
     pill.textContent = "Loading schedule + roster…";
 
-    const [scheduleResp, membersResp] = await Promise.all([
+    const [schedule, members] = await Promise.all([
       fetchJson(storeUrl(KIND_SCHEDULE)),
       fetchJson(storeUrl(KIND_MEMBERS))
     ]);
-
-    // Store returns wrapper: { ok:true, kind:"...", payload:{...} }
-    const schedule = (scheduleResp && (scheduleResp.payload || scheduleResp.data)) ? (scheduleResp.payload || scheduleResp.data) : (scheduleResp || {});
-    const members  = (membersResp  && (membersResp.payload  || membersResp.data))  ? (membersResp.payload  || membersResp.data)  : (membersResp  || {});
 
     const roster = buildRosterIndex(members);
 
@@ -647,26 +539,21 @@ async function main(){
     // Planning weeks start next week
     const planningStarts = addDays(thisWeekStart, 7);
 
-    const historyPrev = await loadHistoryScheduleForRange(prevWeekStart);
-    // For Archived week: prefer history (whiteboard scrape). If missing, falls back to live schedule.
-    const archivedSchedule = Object.keys(historyPrev).length ? historyPrev : schedule;
-    renderWeekBlock(root, "Previous Week", prevWeekStart, archivedSchedule, roster, { sub:"Archived", showNeeds:false });
-    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Controlled" });
+    renderWeekBlock(root, "Previous Week", prevWeekStart, schedule, roster, { sub:"Context" });
+    renderWeekBlock(root, "This Week", thisWeekStart, schedule, roster, { sub:"Operational" });
 
     for(let w=0; w<PLANNING_WEEKS; w++){
-      const ws = addDays(planningStarts, w*7);// the one right before Controlled begins
+      const ws = addDays(planningStarts, w*7);
+      const isLastPlanningWeek = (w === PLANNING_WEEKS-1); // the one right before Controlled begins
       renderWeekBlock(
         root,
-        "",
+        `Planning Week ${w+1}`,
         ws,
         schedule,
         roster,
-        {
-          sub: (w === 0) ? "Controlled" : "Planning",
-          // Needs hints only on the first two future weeks (what used to be Planning Week 1 & 2)
-          showNeeds: (w === 0 || w === 1)
-        }
-      );}
+        { sub: isLastPlanningWeek ? "Notes + Needs" : "Planning", showNeeds: isLastPlanningWeek }
+      );
+    }
 
     pill.textContent = "Live";
     pill.style.color = "#166534";
