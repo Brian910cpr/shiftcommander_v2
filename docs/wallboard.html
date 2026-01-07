@@ -499,18 +499,6 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
 }
 
 /** ========= MAIN ========= **/
-async function boot(){
-  const [membersJson, scheduleJson] = await Promise.all([
-    apiGet("members"),
-    apiGet("schedule"),
-  ]);
-
-  const rosterById = buildRosterIndex(membersJson);
-  renderWallboard(scheduleJson, rosterById);
-}
-
-boot().catch(showFatal);
-
 async function main(){
   const pill = document.getElementById("statusPill");
   try{
