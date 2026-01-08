@@ -43,7 +43,6 @@ header{
   white-space:nowrap;
   flex-shrink:0;
 }
-  .pill.btn{ cursor:pointer; user-select:none; }
 
 select{
   min-width:240px;
@@ -378,7 +377,6 @@ main{ padding:12px; }
     <span class="dot warn" id="driveDot"></span>
     <span class="tiny" id="driveTip">Checking…</span>
   </div>
-  <button class="pill btn" id="btnToken" title="Set/clear SC_TOKEN for Drive saves">Token</button>
 </header>
 
 <div class="tabbar">
@@ -492,15 +490,38 @@ main{ padding:12px; }
 <script>
 /* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
-  // Apps Script Web App (/exec) that reads/writes to Google Drive
-  url: (location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store",
-
-  // Shared secret expected by Apps Script (keep private)
-  token: "",
-
-  // Optional: Drive folder id (if your Apps Script supports it). Safe to ignore server-side.
-  folder_id: "11Q0lLHtSCnPVGV4bsAauGNYaiSbmzQxK"
+  // ALWAYS go through Cloudflare Worker (handles CORS + token injection)
+  url: (location.origin + "/api/store")
 };
+
+
+// ---- org_settings (shared config) ----
+const DEFAULT_ORG = {
+  weeks: { archived: 1, controlled: 2, published: 2, planning: 6 },
+  ui: {
+    use_first_name_only: true,
+    grey_past_days: true,
+    show_health_for_past_days: false,
+    show_needs_in: { controlled_week_index: 1, planning_week_index: 0 }
+  }
+};
+let ORG = structuredClone(DEFAULT_ORG);
+
+async function loadOrgSettings(){
+  try{
+    const resp = await fetch(`${STORE.url}?kind=org_settings`, { cache:"no-store" });
+    const j = await resp.json();
+    const p = j?.payload || {};
+    ORG = {
+      ...DEFAULT_ORG,
+      ...p,
+      weeks: { ...DEFAULT_ORG.weeks, ...(p.weeks||{}) },
+      ui: { ...DEFAULT_ORG.ui, ...(p.ui||{}), show_needs_in: { ...DEFAULT_ORG.ui.show_needs_in, ...(p.ui?.show_needs_in||{}) } }
+    };
+  }catch(_e){
+    ORG = structuredClone(DEFAULT_ORG);
+  }
+}
 
 /* ===================== CONFIG ===================== */
 const MONTHS_AHEAD = 6;
@@ -543,16 +564,10 @@ function isPast(isoDate){ return isoDate < iso(new Date()); }
 
 function getActiveMemberId(){
   const sel = document.getElementById("member");
-  const btnToken = document.getElementById("btnToken");
-  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
-
   return sel ? String(sel.value || "").trim() : "default";
 }
 function getActiveMemberName(){
   const sel = document.getElementById("member");
-  const btnToken = document.getElementById("btnToken");
-  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
-
   if(!sel) return "";
   return sel.options[sel.selectedIndex]?.textContent || "";
 }
@@ -566,6 +581,27 @@ function startOfWeekThursday(d){
   return addDays(x, -delta);
 }
 
+
+/* ===================== IMPACT HELPERS (schedule-derived) ===================== */
+function buildMemberWeekItems(schedule, memberId, weekStartDate){
+  const items = [];
+  for(let i=0;i<7;i++){
+    const d = addDays(weekStartDate, i);
+    const ds = iso(d);
+    const day = schedule[ds] || {};
+    for(const shift of ["AM","PM"]){
+      const pair = day[shift] || day[shift.toLowerCase()] || null;
+      if(!pair || !Array.isArray(pair) || pair.length < 2) continue;
+      const a = String(pair[0]||"").trim();
+      const dr = String(pair[1]||"").trim();
+      if(a === memberId || dr === memberId){
+        const role = (a === memberId) ? "Attendant" : "Driver";
+        items.push({ date: ds, shift, role, status:"OK", note: role });
+      }
+    }
+  }
+  return items;
+}
 /* ===================== STORE HELPERS ===================== */
 async function readJsonOrThrow(resp){
   // Google sometimes returns an HTML login/error page with status 200.
@@ -584,9 +620,8 @@ async function readJsonOrThrow(resp){
 }
 
 function withStoreDefaults(obj){
-  const out = { ...obj };
-  if(STORE.folder_id) out.folder_id = STORE.folder_id;
-  return out;
+  // Never send token from browser — Worker injects it.
+  return { ...(obj || {}) };
 }
 
 async function storeGet(params){
@@ -815,11 +850,24 @@ function saveRosterCache(list){
 
 function normalizeRoster(list){
   return (list || [])
-    .map(x => ({
-      id: String(x.id ?? x.member_id ?? x.memberId ?? x.member ?? "").trim(),
-      name: String(x.name ?? x.full_name ?? x.display ?? x.callsign ?? x.id ?? "").trim(),
-      meta: String(x.meta ?? x.role ?? x.rank ?? "").trim()
-    }))
+    .map(x => {
+      const id = String(x.id ?? x.member_id ?? x.memberId ?? x.member ?? "").trim();
+      const first = String(x.first_name ?? x.firstName ?? "").trim();
+      const last  = String(x.last_name ?? x.lastName ?? "").trim();
+
+      // prefer explicit name fields, else build from first+last, else fallback to id
+      const explicit =
+        String(
+          x.name ?? x.full_name ?? x.fullName ?? x.display ?? x.display_name ??
+          x.callsign ?? x.last_first ?? ""
+        ).trim();
+
+      const built = (first || last) ? `${first} ${last}`.trim() : "";
+      const name = explicit || built || id;
+
+      const meta = String(x.meta ?? x.role ?? x.rank ?? x.title ?? "").trim();
+      return { id, name, meta };
+    })
     .filter(x => x.id && x.name)
     .sort((a,b)=> a.name.localeCompare(b.name));
 }
@@ -837,14 +885,7 @@ async function tryLoadRoster({force=false} = {}){
   // 2) Drive authoritative (best effort)
   try{
     const r = await storeGet({ kind:"members" });
-    const list =
-        Array.isArray(r) ? r :
-        (r && Array.isArray(r.members)) ? r.members :
-        (r && r.payload && Array.isArray(r.payload.members)) ? r.payload.members :
-        (r && Array.isArray(r.payload)) ? r.payload :
-        (r && r.data && Array.isArray(r.data.members)) ? r.data.members :
-        (r && Array.isArray(r.data)) ? r.data :
-        [];
+    const list = Array.isArray(r) ? r : (r && Array.isArray(r.members) ? r.members : (r && Array.isArray(r.payload) ? r.payload : null));
     if(list && list.length){
       roster = normalizeRoster(list);
       saveRosterCache(roster);
@@ -1172,19 +1213,52 @@ async function loadImpact(){
   }
 
   if(!memberAssignments){
-    wrap.innerHTML = `
-      <div class="panel">
-        <div class="panelTitle">No published roster connected (yet)</div>
-        <div class="panelHint">
-          Beta 1 can show real impact as soon as the Wallboard/Supervisor pipeline publishes a member view
-          (recommended Drive kind: <b>${ASSIGN_KIND}</b>).
+    // Fallback: derive an "Impact" view directly from schedule.json (Drive)
+    // This lets members see where they are currently assigned without needing a per-member published file yet.
+    try{
+      const schedule = await storeGet({ kind:"schedule" });
+      const sched = schedule || {};
+      const memberId = getActiveMemberId();
+
+      const counts = (ORG && ORG.weeks) ? ORG.weeks : DEFAULT_ORG.weeks;
+      const controlledN = Number(counts.controlled||2);
+      const publishedN  = Number(counts.published||2);
+
+      const thisStart = startOfWeekThursday(new Date());
+      const weeks = [];
+
+      // Controlled window: this week + next week (by config)
+      for(let i=0;i<controlledN;i++){
+        const ws = addDays(thisStart, i*7);
+        weeks.push({ phase:"controlled", week_start: iso(ws), items: buildMemberWeekItems(sched, memberId, ws) });
+      }
+      // Published window immediately after controlled
+      for(let i=0;i<publishedN;i++){
+        const ws = addDays(thisStart, (controlledN+i)*7);
+        weeks.push({ phase:"published", week_start: iso(ws), items: buildMemberWeekItems(sched, memberId, ws) });
+      }
+
+      // Render
+      wrap.innerHTML = "";
+      for(const w of weeks){
+        wrap.appendChild(renderWeekBlock(w));
+      }
+      return;
+
+    }catch(e){
+      wrap.innerHTML = `
+        <div class="panel">
+          <div class="panelTitle">Impact not connected (yet)</div>
+          <div class="panelHint">
+            Couldn’t load schedule from Drive to compute impact.
+          </div>
+          <div class="smallNote">
+            Error: ${escapeHtml(String(e.message||e))}
+          </div>
         </div>
-        <div class="smallNote">
-          For now: your Availability + Preferences are saving and will be used by the solver.
-        </div>
-      </div>
-    `;
-    return;
+      `;
+      return;
+    }
   }
 
   // Render weeks
@@ -1291,23 +1365,9 @@ function statusDisplay(status, note){
 }
 
 /* ===================== MEMBER SELECTOR + STARTUP ===================== */
-function setTokenUI(){
-  const cur = localStorage.getItem("SC_TOKEN") || "";
-  const next = prompt("Enter SC_TOKEN (leave blank to clear):", cur || "");
-  if(next === null) return;
-  const cleaned = String(next).trim();
-  if(cleaned) localStorage.setItem("SC_TOKEN", cleaned);
-  else localStorage.removeItem("SC_TOKEN");
-  STORE.token = (localStorage.getItem("SC_TOKEN") || "");
-  // Re-check Drive and attempt sync
-  trySync(getActiveMemberId()).catch(()=>{});
-}
-
 async function init(){
+  await loadOrgSettings();
   const sel = document.getElementById("member");
-  const btnToken = document.getElementById("btnToken");
-  if(btnToken) btnToken.addEventListener("click", (e)=>{ e.preventDefault(); setTokenUI(); });
-
 
   // 0) Paint fallback roster immediately so page is usable even if Drive is down
   setRosterPill("fallback", "Using built-in roster (Drive not checked yet)");
