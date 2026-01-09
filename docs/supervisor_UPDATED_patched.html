@@ -326,6 +326,11 @@
             Units & Seats
             <span class="chip">Builder</span>
           </button>
+
+          <button class="navItem" data-tab="ops" aria-selected="false">
+            Ops Planner
+            <span class="chip">Weekly</span>
+          </button>
           <button class="navItem" data-tab="quals" aria-selected="false">
             Qualifications
             <span class="chip">List</span>
@@ -423,6 +428,7 @@
     },
     ui: {
       activeTab: "schedule",
+      opsWeekStartIso: null,
       modal: { mode:null, payload:null }
     }
   };
@@ -464,6 +470,26 @@
   };
   const deepCopy = (x)=> JSON.parse(JSON.stringify(x));
   const uid = ()=> Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+  // ---- DATE UTILS (Ops Planner) ----
+  function isoDate(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function addDays(d, n){
+    const x = new Date(d);
+    x.setDate(x.getDate()+n);
+    return x;
+  }
+  function startOfWeek(d){
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = (x.getDay() - 0 + 7) % 7; // Sunday start
+    x.setDate(x.getDate() - diff);
+    x.setHours(0,0,0,0);
+    return x;
+  }
 
   function setDriveStatus(stateName, short, detail){
     // stateName: ok|warn|bad
@@ -593,6 +619,11 @@
     app.data.org_settings.units ||= [];
     app.data.org_settings.seat_templates ||= [];
 
+    // Ops planner data (per-date)
+    app.data.org_settings.active_units_by_date ||= {};
+    app.data.org_settings.active_seats_by_date ||= {};
+    app.data.org_settings.ops_defaults ||= { units:{ AM:"", PM:"" }, seats:{ AM:[], PM:[] } };
+
     // Add any quals referenced in members
     const qualSet = new Set(app.data.org_settings.qualifications.map(q => (q.code || q).toString()));
     for(const m of app.data.members){
@@ -703,6 +734,7 @@
     else if(t === "overrides") renderOverrides();
     else if(t === "members") renderMembers();
     else if(t === "units") renderUnits();
+    else if(t === "ops") renderOps();
     else if(t === "quals") renderQuals();
     else renderIdeas();
   }
@@ -909,6 +941,298 @@
     setDataStatus("warn", "Unsaved changes", "You have local edits. Click Save.");
     saveDraft();
     renderMembers();
+  }
+
+
+  // ============================================================
+  // Ops Planner (weekly): Active Unit + Active Seats per shift
+  //
+  // Data model (saved inside org_settings):
+  //   org_settings.active_units_by_date[YYYY-MM-DD] = { AM:"AMB-1", PM:"AMB-2" }
+  //   org_settings.active_seats_by_date[YYYY-MM-DD] = { AM:["attendant","operator"], PM:[...] }
+  //   org_settings.ops_defaults = { units:{AM,PM}, seats:{AM:[],PM:[]} }
+  // ============================================================
+  function renderOps(){
+    const org = app.data.org_settings || {};
+    const units = Array.isArray(org.units) ? org.units : [];
+    const seats = Array.isArray(org.seat_templates) ? org.seat_templates : [];
+
+    // Week selection
+    if(!app.ui.opsWeekStartIso){
+      app.ui.opsWeekStartIso = isoDate(startOfWeek(new Date()));
+    }
+    const weekStart = new Date(app.ui.opsWeekStartIso + "T00:00:00");
+    const weekLabel = weekStart.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
+
+    const unitOptions = [`<option value="">(none)</option>`]
+      .concat(units.map(u => `<option value="${esc(u.unit_id)}">${esc(u.unit_id)} — ${esc(u.name||u.unit_id)}</option>`))
+      .join("");
+
+    function dayUnits(iso){
+      const v = org.active_units_by_date?.[iso] || {};
+      return { AM: v.AM || "", PM: v.PM || "" };
+    }
+    function daySeats(iso){
+      const v = org.active_seats_by_date?.[iso] || {};
+      const am = Array.isArray(v.AM) ? v.AM.map(String) : [];
+      const pm = Array.isArray(v.PM) ? v.PM.map(String) : [];
+      return { AM: am, PM: pm };
+    }
+
+    el.panelBody.innerHTML = `
+      <div class="row" style="margin-bottom:10px;">
+        <span class="chip"><span class="dot idle"></span> Weekly planner</span>
+        <span class="chip" title="These settings are internal and can drive schedule generation later.">
+          <span class="dot idle"></span> Saved in <span class="mono">org_settings</span>
+        </span>
+        <span class="spacer"></span>
+        <button class="btn" id="opsPrevWeek">◀</button>
+        <span class="pill" id="opsWeekLabel">${esc(weekLabel)}</span>
+        <button class="btn" id="opsNextWeek">▶</button>
+      </div>
+
+      <div class="row" style="align-items:stretch;">
+        <div class="field" style="flex:1; min-width:320px;">
+          <label>Defaults (used when a date is blank)</label>
+          <div class="row" style="gap:10px; align-items:flex-end;">
+            <div style="flex:1; min-width:220px;">
+              <div class="small" style="margin-bottom:6px;">Default AM unit</div>
+              <select id="opsDefUnitAM" style="width:100%;">${unitOptions}</select>
+            </div>
+            <div style="flex:1; min-width:220px;">
+              <div class="small" style="margin-bottom:6px;">Default PM unit</div>
+              <select id="opsDefUnitPM" style="width:100%;">${unitOptions}</select>
+            </div>
+          </div>
+          <div class="hint" style="margin-top:8px;">
+            Tip: Set defaults, then use <strong>Fill week from defaults</strong> to populate dates.
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn" id="opsSaveDefaults">Save defaults</button>
+            <button class="btn primary" id="opsFillWeek">Fill week from defaults</button>
+          </div>
+        </div>
+
+        <div class="field" style="flex:1; min-width:320px;">
+          <label>Copy forward</label>
+          <div class="hint">
+            Copy the current week’s unit + seat selections forward. “Indefinitely” uses 52 weeks.
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn" id="opsCopyNext">Copy → next week</button>
+            <button class="btn" id="opsCopyN">Copy forward…</button>
+            <button class="btn primary" id="opsCopyIndef">Copy indefinitely</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <label>Active unit per shift (week)</label>
+        <div class="hint" style="margin-bottom:10px;">
+          Public wallboard can hide future weeks; this is where supervisors can plan ahead.
+        </div>
+        <div id="opsWeekTableWrap"></div>
+      </div>
+    `;
+
+    // Set defaults controls
+    const def = org.ops_defaults || { units:{AM:"",PM:""}, seats:{AM:[],PM:[]} };
+    $("#opsDefUnitAM").value = def.units?.AM || "";
+    $("#opsDefUnitPM").value = def.units?.PM || "";
+
+    $("#opsPrevWeek").onclick = ()=>{
+      app.ui.opsWeekStartIso = isoDate(addDays(weekStart, -7));
+      renderOps();
+    };
+    $("#opsNextWeek").onclick = ()=>{
+      app.ui.opsWeekStartIso = isoDate(addDays(weekStart, +7));
+      renderOps();
+    };
+
+    $("#opsSaveDefaults").onclick = ()=>{
+      org.ops_defaults ||= { units:{ AM:"", PM:"" }, seats:{ AM:[], PM:[] } };
+      org.ops_defaults.units.AM = ($("#opsDefUnitAM").value || "").trim();
+      org.ops_defaults.units.PM = ($("#opsDefUnitPM").value || "").trim();
+      setDataStatus("warn","Unsaved changes","Defaults updated. Click Save.");
+      saveDraft();
+      alert("Defaults saved (local). Click Save to push to Drive.");
+    };
+
+    $("#opsFillWeek").onclick = ()=>{
+      org.active_units_by_date ||= {};
+      org.active_seats_by_date ||= {};
+      const d = org.ops_defaults || { units:{ AM:"", PM:"" }, seats:{ AM:[], PM:[] } };
+
+      for(let i=0;i<7;i++){
+        const day = addDays(weekStart, i);
+        const iso = isoDate(day);
+
+        org.active_units_by_date[iso] ||= {};
+        if(!org.active_units_by_date[iso].AM) org.active_units_by_date[iso].AM = d.units?.AM || "";
+        if(!org.active_units_by_date[iso].PM) org.active_units_by_date[iso].PM = d.units?.PM || "";
+
+        org.active_seats_by_date[iso] ||= {};
+        if(!Array.isArray(org.active_seats_by_date[iso].AM) || !org.active_seats_by_date[iso].AM.length){
+          org.active_seats_by_date[iso].AM = Array.isArray(d.seats?.AM) ? deepCopy(d.seats.AM) : [];
+        }
+        if(!Array.isArray(org.active_seats_by_date[iso].PM) || !org.active_seats_by_date[iso].PM.length){
+          org.active_seats_by_date[iso].PM = Array.isArray(d.seats?.PM) ? deepCopy(d.seats.PM) : [];
+        }
+      }
+
+      setDataStatus("warn","Unsaved changes","Week filled. Click Save.");
+      saveDraft();
+      renderOps();
+    };
+
+    $("#opsCopyNext").onclick = ()=> copyWeekForward(1);
+    $("#opsCopyN").onclick = ()=>{
+      const raw = prompt("Copy forward how many weeks?", "4");
+      if(raw === null) return;
+      const n = Math.max(0, Number(raw||0));
+      if(!Number.isFinite(n) || n < 1){ alert("Enter a number >= 1."); return; }
+      copyWeekForward(n);
+    };
+    $("#opsCopyIndef").onclick = ()=> copyWeekForward(52);
+
+    // Build week table
+    const wrap = $("#opsWeekTableWrap");
+    const rows = [];
+    for(let i=0;i<7;i++){
+      const day = addDays(weekStart, i);
+      const iso = isoDate(day);
+      rows.push({ day, iso, units: dayUnits(iso), seats: daySeats(iso) });
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th style="width:170px;">Date</th>
+            <th style="width:220px;">AM unit</th>
+            <th>AM seats</th>
+            <th style="width:220px;">PM unit</th>
+            <th>PM seats</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td class="mono">${esc(r.iso)}<div class="small">${esc(r.day.toLocaleDateString(undefined,{weekday:"short"}))}</div></td>
+
+              <td>
+                <select data-ops-unit data-iso="${esc(r.iso)}" data-shift="AM" style="width:100%;">${unitOptions}</select>
+              </td>
+              <td>
+                ${renderSeatChecks(r.iso, "AM", r.seats.AM, seats)}
+              </td>
+
+              <td>
+                <select data-ops-unit data-iso="${esc(r.iso)}" data-shift="PM" style="width:100%;">${unitOptions}</select>
+              </td>
+              <td>
+                ${renderSeatChecks(r.iso, "PM", r.seats.PM, seats)}
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      <div class="hint" style="margin-top:8px;">
+        Blank values fall back to defaults. Everything here is supervisor-only data.
+      </div>
+    `;
+
+    // Set current values
+    $$("[data-ops-unit]").forEach(sel=>{
+      const iso = sel.dataset.iso;
+      const shift = sel.dataset.shift;
+      const val = (org.active_units_by_date?.[iso]?.[shift]) || "";
+      sel.value = val;
+      sel.onchange = ()=>{
+        org.active_units_by_date ||= {};
+        org.active_units_by_date[iso] ||= {};
+        org.active_units_by_date[iso][shift] = (sel.value || "").trim();
+        setDataStatus("warn","Unsaved changes","Ops units edited. Click Save.");
+        saveDraft();
+      };
+    });
+
+    // seat checkbox handlers
+    $$("[data-ops-seat]").forEach(cb=>{
+      cb.onchange = ()=>{
+        const iso = cb.dataset.iso;
+        const shift = cb.dataset.shift;
+        const code = cb.dataset.code;
+
+        org.active_seats_by_date ||= {};
+        org.active_seats_by_date[iso] ||= {};
+        const arr = Array.isArray(org.active_seats_by_date[iso][shift]) ? org.active_seats_by_date[iso][shift] : [];
+        const set = new Set(arr.map(String));
+        if(cb.checked) set.add(code);
+        else set.delete(code);
+        org.active_seats_by_date[iso][shift] = Array.from(set);
+
+        setDataStatus("warn","Unsaved changes","Ops seats edited. Click Save.");
+        saveDraft();
+      };
+    });
+
+    // Helper: copy week selections forward N weeks (inclusive, sequential)
+    function copyWeekForward(weeks){
+      org.active_units_by_date ||= {};
+      org.active_seats_by_date ||= {};
+
+      for(let w=1; w<=weeks; w++){
+        for(let i=0;i<7;i++){
+          const srcDate = addDays(weekStart, i);
+          const dstDate = addDays(weekStart, i + (w*7));
+          const srcIso = isoDate(srcDate);
+          const dstIso = isoDate(dstDate);
+
+          // Units
+          const srcUnits = org.active_units_by_date[srcIso] || {};
+          if(srcUnits.AM || srcUnits.PM){
+            org.active_units_by_date[dstIso] = {
+              AM: srcUnits.AM || "",
+              PM: srcUnits.PM || ""
+            };
+          }
+
+          // Seats
+          const srcSeats = org.active_seats_by_date[srcIso] || {};
+          if((srcSeats.AM && srcSeats.AM.length) || (srcSeats.PM && srcSeats.PM.length)){
+            org.active_seats_by_date[dstIso] = {
+              AM: Array.isArray(srcSeats.AM) ? deepCopy(srcSeats.AM) : [],
+              PM: Array.isArray(srcSeats.PM) ? deepCopy(srcSeats.PM) : []
+            };
+          }
+        }
+      }
+
+      setDataStatus("warn","Unsaved changes","Copied forward. Click Save.");
+      saveDraft();
+      alert(`Copied this week forward ${weeks} week(s). Click Save to push to Drive.`);
+    }
+
+    function renderSeatChecks(iso, shift, activeList, seatTemplates){
+      const active = new Set((activeList||[]).map(String));
+      if(!seatTemplates.length){
+        return `<span class="small">No seat templates yet (add in Units & Seats).</span>`;
+      }
+      return seatTemplates.map(s=>{
+        const code = String(s.code || "");
+        const label = s.label || code;
+        if(!code) return "";
+        const checked = active.has(code) ? "checked" : "";
+        return `
+          <label class="tag" style="cursor:pointer; user-select:none;">
+            <input type="checkbox" data-ops-seat data-iso="${esc(iso)}" data-shift="${esc(shift)}" data-code="${esc(code)}" ${checked}
+              style="margin-right:8px; vertical-align:middle;" />
+            <span class="mono">${esc(code)}</span> — ${esc(label)}
+          </label>
+        `;
+      }).join("");
+    }
   }
 
   function renderUnits(){

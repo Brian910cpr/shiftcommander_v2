@@ -21,7 +21,6 @@
     --y:#f59e0b;   /* yellow */
     --red:#dc2626; /* red */
     --gray:#94a3b8;
-    --past:#cbd5e1; /* subdued strip for past days */
   }
 
   body{
@@ -75,6 +74,12 @@
     box-shadow:var(--shadow);
     overflow:hidden;
     margin-bottom:12px;
+  }
+
+  .divider{
+    height:1px;
+    background: repeating-linear-gradient(90deg, var(--line), var(--line) 10px, transparent 10px, transparent 16px);
+    margin: 10px 0 14px 0;
   }
 
   .week-head{
@@ -195,14 +200,9 @@
 
   .today .tile{ outline:2px solid #0f172a; outline-offset:-2px; }
 
-  /* Past days: de-emphasize to highlight today + future */
-  .past{ opacity:.55; }
-
-  /* Heavy divider after last Published week */
-  .section-divider{
-    border-top:6px solid var(--line);
-    margin:14px 0 18px;
-  }
+  /* Past days (greyed out) */
+  .past{ opacity:.55; filter: grayscale(1); }
+  .past .health{ opacity:.75; }
 
   @media (max-width: 980px){
     .weekday-row{ display:none; }
@@ -230,20 +230,12 @@
 const STORE_URL = (location.hostname.endsWith("adr-fr.org"))
   ? "/api/store"
   : "https://adr-fr.org/api/store";
-// Defaults (may be overridden by org_settings.json)
-let USE_FIRST_NAME = true; // wallboard display: first name only
-let PLANNING_WEEKS = 4; // how many planning weeks to show
-let ARCHIVED_WEEKS = 1;
-let CONTROLLED_WEEKS = 2;
-let PUBLISHED_WEEKS = 2;
+const USE_FIRST_NAME = true; // wallboard display: first name only
+const PLANNING_WEEKS = 4; // how many planning weeks to show (Supervisor-only)
+// Public wallboard hides anything beyond PUBLISHED weeks.
+const SHOW_PLANNING = (new URLSearchParams(location.search).has("supervisor")) || !!localStorage.getItem("sc_token");
 const WEEK_START = 0; // 0=Sunday (ADR matches wallboard)
 const SHOW_WEEKDAY_HEADER = true;
-
-// UI behavior defaults (may be overridden by org_settings.json)
-let GREY_PAST_DAYS = true;
-let SHOW_HEALTH_FOR_PAST_DAYS = false;
-let SHOW_NEEDS_CONTROLLED_WEEK_INDEX = 1; // 0-based within Controlled block
-let SHOW_NEEDS_PLANNING_WEEK_INDEX = 0;   // 0-based within Planning block
 
 /** kind names in Apps Script */
 const KIND_SCHEDULE = "schedule"; // should return schedule.json contents
@@ -295,32 +287,6 @@ async function fetchJson(url){
     if(t.trim().startsWith("<!DOCTYPE html")) throw new Error("Upstream returned HTML (auth/cors/drive).");
     throw e;
   }
-}
-
-/** ========= ORG SETTINGS (optional) ========= **/
-async function loadOrgSettings(){
-  // Best-effort. If missing, we just use defaults.
-  try{
-    const r = await fetch("org_settings.json", { cache:"no-store" });
-    if(!r.ok) return;
-    const j = await r.json();
-    const ui = (j && j.ui) ? j.ui : {};
-    const w  = (j && j.weeks) ? j.weeks : {};
-
-    if(typeof ui.use_first_name_only === "boolean") USE_FIRST_NAME = ui.use_first_name_only;
-    if(typeof w.archived === "number")  ARCHIVED_WEEKS = w.archived;
-    if(typeof w.controlled === "number") CONTROLLED_WEEKS = w.controlled;
-    if(typeof w.published === "number")  PUBLISHED_WEEKS = w.published;
-    if(typeof w.planning === "number")   PLANNING_WEEKS = w.planning;
-
-    if(typeof ui.grey_past_days === "boolean") GREY_PAST_DAYS = ui.grey_past_days;
-    if(typeof ui.show_health_for_past_days === "boolean") SHOW_HEALTH_FOR_PAST_DAYS = ui.show_health_for_past_days;
-
-    if(ui.show_needs_in){
-      if(typeof ui.show_needs_in.controlled_week_index === "number") SHOW_NEEDS_CONTROLLED_WEEK_INDEX = ui.show_needs_in.controlled_week_index;
-      if(typeof ui.show_needs_in.planning_week_index === "number") SHOW_NEEDS_PLANNING_WEEK_INDEX = ui.show_needs_in.planning_week_index;
-    }
-  }catch(_e){ /* ignore */ }
 }
 
 /** ========= ROSTER MAP ========= **/
@@ -461,11 +427,6 @@ function healthColor(h){
   return "var(--gray)";
 }
 
-function isPastIso(iso, todayIso){
-  // iso is YYYY-MM-DD, so lexicographic compare works.
-  return iso < todayIso;
-}
-
 function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
   const weekEnd = addDays(weekStartDate, 6);
   const range = fmtRange(weekStartDate, weekEnd);
@@ -505,14 +466,12 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
     // optional caution flag if day has flags
     const hasCaution = Array.isArray(dayObj.flags) && dayObj.flags.length > 0;
 
-    const past = isPastIso(iso, todayIso);
     const day = document.createElement("div");
-    day.className = "day" + (iso===todayIso ? " today" : "") + ((opts.greyPastDays && past) ? " past" : "");
+    day.className = "day" + (iso===todayIso ? " today" : "") + (iso < todayIso ? " past" : "");
 
     const health = document.createElement("div");
     health.className = "health";
-    const showHealth = !(opts.greyPastDays && past && !opts.showHealthForPastDays);
-    health.style.background = showHealth ? healthColor(h) : "var(--past)";
+    health.style.background = healthColor(h);
 
     const tile = document.createElement("div");
     tile.className = "tile";
@@ -562,7 +521,6 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, opts={}){
 async function main(){
   const pill = document.getElementById("statusPill");
   try{
-    await loadOrgSettings();
     pill.textContent = "Loading schedule + roster…";
 
     const [scheduleResp, membersResp] = await Promise.all([
@@ -579,45 +537,43 @@ async function main(){
     const now = new Date();
     const thisWeekStart = startOfWeek(now);
 
-    // Build week starts based on org_settings.json
-    const archivedStart = addDays(thisWeekStart, -7 * ARCHIVED_WEEKS);
-    const controlledStart = thisWeekStart;
-    const publishedStart = addDays(controlledStart, 7 * CONTROLLED_WEEKS);
-    const planningStart  = addDays(publishedStart, 7 * PUBLISHED_WEEKS);
+    // Week offsets (from "this week")
+    const archivedStart   = addDays(thisWeekStart, -7);   // -1
+    const controlled0     = thisWeekStart;                // 0
+    const controlled1     = addDays(thisWeekStart,  7);   // +1 (show Needs)
+    const published2      = addDays(thisWeekStart, 14);   // +2
+    const published3      = addDays(thisWeekStart, 21);   // +3
 
-    // Header label (absolute week counts)
+    // Planning begins AFTER published weeks
+    const planningStart   = addDays(thisWeekStart, 28);   // +4
+
+    // Header label
     document.getElementById("rangeLabel").textContent =
-      `Archived (${ARCHIVED_WEEKS}) • Controlled (${CONTROLLED_WEEKS}) • Published (${PUBLISHED_WEEKS}) • Planning (${PLANNING_WEEKS})`;
+      SHOW_PLANNING
+        ? `Archived (-1) • Controlled (0,+1) • Published (+2,+3) • Planning (+4..+${3+PLANNING_WEEKS})`
+        : `Archived (-1) • Controlled (0,+1) • Published (+2,+3)`;
 
-    // Archived
-    for(let w=0; w<ARCHIVED_WEEKS; w++){
-      const ws = addDays(archivedStart, w*7);
-      renderWeekBlock(root, "", ws, schedule, roster, { sub:"Archived", greyPastDays:GREY_PAST_DAYS, showHealthForPastDays:SHOW_HEALTH_FOR_PAST_DAYS });
-    }
+    // Render blocks — no "Planning Week #" headers; dates are the primary header
+    renderWeekBlock(root, "", archivedStart, schedule, roster, { sub:"Archived" });
+    renderWeekBlock(root, "", controlled0,   schedule, roster, { sub:"Controlled" });
+    renderWeekBlock(root, "", controlled1,   schedule, roster, { sub:"Controlled", showNeeds:true });
 
-    // Controlled
-    for(let w=0; w<CONTROLLED_WEEKS; w++){
-      const ws = addDays(controlledStart, w*7);
-      const showNeeds = (w === SHOW_NEEDS_CONTROLLED_WEEK_INDEX);
-      renderWeekBlock(root, "", ws, schedule, roster, { sub:"Controlled", greyPastDays:GREY_PAST_DAYS, showHealthForPastDays:SHOW_HEALTH_FOR_PAST_DAYS, showNeeds });
-    }
+    renderWeekBlock(root, "", published2,    schedule, roster, { sub:"Published" });
+    renderWeekBlock(root, "", published3,    schedule, roster, { sub:"Published" });
 
-    // Published
-    for(let w=0; w<PUBLISHED_WEEKS; w++){
-      const ws = addDays(publishedStart, w*7);
-      renderWeekBlock(root, "", ws, schedule, roster, { sub:"Published", greyPastDays:GREY_PAST_DAYS, showHealthForPastDays:SHOW_HEALTH_FOR_PAST_DAYS });
-    }
+    // Visual end-of-published line
+    const div = document.createElement("div");
+    div.className = "divider";
+    root.appendChild(div);
 
-    // Heavy line after last Published week
-    const divider = document.createElement("div");
-    divider.className = "section-divider";
-    root.appendChild(divider);
+    // Planning weeks are Supervisor-only
+    if(SHOW_PLANNING){
 
-    // Planning
-    for(let w=0; w<PLANNING_WEEKS; w++){
-      const ws = addDays(planningStart, w*7);
-      const showNeeds = (w === SHOW_NEEDS_PLANNING_WEEK_INDEX);
-      renderWeekBlock(root, "", ws, schedule, roster, { sub:"Planning", showNeeds, greyPastDays:GREY_PAST_DAYS, showHealthForPastDays:SHOW_HEALTH_FOR_PAST_DAYS });
+      for(let w=0; w<PLANNING_WEEKS; w++){
+        const ws = addDays(planningStart, w*7);
+        const isFirstPlanning = (w === 0); // show Needs only here
+        renderWeekBlock(root, "", ws, schedule, roster, { sub:"Planning", showNeeds:isFirstPlanning });
+      }
     }
 
     pill.textContent = "Live";
