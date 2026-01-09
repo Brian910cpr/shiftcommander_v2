@@ -1673,7 +1673,23 @@
     return set.map(q => `<span class="tag mono">${esc(q)}</span>`).join("");
   }
 
-  function esc(s){
+  
+  function serializeSeatRules(seat){
+    // Return a JSON string of non-basic fields so they can be preserved via the editor.
+    try{
+      const baseKeys = new Set(["code","label","required_qual"]);
+      const out = {};
+      for(const [k,v] of Object.entries(seat || {})){
+        if(baseKeys.has(k)) continue;
+        out[k] = v;
+      }
+      return Object.keys(out).length ? JSON.stringify(out, null, 2) : "";
+    }catch(_e){
+      return "";
+    }
+  }
+
+function esc(s){
     return String(s ?? "").replace(/[&<>"']/g, (c)=>({
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
     }[c]));
@@ -2005,6 +2021,11 @@
         <input id="s_req" class="mono" placeholder="qual_FTO or qual_student (optional)" />
         <div class="hint" style="margin-top:8px;">Leave blank if no strict requirement. Keep strict rules rare.</div>
       </div>
+
+      <div class="field full"><label>Advanced rules (JSON, optional)</label>
+        <textarea id="s_rules" class="mono" placeholder='{"eligibility":{"anyOf":["..."]},"constraints":[...],"preference":{...},"meta":{...}}'></textarea>
+        <div class="hint" style="margin-top:8px;">Optional. If provided, it will be merged into the seat template object and preserved on edits.</div>
+      </div>
     `;
     openModal("Add seat template", body, ()=>{
       const s = {
@@ -2012,6 +2033,20 @@
         label: ($("#s_label").value||"").trim(),
         required_qual: ($("#s_req").value||"").trim()
       };
+
+      // Advanced JSON (optional) — merge into template without losing future fields
+      const rawRules = ($("#s_rules") ? ($("#s_rules").value||"").trim() : "");
+      if(rawRules){
+        try{
+          const rules = JSON.parse(rawRules);
+          if(rules && typeof rules === "object"){
+            Object.assign(s, rules);
+          }
+        }catch(e){
+          alert("Advanced rules must be valid JSON.");
+          return;
+        }
+      }
       if(!s.code){ alert("Seat code required."); return; }
       app.data.org_settings.seat_templates.push(s);
       setDataStatus("warn","Unsaved changes","Seat template added. Click Save.");
@@ -2031,6 +2066,11 @@
         <input id="s_req" class="mono" value="${esc(s.required_qual||"")}" />
         <div class="hint" style="margin-top:8px;">Leave blank if no strict requirement.</div>
       </div>
+
+      <div class="field full"><label>Advanced rules (JSON, optional)</label>
+        <textarea id="s_rules" class="mono">${esc(serializeSeatRules(s))}</textarea>
+        <div class="hint" style="margin-top:8px;">Optional. These fields are preserved even if the main UI doesn’t use them yet.</div>
+      </div>
     `;
     openModal("Edit seat template", body, ()=>{
       const updated = {
@@ -2039,7 +2079,25 @@
         required_qual: ($("#s_req").value||"").trim()
       };
       if(!updated.code){ alert("Seat code required."); return; }
-      app.data.org_settings.seat_templates[idx] = updated;
+
+      // Preserve any advanced fields already on the seat template
+      const merged = { ...(app.data.org_settings.seat_templates[idx] || {}), ...updated };
+
+      // Advanced JSON (optional)
+      const rawRules = ($("#s_rules") ? ($("#s_rules").value||"").trim() : "");
+      if(rawRules){
+        try{
+          const rules = JSON.parse(rawRules);
+          if(rules && typeof rules === "object"){
+            Object.assign(merged, rules);
+          }
+        }catch(e){
+          alert("Advanced rules must be valid JSON.");
+          return;
+        }
+      }
+
+      app.data.org_settings.seat_templates[idx] = merged;
       setDataStatus("warn","Unsaved changes","Seat template updated. Click Save.");
       saveDraft();
       closeModal();
