@@ -427,12 +427,13 @@ function healthColor(h){
   if(h==="YELLOW") return "var(--y)";
   if(h==="RED") return "var(--red)";
   return "var(--gray)";
+}
 
 // ---- TRUCK LABEL (from org_settings.active_units_by_date) ----
 function digitsFromUnit(unitId){
   const s = String(unitId || "").trim();
   if(!s) return "";
-  const m = s.match(/(\d{2,4})/); // grab 2-4 digit truck number if present
+  const m = s.match(/(\d{3})(?!\d)/); // grab 3-digit truck number if present
   return m ? m[1] : s; // fallback to full string
 }
 function truckLabelForDate(iso, org){
@@ -444,7 +445,6 @@ function truckLabelForDate(iso, org){
   if(a && (!p || p === a)) return a;
   if(!a && p) return p;
   return a + "/" + p;
-}
 }
 
 function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts={}){
