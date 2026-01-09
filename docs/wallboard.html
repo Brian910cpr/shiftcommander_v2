@@ -209,6 +209,8 @@
     .weekday-row{ display:none; }
     .grid{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
   }
+
+  #root{ transition: opacity .22s ease; }
 </style>
 </head>
 <body>
@@ -236,6 +238,11 @@ const PLANNING_WEEKS = 0; // planning hidden on public wallboard
 const SHOW_PLANNING = false; // public wallboard never shows planning
 const WEEK_START = 0; // 0=Sunday (ADR matches wallboard)
 const SHOW_WEEKDAY_HEADER = true;
+
+// Auto-refresh (keeps board current without frequent flashing)
+// 5 minutes is a good default for public displays.
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
 
 /** kind names in Apps Script */
 const KIND_SCHEDULE = "schedule"; // should return schedule.json contents
@@ -540,67 +547,122 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
 }
 
 /** ========= MAIN ========= **/
-async function main(){
-  const pill = document.getElementById("statusPill");
+async function loadData(){
+  const [scheduleResp, membersResp] = await Promise.all([
+    fetchJson(storeUrl(KIND_SCHEDULE)),
+    fetchJson(storeUrl(KIND_MEMBERS))
+  ]);
+
+  // org_settings is optional (used for truck labels)
+  let org = {};
   try{
-    pill.textContent = "Loading schedule + roster…";
+    const orgResp = await fetchJson(storeUrl(KIND_ORG));
+    org = (orgResp && orgResp.payload) ? orgResp.payload : (orgResp || {});
+  }catch(_e){ org = {}; }
 
-    const [scheduleResp, membersResp] = await Promise.all([
-      fetchJson(storeUrl(KIND_SCHEDULE)),
-      fetchJson(storeUrl(KIND_MEMBERS))
-    ]);
+  const schedule = (scheduleResp && scheduleResp.payload) ? scheduleResp.payload : scheduleResp;
+  const roster   = buildRosterIndex(membersResp);
+  return { schedule, roster, org };
+}
 
-    // org_settings is optional (used for truck labels)
-    let org = {};
-    try{
-      const orgResp = await fetchJson(storeUrl(KIND_ORG));
-      org = (orgResp && orgResp.payload) ? orgResp.payload : (orgResp || {});
-    }catch(_e){ org = {}; }
+function hashLite(obj){
+  // Simple stable-ish hash to avoid re-rendering when nothing changed.
+  // (Not cryptographic; just reduces unnecessary redraw.)
+  try{
+    const s = JSON.stringify(obj);
+    let h = 0;
+    for(let i=0;i<s.length;i++){
+      h = ((h<<5) - h) + s.charCodeAt(i);
+      h |= 0;
+    }
+    return String(h);
+  }catch(_e){
+    return String(Date.now());
+  }
+}
 
-    const schedule = (scheduleResp && scheduleResp.payload) ? scheduleResp.payload : scheduleResp;
-    const roster   = buildRosterIndex(membersResp);
+function renderAll(root, schedule, roster, org){
+  root.innerHTML = "";
 
-    const root = document.getElementById("root");
-    root.innerHTML = "";
+  const now = new Date();
+  const thisWeekStart = startOfWeek(now);
 
-    const now = new Date();
-    const thisWeekStart = startOfWeek(now);
+  // Week offsets (from "this week")
+  const archivedStart   = addDays(thisWeekStart, -7);   // -1
+  const controlled0     = thisWeekStart;                // 0
+  const controlled1     = addDays(thisWeekStart,  7);   // +1 (show Needs)
+  const published2      = addDays(thisWeekStart, 14);   // +2
+  const published3      = addDays(thisWeekStart, 21);   // +3
 
-    // Week offsets (from "this week")
-    const archivedStart   = addDays(thisWeekStart, -7);   // -1
-    const controlled0     = thisWeekStart;                // 0
-    const controlled1     = addDays(thisWeekStart,  7);   // +1 (show Needs)
-    const published2      = addDays(thisWeekStart, 14);   // +2
-    const published3      = addDays(thisWeekStart, 21);   // +3
-    // Header label
-    document.getElementById("rangeLabel").textContent = `Archived (-1) • Controlled (0,+1) • Published (+2,+3)`;
+  // Header label
+  document.getElementById("rangeLabel").textContent = `Archived (-1) • Controlled (0,+1) • Published (+2,+3)`;
 
-    // Render blocks — no "Planning Week #" headers; dates are the primary header
-    renderWeekBlock(root, "", archivedStart, schedule, roster, org, { sub:"Archived" });
-    renderWeekBlock(root, "", controlled0, schedule, roster, org, { sub:"Controlled" });
-    renderWeekBlock(root, "", controlled1, schedule, roster, org, { sub:"Controlled", showNeeds:true });
+  // Render blocks
+  renderWeekBlock(root, "", archivedStart, schedule, roster, org, { sub:"Archived" });
+  renderWeekBlock(root, "", controlled0, schedule, roster, org, { sub:"Controlled" });
+  renderWeekBlock(root, "", controlled1, schedule, roster, org, { sub:"Controlled", showNeeds:true });
 
-    renderWeekBlock(root, "", published2, schedule, roster, org, { sub:"Published" });
-    renderWeekBlock(root, "", published3, schedule, roster, org, { sub:"Published" });
+  renderWeekBlock(root, "", published2, schedule, roster, org, { sub:"Published" });
+  renderWeekBlock(root, "", published3, schedule, roster, org, { sub:"Published" });
 
-    // Visual end-of-published line
-    const div = document.createElement("div");
-    div.className = "divider";
-    root.appendChild(div);
+  // Visual end-of-published line
+  const div = document.createElement("div");
+  div.className = "divider";
+  root.appendChild(div);
+}
+
+async function refreshBoard({initial=false}={}){
+  const pill = document.getElementById("statusPill");
+  const root = document.getElementById("root");
+
+  try{
+    if(initial){
+      pill.textContent = "Loading schedule + roster…";
+    }else{
+      pill.textContent = "Refreshing…";
+    }
+
+    const data = await loadData();
+
+    // Only re-render if something actually changed
+    window.__sc_lastHash ||= "";
+    const h = hashLite({ schedule: data.schedule, roster: data.roster, org: data.org });
+    if(!initial && h === window.__sc_lastHash){
+      pill.textContent = "Live";
+      pill.style.color = "#166534";
+      return;
+    }
+    window.__sc_lastHash = h;
+
+    // Build off-DOM then swap with a gentle fade (reduces “flash”)
+    const temp = document.createElement("div");
+    renderAll(temp, data.schedule, data.roster, data.org);
+
+    if(!initial){
+      root.style.opacity = "0.18";
+      setTimeout(()=>{
+        root.innerHTML = temp.innerHTML;
+        root.style.opacity = "1";
+      }, 180);
+    }else{
+      root.innerHTML = temp.innerHTML;
+      root.style.opacity = "1";
+    }
+
     pill.textContent = "Live";
     pill.style.color = "#166534";
   }catch(err){
     console.error(err);
     pill.textContent = "Load failed";
     pill.style.color = "#b91c1c";
-    const root = document.getElementById("root");
     root.innerHTML = `<div class="pill" style="border-color:#fecaca;color:#b91c1c">
       ${escapeHtml(String(err.message || err))}
     </div>`;
   }
 }
 
-main();
+refreshBoard({initial:true});
+setInterval(()=> refreshBoard({initial:false}), AUTO_REFRESH_MS);
 </script>
 </body>
 </html>
