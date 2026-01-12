@@ -627,6 +627,8 @@
     app.data.org_settings.qualifications ||= [];
     app.data.org_settings.units ||= [];
     app.data.org_settings.seat_templates ||= [];
+    app.data.org_settings.seat_plans ||= [];
+    app.data.org_settings.first_out_rotation ||= { enabled:false, units:[], anchor_saturday:"", anchor_first_unit:"" };
 
     // Ops planner data (per-date)
     app.data.org_settings.active_units_by_date ||= {};
@@ -1213,7 +1215,7 @@
     const weekLabel = weekStart.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
 
     const unitOptions = [`<option value="">(none)</option>`]
-      .concat(units.map(u => `<option value="${esc(u.unit_id)}">${esc(u.unit_id)} — ${esc(u.name||u.unit_id)}</option>`))
+      .concat(units.filter(u=> u.is_schedulable!==false && (u.status||"ACTIVE")==="ACTIVE").map(u => `<option value="${esc(u.unit_id)}">${esc(u.unit_id)} — ${esc(u.name||u.unit_id)}</option>`))
       .join("");
 
     function dayUnits(iso){
@@ -1255,6 +1257,35 @@
           <div class="hint" style="margin-top:8px;">
             Tip: Set defaults, then use <strong>Fill week from defaults</strong> to populate dates.
           </div>
+
+          <div class="divider" style="margin:12px 0;"></div>
+          <div class="hint" style="margin-bottom:8px;"><strong>Saturday 1st-out Ambulance rotation</strong> (ADR rule)</div>
+          <div class="row" style="gap:10px; align-items:flex-end;">
+            <div style="flex:1; min-width:180px;">
+              <div class="small" style="margin-bottom:6px;">Enable</div>
+              <select id="rotEnabled" style="width:100%;">
+                <option value="N">N</option>
+                <option value="Y">Y</option>
+              </select>
+            </div>
+            <div style="flex:2; min-width:240px;">
+              <div class="small" style="margin-bottom:6px;">Rotation units (ambulances)</div>
+              <select id="rotUnits" multiple size="4" style="width:100%;"></select>
+            </div>
+            <div style="flex:2; min-width:220px;">
+              <div class="small" style="margin-bottom:6px;">Anchor Saturday</div>
+              <input id="rotAnchor" type="date" style="width:100%;" />
+              <div class="small" style="margin-top:6px;">(The Saturday where <em>Anchor first unit</em> is 1st-out.)</div>
+            </div>
+            <div style="flex:2; min-width:220px;">
+              <div class="small" style="margin-bottom:6px;">Anchor first unit</div>
+              <select id="rotFirst" style="width:100%;"></select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn" id="rotSave">Save rotation</button>
+          </div>
+
           <div class="row" style="margin-top:10px;">
             <button class="btn" id="opsSaveDefaults">Save defaults</button>
             <button class="btn primary" id="opsFillWeek">Fill week from defaults</button>
@@ -1287,6 +1318,59 @@
     const def = org.ops_defaults || { units:{AM:"",PM:""}, seats:{AM:[],PM:[]} };
     $("#opsDefUnitAM").value = def.units?.AM || "";
     $("#opsDefUnitPM").value = def.units?.PM || "";
+    // Rotation controls (Saturday 1st-out ambulance)
+    const rot = org.first_out_rotation || { enabled:false, units:[], anchor_saturday:"", anchor_first_unit:"" };
+    $("#rotEnabled").value = rot.enabled ? "Y" : "N";
+
+    // Populate ambulance units
+    const ambUnits = units.filter(u => (u.type||"").toLowerCase()==="ambulance");
+    const rotUnitsSel = $("#rotUnits");
+    rotUnitsSel.innerHTML = ambUnits.map(u=>{
+      const id = String(u.unit_id);
+      const sel = (rot.units||[]).map(String).includes(id) ? "selected" : "";
+      return `<option value="${esc(id)}" ${sel}>${esc(id)} — ${esc(u.name||id)}</option>`;
+    }).join("");
+
+    const rotFirstSel = $("#rotFirst");
+    rotFirstSel.innerHTML = [`<option value="">(choose)</option>`].concat(
+      ambUnits.map(u=>{
+        const id = String(u.unit_id);
+        const sel = (rot.anchor_first_unit===id) ? "selected" : "";
+        return `<option value="${esc(id)}" ${sel}>${esc(id)} — ${esc(u.name||id)}</option>`;
+      })
+    ).join("");
+    $("#rotAnchor").value = rot.anchor_saturday || "";
+
+    $("#rotSave").onclick = ()=>{
+      org.first_out_rotation ||= { enabled:false, units:[], anchor_saturday:"", anchor_first_unit:"" };
+      org.first_out_rotation.enabled = ($("#rotEnabled").value === "Y");
+      org.first_out_rotation.units = Array.from(rotUnitsSel.selectedOptions).map(o=>o.value);
+      org.first_out_rotation.anchor_saturday = ($("#rotAnchor").value||"").trim();
+      org.first_out_rotation.anchor_first_unit = ($("#rotFirst").value||"").trim();
+      setDataStatus("warn","Unsaved changes","Rotation updated. Click Save.");
+      saveDraft();
+      alert("Rotation saved (local). Click Save to push to Drive.");
+    };
+
+    function saturdayFirstOutUnit(dateObj){
+      const cfg = org.first_out_rotation || {};
+      if(!cfg.enabled) return "";
+      const list = Array.isArray(cfg.units) ? cfg.units.map(String) : [];
+      if(list.length < 1) return "";
+      const anchorIso = (cfg.anchor_saturday||"").trim();
+      const anchorFirst = (cfg.anchor_first_unit||"").trim();
+      if(!anchorIso || !anchorFirst) return "";
+      const anchorIndex = list.indexOf(anchorFirst);
+      if(anchorIndex < 0) return "";
+      // compute week offset from anchor Saturday
+      const msPerWeek = 7*24*60*60*1000;
+      const a = new Date(anchorIso + "T12:00:00").getTime();
+      const b = new Date(isoDate(dateObj) + "T12:00:00").getTime();
+      const w = Math.round((b - a)/msPerWeek);
+      const idx = (anchorIndex + (w % list.length) + list.length) % list.length;
+      return list[idx];
+    }
+
 
     $("#opsPrevWeek").onclick = ()=>{
       app.ui.opsWeekStartIso = isoDate(addDays(weekStart, -7));
@@ -1318,6 +1402,16 @@
         org.active_units_by_date[iso] ||= {};
         if(!org.active_units_by_date[iso].AM) org.active_units_by_date[iso].AM = d.units?.AM || "";
         if(!org.active_units_by_date[iso].PM) org.active_units_by_date[iso].PM = d.units?.PM || "";
+
+        // ADR rule: Saturday 1st-out ambulance rotation (optional)
+        if(day.getDay() === 6){
+          const firstOut = saturdayFirstOutUnit(day);
+          if(firstOut){
+            // Only apply rotation if the slot is blank (supervisor can still override manually)
+            if(!org.active_units_by_date[iso].AM) org.active_units_by_date[iso].AM = firstOut;
+            if(!org.active_units_by_date[iso].PM) org.active_units_by_date[iso].PM = firstOut;
+          }
+        }
 
         org.active_seats_by_date[iso] ||= {};
         if(!Array.isArray(org.active_seats_by_date[iso].AM) || !org.active_seats_by_date[iso].AM.length){
@@ -1372,14 +1466,14 @@
                 <select data-ops-unit data-iso="${esc(r.iso)}" data-shift="AM" style="width:100%;">${unitOptions}</select>
               </td>
               <td>
-                ${renderSeatChecks(r.iso, "AM", r.seats.AM, seats)}
+                ${renderSeatChecks(r.iso, "AM", r.seats.AM, seats, r.units.AM)}
               </td>
 
               <td>
                 <select data-ops-unit data-iso="${esc(r.iso)}" data-shift="PM" style="width:100%;">${unitOptions}</select>
               </td>
               <td>
-                ${renderSeatChecks(r.iso, "PM", r.seats.PM, seats)}
+                ${renderSeatChecks(r.iso, "PM", r.seats.PM, seats, r.units.PM)}
               </td>
             </tr>
           `).join("")}
@@ -1400,6 +1494,26 @@
         org.active_units_by_date ||= {};
         org.active_units_by_date[iso] ||= {};
         org.active_units_by_date[iso][shift] = (sel.value || "").trim();
+        // If this unit has a seat plan, auto-ensure required seats are ON (and defaults if empty).
+        try{
+          const unitId = org.active_units_by_date[iso][shift];
+          const plan = getPlanForUnit(unitId);
+          if(plan && Array.isArray(plan.seats)){
+            org.active_seats_by_date ||= {};
+            org.active_seats_by_date[iso] ||= {};
+            const cur = Array.isArray(org.active_seats_by_date[iso][shift]) ? org.active_seats_by_date[iso][shift].map(String) : [];
+            const set = new Set(cur);
+            const hasAny = set.size > 0;
+            for(const ps of plan.seats){
+              const code = String(ps.code||ps.template||"").trim();
+              if(!code) continue;
+              if(ps.required === true) set.add(code);
+              else if(!hasAny && ps.default_on === true) set.add(code);
+            }
+            org.active_seats_by_date[iso][shift] = Array.from(set);
+          }
+        }catch(_e){}
+
         setDataStatus("warn","Unsaved changes","Ops units edited. Click Save.");
         saveDraft();
       };
@@ -1462,33 +1576,66 @@
       alert(`Copied this week forward ${weeks} week(s). Click Save to push to Drive.`);
     }
 
-    function renderSeatChecks(iso, shift, activeList, seatTemplates){
+    
+    function getPlanForUnit(unitId){
+      if(!unitId) return null;
+      const u = units.find(x => String(x.unit_id) === String(unitId));
+      if(!u) return null;
+      const pid = (u.seat_plan_id || "").trim();
+      if(!pid) return null;
+      const plans = Array.isArray(org.seat_plans) ? org.seat_plans : [];
+      return plans.find(p => String(p.plan_id) === String(pid)) || null;
+    }
+
+    function renderSeatChecks(iso, shift, activeList, seatTemplates, unitId){
       const active = new Set((activeList||[]).map(String));
-      if(!seatTemplates.length){
+      const plan = getPlanForUnit(unitId);
+      const planSeats = plan && Array.isArray(plan.seats) ? plan.seats : null;
+
+      // If a seat plan exists, only show seats in that plan.
+      const showSeats = planSeats ? planSeats.map(ps=>{
+        const code = String(ps.code||ps.template||"").trim();
+        const required = ps.required === true;
+        const default_on = ps.default_on === true;
+        return { code, required, default_on };
+      }).filter(x=>x.code) : seatTemplates.map(t=>({ code:String(t.code||"").trim(), required:false, default_on:false })).filter(x=>x.code);
+
+      if(!showSeats.length){
         return `<span class="small">No seat templates yet (add in Units & Seats).</span>`;
       }
-      return seatTemplates.map(s=>{
-        const code = String(s.code || "");
-        const label = s.label || code;
-        if(!code) return "";
-        const checked = active.has(code) ? "checked" : "";
+
+      // Always show required seats as checked+locked, even if not in active_seats_by_date.
+      return showSeats.map(ss=>{
+        const code = ss.code;
+        const t = seatTemplates.find(x => String(x.code) === code) || {};
+        const label = t.label || code;
+
+        const isRequired = !!ss.required;
+        const checked = (isRequired || active.has(code)) ? "checked" : "";
+        const disabled = isRequired ? "disabled" : "";
+        const reqBadge = isRequired ? " <span class=\"small\">(req)</span>" : "";
+
         return `
-          <label class="tag" style="cursor:pointer; user-select:none;">
-            <input type="checkbox" data-ops-seat data-iso="${esc(iso)}" data-shift="${esc(shift)}" data-code="${esc(code)}" ${checked}
+          <label class="tag" style="cursor:${isRequired?'not-allowed':'pointer'}; user-select:none;">
+            <input type="checkbox" data-ops-seat data-iso="${esc(iso)}" data-shift="${esc(shift)}" data-code="${esc(code)}" ${checked} ${disabled}
               style="margin-right:8px; vertical-align:middle;" />
-            <span class="mono">${esc(code)}</span> — ${esc(label)}
+            <span class="mono">${esc(code)}</span> — ${esc(label)}${reqBadge}
           </label>
         `;
-      }).join("");
+      }).join(" ");
     }
+
   }
 
   function renderUnits(){
     const org = app.data.org_settings || {};
     const units = Array.isArray(org.units) ? org.units : [];
     const seatTemplates = Array.isArray(org.seat_templates) ? org.seat_templates : [];
+    const seatPlans = Array.isArray(org.seat_plans) ? org.seat_plans : [];
 
     const uFiltered = units.filter(u => matchesSearch([u.unit_id,u.name,u.type].join(" ")));
+    const planFiltered = seatPlans.filter(p => matchesSearch([p.plan_id,p.name,p.type].join(" ")));
+
     const sFiltered = seatTemplates.filter(s => matchesSearch([s.code,s.label,s.required_qual].join(" ")));
 
     el.panelBody.innerHTML = `
@@ -1497,6 +1644,7 @@
         <span class="spacer"></span>
         <button class="btn primary" id="btnAddUnit">Add unit</button>
         <button class="btn primary" id="btnAddSeat">Add seat template</button>
+        <button class="btn primary" id="btnAddPlan">Add seat plan</button>
       </div>
 
       <div class="row" style="align-items:stretch;">
@@ -1504,13 +1652,18 @@
           <label>Units</label>
           <div class="hint" style="margin-bottom:8px;">Example: AMB-1, AMB-2, QRV, Utility…</div>
           <table>
-            <thead><tr><th>Unit ID</th><th>Name</th><th>Type</th><th></th></tr></thead>
+            <thead><tr>
+              <th>Unit ID</th><th>Name</th><th>Type</th><th>Seat Plan</th><th>Operator qual</th><th>Sched?</th><th></th>
+            </tr></thead>
             <tbody>
               ${uFiltered.map((u,i)=>`
                 <tr>
                   <td class="mono">${esc(u.unit_id||"")}</td>
                   <td>${esc(u.name||"")}</td>
                   <td>${esc(u.type||"")}</td>
+                  <td class="mono">${esc(u.seat_plan_id||"")}</td>
+                  <td class="mono">${esc(u.operator_qual_key||"")}</td>
+                  <td class="mono">${esc((u.is_schedulable===false) ? "N" : "Y")}</td>
                   <td><button class="btn" data-u-edit="${i}">Edit</button> <button class="btn danger" data-u-del="${i}">Delete</button></td>
                 </tr>
               `).join("")}
@@ -1518,7 +1671,29 @@
           </table>
         </div>
 
+        
         <div class="field" style="flex:1; min-width:320px;">
+          <label>Seat plans</label>
+          <div class="hint" style="margin-bottom:8px;">
+            Define per-truck layouts (required vs optional seats). Units reference a seat plan.
+          </div>
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Seats</th><th></th></tr></thead>
+            <tbody>
+              ${planFiltered.map((p,i)=>`
+                <tr>
+                  <td class="mono">${esc(p.plan_id||"")}</td>
+                  <td>${esc(p.name||"")}</td>
+                  <td class="mono">${esc(p.type||"")}</td>
+                  <td>${renderPlanSeatBadges(p)}</td>
+                  <td><button class="btn" data-p-edit="${i}">Edit</button> <button class="btn danger" data-p-del="${i}">Delete</button></td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+
+<div class="field" style="flex:1; min-width:320px;">
           <label>Seat templates</label>
           <div class="hint" style="margin-bottom:8px;">
             Keep this small & stable: attendant, operator, third_rider, firefighter, officer.
@@ -1542,6 +1717,11 @@
 
     $("#btnAddUnit").onclick = ()=> openModalUnitCreate();
     $("#btnAddSeat").onclick = ()=> openModalSeatCreate();
+
+    $("#btnAddPlan").onclick = ()=> openModalPlanCreate();
+
+    $$("[data-p-edit]").forEach(b => b.onclick = ()=> openModalPlanEdit(Number(b.dataset.pEdit)));
+    $$("[data-p-del]").forEach(b => b.onclick = ()=> deletePlan(Number(b.dataset.pDel)));
 
     $$("[data-u-edit]").forEach(b => b.onclick = ()=> openModalUnitEdit(Number(b.dataset.uEdit)));
     $$("[data-u-del]").forEach(b => b.onclick = ()=> deleteUnit(Number(b.dataset.uDel)));
@@ -1674,6 +1854,17 @@
   }
 
   
+  function renderPlanSeatBadges(plan){
+    const seats = Array.isArray(plan?.seats) ? plan.seats : [];
+    if(!seats.length) return `<span class="small">—</span>`;
+    return seats.map(s=>{
+      const code = String(s.code||s.template||"").trim();
+      if(!code) return "";
+      const req = (s.required === true) ? " (req)" : "";
+      return `<span class="tag mono">${esc(code)}${esc(req)}</span>`;
+    }).join("");
+  }
+
   function serializeSeatRules(seat){
     // Return a JSON string of non-basic fields so they can be preserved via the editor.
     try{
@@ -1947,7 +2138,19 @@ function esc(s){
     };
   }
 
-  function memberSelect(id, selectedId){
+  
+  function seatPlanSelect(id, selectedId){
+    const plans = (app.data.org_settings.seat_plans || []);
+    const options = plans.map(p=>{
+      const pid = String(p.plan_id||"").trim();
+      const label = (p.name || pid);
+      const sel = String(selectedId||"") === pid ? "selected" : "";
+      return `<option value="${esc(pid)}" ${sel}>${esc(pid)} — ${esc(label)}</option>`;
+    }).join("");
+    return `<select id="${esc(id)}"><option value="">(none)</option>${options}</select>`;
+  }
+
+function memberSelect(id, selectedId){
     const options = (app.data.members || []).map(m => {
       const mid = String(m.member_id);
       const sel = String(selectedId||"") === mid ? "selected" : "";
@@ -1959,15 +2162,35 @@ function esc(s){
   // Unit / seat / qual modals
   function openModalUnitCreate(){
     const body = `
-      <div class="field"><label>Unit ID</label><input id="u_id" class="mono" placeholder="AMB-1" /></div>
-      <div class="field"><label>Name</label><input id="u_name" placeholder="Ambulance 1" /></div>
+      <div class="field"><label>Unit ID</label><input id="u_id" class="mono" placeholder="T128" /></div>
+      <div class="field"><label>Name</label><input id="u_name" placeholder="Tanker 128" /></div>
+
       <div class="field full"><label>Type</label>
         <select id="u_type">
-          <option value="ambulance">ambulance</option>
-          <option value="qrv">qrv</option>
-          <option value="utility">utility</option>
-          <option value="engine">engine</option>
-          <option value="truck">truck</option>
+          ${["ambulance","engine","tanker","brush","ladder","qrv","utility","other"].map(t=>`<option value="${t}">${t}</option>`).join("")}
+        </select>
+      </div>
+
+      <div class="field full"><label>Seat plan</label>
+        ${seatPlanSelect("u_plan","")}
+      </div>
+
+      <div class="field"><label>Operator qual key (per-unit)</label>
+        <input id="u_opq" class="mono" placeholder="qual_driver_128" />
+        <div class="hint" style="margin-top:8px;">Used for Operator/Driver seats that require unit-specific clearance.</div>
+      </div>
+
+      <div class="field"><label>Schedulable?</label>
+        <select id="u_sched">
+          <option value="Y">Y (show in Ops Planner)</option>
+          <option value="N">N (hide unless activated later)</option>
+        </select>
+      </div>
+
+      <div class="field"><label>Status</label>
+        <select id="u_status">
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="INACTIVE">INACTIVE</option>
         </select>
       </div>
     `;
@@ -1975,7 +2198,11 @@ function esc(s){
       const unit = {
         unit_id: ($("#u_id").value||"").trim(),
         name: ($("#u_name").value||"").trim(),
-        type: ($("#u_type").value||"").trim()
+        type: ($("#u_type").value||"").trim(),
+        seat_plan_id: ($("#u_plan").value||"").trim(),
+        operator_qual_key: ($("#u_opq").value||"").trim(),
+        is_schedulable: ($("#u_sched").value||"Y") !== "N",
+        status: ($("#u_status").value||"ACTIVE").trim() || "ACTIVE"
       };
       if(!unit.unit_id){ alert("Unit ID required."); return; }
       app.data.org_settings.units.push(unit);
@@ -2002,7 +2229,11 @@ function esc(s){
       const unit = {
         unit_id: ($("#u_id").value||"").trim(),
         name: ($("#u_name").value||"").trim(),
-        type: ($("#u_type").value||"").trim()
+        type: ($("#u_type").value||"").trim(),
+        seat_plan_id: ($("#u_plan").value||"").trim(),
+        operator_qual_key: ($("#u_opq").value||"").trim(),
+        is_schedulable: ($("#u_sched").value||"Y") !== "N",
+        status: ($("#u_status").value||"ACTIVE").trim() || "ACTIVE"
       };
       if(!unit.unit_id){ alert("Unit ID required."); return; }
       app.data.org_settings.units[idx] = unit;
@@ -2104,6 +2335,159 @@ function esc(s){
       renderUnits();
     });
   }
+
+  
+  // Seat Plan modals (guided)
+  function openModalPlanCreate(){
+    const body = `
+      <div class="field"><label>Plan ID</label><input id="p_id" class="mono" placeholder="plan_tanker_standard" /></div>
+      <div class="field"><label>Name</label><input id="p_name" placeholder="Tanker (Operator req, Officer optional)" /></div>
+      <div class="field full"><label>Type</label>
+        <select id="p_type">
+          ${["ambulance","engine","tanker","brush","ladder","qrv","other"].map(t=>`<option value="${t}">${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field full">
+        <label>Seats in this plan</label>
+        <div class="hint" style="margin-bottom:8px;">Check seats to include. Required seats are locked on in Ops Planner; optional seats can be toggled per shift.</div>
+        ${planSeatChecklist("p_seats", [])}
+      </div>
+    `;
+    openModal("Add seat plan", body, ()=>{
+      const plan = collectPlanFromModal(null);
+      if(!plan) return;
+      app.data.org_settings.seat_plans.push(plan);
+      setDataStatus("warn","Unsaved changes","Seat plan added. Click Save.");
+      saveDraft();
+      closeModal();
+      renderUnits();
+    });
+    attachPlanChecklistHandlers();
+  }
+
+  function openModalPlanEdit(idx){
+    const p = app.data.org_settings.seat_plans[idx];
+    if(!p) return;
+    const body = `
+      <div class="field"><label>Plan ID</label><input id="p_id" class="mono" value="${esc(p.plan_id||"")}" /></div>
+      <div class="field"><label>Name</label><input id="p_name" value="${esc(p.name||"")}" /></div>
+      <div class="field full"><label>Type</label>
+        <select id="p_type">
+          ${["ambulance","engine","tanker","brush","ladder","qrv","other"].map(t=>`<option value="${t}" ${(p.type===t)?"selected":""}>${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field full">
+        <label>Seats in this plan</label>
+        <div class="hint" style="margin-bottom:8px;">Required seats are always ON. Optional seats can be toggled per date/shift.</div>
+        ${planSeatChecklist("p_seats", p.seats || [])}
+      </div>
+    `;
+    openModal("Edit seat plan", body, ()=>{
+      const updated = collectPlanFromModal(p.plan_id);
+      if(!updated) return;
+      app.data.org_settings.seat_plans[idx] = updated;
+      setDataStatus("warn","Unsaved changes","Seat plan updated. Click Save.");
+      saveDraft();
+      closeModal();
+      renderUnits();
+    });
+    attachPlanChecklistHandlers();
+  }
+
+  function deletePlan(idx){
+    if(!confirm("Delete this seat plan?")) return;
+    app.data.org_settings.seat_plans.splice(idx, 1);
+    setDataStatus("warn", "Unsaved changes", "You have local edits. Click Save.");
+    saveDraft();
+    renderUnits();
+  }
+
+  function planSeatChecklist(id, selectedSeats){
+    const selected = new Map();
+    for(const s of (selectedSeats||[])){
+      const code = String(s.code||s.template||"").trim();
+      if(!code) continue;
+      selected.set(code, { required: s.required===true, default_on: s.default_on===true });
+    }
+    const templates = app.data.org_settings.seat_templates || [];
+    if(!templates.length){
+      return `<div class="hint">Add seat templates first (right panel).</div>`;
+    }
+    return `
+      <table>
+        <thead><tr><th>Include</th><th>Seat</th><th>Required</th><th>Default ON (if optional)</th></tr></thead>
+        <tbody>
+          ${templates.map(t=>{
+            const code = String(t.code||"").trim();
+            if(!code) return "";
+            const label = t.label || code;
+            const sel = selected.has(code);
+            const req = sel ? (selected.get(code).required) : false;
+            const defOn = sel ? (selected.get(code).default_on) : false;
+            return `
+              <tr>
+                <td><input type="checkbox" data-plan-inc="${esc(code)}" ${sel?"checked":""} /></td>
+                <td><span class="mono">${esc(code)}</span> — ${esc(label)}</td>
+                <td><input type="checkbox" data-plan-req="${esc(code)}" ${req?"checked":""} ${sel?"":"disabled"} /></td>
+                <td><input type="checkbox" data-plan-def="${esc(code)}" ${defOn?"checked":""} ${sel?"":"disabled"} /></td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+      <div class="hint" style="margin-top:8px;">Tip: Make “operator” and “attendant” required on their respective apparatus; keep 3rd rider optional by default.</div>
+    `;
+  }
+
+  
+
+  function attachPlanChecklistHandlers(){
+    // Called after opening the seat-plan modal. Keeps Required/Default toggles in sync.
+    const nodes = Array.from(document.querySelectorAll('[data-plan-inc]'));
+    if(!nodes.length) return;
+
+    function syncOne(cb){
+      const code = cb.getAttribute('data-plan-inc');
+      const req = document.querySelector('[data-plan-req="'+code+'"]');
+      const def = document.querySelector('[data-plan-def="'+code+'"]');
+      if(req) req.disabled = !cb.checked;
+      if(def) def.disabled = !cb.checked;
+      if(!cb.checked){
+        if(req) req.checked = false;
+        if(def) def.checked = false;
+      }
+    }
+
+    for(const cb of nodes){
+      cb.addEventListener('change', ()=> syncOne(cb));
+      syncOne(cb);
+    }
+  }
+function collectPlanFromModal(existingId){
+    const plan_id = ($("#p_id").value||"").trim();
+    const name = ($("#p_name").value||"").trim();
+    const type = ($("#p_type").value||"").trim() || "other";
+    if(!plan_id){ alert("Plan ID required."); return null; }
+
+    const seats = [];
+    document.querySelectorAll('[data-plan-inc]').forEach(cb=>{
+      const code = cb.getAttribute('data-plan-inc');
+      if(!cb.checked) return;
+      const req = document.querySelector('[data-plan-req="'+code+'"]');
+      const def = document.querySelector('[data-plan-def="'+code+'"]');
+      seats.push({
+        code,
+        required: !!(req && req.checked),
+        default_on: !!(def && def.checked)
+      });
+    });
+    if(!seats.length){
+      alert("Select at least one seat for this plan.");
+      return null;
+    }
+    return { plan_id, name: name || plan_id, type, seats };
+  }
+
 
   function openModalQualCreate(){
     const body = `
