@@ -1,0 +1,28 @@
+[
+  {
+    "id": "plan_ambulance_standard",
+    "name": "Ambulance (Att + Driver, optional 3rd)",
+    "seats": [
+      { "template": "Att", "required": true },
+      { "template": "Driver", "required": true },
+      { "template": "3rdRider", "required": false, "default_on": false }
+    ]
+  },
+  {
+    "id": "plan_tanker_standard",
+    "name": "Tanker (Operator required, Officer optional)",
+    "seats": [
+      { "template": "Driver", "required": true }, 
+      { "template": "Officer", "required": false, "default_on": true }
+    ]
+  },
+  {
+    "id": "plan_engine_standard",
+    "name": "Engine (Driver + Officer, optional ALS)",
+    "seats": [
+      { "template": "Driver", "required": true },
+      { "template": "Officer", "required": true },
+      { "template": "Att", "required": false, "default_on": true }
+    ]
+  }
+]
