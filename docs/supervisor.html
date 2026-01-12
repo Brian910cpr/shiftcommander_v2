@@ -474,6 +474,21 @@
     const txt = await resp.text();
     try{ return JSON.parse(txt); }catch(e){ throw new Error(`Non-JSON response: ${txt.slice(0,160)}`); }
   };
+
+  function unwrapStorePayload(obj){
+    // Unwrap nested store envelopes: {ok,kind,payload:{...}} possibly multiple layers
+    let x = obj;
+    for(let i=0;i<6;i++){
+      if(!x || typeof x !== 'object') break;
+      if('payload' in x && x.payload && typeof x.payload === 'object'){
+        x = x.payload;
+        continue;
+      }
+      break;
+    }
+    return x || {};
+  }
+
   const deepCopy = (x)=> JSON.parse(JSON.stringify(x));
   const uid = ()=> Math.random().toString(16).slice(2) + Date.now().toString(16);
 
@@ -2343,7 +2358,20 @@ function esc(s){
   }
 
 
-  // ============================================================
+  
+  function normalizeScheduleMap(obj){
+    // Keep only YYYY-MM-DD keys mapping to day objects.
+    const out = {};
+    if(!obj || typeof obj !== "object") return out;
+    for(const [k,v] of Object.entries(obj)){
+      if(/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === "object"){
+        out[k] = v;
+      }
+    }
+    return out;
+  }
+
+// ============================================================
   // Resolver (Beta) — Ambulance-only
   //
   // Fills Attendant (ALS required) and Operator (EMT + unit operator qual)
@@ -2423,7 +2451,7 @@ function esc(s){
       let schedule = {};
       try{
         const schedResp = await storeGet({ kind:"schedule" });
-        schedule = schedResp || {};
+        schedule = normalizeScheduleMap(unwrapStorePayload(schedResp));
       }catch(e){
         // If schedule doesn't exist yet, we start a new object
         schedule = {};
@@ -2519,7 +2547,7 @@ function esc(s){
       }
 
       setDataStatus("warn", "Saving schedule…", "Writing schedule to Drive…");
-      await storePost({ kind:"schedule", payload: schedule });
+      await storePost({ kind:"schedule", payload: normalizeScheduleMap(schedule) });
 
       app.data.schedule = schedule;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
