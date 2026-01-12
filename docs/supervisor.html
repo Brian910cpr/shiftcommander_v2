@@ -393,6 +393,35 @@
   </div>
 
   <script>
+  function weekStartThursdayFromISO(dateISO){
+    const d = new Date(dateISO + "T12:00:00");
+    const dow = d.getDay();
+    const target = 4; // Thu
+    const delta = (dow - target + 7) % 7;
+    d.setDate(d.getDate() - delta);
+    return d.toISOString().slice(0,10);
+  }
+  function addDaysISO(dateISO, n){
+    const d = new Date(dateISO + "T12:00:00");
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0,10);
+  }
+  function formatWeekLabel(thuISO){
+    const thu = new Date(thuISO + "T12:00:00");
+    const wedISO = addDaysISO(thuISO, 6);
+    const wed = new Date(wedISO + "T12:00:00");
+    const fmt = (x)=> x.toLocaleDateString(undefined,{weekday:"short", month:"short", day:"numeric", year:"numeric"});
+    return `${fmt(thu)} → ${fmt(wed)} (${thuISO} to ${wedISO})`;
+  }
+  function getSelectedResolveThu(){
+    const inp = document.getElementById("resolveWeekPick");
+    const pickISO = (inp && inp.value) ? inp.value : new Date().toISOString().slice(0,10);
+    const thuISO = weekStartThursdayFromISO(pickISO);
+    const lab = document.getElementById("resolveWeekLabel");
+    if(lab) lab.textContent = "Week: " + formatWeekLabel(thuISO);
+    return thuISO;
+  }
+
   // ============================================================
   // ShiftCommander — Supervisor
   //
@@ -472,25 +501,21 @@
   const nowIso = ()=> new Date().toISOString();
   const safeJson = async (resp)=>{
     const txt = await resp.text();
-    try{ return JSON.parse(txt); }catch(e){ throw new Error(`Non-JSON response: ${txt.slice(0,160)}`); }
+    try{ return JSON.parse(txt); }catch(e){ const head = txt.slice(0,200).replace(/\s+/g," ").trim(); throw new Error(`Non-JSON response (likely auth/redirect): ${head}`); }
   };
-
-  function unwrapStorePayload(obj){
-    // Unwrap nested store envelopes: {ok,kind,payload:{...}} possibly multiple layers
-    let x = obj;
-    for(let i=0;i<6;i++){
-      if(!x || typeof x !== 'object') break;
-      if('payload' in x && x.payload && typeof x.payload === 'object'){
-        x = x.payload;
-        continue;
-      }
-      break;
-    }
-    return x || {};
-  }
-
   const deepCopy = (x)=> JSON.parse(JSON.stringify(x));
   const uid = ()=> Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+
+const fetchWithTimeout = async (url, opts={}, ms=12000)=>{
+  const ctrl = new AbortController();
+  const t = setTimeout(()=> ctrl.abort(), ms);
+  try{
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  }finally{
+    clearTimeout(t);
+  }
+};
 
   // ---- DATE UTILS (Ops Planner) ----
   function isoDate(d){
@@ -566,18 +591,14 @@
     if(!app.token) throw new Error("No token set.");
     const u = new URL(STORE_EXEC);
     Object.entries({ ...params, token: app.token }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
-    const resp = await fetch(u.toString(), { method:"GET", cache:"no-store" });
+    const resp = await fetchWithTimeout(u.toString(), { method:"GET", cache:"no-store" });
     if(!resp.ok) throw new Error(`Store GET ${resp.status}`);
     return await safeJson(resp);
   }
 
   async function storePost(body){
     if(!app.token) throw new Error("No token set.");
-    const resp = await fetch(STORE_EXEC, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ token: app.token, ...body })
-    });
+    const resp = await fetchWithTimeout(STORE_EXEC, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ token: app.token, ...body }) });
     if(!resp.ok) throw new Error(`Store POST ${resp.status}`);
     return await safeJson(resp);
   }
@@ -1045,7 +1066,16 @@
     `;
     const tb = table.querySelector("tbody");
 
+    
+  // If overwrite mode, clear this Thu→Wed window before recomputing
+  if(overwrite){
     for(let i=0;i<7;i++){
+      const dayISO = addDaysISO(weekStartISO, i);
+      schedule[dayISO] = { AM:["",""], PM:["",""] };
+    }
+  }
+
+for(let i=0;i<7;i++){
       const d = addDays(weekStartDate, i);
       const iso = isoDate(d);
       const day = schedule[iso] || {};
@@ -1338,15 +1368,46 @@
             Beta resolver: fills ambulance Attendant/Operator seats for this week using member availability.
             Writes into <span class="mono">schedule</span> in Drive.
           </div>
-          <div class="row" style="margin-top:10px;">
-            <button class="btn primary" id="opsResolveWeek">Resolve week</button>
-            <button class="btn" id="opsResolveDry">Dry run (no write)</button>
+          
+      <div class="row" style="gap:10px; align-items:flex-end; flex-wrap:wrap; margin: 8px 0 10px;">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <div class="muted" style="font-size:12px; font-weight:900;">Week to run (pick any date)</div>
+          <input id="resolveWeekPick" type="date" style="min-width:200px;">
+        </div>
+        <div class="pill" id="resolveWeekLabel" style="font-weight:900;"></div>
+      </div>
+<div class="row" style="margin-top:10px;">
+            <button class="btn btn primary" id="opsResolveDry">Dry run (no write)</button>
+            <button class="btn primary btn danger" id="opsResolveWeek">Overwrite week (Resolve)</button>
           </div>
           <div class="hint" style="margin-top:10px;">
             Note: availability is read from <span class="mono">member_availability</span> records; this can take ~10–20 seconds depending on roster size.
           </div>
         </div>
       </div>
+
+      <div class="field" id="dryRunPanel" style="margin-top:12px; display:none;">
+        <label>Dry-run report</label>
+        <div class="hint" style="margin-bottom:10px;">
+          Preview of what <b>Resolve week</b> would change. Nothing is written during a dry run.
+        </div>
+        <div style="overflow:auto; max-height:340px; border:1px solid rgba(255,255,255,.10); border-radius:12px;">
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:rgba(255,255,255,.04); position:sticky; top:0;">
+                <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.10);">Date</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.10);">Shift</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.10);">Unit</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.10);">Attendant</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.10);">Operator</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.10);">Changed?</th>
+              </tr>
+            </thead>
+            <tbody id="dryRunTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
 
 <div class="field" style="margin-top:12px;">
         <label>Active unit per shift (week)</label>
@@ -1537,7 +1598,10 @@
     };
 
     // Resolve Now (this week)
-    $("#opsResolveDry").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:true }); };
+    $("#opsResolveDry").onclick = async ()=>{       const result = await resolveWeek(thuISO, true, false);
+      setDryRunReport(result?.rows||[], {mode:"dry"});
+      toast(`Dry run complete for week ${thuISO}.`);
+ };
     $("#opsResolveWeek").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:false }); };
     // Helper: copy week selections forward N weeks (inclusive, sequential)
     function copyWeekForward(weeks){
@@ -2358,20 +2422,7 @@ function esc(s){
   }
 
 
-  
-  function normalizeScheduleMap(obj){
-    // Keep only YYYY-MM-DD keys mapping to day objects.
-    const out = {};
-    if(!obj || typeof obj !== "object") return out;
-    for(const [k,v] of Object.entries(obj)){
-      if(/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === "object"){
-        out[k] = v;
-      }
-    }
-    return out;
-  }
-
-// ============================================================
+  // ============================================================
   // Resolver (Beta) — Ambulance-only
   //
   // Fills Attendant (ALS required) and Operator (EMT + unit operator qual)
@@ -2436,7 +2487,84 @@ function esc(s){
     return (u && u.operator_qual_key) ? String(u.operator_qual_key) : "";
   }
 
-  async function resolveWeek(weekStartDate, {dryRun=false}={}){
+  
+
+  // ---- Resolve helpers ----
+  function escapeHtml(s){
+    return String(s ?? "").replace(/[&<>"']/g, (c)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+
+  function getActiveUnitForShift(dateIso, shift){
+    // Returns the active unit_id for the given date/shift using org_settings (or defaults).
+    const org = app.data.org_settings || {};
+    const au = (org.active_units_by_date && org.active_units_by_date[dateIso]) ? org.active_units_by_date[dateIso] : {};
+    if(shift === "PM"){
+      return (au.PM || (org.ops_defaults && org.ops_defaults.units ? org.ops_defaults.units.PM : "") || "").trim();
+    }
+    return (au.AM || (org.ops_defaults && org.ops_defaults.units ? org.ops_defaults.units.AM : "") || "").trim();
+  }
+
+  // Render dry-run diff into Ops Planner (if visible)
+  function memberLabelById(id){
+    const s = String(id||"").trim();
+    if(!s) return "OPEN";
+    const members = Array.isArray(app?.data?.members) ? app.data.members : [];
+    const m = members.find(x => String(x.member_id||x.id||"").trim() === s);
+    return m ? displayName(m) : s;
+  }
+  function setDryRunReport(changes, weekStartDate){
+    const panel = document.getElementById("dryRunPanel");
+    const tbody = document.getElementById("dryRunTbody");
+    if(!panel || !tbody) return;
+
+    // If no changes, still show the week with "no change" rows
+    const rows = [];
+    for(let i=0;i<7;i++){
+      const d = addDays(weekStartDate, i);
+      const dateIso = isoDate(d);
+      for(const shift of ["AM","PM"]){
+        const unitId = getActiveUnitForShift(dateIso, shift);
+        const pair = (app.data.schedule && app.data.schedule[dateIso] && app.data.schedule[dateIso][shift]) ? app.data.schedule[dateIso][shift] : ["",""];
+        rows.push({ date: dateIso, shift, unit: unitId, from: pair, to: pair, changed:false });
+      }
+    }
+    // Overlay actual diffs from resolver
+    const byKey = new Map();
+    (changes||[]).forEach(ch=>{
+      byKey.set(`${ch.date}|${ch.shift}`, ch);
+    });
+    const finalRows = rows.map(r=>{
+      const key = `${r.date}|${r.shift}`;
+      if(byKey.has(key)){
+        const ch = byKey.get(key);
+        return {
+          date: ch.date, shift: ch.shift, unit: ch.unit,
+          from: ch.from || ["",""], to: ch.to || ["",""],
+          changed: true
+        };
+      }
+      return r;
+    });
+
+    tbody.innerHTML = "";
+    for(const r of finalRows){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,.08);">${r.date}</td>
+        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,.08);">${r.shift}</td>
+        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,.08);">${escapeHtml(r.unit||"(none)")}</td>
+        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,.08);">${escapeHtml(memberLabelById(r.to[0]))}</td>
+        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,.08);">${escapeHtml(memberLabelById(r.to[1]))}</td>
+        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,.08);">${r.changed ? "YES" : "—"}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+    panel.style.display = "block";
+  }
+
+async function resolveWeek(weekStartDate, {dryRun=false}={}){
     try{
       const org = app.data.org_settings || {};
       const units = Array.isArray(org.units) ? org.units : [];
@@ -2451,7 +2579,7 @@ function esc(s){
       let schedule = {};
       try{
         const schedResp = await storeGet({ kind:"schedule" });
-        schedule = normalizeScheduleMap(unwrapStorePayload(schedResp));
+        schedule = schedResp || {};
       }catch(e){
         // If schedule doesn't exist yet, we start a new object
         schedule = {};
@@ -2541,13 +2669,15 @@ function esc(s){
 
       // Report
       if(dryRun){
+        // Show report in UI
+        setDryRunReport(changes, weekStartDate);
         setDataStatus("ok", `Dry run: ${changes.length} change(s)`, "No write performed.");
-        alert(`Dry run complete.\nChanges: ${changes.length}\n\nTip: Click Resolve week to write to Drive.`);
+        alert(`Dry run complete.\nChanges: ${changes.length}\n\nSee the Dry-run report panel below.`);
         return;
       }
 
       setDataStatus("warn", "Saving schedule…", "Writing schedule to Drive…");
-      await storePost({ kind:"schedule", payload: normalizeScheduleMap(schedule) });
+      await storePost({ kind:"schedule", payload: schedule });
 
       app.data.schedule = schedule;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
@@ -2570,5 +2700,17 @@ function esc(s){
   })();
 
   </script>
+
+<div id="resolveConfirmModal" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.55); z-index:9999;">
+  <div style="width:min(560px,92vw); background:rgba(17,26,51,.98); border:1px solid rgba(255,255,255,.18); border-radius:16px; padding:14px;">
+    <div style="font-weight:900; font-size:14px; margin-bottom:6px;">Overwrite week schedule?</div>
+    <div class="muted" id="resolveConfirmText" style="font-size:12px; line-height:1.35; margin-bottom:12px; white-space:pre-wrap;"></div>
+    <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+      <button id="btnResolveCancel" class="btn primary" type="button">Cancel</button>
+      <button id="btnResolveConfirm" class="btn danger" type="button">Submit overwrite</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
