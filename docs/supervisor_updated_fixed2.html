@@ -2362,6 +2362,7 @@ function memberSelect(id, selectedId){
       closeModal();
       renderUnits();
     });
+    attachPlanChecklistHandlers();
   }
 
   function openModalPlanEdit(idx){
@@ -2390,6 +2391,7 @@ function memberSelect(id, selectedId){
       closeModal();
       renderUnits();
     });
+    attachPlanChecklistHandlers();
   }
 
   function deletePlan(idx){
@@ -2434,28 +2436,34 @@ function memberSelect(id, selectedId){
         </tbody>
       </table>
       <div class="hint" style="margin-top:8px;">Tip: Make “operator” and “attendant” required on their respective apparatus; keep 3rd rider optional by default.</div>
-      <script>
-        // enable/disable required/default toggles based on include
-        setTimeout(()=>{
-          document.querySelectorAll('[data-plan-inc]').forEach(cb=>{
-            cb.addEventListener('change', ()=>{
-              const code = cb.getAttribute('data-plan-inc');
-              const req = document.querySelector('[data-plan-req="'+code+'"]');
-              const def = document.querySelector('[data-plan-def="'+code+'"]');
-              if(req) req.disabled = !cb.checked;
-              if(def) def.disabled = !cb.checked;
-              if(!cb.checked){
-                if(req) req.checked = false;
-                if(def) def.checked = false;
-              }
-            });
-          });
-        },0);
-      </script>
     `;
   }
 
-  function collectPlanFromModal(existingId){
+  
+
+  function attachPlanChecklistHandlers(){
+    // Called after opening the seat-plan modal. Keeps Required/Default toggles in sync.
+    const nodes = Array.from(document.querySelectorAll('[data-plan-inc]'));
+    if(!nodes.length) return;
+
+    function syncOne(cb){
+      const code = cb.getAttribute('data-plan-inc');
+      const req = document.querySelector('[data-plan-req="'+code+'"]');
+      const def = document.querySelector('[data-plan-def="'+code+'"]');
+      if(req) req.disabled = !cb.checked;
+      if(def) def.disabled = !cb.checked;
+      if(!cb.checked){
+        if(req) req.checked = false;
+        if(def) def.checked = false;
+      }
+    }
+
+    for(const cb of nodes){
+      cb.addEventListener('change', ()=> syncOne(cb));
+      syncOne(cb);
+    }
+  }
+function collectPlanFromModal(existingId){
     const plan_id = ($("#p_id").value||"").trim();
     const name = ($("#p_name").value||"").trim();
     const type = ($("#p_type").value||"").trim() || "other";
