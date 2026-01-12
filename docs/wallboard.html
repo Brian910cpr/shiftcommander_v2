@@ -346,7 +346,7 @@ function buildRosterIndex(membersJson){
     const nm =
       (m.name || m.full_name || m.display_name || m.last_first || `${first} ${last}`.trim() || id).toString().trim();
 
-    byId[id] = { name: nm, first: first || nm.split(" ")[0] || nm, tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"), has120: !!has120 };
+    byId[id] = { name: nm, first: first || nm.split(" ")[0] || nm, tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"), quals: Array.isArray(quals)? quals.map(q=>String(q)) : [], has120: !!has120 };
   }
   return byId;
 }
@@ -368,22 +368,23 @@ function getDay(schedule, iso){
 }
 
 /** ========= HEALTH RULES (ALL SHIFTS ARE ALS SHIFTS) ========= **/
-function shiftHealth(attId, drvId, roster){
+function shiftHealth(attId, drvId, roster, operatorQualKey){
   // Red if attendant is not ALS, or driver lacks qual_120
   const att = roster[attId];
   const drv = roster[drvId];
 
   const attTier = (attId === "OPEN") ? "OPEN" : (att?.tier || "UNK");
   const drvTier = (drvId === "OPEN") ? "OPEN" : (drv?.tier || "UNK");
-  const drvHas120 = (drvId !== "OPEN") && !!(drv?.has120);
+  const opKey = (operatorQualKey||"").trim();
+  const drvHasOp = (drvId !== "OPEN") && (!opKey ? true : (Array.isArray(drv?.quals) && drv.quals.includes(opKey)));
 
   // Missing or non-ALS attendant => RED
   if(attId === "OPEN" || attTier !== "ALS") return "RED";
 
-  // Missing driver or no 120 => RED
-  if(drvId === "OPEN" || !drvHas120) return "RED";
+  // Missing driver or missing per-unit operator qual => RED
+  if(drvId === "OPEN" || !drvHasOp) return "RED";
 
-  // Ideal: ALS attendant + EMT driver w/ 120 => GREEN
+  // Ideal: ALS attendant + EMT driver w/ required operator qual => GREEN
   if(drvTier === "EMT") return "GREEN";
 
   // Driver is ALS (still ok, less ideal) => YELLOW
@@ -393,25 +394,30 @@ function shiftHealth(attId, drvId, roster){
   return "YELLOW";
 }
 
-function dayHealth(dayObj, roster){
+function dayHealth(dayObj, roster, iso, org){
   const [amA, amD] = dayObj.am;
   const [pmA, pmD] = dayObj.pm;
 
+  const amOpKey = operatorQualForDateShift(iso, "AM", org);
+  const pmOpKey = operatorQualForDateShift(iso, "PM", org);
+
   // Worst-of (RED beats YELLOW beats GREEN)
   const ranks = { RED:3, YELLOW:2, GREEN:1 };
-  const amH = shiftHealth(amA, amD, roster);
-  const pmH = shiftHealth(pmA, pmD, roster);
+  const amH = shiftHealth(amA, amD, roster, amOpKey);
+  const pmH = shiftHealth(pmA, pmD, roster, pmOpKey);
   return (ranks[amH] >= ranks[pmH]) ? amH : pmH;
 }
 
 /** ========= NEEDS HINTS (ONLY IN LAST PLANNING WEEK) ========= **/
-function needsHint(attId, drvId, roster){
+function needsHint(attId, drvId, roster, operatorQualKey){
   // Based on your preferences:
   // - If 2 ALS scheduled (ALS attendant + ALS driver w/ 120) => Needs EMT
-  // - If ALS attendant but driver missing or lacks 120 => Need Driver
+  // - If ALS attendant but driver missing or lacks required operator qual => Need Driver
   // - If attendant missing or not ALS => Need ALS
   if(attId === "OPEN" || (roster[attId]?.tier !== "ALS")) return "Needs ALS";
-  if(drvId === "OPEN" || !roster[drvId]?.has120) return "Need Driver";
+  const opKey = (operatorQualKey||"").trim();
+  const hasOp = (drvId !== "OPEN") && (!opKey ? true : (Array.isArray(roster[drvId]?.quals) && roster[drvId].quals.includes(opKey)));
+  if(drvId === "OPEN" || !hasOp) return "Need Driver";
   if(roster[drvId]?.tier === "ALS") return "Needs EMT";
   return ""; // already ideal
 }
@@ -435,6 +441,21 @@ function healthColor(h){
   return "var(--gray)";
 }
 
+
+// ---- OPERATOR QUAL (per unit) ----
+function operatorQualForDateShift(iso, shift, org){
+  try{
+    const au = (org && org.active_units_by_date && org.active_units_by_date[iso]) ? org.active_units_by_date[iso] : null;
+    if(!au) return "";
+    const unitId = (shift === "PM") ? (au.PM || "") : (au.AM || "");
+    if(!unitId) return "";
+    const units = (org && Array.isArray(org.units)) ? org.units : [];
+    const u = units.find(x => String(x.unit_id||"") === String(unitId));
+    return (u && u.operator_qual_key) ? String(u.operator_qual_key) : "";
+  }catch(_e){
+    return "";
+  }
+}
 // ---- TRUCK LABEL (from org_settings.active_units_by_date) ----
 function digitsFromUnit(unitId){
   const s = String(unitId || "").trim();
@@ -487,7 +508,7 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
     const d = addDays(weekStartDate, i);
     const iso = isoDate(d);
     const dayObj = getDay(schedule, iso);
-    const h = dayHealth(dayObj, roster);
+    const h = dayHealth(dayObj, roster, iso, org);
 
     // optional caution flag if day has flags
     const hasCaution = Array.isArray(dayObj.flags) && dayObj.flags.length > 0;
@@ -508,8 +529,8 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
     const [pmA, pmD] = dayObj.pm;
 
     // Planning “Needs …” only in last planning week block
-    const amNeed = opts.showNeeds ? needsHint(amA, amD, roster) : "";
-    const pmNeed = opts.showNeeds ? needsHint(pmA, pmD, roster) : "";
+    const amNeed = opts.showNeeds ? needsHint(amA, amD, roster, operatorQualForDateShift(iso, "AM", org)) : "";
+    const pmNeed = opts.showNeeds ? needsHint(pmA, pmD, roster, operatorQualForDateShift(iso, "PM", org)) : "";
 
     tile.innerHTML = `
       <div class="dayhead">
