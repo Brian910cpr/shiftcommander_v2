@@ -1289,7 +1289,51 @@
         </div>
       </div>
 
-      <div class="field" style="margin-top:12px;">
+      
+
+      <div class="row" style="align-items:stretch; margin-top:12px;">
+        <div class="field" style="flex:1; min-width:320px;">
+          <label>Ambulance rotation (Saturday 1st-out)</label>
+          <div class="hint">
+            If enabled, Saturdays auto-rotate the 1st-out ambulance when filling/copying weeks.
+            Supervisor overrides always win.
+          </div>
+          <div class="row" style="gap:10px; align-items:flex-end; margin-top:10px;">
+            <label class="tag" style="cursor:pointer;">
+              <input type="checkbox" id="rotEnabled" style="margin-right:8px; vertical-align:middle;">
+              Enable rotation
+            </label>
+            <div style="flex:1; min-width:220px;">
+              <div class="small" style="margin-bottom:6px;">Rotation AM unit order (Sat)</div>
+              <div class="row" style="gap:8px;">
+                <select id="rotU1" style="flex:1;">${unitOptions}</select>
+                <select id="rotU2" style="flex:1;">${unitOptions}</select>
+                <select id="rotU3" style="flex:1;">${unitOptions}</select>
+              </div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn" id="rotSave">Save rotation</button>
+          </div>
+        </div>
+
+        <div class="field" style="flex:1; min-width:320px;">
+          <label>Resolve Now (this week)</label>
+          <div class="hint">
+            Beta resolver: fills ambulance Attendant/Operator seats for this week using member availability.
+            Writes into <span class="mono">schedule</span> in Drive.
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn primary" id="opsResolveWeek">Resolve week</button>
+            <button class="btn" id="opsResolveDry">Dry run (no write)</button>
+          </div>
+          <div class="hint" style="margin-top:10px;">
+            Note: availability is read from <span class="mono">member_availability</span> records; this can take ~10–20 seconds depending on roster size.
+          </div>
+        </div>
+      </div>
+
+<div class="field" style="margin-top:12px;">
         <label>Active unit per shift (week)</label>
         <div class="hint" style="margin-bottom:10px;">
           Public wallboard can hide future weeks; this is where supervisors can plan ahead.
@@ -1333,6 +1377,20 @@
         org.active_units_by_date[iso] ||= {};
         if(!org.active_units_by_date[iso].AM) org.active_units_by_date[iso].AM = d.units?.AM || "";
         if(!org.active_units_by_date[iso].PM) org.active_units_by_date[iso].PM = d.units?.PM || "";
+
+        // Saturday ambulance rotation (defaults only; supervisor overrides still win)
+        try{
+          const rot = org.ambulance_rotation;
+          if(rot && rot.enabled && day.getDay() === 6){
+            const order = Array.isArray(rot.order_units) ? rot.order_units.filter(x=>x) : [];
+            if(order.length){
+              const widx = Math.floor(weekStart.getTime() / (7*24*60*60*1000));
+              const pick = order[((widx % order.length) + order.length) % order.length];
+              if(!org.active_units_by_date[iso].AM) org.active_units_by_date[iso].AM = pick;
+              if(!org.active_units_by_date[iso].PM) org.active_units_by_date[iso].PM = pick;
+            }
+          }
+        }catch(_e){}
 
         org.active_seats_by_date[iso] ||= {};
         if(!Array.isArray(org.active_seats_by_date[iso].AM) || !org.active_seats_by_date[iso].AM.length){
@@ -1440,6 +1498,32 @@
       };
     });
 
+
+    // Rotation UI
+    org.ambulance_rotation ||= { enabled:false, order_units:[], day:"SATURDAY" };
+    const rot = org.ambulance_rotation;
+    const rebindRot = ()=>{
+      $("#rotEnabled").checked = !!rot.enabled;
+      const ou = Array.isArray(rot.order_units) ? rot.order_units : [];
+      $("#rotU1").value = ou[0] || "";
+      $("#rotU2").value = ou[1] || "";
+      $("#rotU3").value = ou[2] || "";
+    };
+    rebindRot();
+
+    $("#rotSave").onclick = ()=>{
+      org.ambulance_rotation ||= { enabled:false, order_units:[], day:"SATURDAY" };
+      org.ambulance_rotation.enabled = !!$("#rotEnabled").checked;
+      org.ambulance_rotation.day = "SATURDAY";
+      org.ambulance_rotation.order_units = [$("#rotU1").value||"", $("#rotU2").value||"", $("#rotU3").value||""].filter(x=>x);
+      setDataStatus("warn","Unsaved changes","Rotation updated. Click Save.");
+      saveDraft();
+      alert("Rotation saved (local). Click Save to push to Drive.");
+    };
+
+    // Resolve Now (this week)
+    $("#opsResolveDry").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:true }); };
+    $("#opsResolveWeek").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:false }); };
     // Helper: copy week selections forward N weeks (inclusive, sequential)
     function copyWeekForward(weeks){
       org.active_units_by_date ||= {};
@@ -1519,13 +1603,15 @@
           <label>Units</label>
           <div class="hint" style="margin-bottom:8px;">Example: AMB-1, AMB-2, QRV, Utility…</div>
           <table>
-            <thead><tr><th>Unit ID</th><th>Name</th><th>Type</th><th></th></tr></thead>
+            <thead><tr><th>Unit ID</th><th>Name</th><th>Type</th><th>Op qual</th><th>Sched</th><th></th></tr></thead>
             <tbody>
               ${uFiltered.map((u,i)=>`
                 <tr>
                   <td class="mono">${esc(u.unit_id||"")}</td>
                   <td>${esc(u.name||"")}</td>
                   <td>${esc(u.type||"")}</td>
+                  <td class="mono">${esc(u.operator_qual_key||"")}</td>
+                  <td class="mono">${(u.is_schedulable===false)?"N":"Y"}</td>
                   <td><button class="btn" data-u-edit="${i}">Edit</button> <button class="btn danger" data-u-del="${i}">Delete</button></td>
                 </tr>
               `).join("")}
@@ -1985,12 +2071,22 @@ function esc(s){
           <option value="truck">truck</option>
         </select>
       </div>
+      <div class="field"><label>Operator qual key (per-unit)</label><input id="u_opq" class="mono" placeholder="qual_driver_120" /></div>
+      <div class="field"><label>Status</label>
+        <select id="u_status"><option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option></select>
+      </div>
+      <div class="field full"><label><input id="u_sched" type="checkbox" checked style="margin-right:8px; vertical-align:middle;">Schedulable (show in Ops Planner)</label>
+        <div class="hint">Turn off to hide from planning menus.</div>
+      </div>
     `;
     openModal("Add unit", body, ()=>{
       const unit = {
         unit_id: ($("#u_id").value||"").trim(),
         name: ($("#u_name").value||"").trim(),
-        type: ($("#u_type").value||"").trim()
+        type: ($("#u_type").value||"").trim(),
+        operator_qual_key: ($("#u_opq").value||"").trim(),
+        status: ($("#u_status").value||"ACTIVE").trim(),
+        is_schedulable: !!$("#u_sched").checked
       };
       if(!unit.unit_id){ alert("Unit ID required."); return; }
       app.data.org_settings.units.push(unit);
@@ -2012,12 +2108,23 @@ function esc(s){
           ${["ambulance","qrv","utility","engine","truck"].map(t=>`<option value="${t}" ${u.type===t?"selected":""}>${t}</option>`).join("")}
         </select>
       </div>
+      <div class="field"><label>Operator qual key (per-unit)</label><input id="u_opq" class="mono" value="${esc(u.operator_qual_key||"")}" /></div>
+      <div class="field"><label>Status</label>
+        <select id="u_status">
+          <option value="ACTIVE" ${String(u.status||"ACTIVE")==="ACTIVE"?"selected":""}>ACTIVE</option>
+          <option value="INACTIVE" ${String(u.status||"ACTIVE")==="INACTIVE"?"selected":""}>INACTIVE</option>
+        </select>
+      </div>
+      <div class="field full"><label><input id="u_sched" type="checkbox" ${u.is_schedulable===false?"":"checked"} style="margin-right:8px; vertical-align:middle;">Schedulable (show in Ops Planner)</label></div>
     `;
     openModal("Edit unit", body, ()=>{
       const unit = {
         unit_id: ($("#u_id").value||"").trim(),
         name: ($("#u_name").value||"").trim(),
-        type: ($("#u_type").value||"").trim()
+        type: ($("#u_type").value||"").trim(),
+        operator_qual_key: ($("#u_opq").value||"").trim(),
+        status: ($("#u_status").value||"ACTIVE").trim(),
+        is_schedulable: !!$("#u_sched").checked
       };
       if(!unit.unit_id){ alert("Unit ID required."); return; }
       app.data.org_settings.units[idx] = unit;
@@ -2233,6 +2340,195 @@ function esc(s){
     a.click();
     a.remove();
     URL.revokeObjectURL(a.href);
+  }
+
+
+  // ============================================================
+  // Resolver (Beta) — Ambulance-only
+  //
+  // Fills Attendant (ALS required) and Operator (EMT + unit operator qual)
+  // for the selected week using member_availability records.
+  //
+  // Notes:
+  // - This is intentionally conservative: it does not rewrite non-OPEN slots
+  //   unless you choose to (currently: it will only fill OPEN/missing).
+  // - Uses per-day active unit selection from org_settings.active_units_by_date.
+  // - Uses unit.operator_qual_key to enforce per-unit operator clearance.
+  // ============================================================
+
+  const ALS_KEYS = ["AEMT","MEDIC","SAL-ALS"]; // treat SAL-ALS as ALS-capable pool for now
+  const EMT_KEY = "EMT";
+
+  function isOpenSlot(x){
+    return !x || String(x).trim() === "" || String(x).trim().toUpperCase() === "OPEN";
+  }
+
+  function qualSetForMember(m){
+    const arr = Array.isArray(m.qualifications) ? m.qualifications.map(String) : [];
+    return new Set(arr);
+  }
+
+  async function loadAllAvailabilities(memberIds){
+    const out = {};
+    for(const mid of memberIds){
+      try{
+        const payload = await storeGet({ kind:"member_availability", member_id: mid });
+        out[mid] = payload || null;
+      }catch(e){
+        out[mid] = null; // treat as no data (blank_ok handled per member if exists)
+      }
+    }
+    return out;
+  }
+
+  function availabilityScore(avPayload, dateIso, shift){
+    // Returns {state, score, blank_ok}
+    // States: pref, avail, no, clear(=blank)
+    const prefs = avPayload?.prefs || {};
+    const blank_ok = (prefs.blank_ok !== false);
+    const day = avPayload?.days?.[dateIso] || null;
+    const key = shift === "PM" ? "pm" : "am";
+    const state = day ? (day[key] || "clear") : "clear";
+
+    if(state === "no") return { state, score: -999, blank_ok };
+    if(state === "pref") return { state, score: 20, blank_ok };
+    if(state === "avail") return { state, score: 10, blank_ok };
+    // clear/blank
+    return { state:"clear", score: (blank_ok ? 0 : -3), blank_ok };
+  }
+
+  function pickBestCandidate(candidates){
+    // candidates: array of {id, score, detail}
+    candidates.sort((a,b)=> b.score - a.score || String(a.id).localeCompare(String(b.id)));
+    return candidates[0] || null;
+  }
+
+  function operatorQualForUnit(unitId, units){
+    const u = (units || []).find(x => String(x.unit_id||"") === String(unitId));
+    return (u && u.operator_qual_key) ? String(u.operator_qual_key) : "";
+  }
+
+  async function resolveWeek(weekStartDate, {dryRun=false}={}){
+    try{
+      const org = app.data.org_settings || {};
+      const units = Array.isArray(org.units) ? org.units : [];
+      const members = Array.isArray(app.data.members) ? app.data.members : [];
+
+      if(!members.length){
+        alert("No members loaded.");
+        return;
+      }
+
+      // Fetch schedule fresh from Drive (authoritative) so we don't clobber
+      let schedule = {};
+      try{
+        const schedResp = await storeGet({ kind:"schedule" });
+        schedule = schedResp || {};
+      }catch(e){
+        // If schedule doesn't exist yet, we start a new object
+        schedule = {};
+      }
+
+      // Build member qual sets
+      const mById = {};
+      for(const m of members){
+        const id = String(m.member_id||"").trim();
+        if(!id) continue;
+        mById[id] = { ...m, _q: qualSetForMember(m) };
+      }
+      const memberIds = Object.keys(mById);
+
+      // Load all member availability (can be slow; show a simple progress pill)
+      setDataStatus("warn", "Resolving…", "Loading member availability…");
+      const avBy = await loadAllAvailabilities(memberIds);
+
+      const changes = [];
+      for(let i=0;i<7;i++){
+        const d = addDays(weekStartDate, i);
+        const dateIso = isoDate(d);
+
+        const au = org.active_units_by_date?.[dateIso] || {};
+        for(const shift of ["AM","PM"]){
+          const unitId = (shift === "PM") ? (au.PM || org.ops_defaults?.units?.PM || "") : (au.AM || org.ops_defaults?.units?.AM || "");
+          if(!unitId) continue; // nothing active
+
+          const opKey = operatorQualForUnit(unitId, units);
+
+          // Ensure schedule day container
+          schedule[dateIso] ||= {};
+          const slot = schedule[dateIso][shift] || schedule[dateIso][shift.toLowerCase()] || null;
+          const pair = Array.isArray(slot) ? slot.slice(0,2) : ["OPEN","OPEN"];
+          const curAtt = pair[0] || "OPEN";
+          const curOp  = pair[1] || "OPEN";
+
+          // Only fill OPEN slots (conservative)
+          let newAtt = curAtt;
+          let newOp  = curOp;
+
+          // --- Attendant (ALS required) ---
+          if(isOpenSlot(curAtt)){
+            const cands = [];
+            for(const mid of memberIds){
+              const mem = mById[mid];
+              if(!mem) continue;
+              // ALS requirement
+              const isAls = ALS_KEYS.some(k => mem._q.has(k));
+              if(!isAls) continue;
+
+              const av = availabilityScore(avBy[mid], dateIso, shift);
+              if(av.score <= -999) continue; // NO
+              cands.push({ id: mid, score: av.score, detail: av.state });
+            }
+            const best = pickBestCandidate(cands);
+            if(best) newAtt = best.id;
+          }
+
+          // --- Operator (EMT + per-unit operator qual) ---
+          if(isOpenSlot(curOp)){
+            const cands = [];
+            for(const mid of memberIds){
+              const mem = mById[mid];
+              if(!mem) continue;
+              if(!mem._q.has(EMT_KEY)) continue;
+              if(opKey && !mem._q.has(opKey)) continue;
+
+              const av = availabilityScore(avBy[mid], dateIso, shift);
+              if(av.score <= -999) continue;
+              cands.push({ id: mid, score: av.score, detail: av.state });
+            }
+            const best = pickBestCandidate(cands);
+            if(best) newOp = best.id;
+          }
+
+          const changed = (newAtt !== curAtt) || (newOp !== curOp);
+          if(changed){
+            schedule[dateIso][shift] = [newAtt, newOp];
+            changes.push({ date: dateIso, shift, unit: unitId, from:[curAtt,curOp], to:[newAtt,newOp] });
+          }else{
+            // keep original casing; ensure key exists
+            schedule[dateIso][shift] = [curAtt, curOp];
+          }
+        }
+      }
+
+      // Report
+      if(dryRun){
+        setDataStatus("ok", `Dry run: ${changes.length} change(s)`, "No write performed.");
+        alert(`Dry run complete.\nChanges: ${changes.length}\n\nTip: Click Resolve week to write to Drive.`);
+        return;
+      }
+
+      setDataStatus("warn", "Saving schedule…", "Writing schedule to Drive…");
+      await storePost({ kind:"schedule", payload: schedule });
+
+      app.data.schedule = schedule;
+      setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
+      alert(`Resolved week.\nChanges written: ${changes.length}`);
+    }catch(e){
+      console.error(e);
+      setDataStatus("bad", "Resolve failed", String(e.message||e));
+      alert("Resolve failed:\n\n" + (e.message||e));
+    }
   }
 
   // ---- INIT ----

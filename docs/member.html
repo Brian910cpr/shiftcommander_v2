@@ -550,6 +550,22 @@ let roster = [
   { id:"brian", name:"Brian Ennis", meta:"" }
 ];
 
+// Full member records (from kind=members) so we can read qualifications
+let ROSTER_FULL_BY_ID = {}; // id -> full member object
+function setRosterFull(list){
+  ROSTER_FULL_BY_ID = {};
+  (list||[]).forEach(m=>{
+    const id = String(m.member_id ?? m.id ?? "").trim();
+    if(id) ROSTER_FULL_BY_ID[id] = m;
+  });
+}
+function memberQuals(memberId){
+  const m = ROSTER_FULL_BY_ID[String(memberId)];
+  const q = Array.isArray(m?.qualifications) ? m.qualifications : (Array.isArray(m?.quals) ? m.quals : []);
+  return new Set((q||[]).map(String));
+}
+
+
 // published assignments for member (Impact tab), if available
 // expected structure:
 // { weeks: [ { phase:"published|controlled|active|planning", week_start:"YYYY-MM-DD", items:[{date:"YYYY-MM-DD", shift:"AM|PM", role:"EMT|ALS|Driver", status:"OK|ON_DECK|OPEN", note:"..."} ] } ] }
@@ -887,6 +903,7 @@ async function tryLoadRoster({force=false} = {}){
     const r = await storeGet({ kind:"members" });
     const list = Array.isArray(r) ? r : (r && Array.isArray(r.members) ? r.members : (r && Array.isArray(r.payload) ? r.payload : null));
     if(list && list.length){
+      setRosterFull(list);
       roster = normalizeRoster(list);
       saveRosterCache(roster);
       setRosterPill("Drive", "Roster loaded from Google Drive");
@@ -1326,6 +1343,22 @@ function phaseLabel(phase, weekStart){
   return `Published${d}`;
 }
 
+
+function activeUnitFor(dateISO, shift){
+  const v = (ORG && ORG.active_units_by_date && ORG.active_units_by_date[dateISO]) ? ORG.active_units_by_date[dateISO] : {};
+  const ds = (ORG && ORG.ops_defaults && ORG.ops_defaults.units) ? ORG.ops_defaults.units : {};
+  if(shift === "PM") return (v.PM || ds.PM || "");
+  return (v.AM || ds.AM || "");
+}
+function operatorQualForUnit(unitId){
+  const units = Array.isArray(ORG?.units) ? ORG.units : [];
+  const u = units.find(x => String(x.unit_id||"") === String(unitId));
+  if(u && u.operator_qual_key) return String(u.operator_qual_key);
+  // fallback: try to derive qual_driver_### from digits in unit id
+  const m = String(unitId||"").match(/(\d{3})/);
+  return m ? ("qual_driver_"+m[1]) : "";
+}
+const ALS_KEYS = ["AEMT","MEDIC","SAL-ALS"]; // ambulance ALS-required for now
 function renderShiftCard(it){
   const dateISO = String(it.date||"");
   const shift = String(it.shift||"");
@@ -1347,6 +1380,39 @@ function renderShiftCard(it){
     <div class="t">${escapeHtml(dateISO)} — ${escapeHtml(shift)} ${role ? "· "+escapeHtml(role) : ""}</div>
     <div class="s">${escapeHtml(statusDisplay(status, note))}</div>
   `;
+
+  // Eligibility overlay (ambulance-only): inform member if they are assigned into a role they don't qualify for
+  const full = ROSTER_FULL_BY_ID[getActiveMemberId()] || {};
+  const quals = Array.isArray(full.qualifications) ? full.qualifications.map(String) : [];
+  const qset = new Set(quals);
+  const unitId = activeUnitFor(dateISO, shift);
+  const opQual = operatorQualForUnit(unitId);
+
+  // For now, ambulance is ALS-required: Attendant must be ALS-capable
+  if(role === "Attendant"){
+    const hasAls = ALS_KEYS.some(k => qset.has(k));
+    if(!hasAls){
+      const warn = document.createElement("div");
+      warn.className = "badgeWarn";
+      warn.textContent = "⚠️ Assigned Attendant but you are not marked ALS-capable (AEMT/MEDIC/SAL-ALS)";
+      el.appendChild(warn);
+    }
+  }
+  if(role === "Driver"){
+    if(opQual && !qset.has(opQual)){
+      const warn = document.createElement("div");
+      warn.className = "badgeWarn";
+      warn.textContent = "⚠️ Assigned Operator but missing unit clearance: " + opQual;
+      el.appendChild(warn);
+    }
+  }
+  if(unitId){
+    const note2 = document.createElement("div");
+    note2.className = "smallNote";
+    note2.textContent = "Active unit: " + unitId;
+    el.appendChild(note2);
+  }
+
 
   if(shouldWarn){
     const warn = document.createElement("div");
