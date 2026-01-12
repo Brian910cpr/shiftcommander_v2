@@ -297,6 +297,22 @@ async function fetchJson(url){
   }
 }
 
+
+function unwrapStorePayload(obj){
+  // Unwrap nested {ok,kind,payload} layers (worker/store sometimes returns nested envelopes)
+  let x = obj;
+  for(let i=0;i<6;i++){
+    if(!x || typeof x !== "object") break;
+    if("payload" in x && x.payload && typeof x.payload === "object"){
+      x = x.payload;
+      continue;
+    }
+    break;
+  }
+  return x || {};
+}
+
+
 /** ========= ROSTER MAP ========= **/
 /**
  * We need:
@@ -309,7 +325,7 @@ function buildRosterIndex(membersJson){
   const byId = {};
   // Accept either the full store response {ok, kind, payload:{...}}
   // or the payload itself.
-  const payload = (membersJson && membersJson.payload) ? membersJson.payload : membersJson;
+  const payload = unwrapStorePayload(membersJson);
 
   const list =
     Array.isArray(payload) ? payload :
@@ -581,7 +597,7 @@ async function loadData(){
     org = (orgResp && orgResp.payload) ? orgResp.payload : (orgResp || {});
   }catch(_e){ org = {}; }
 
-  const schedule = (scheduleResp && scheduleResp.payload) ? scheduleResp.payload : scheduleResp;
+  const schedule = unwrapStorePayload(scheduleResp);
   const roster   = buildRosterIndex(membersResp);
   return { schedule, roster, org };
 }
