@@ -1594,11 +1594,11 @@
 
       // If a seat plan exists, only show seats in that plan.
       const showSeats = planSeats ? planSeats.map(ps=>{
-        const code = String(ps.code||ps.template||""").trim();
+        const code = String(ps.code||ps.template||"").trim();
         const required = ps.required === true;
         const default_on = ps.default_on === true;
         return { code, required, default_on };
-      }).filter(x=>x.code) : seatTemplates.map(t=>({ code:String(t.code||""").trim(), required:false, default_on:false })).filter(x=>x.code);
+      }).filter(x=>x.code) : seatTemplates.map(t=>({ code:String(t.code||"").trim(), required:false, default_on:false })).filter(x=>x.code);
 
       if(!showSeats.length){
         return `<span class="small">No seat templates yet (add in Units & Seats).</span>`;
@@ -2162,38 +2162,17 @@ function memberSelect(id, selectedId){
   // Unit / seat / qual modals
   function openModalUnitCreate(){
     const body = `
-      <div class="field"><label>Unit ID</label><input id="u_id" class="mono" placeholder="AMB-1" /></div>
-      <div class="field"><label>Name</label><input id="u_name" placeholder="Ambulance 1" /></div>
+      <div class="field"><label>Unit ID</label><input id="u_id" class="mono" placeholder="T128" /></div>
+      <div class="field"><label>Name</label><input id="u_name" placeholder="Tanker 128" /></div>
+
       <div class="field full"><label>Type</label>
         <select id="u_type">
-          ${["ambulance","engine","tanker","brush","ladder","qrv","utility","other"].map(t=>`<option value="${t}" ${u.type===t?"selected":""}>${t}</option>`).join("")}
+          ${["ambulance","engine","tanker","brush","ladder","qrv","utility","other"].map(t=>`<option value="${t}">${t}</option>`).join("")}
         </select>
       </div>
 
       <div class="field full"><label>Seat plan</label>
-        ${seatPlanSelect("u_plan", u.seat_plan_id||"")}
-      </div>
-
-      <div class="field"><label>Operator qual key (per-unit)</label>
-        <input id="u_opq" class="mono" value="${esc(u.operator_qual_key||"")}" />
-      </div>
-
-      <div class="field"><label>Schedulable?</label>
-        <select id="u_sched">
-          <option value="Y" ${(u.is_schedulable===false)?"":"selected"}>Y (show)</option>
-          <option value="N" ${(u.is_schedulable===false)?"selected":""}>N (hide)</option>
-        </select>
-      </div>
-
-      <div class="field"><label>Status</label>
-        <select id="u_status">
-          <option value="ACTIVE" ${(u.status||"ACTIVE")==="ACTIVE"?"selected":""}>ACTIVE</option>
-          <option value="INACTIVE" ${(u.status||"ACTIVE")==="INACTIVE"?"selected":""}>INACTIVE</option>
-        </select>
-      </div>
-
-      <div class="field full"><label>Seat plan</label>
-        ${seatPlanSelect("u_plan")}
+        ${seatPlanSelect("u_plan","")}
       </div>
 
       <div class="field"><label>Operator qual key (per-unit)</label>
@@ -2214,7 +2193,6 @@ function memberSelect(id, selectedId){
           <option value="INACTIVE">INACTIVE</option>
         </select>
       </div>
-
     `;
     openModal("Add unit", body, ()=>{
       const unit = {
