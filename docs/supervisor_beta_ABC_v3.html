@@ -472,10 +472,21 @@
   const nowIso = ()=> new Date().toISOString();
   const safeJson = async (resp)=>{
     const txt = await resp.text();
-    try{ return JSON.parse(txt); }catch(e){ throw new Error(`Non-JSON response: ${txt.slice(0,160)}`); }
+    try{ return JSON.parse(txt); }catch(e){ const head = txt.slice(0,200).replace(/\s+/g," ").trim(); throw new Error(`Non-JSON response (likely auth/redirect): ${head}`); }
   };
   const deepCopy = (x)=> JSON.parse(JSON.stringify(x));
   const uid = ()=> Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+
+const fetchWithTimeout = async (url, opts={}, ms=12000)=>{
+  const ctrl = new AbortController();
+  const t = setTimeout(()=> ctrl.abort(), ms);
+  try{
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  }finally{
+    clearTimeout(t);
+  }
+};
 
   // ---- DATE UTILS (Ops Planner) ----
   function isoDate(d){
@@ -551,18 +562,14 @@
     if(!app.token) throw new Error("No token set.");
     const u = new URL(STORE_EXEC);
     Object.entries({ ...params, token: app.token }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
-    const resp = await fetch(u.toString(), { method:"GET", cache:"no-store" });
+    const resp = await fetchWithTimeout(u.toString(), { method:"GET", cache:"no-store" });
     if(!resp.ok) throw new Error(`Store GET ${resp.status}`);
     return await safeJson(resp);
   }
 
   async function storePost(body){
     if(!app.token) throw new Error("No token set.");
-    const resp = await fetch(STORE_EXEC, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ token: app.token, ...body })
-    });
+    const resp = await fetchWithTimeout(STORE_EXEC, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ token: app.token, ...body }) });
     if(!resp.ok) throw new Error(`Store POST ${resp.status}`);
     return await safeJson(resp);
   }
@@ -1292,11 +1299,10 @@
       
 
       <div class="row" style="align-items:stretch; margin-top:12px;">
-        
-<div class="field" style="flex:1; min-width:320px;">
+        <div class="field" style="flex:1; min-width:320px;">
           <label>Ambulance rotation (Saturday 1st-out)</label>
           <div class="hint">
-            If enabled, Saturdays auto-rotate the 1st-out ambulance when planning or resolving.
+            If enabled, Saturdays auto-rotate the 1st-out ambulance when filling/copying weeks.
             Supervisor overrides always win.
           </div>
           <div class="row" style="gap:10px; align-items:flex-end; margin-top:10px;">
@@ -1305,7 +1311,7 @@
               Enable rotation
             </label>
             <div style="flex:1; min-width:220px;">
-              <div class="small" style="margin-bottom:6px;">Rotation order (Sat)</div>
+              <div class="small" style="margin-bottom:6px;">Rotation AM unit order (Sat)</div>
               <div class="row" style="gap:8px;">
                 <select id="rotU1" style="flex:1;">${unitOptions}</select>
                 <select id="rotU2" style="flex:1;">${unitOptions}</select>
@@ -1313,29 +1319,13 @@
               </div>
             </div>
           </div>
-
-          <div class="row" style="gap:10px; align-items:flex-end; margin-top:10px;">
-            <div style="flex:1; min-width:220px;">
-              <div class="small" style="margin-bottom:6px;">Anchor Saturday (week where you know who was 1st-out)</div>
-              <input id="rotAnchor" type="date" style="width:100%;" />
-            </div>
-            <div style="flex:1; min-width:220px;">
-              <div class="small" style="margin-bottom:6px;">Anchor 1st-out unit</div>
-              <select id="rotAnchorUnit" style="width:100%;">${unitOptions}</select>
-            </div>
-          </div>
-
           <div class="row" style="margin-top:10px;">
             <button class="btn" id="rotSave">Save rotation</button>
-          </div>
-          <div class="hint" style="margin-top:8px;">
-            If Anchor is blank, rotation starts with the first unit in the order list.
           </div>
         </div>
 
         <div class="field" style="flex:1; min-width:320px;">
           <label>Resolve Now (this week)</label>
-
           <div class="hint">
             Beta resolver: fills ambulance Attendant/Operator seats for this week using member availability.
             Writes into <span class="mono">schedule</span> in Drive.
@@ -1392,40 +1382,22 @@
         const iso = isoDate(day);
 
         org.active_units_by_date[iso] ||= {};
-        const prevAM = org.active_units_by_date[iso].AM || "";
-        const prevPM = org.active_units_by_date[iso].PM || "";
+        if(!org.active_units_by_date[iso].AM) org.active_units_by_date[iso].AM = d.units?.AM || "";
+        if(!org.active_units_by_date[iso].PM) org.active_units_by_date[iso].PM = d.units?.PM || "";
 
-        // Compute Saturday rotation pick (only used when this date/shift was blank)
-        let satPick = "";
+        // Saturday ambulance rotation (defaults only; supervisor overrides still win)
         try{
           const rot = org.ambulance_rotation;
           if(rot && rot.enabled && day.getDay() === 6){
-            const order = Array.isArray(rot.order_units) ? rot.order_units.filter(Boolean) : [];
+            const order = Array.isArray(rot.order_units) ? rot.order_units.filter(x=>x) : [];
             if(order.length){
-              const anchorIso = (rot.anchor_iso || "").trim();
-              const anchorUnit = (rot.anchor_unit || "").trim() || order[0];
-              let anchorIdx = Math.max(0, order.indexOf(anchorUnit));
-              // weeks between anchor Saturday and this Saturday
-              if(anchorIso && /^\d{4}-\d{2}-\d{2}$/.test(anchorIso)){
-                const a = new Date(anchorIso + "T00:00:00");
-                const w = Math.round((day.getTime() - a.getTime()) / (7*24*60*60*1000));
-                satPick = order[((anchorIdx + (w % order.length) + order.length) % order.length)];
-              }else{
-                // no anchor → start at order[0] and rotate by week index from epoch
-                const widx = Math.floor(day.getTime() / (7*24*60*60*1000));
-                satPick = order[((widx % order.length) + order.length) % order.length];
-              }
+              const widx = Math.floor(weekStart.getTime() / (7*24*60*60*1000));
+              const pick = order[((widx % order.length) + order.length) % order.length];
+              if(!org.active_units_by_date[iso].AM) org.active_units_by_date[iso].AM = pick;
+              if(!org.active_units_by_date[iso].PM) org.active_units_by_date[iso].PM = pick;
             }
           }
-        }catch(_e){ satPick = ""; }
-
-        // Fill blanks only (supervisor overrides win)
-        if(!prevAM){
-          org.active_units_by_date[iso].AM = satPick || (d.units?.AM || "");
-        }
-        if(!prevPM){
-          org.active_units_by_date[iso].PM = satPick || (d.units?.PM || "");
-        }
+        }catch(_e){}
 
         org.active_seats_by_date[iso] ||= {};
         if(!Array.isArray(org.active_seats_by_date[iso].AM) || !org.active_seats_by_date[iso].AM.length){
@@ -1535,38 +1507,19 @@
 
 
     // Rotation UI
-    org.ambulance_rotation ||= { enabled:false, order_units:[], day:"SATURDAY", anchor_iso:"", anchor_unit:"" };
+    org.ambulance_rotation ||= { enabled:false, order_units:[], day:"SATURDAY" };
     const rot = org.ambulance_rotation;
-
-    function defaultSatAnchorIso(){
-      // default to Saturday of the currently viewed week
-      const sat = addDays(weekStart, 6);
-      return isoDate(sat);
-    }
-
     const rebindRot = ()=>{
       $("#rotEnabled").checked = !!rot.enabled;
       const ou = Array.isArray(rot.order_units) ? rot.order_units : [];
       $("#rotU1").value = ou[0] || "";
       $("#rotU2").value = ou[1] || "";
       $("#rotU3").value = ou[2] || "";
-      $("#rotAnchor").value = rot.anchor_iso || defaultSatAnchorIso();
-      $("#rotAnchorUnit").value = rot.anchor_unit || (ou[0] || "");
     };
     rebindRot();
 
     $("#rotSave").onclick = ()=>{
-      org.ambulance_rotation ||= { enabled:false, order_units:[], day:"SATURDAY", anchor_iso:"", anchor_unit:"" };
-      const ou = [$("#rotU1").value||"", $("#rotU2").value||"", $("#rotU3").value||""].filter(x=>x);
-      org.ambulance_rotation.enabled = !!$("#rotEnabled").checked;
-      org.ambulance_rotation.day = "SATURDAY";
-      org.ambulance_rotation.order_units = ou;
-      org.ambulance_rotation.anchor_iso = ($("#rotAnchor").value||"").trim();
-      org.ambulance_rotation.anchor_unit = ($("#rotAnchorUnit").value||"").trim() || (ou[0]||"");
-      setDataStatus("warn","Unsaved changes","Rotation updated. Click Save.");
-      saveDraft();
-      alert("Rotation saved (local). Click Save to push to Drive.");
-    };
+      org.ambulance_rotation ||= { enabled:false, order_units:[], day:"SATURDAY" };
       org.ambulance_rotation.enabled = !!$("#rotEnabled").checked;
       org.ambulance_rotation.day = "SATURDAY";
       org.ambulance_rotation.order_units = [$("#rotU1").value||"", $("#rotU2").value||"", $("#rotU3").value||""].filter(x=>x);
@@ -2497,42 +2450,13 @@ function esc(s){
       const avBy = await loadAllAvailabilities(memberIds);
 
       const changes = [];
-
-      function rotationPickForDate(dateObj){
-        const rot = org.ambulance_rotation;
-        if(!(rot && rot.enabled)) return "";
-        if(dateObj.getDay() !== 6) return ""; // Saturday only
-        const order = Array.isArray(rot.order_units) ? rot.order_units.filter(Boolean) : [];
-        if(!order.length) return "";
-        const anchorIso = (rot.anchor_iso || "").trim();
-        const anchorUnit = (rot.anchor_unit || "").trim() || order[0];
-        const anchorIdx = Math.max(0, order.indexOf(anchorUnit));
-        if(anchorIso && /^\d{4}-\d{2}-\d{2}$/.test(anchorIso)){
-          const a = new Date(anchorIso + "T00:00:00");
-          const w = Math.round((dateObj.getTime() - a.getTime()) / (7*24*60*60*1000));
-          return order[((anchorIdx + (w % order.length) + order.length) % order.length)];
-        }
-        const widx = Math.floor(dateObj.getTime() / (7*24*60*60*1000));
-        return order[((widx % order.length) + order.length) % order.length];
-      }
-
-      function plannedUnitFor(dateIso, shift, dateObj){
-        const au = org.active_units_by_date?.[dateIso] || {};
-        const explicit = (shift === "PM") ? (au.PM || "") : (au.AM || "");
-        if(explicit) return explicit;
-        const satPick = rotationPickForDate(dateObj);
-        if(satPick) return satPick;
-        const defs = org.ops_defaults?.units || {};
-        return (shift === "PM") ? (defs.PM || "") : (defs.AM || "");
-      }
-
       for(let i=0;i<7;i++){
         const d = addDays(weekStartDate, i);
         const dateIso = isoDate(d);
 
         const au = org.active_units_by_date?.[dateIso] || {};
         for(const shift of ["AM","PM"]){
-          const unitId = plannedUnitFor(dateIso, shift, d);
+          const unitId = (shift === "PM") ? (au.PM || org.ops_defaults?.units?.PM || "") : (au.AM || org.ops_defaults?.units?.AM || "");
           if(!unitId) continue; // nothing active
 
           const opKey = operatorQualForUnit(unitId, units);
@@ -2571,7 +2495,6 @@ function esc(s){
             const cands = [];
             for(const mid of memberIds){
               const mem = mById[mid];
-              if(mid === newAtt) continue;
               if(!mem) continue;
               if(!mem._q.has(EMT_KEY)) continue;
               if(opKey && !mem._q.has(opKey)) continue;
