@@ -192,7 +192,7 @@
 
   .lines{ display:flex; flex-direction:column; gap:5px; min-width:0; }
   .line{
-    font-size:clamp(12px, 1.15vw, 14px);
+    font-size:clamp(13px, 1.45vw, 16px);
     font-weight:900;
     line-height:1.15;
     white-space:nowrap;
@@ -217,6 +217,15 @@
     text-overflow:ellipsis;
   }
   .note strong{ color:var(--text); }
+  .note.needs{
+    color:var(--red);
+    background:#fff1f2;
+    border:1px solid #fecdd3;
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+  }
+  .note.needs strong{ color:var(--red); }
 
   .flag{
     font-size:12px;
@@ -237,6 +246,20 @@
   }
 
   #root{ transition: opacity .22s ease; }
+
+  #rangeLabel{ display:none; }
+
+  .footer{
+    max-width:1500px;
+    margin:0 auto;
+    padding:10px 12px 16px 12px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+    text-align:right;
+  }
+  .footer strong{ color:var(--text); }
+
 </style>
 </head>
 <body>
@@ -245,13 +268,15 @@
   <div class="top-inner">
     <div class="title">
       <div>Wallboard <span class="sub" id="buildTag" style="font-weight:1000;margin-left:6px"></span></div>
-      <div class="sub" id="rangeLabel">Prev + This</div>
+      <div class="sub" id="rangeLabel"></div>
     </div>
     <div class="pill" id="statusPill">Loading…</div>
   </div>
 </div>
 
 <div class="wrap" id="root"></div>
+
+<div class="footer" id="resolverFooter"></div>
 
 <script>
 /** ========= CONFIG ========= **/
@@ -304,7 +329,7 @@ function fmtLocalTimeFromIso(isoStr){
   try{
     const d = new Date(String(isoStr));
     if(isNaN(d.getTime())) return "";
-    return d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
+    return new Intl.DateTimeFormat(undefined, { timeZone:"America/New_York", hour:"2-digit", minute:"2-digit" }).format(d);
   }catch(_e){
     return "";
   }
@@ -313,7 +338,7 @@ function fmtLocalDateTimeFromIso(isoStr){
   try{
     const d = new Date(String(isoStr));
     if(isNaN(d.getTime())) return "";
-    return d.toLocaleString(undefined, { weekday:"short", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+    return new Intl.DateTimeFormat(undefined, { timeZone:"America/New_York", weekday:"short", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit", timeZoneName:"short" }).format(d);
   }catch(_e){
     return "";
   }
@@ -427,6 +452,18 @@ function getDay(schedule, iso){
 }
 
 /** ========= HEALTH RULES (ALL SHIFTS ARE ALS SHIFTS) ========= **/
+function hasQual(member, key){
+  try{
+    const k = String(key||"").trim();
+    if(!k) return true;
+    const ks = k.replace(/^qual_/, "");
+    const q = Array.isArray(member?.quals) ? member.quals.map(x=>String(x)) : [];
+    return q.includes(k) || (ks && q.includes(ks)) || q.includes("qual_"+ks);
+  }catch(_e){
+    return false;
+  }
+}
+
 function shiftHealth(attId, drvId, roster, operatorQualKey){
   // Red if attendant is not ALS, or driver lacks qual_120
   const att = roster[attId];
@@ -435,7 +472,7 @@ function shiftHealth(attId, drvId, roster, operatorQualKey){
   const attTier = (attId === "OPEN") ? "OPEN" : (att?.tier || "UNK");
   const drvTier = (drvId === "OPEN") ? "OPEN" : (drv?.tier || "UNK");
   const opKey = (operatorQualKey||"").trim();
-  const drvHasOp = (drvId !== "OPEN") && (!opKey ? true : (Array.isArray(drv?.quals) && drv.quals.includes(opKey)));
+  const drvHasOp = (drvId !== "OPEN") && hasQual(drv, opKey);
 
   // Missing or non-ALS attendant => RED
   if(attId === "OPEN" || attTier !== "ALS") return "RED";
@@ -475,7 +512,7 @@ function needsHint(attId, drvId, roster, operatorQualKey){
   // - If attendant missing or not ALS => Need ALS
   if(attId === "OPEN" || (roster[attId]?.tier !== "ALS")) return "Needs ALS";
   const opKey = (operatorQualKey||"").trim();
-  const hasOp = (drvId !== "OPEN") && (!opKey ? true : (Array.isArray(roster[drvId]?.quals) && roster[drvId].quals.includes(opKey)));
+  const hasOp = (drvId !== "OPEN") && hasQual(roster[drvId], opKey);
   if(drvId === "OPEN" || !hasOp) return "Need Driver";
   if(roster[drvId]?.tier === "ALS") return "Needs EMT";
   return ""; // already ideal
@@ -603,7 +640,7 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
         <div class="lines">
           <div class="line">${nameFor(amA, roster)}</div>
           <div class="line">${nameFor(amD, roster)}</div>
-          ${amNeed ? `<div class="note"><strong>${escapeHtml(amNeed)}</strong></div>` : ""}
+          ${amNeed ? `<div class="note needs"><strong>${escapeHtml(amNeed)}</strong></div>` : ""}
         </div>
       </div>
 
@@ -612,7 +649,7 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
         <div class="lines">
           <div class="line">${nameFor(pmA, roster)}</div>
           <div class="line">${nameFor(pmD, roster)}</div>
-          ${pmNeed ? `<div class="note"><strong>${escapeHtml(pmNeed)}</strong></div>` : ""}
+          ${pmNeed ? `<div class="note needs"><strong>${escapeHtml(pmNeed)}</strong></div>` : ""}
         </div>
       </div>
     `;
@@ -675,9 +712,7 @@ function renderAll(root, schedule, roster, org){
   const published3      = addDays(thisWeekStart, 21);   // +3
 
   // Header label
-  document.getElementById("rangeLabel").textContent = `Archived (-1) • Controlled (0,+1) • Published (+2,+3)`;
-
-  // Render blocks
+    // Render blocks
   renderWeekBlock(root, "", archivedStart, schedule, roster, org, { sub:"Archived" });
   renderWeekBlock(root, "", controlled0, schedule, roster, org, { sub:"Controlled" });
   renderWeekBlock(root, "", controlled1, schedule, roster, org, { sub:"Controlled", showNeeds:true });
@@ -705,7 +740,7 @@ async function refreshBoard({initial=false}={}){
     const data = await loadData();
 
     // Visible “did the update push?” marker (build tag)
-    document.getElementById("buildTag").textContent = "v2026-01-16.1";
+    document.getElementById("buildTag").textContent = "v2026-01-16.2";
 
     // Only re-render if something actually changed
     window.__sc_lastHash ||= "";
@@ -716,6 +751,14 @@ async function refreshBoard({initial=false}={}){
       pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
       pill.title = ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "";
       pill.style.color = "#166534";
+    const foot = document.getElementById("resolverFooter");
+    if(foot){
+      foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
+    }
+      const foot = document.getElementById("resolverFooter");
+      if(foot){
+        foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
+      }
       return;
     }
     window.__sc_lastHash = h;
@@ -739,8 +782,12 @@ async function refreshBoard({initial=false}={}){
       const ra = data.schedule && data.schedule.meta ? data.schedule.meta.resolved_at : null;
       const t = ra ? fmtLocalTimeFromIso(ra) : "";
       pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
-      pill.title = (ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet") + "\n" + "Build: v2026-01-16.1";
+      pill.title = (ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet") + "\n" + "Build: v2026-01-16.2";
       pill.style.color = "#166534";
+    const foot = document.getElementById("resolverFooter");
+    if(foot){
+      foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
+    }
     }
   }catch(err){
     console.error(err);
