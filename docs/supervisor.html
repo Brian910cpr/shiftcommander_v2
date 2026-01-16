@@ -1065,12 +1065,14 @@
     if(!pair || !Array.isArray(pair) || pair.length < 2){
       return `<span class="small">—</span>`;
     }
-    const a = String(pair[0]||"OPEN").trim() || "OPEN";
-    const b = String(pair[1]||"OPEN").trim() || "OPEN";
+    const aId = String(pair[0]||"OPEN").trim() || "OPEN";
+    const bId = String(pair[1]||"OPEN").trim() || "OPEN";
+    const a = memberNameById(aId);
+    const b = memberNameById(bId);
     return `
       <div class="row" style="gap:10px; align-items:center;">
-        <span class="tag mono">${esc(a)}</span>
-        <span class="tag mono">${esc(b)}</span>
+        <span class="tag">${esc(a)}</span>
+        <span class="tag">${esc(b)}</span>
         <button class="btn" data-hold="1" title="Hold to show candidates (needs bulk availability; not enabled yet)">Hold</button>
       </div>
     `;
@@ -1129,7 +1131,7 @@
             <tr>
               <td class="mono">${esc(o.date || "")}</td>
               <td class="mono">${esc(o.shift || "")}</td>
-              <td>${esc(o.member_name || o.member_id || "")}</td>
+              <td>${esc(o.member_name || memberNameById(o.member_id) || "")}</td>
               <td>${esc(o.reason || "")}</td>
               <td><button class="btn" data-ov-edit="${i}">Edit</button> <button class="btn danger" data-ov-del="${i}">Delete</button></td>
             </tr>
@@ -1768,6 +1770,17 @@
   }
 
   // ---- Helpers for rendering ----
+  // Schedule display must never show member numbers.
+  // We keep IDs internally, but render a friendly name everywhere schedule is shown.
+  function memberNameById(id){
+    const mid = String(id ?? "").trim();
+    if(!mid || mid.toUpperCase() === "OPEN") return "OPEN";
+    const m = (app.data.members || []).find(x => String(x.member_id ?? "").trim() === mid);
+    if(m) return displayName(m);
+    return "Assigned"; // safe fallback (never leak ID)
+  }
+
+
   function displayName(m){
     if(!m) return "";
     if(m.name) return m.name;
@@ -2061,7 +2074,7 @@ function esc(s){
     const options = (app.data.members || []).map(m => {
       const mid = String(m.member_id);
       const sel = String(selectedId||"") === mid ? "selected" : "";
-      return `<option value="${esc(mid)}" ${sel}>${esc(mid)} — ${esc(displayName(m))}</option>`;
+      return `<option value="${esc(mid)}" ${sel}>${esc(displayName(m))}</option>`;
     }).join("");
     return `<select id="${esc(id)}"><option value="">Select…</option>${options}</select>`;
   }

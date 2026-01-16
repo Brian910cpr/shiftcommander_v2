@@ -440,7 +440,7 @@ function needsHint(attId, drvId, roster, operatorQualKey){
 function nameFor(id, roster){
   if(!id || id === "OPEN") return `<span class="open">OPEN</span>`;
   const r = roster[id];
-  let nm = (r?.name || id).toString();
+  let nm = (r?.name || "Assigned").toString();
   if(USE_FIRST_NAME && r?.first) nm = String(r.first);
 
   return escapeHtml(nm);
