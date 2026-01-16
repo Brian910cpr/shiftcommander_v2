@@ -406,7 +406,7 @@
   // ============================================================
 
   // ---- CONFIG ----
-  const STORE_EXEC = "https://schedule-cors-910cpr.brian-9ac.workers.dev";
+  const STORE_EXEC = ((location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store");
   const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
   const LOCAL_PATHS = {
     members: `${DATA_BASE}/members.json`,
@@ -539,14 +539,14 @@
 
   // ---- TOKEN ----
   function loadToken(){
-    // Token is injected by the Cloudflare Worker; no browser token needed.
-    app.token = "";
+    app.token = localStorage.getItem(LS_TOKEN) || "";
+    if(!app.token){
+      setDriveStatus("warn", "Drive", "Token not set. Click Token to set your SC_TOKEN.");
+    }
   }
 
   function promptToken(){
     const current = (app.token || "").trim();
-    alert("No token needed here — Cloudflare Worker injects SC_TOKEN.");
-    return;
     const input = prompt("Paste SC_TOKEN (saved in this browser).", current);
     if(input === null) return;
     const trimmed = input.trim();
@@ -563,18 +563,20 @@
 
   // ---- STORE CLIENT ----
   async function storeGet(params){
+    if(!app.token) throw new Error("No token set.");
     const u = new URL(STORE_EXEC);
-    Object.entries({ ...params }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
+    Object.entries({ ...params, token: app.token }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
     const resp = await fetch(u.toString(), { method:"GET", cache:"no-store" });
     if(!resp.ok) throw new Error(`Store GET ${resp.status}`);
     return await safeJson(resp);
   }
 
   async function storePost(body){
+    if(!app.token) throw new Error("No token set.");
     const resp = await fetch(STORE_EXEC, {
       method: "POST",
       headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ ...body })
+      body: JSON.stringify({ token: app.token, ...body })
     });
     if(!resp.ok) throw new Error(`Store POST ${resp.status}`);
     return await safeJson(resp);
@@ -589,7 +591,7 @@
       return res;
     }catch(e){
       app.connected = false;
-      setDriveStatus("warn", "Drive", `Offline. Using local JSON.\n${e.message}`);
+      setDriveStatus("warn", "Drive", `Offline (or token missing). Using local JSON.\n${e.message}`);
       return null;
     }
   }
@@ -728,6 +730,11 @@
   async function saveAll(){
     // Always save a local draft first (protect against outage)
     saveDraft();
+
+    if(!app.token){
+      alert("No token set. Click Token, paste SC_TOKEN, then Save again.");
+      return;
+    }
 
     try{
       const payload = {
@@ -1064,14 +1071,12 @@
     if(!pair || !Array.isArray(pair) || pair.length < 2){
       return `<span class="small">—</span>`;
     }
-    const aId = String(pair[0]||"OPEN").trim() || "OPEN";
-    const bId = String(pair[1]||"OPEN").trim() || "OPEN";
-    const a = memberNameById(aId);
-    const b = memberNameById(bId);
+    const a = String(pair[0]||"OPEN").trim() || "OPEN";
+    const b = String(pair[1]||"OPEN").trim() || "OPEN";
     return `
       <div class="row" style="gap:10px; align-items:center;">
-        <span class="tag">${esc(a)}</span>
-        <span class="tag">${esc(b)}</span>
+        <span class="tag mono">${esc(a)}</span>
+        <span class="tag mono">${esc(b)}</span>
         <button class="btn" data-hold="1" title="Hold to show candidates (needs bulk availability; not enabled yet)">Hold</button>
       </div>
     `;
@@ -1130,7 +1135,7 @@
             <tr>
               <td class="mono">${esc(o.date || "")}</td>
               <td class="mono">${esc(o.shift || "")}</td>
-              <td>${esc(o.member_name || memberNameById(o.member_id) || "")}</td>
+              <td>${esc(o.member_name || o.member_id || "")}</td>
               <td>${esc(o.reason || "")}</td>
               <td><button class="btn" data-ov-edit="${i}">Edit</button> <button class="btn danger" data-ov-del="${i}">Delete</button></td>
             </tr>
@@ -1769,17 +1774,6 @@
   }
 
   // ---- Helpers for rendering ----
-  // Schedule display must never show member numbers.
-  // We keep IDs internally, but render a friendly name everywhere schedule is shown.
-  function memberNameById(id){
-    const mid = String(id ?? "").trim();
-    if(!mid || mid.toUpperCase() === "OPEN") return "OPEN";
-    const m = (app.data.members || []).find(x => String(x.member_id ?? "").trim() === mid);
-    if(m) return displayName(m);
-    return "Assigned"; // safe fallback (never leak ID)
-  }
-
-
   function displayName(m){
     if(!m) return "";
     if(m.name) return m.name;
@@ -2073,7 +2067,7 @@ function esc(s){
     const options = (app.data.members || []).map(m => {
       const mid = String(m.member_id);
       const sel = String(selectedId||"") === mid ? "selected" : "";
-      return `<option value="${esc(mid)}" ${sel}>${esc(displayName(m))}</option>`;
+      return `<option value="${esc(mid)}" ${sel}>${esc(mid)} — ${esc(displayName(m))}</option>`;
     }).join("");
     return `<select id="${esc(id)}"><option value="">Select…</option>${options}</select>`;
   }
@@ -2367,17 +2361,10 @@ function esc(s){
   
   function normalizeScheduleMap(obj){
     // Keep only YYYY-MM-DD keys mapping to day objects.
-    // Preserve optional top-level meta (e.g., resolver run stamp).
     const out = {};
     if(!obj || typeof obj !== "object") return out;
-
-    // Preserve meta if present
-    if(obj.meta && typeof obj.meta === "object"){
-      out.meta = obj.meta;
-    }
-
     for(const [k,v] of Object.entries(obj)){
-      if(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(k) && v && typeof v === "object"){
+      if(/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === "object"){
         out[k] = v;
       }
     }
@@ -2497,6 +2484,11 @@ function esc(s){
 
           // Ensure schedule day container
           schedule[dateIso] ||= {};
+
+          // Persist the planned active unit into schedule output so Wallboard can display it.
+          // (Show AM/PM if different; show one number if same.)
+          schedule[dateIso]._unit ||= {};
+          schedule[dateIso]._unit[shift] = unitId;
           const slot = schedule[dateIso][shift] || schedule[dateIso][shift.toLowerCase()] || null;
           const pair = Array.isArray(slot) ? slot.slice(0,2) : ["OPEN","OPEN"];
           const curAtt = pair[0] || "OPEN";
@@ -2560,23 +2552,9 @@ function esc(s){
       }
 
       setDataStatus("warn", "Saving schedule…", "Writing schedule to Drive…");
-      // Stamp resolve metadata into schedule (never shown to members as IDs)
-      const weekStartIso = isoDate(weekStartDate);
-      const weekEndIso = isoDate(addDays(weekStartDate, 6));
-      const outSched = normalizeScheduleMap(schedule);
-      const prevMeta = (outSched.meta && typeof outSched.meta === "object") ? outSched.meta : {};
-      outSched.meta = {
-        ...prevMeta,
-        resolved_at: nowIso(),
-        resolved_by: "Supervisor UI",
-        resolver_version: "beta1",
-        range_start: weekStartIso,
-        range_end: weekEndIso
-      };
+      await storePost({ kind:"schedule", payload: normalizeScheduleMap(schedule) });
 
-      await storePost({ kind:"schedule", payload: outSched });
-
-      app.data.schedule = outSched;
+      app.data.schedule = schedule;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
       alert(`Resolved week.\nChanges written: ${changes.length}`);
     }catch(e){

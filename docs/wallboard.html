@@ -448,7 +448,25 @@ function getDay(schedule, iso){
   const pm = normalizePair(obj.PM || obj.pm || obj.Pm || ["OPEN","OPEN"]);
   const flags = obj.flags || []; // optional: day-level flags
   const notes = obj.notes || {}; // optional: { AM:"...", PM:"..." }
-  return { am, pm, flags, notes };
+  const unit = (obj && typeof obj === 'object' && obj._unit && typeof obj._unit === 'object') ? obj._unit : null;
+  return { am, pm, flags, notes, unit };
+}
+
+function unitPillText(dayObj, org, iso){
+  // Prefer schedule-provided unit info (written by Supervisor resolver).
+  const u = dayObj && dayObj.unit ? dayObj.unit : null;
+  const am = u && u.AM ? String(u.AM).trim() : "";
+  const pm = u && u.PM ? String(u.PM).trim() : "";
+
+  if(am && pm){
+    return (am === pm) ? am : `AM ${am} • PM ${pm}`;
+  }
+  if(am) return `AM ${am}`;
+  if(pm) return `PM ${pm}`;
+
+  // Fallback to org_settings-based label if present
+  const t = truckLabelForDate(iso, org);
+  return t ? String(t) : "";
 }
 
 /** ========= HEALTH RULES (ALL SHIFTS ARE ALS SHIFTS) ========= **/
@@ -609,7 +627,7 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
     // optional caution flag if day has flags
     const hasCaution = Array.isArray(dayObj.flags) && dayObj.flags.length > 0;
 
-    const truck = truckLabelForDate(iso, org);
+    const truck = unitPillText(dayObj, org, iso);
 
     const day = document.createElement("div");
     day.className = "day" + (iso===todayIso ? " today" : "") + (iso < todayIso ? " past" : "");
@@ -740,7 +758,7 @@ async function refreshBoard({initial=false}={}){
     const data = await loadData();
 
     // Visible “did the update push?” marker (build tag)
-    document.getElementById("buildTag").textContent = "v2026-01-16.3";
+    document.getElementById("buildTag").textContent = "v2026-01-16.6";
 
     // Only re-render if something actually changed
     window.__sc_lastHash ||= "";
@@ -781,7 +799,7 @@ async function refreshBoard({initial=false}={}){
       const ra = data.schedule && data.schedule.meta ? data.schedule.meta.resolved_at : null;
       const t = ra ? fmtLocalTimeFromIso(ra) : "";
       pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
-      pill.title = (ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet") + "\n" + "Build: v2026-01-16.3";
+      pill.title = (ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet") + "\n" + "Build: v2026-01-16.6";
       pill.style.color = "#166534";
     const foot = document.getElementById("resolverFooter");
     if(foot){
