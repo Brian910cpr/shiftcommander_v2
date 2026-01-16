@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander — Seating Planner</title>
+  <style>
+    :root{
+      --bg:#0b1020; --text:#e7ecff; --muted:#a9b3d6; --line:rgba(255,255,255,.10);
+      --ok:#2ee59d; --warn:#ffd166; --bad:#ff4d6d; --idle:#95a3c7;
+      --focus:#7c5cff; --radius:18px;
+      --btnBg: rgba(255,255,255,.05);
+      --btnBr: rgba(255,255,255,.14);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 700px at 25% -20%, rgba(124,92,255,.35), transparent 55%),
+                  radial-gradient(900px 600px at 90% 0%, rgba(88,166,255,.25), transparent 52%),
+                  linear-gradient(180deg, #060a18, var(--bg));
+      color:var(--text);
+      overflow:hidden;
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background: rgba(8,12,28,.55);
+      backdrop-filter: blur(10px);
+      gap:10px;
+    }
+    .brand{ display:flex; gap:10px; align-items:center; font-weight:900; letter-spacing:.2px; }
+    .logoDot{ width:14px; height:14px; border-radius:50%; background: linear-gradient(135deg, var(--focus), #00d4ff); box-shadow: 0 0 0 6px rgba(124,92,255,.12); }
+    .brand small{ display:block; color:var(--muted); font-weight:650; }
+    .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; border:1px solid var(--line); background: rgba(255,255,255,.03); white-space:nowrap; font-weight:800; color:var(--muted); }
+    .dot{ width:10px; height:10px; border-radius:50%; background: var(--idle); box-shadow: 0 0 0 4px rgba(149,163,199,.12); }
+    .dot.ok{ background: var(--ok); box-shadow: 0 0 0 4px rgba(46,229,157,.12); }
+    .dot.warn{ background: var(--warn); box-shadow: 0 0 0 4px rgba(255,209,102,.14); }
+    .dot.bad{ background: var(--bad); box-shadow: 0 0 0 4px rgba(255,77,109,.14); }
+    .btn{ border:1px solid var(--btnBr); background: var(--btnBg); padding:9px 11px; border-radius: 14px; cursor:pointer; font-weight:900; }
+    .btn.primary{ background: rgba(124,92,255,.22); border-color: rgba(124,92,255,.45); }
+    .btn:active{ transform: translateY(1px); }
+
+    .main{
+      height:100%;
+      padding:14px;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+      min-height:0;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      overflow:hidden;
+      min-height:0;
+    }
+    .cardHeader{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .cardHeader h2{ margin:0; font-size:1.02rem; letter-spacing:.2px; }
+    .cardBody{ padding:12px 14px; overflow:auto; min-height:0; background: rgba(0,0,0,.10); }
+    .hint{ color:var(--muted); line-height:1.35; font-size:.95rem; }
+    .navItem{
+      width:100%;
+      text-align:left;
+      border:1px solid transparent;
+      background: transparent;
+      padding:11px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between;
+      color:var(--muted);
+      font-weight:900;
+      margin-bottom:8px;
+      white-space:nowrap;
+    }
+    .navItem[aria-selected="true"]{
+      background: rgba(124,92,255,.20);
+      border-color: rgba(124,92,255,.45);
+      color: var(--text);
+    }
+    .field{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      border-radius: 16px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .field label{ color:var(--muted); font-weight:850; font-size:.92rem; }
+    input, select, textarea{ font:inherit; color:inherit; }
+    input, select, textarea{
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      outline:none;
+    }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .spacer{ flex:1; }
+    table{ width:100%; border-collapse:separate; border-spacing:0; }
+    th, td{ text-align:left; padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.08); vertical-align:top; }
+    th{ color:var(--muted); font-weight:900; font-size:.9rem; }
+    .tag{ display:inline-flex; padding:6px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); font-weight:850; font-size:.86rem; color: var(--muted); margin: 2px 6px 2px 0; white-space:nowrap; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .small{ font-size:.9rem; color:var(--muted); }
+    .split{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width: 980px){ body{ overflow:auto; } .main{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logoDot" aria-hidden="true"></span>
+      <div>
+        <div>ShiftCommander <span class="small">— Seating Planner</span></div>
+        <small>Build 2026-01-16.1</small>
+      </div>
+    </div>
+    <div class="toolbar">
+      <span class="pill" id="storePill" title="Store status">
+        <span class="dot warn" id="storeDot"></span>
+        <span id="storeText" class="mono">Store</span>
+      </span>
+      <span class="pill" id="clockPill">—</span>
+      <button class="btn" id="btnReload">Reload</button>
+      <button class="btn primary" id="btnSave">Save</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <aside class="card">
+      <div class="cardHeader"><h2>Tools</h2></div>
+      <div class="cardBody">
+        <button class="navItem" data-tab="templates" aria-selected="true">Seating Templates <span class="tag">Build</span></button>
+        <button class="navItem" data-tab="planner" aria-selected="false">Week Planner <span class="tag">Assign</span></button>
+
+        <div class="field" style="margin-top:12px;">
+          <label>How this works</label>
+          <div class="hint">
+            Build named seating templates, then assign AM/PM templates per day in a week view.
+            Saved inside <span class="mono">org_settings</span> via <span class="mono">supervisor_patch</span>.
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="card">
+      <div class="cardHeader">
+        <h2 id="panelTitle">Seating Templates</h2>
+        <div class="row"><span class="tag">Store: <span class="mono">schedule-cors-910cpr</span></span></div>
+      </div>
+      <div class="cardBody" id="panelBody"></div>
+    </section>
+  </main>
+
+<script>
+  const STORE_EXEC = "https://schedule-cors-910cpr.brian-9ac.workers.dev";
+
+  const $ = (s)=>document.querySelector(s);
+  const $$ = (s)=>Array.from(document.querySelectorAll(s));
+
+  const el = {
+    storeDot: $("#storeDot"),
+    storeText: $("#storeText"),
+    storePill: $("#storePill"),
+    clockPill: $("#clockPill"),
+    btnReload: $("#btnReload"),
+    btnSave: $("#btnSave"),
+    panelTitle: $("#panelTitle"),
+    panelBody: $("#panelBody"),
+  };
+
+  const app = {
+    tab: "templates",
+    connected: false,
+    patch: null,   // supervisor_patch payload (full)
+    org: null,     // org_settings object (inside patch)
+    dirty: false,
+    ui: {
+      editTemplateId: null,
+      weekStartIso: null
+    }
+  };
+
+  function setStoreStatus(kind, text, detail){
+    el.storeDot.className = "dot " + (kind||"warn");
+    el.storeText.textContent = text || "Store";
+    el.storePill.title = detail || "";
+  }
+
+  function tickClock(){
+    const d = new Date();
+    el.clockPill.textContent = d.toLocaleString(undefined, { weekday:"short", month:"short", day:"numeric" }) +
+      " • " + d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
+  }
+
+  async function safeJson(resp){
+    const txt = await resp.text();
+    try{ return JSON.parse(txt); }catch(_e){ throw new Error("Non-JSON: " + txt.slice(0,180)); }
+  }
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function isoDate(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function addDays(d,n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+  function startOfWeekSunday(d){
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = (x.getDay() - 0 + 7) % 7;
+    x.setDate(x.getDate() - diff);
+    x.setHours(0,0,0,0);
+    return x;
+  }
+
+  function ensureOrgShape_(){
+    app.org ||= {};
+    app.org.seat_templates ||= [];
+    app.org.truck_seating_templates ||= [];
+    app.org.active_seat_template_by_date ||= {};
+    app.org.ops_defaults ||= { units:{AM:"",PM:""}, seats:{AM:[],PM:[]} };
+    app.org.ops_defaults.seat_templates ||= { AM:"", PM:"" };
+  }
+
+  function templates_(){ ensureOrgShape_(); return app.org.truck_seating_templates; }
+  function seatCatalog_(){ ensureOrgShape_(); return app.org.seat_templates; }
+  function templateById_(id){ return templates_().find(t=>String(t.id)===String(id)); }
+
+  function normalizedId_(name){
+    return String(name||"").trim().toUpperCase().replace(/[^A-Z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,42) ||
+      ("T_" + Math.random().toString(16).slice(2,10).toUpperCase());
+  }
+
+  async function storeGet(params){
+    const u = new URL(STORE_EXEC);
+    Object.entries(params||{}).forEach(([k,v])=>u.searchParams.set(k,String(v)));
+    const resp = await fetch(u.toString(), { method:"GET", cache:"no-store" });
+    if(!resp.ok) throw new Error("GET " + resp.status);
+    return await safeJson(resp);
+  }
+  async function storePost(body){
+    const resp = await fetch(STORE_EXEC, {
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body: JSON.stringify(body||{})
+    });
+    if(!resp.ok) throw new Error("POST " + resp.status);
+    return await safeJson(resp);
+  }
+
+  function markDirty(){
+    app.dirty = true;
+    if(app.connected) setStoreStatus("warn","Unsaved","Changes not saved");
+  }
+
+  async function loadAll(){
+    setStoreStatus("warn","Loading…","Connecting to store…");
+    let patchResp = null;
+    try{
+      patchResp = await storeGet({ kind:"supervisor_patch" });
+      app.connected = true;
+      setStoreStatus("ok","Connected","Loaded supervisor_patch");
+    }catch(e){
+      app.connected = false;
+      setStoreStatus("bad","Offline", e.message);
+      patchResp = null;
+    }
+
+    const payload = (patchResp && patchResp.payload && typeof patchResp.payload === "object") ? patchResp.payload : {};
+    app.patch = payload;
+    app.org = payload.org_settings || payload.orgSettings || payload.org || {};
+
+    app.patch.org_settings = app.org;
+    delete app.patch.orgSettings; delete app.patch.org;
+
+    ensureOrgShape_();
+    if(!app.ui.weekStartIso) app.ui.weekStartIso = isoDate(startOfWeekSunday(new Date()));
+    render();
+  }
+
+  async function saveAll(){
+    if(!app.connected) return alert("Store offline — can't save.");
+    ensureOrgShape_();
+    setStoreStatus("warn","Saving…","Writing supervisor_patch…");
+    const out = { ...app.patch, org_settings: app.org };
+    const res = await storePost({ kind:"supervisor_patch", payload: out });
+    if(res && res.ok === false) throw new Error(res.error || "Save failed");
+    app.dirty = false;
+    setStoreStatus("ok","Saved","supervisor_patch updated");
+    alert("Saved ✅");
+  }
+
+  function setTab(tab){
+    app.tab = tab;
+    $$("[data-tab]").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===tab ? "true":"false"));
+    el.panelTitle.textContent = (tab==="planner") ? "Week Planner" : "Seating Templates";
+    render();
+  }
+
+  function render(){
+    if(app.tab==="planner") renderPlanner();
+    else renderTemplates();
+  }
+
+  function renderTemplates(){
+    const list = templates_();
+    const seats = seatCatalog_();
+
+    const edit = app.ui.editTemplateId ? templateById_(app.ui.editTemplateId) : null;
+    const selected = new Set((edit?.seats || []).map(String));
+
+    const seatChecks = seats.length ? seats.map(s=>{
+      const code = String(s.code||"");
+      const label = String(s.label||code);
+      if(!code) return "";
+      const checked = selected.has(code) ? "checked" : "";
+      return `<label class="tag" style="cursor:pointer; user-select:none;">
+        <input type="checkbox" data-seatcheck value="${esc(code)}" ${checked} style="margin-right:8px; vertical-align:middle;" />
+        <span class="mono">${esc(code)}</span> — ${esc(label)}
+      </label>`;
+    }).join("") : `<div class="hint">No seat templates exist yet. Add them first in Supervisor → Units & Seats.</div>`;
+
+    el.panelBody.innerHTML = `
+      <div class="row" style="margin-bottom:10px;">
+        <span class="tag">Count: <strong>${list.length}</strong></span>
+        <span class="spacer"></span>
+        <button class="btn" id="btnNew">New template</button>
+      </div>
+
+      <div class="split">
+        <div class="field" style="min-height:220px;">
+          <label>Existing templates</label>
+          <div class="hint">Click to edit. Templates store a list of seat codes.</div>
+          <div style="margin-top:10px;">
+            ${
+              list.length ? list.map(t=>`
+                <div class="row" style="justify-content:space-between; padding:10px 10px; border:1px solid rgba(255,255,255,.08); border-radius:14px; margin-bottom:8px; background: rgba(255,255,255,.03);">
+                  <div>
+                    <div style="font-weight:950;">${esc(t.name || t.id)}</div>
+                    <div class="small mono">${esc(t.id)} • ${(t.seats||[]).length} seat(s)</div>
+                  </div>
+                  <div class="row" style="gap:6px;">
+                    <button class="btn" data-edit="${esc(t.id)}">Edit</button>
+                    <button class="btn" data-del="${esc(t.id)}">Delete</button>
+                  </div>
+                </div>
+              `).join("") : `<div class="hint">No templates yet.</div>`
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <label>${edit ? "Edit template" : "Create template"}</label>
+
+          <div class="field" style="margin:0;">
+            <label>Template name</label>
+            <input id="tplName" placeholder="ALS/BLS Standard" value="${esc(edit?.name||"")}" />
+          </div>
+
+          <div class="field" style="margin:0;">
+            <label>Template ID</label>
+            <input id="tplId" class="mono" value="${esc(edit?.id||"")}" placeholder="AUTO" disabled />
+            <div class="hint">ID is auto-generated from name.</div>
+          </div>
+
+          <div class="field" style="margin:0;">
+            <label>Seats included</label>
+            <div>${seatChecks}</div>
+          </div>
+
+          <div class="row" style="margin-top:6px;">
+            <button class="btn primary" id="btnSaveTpl">${edit ? "Save changes" : "Create template"}</button>
+            <button class="btn" id="btnCancelTpl" style="display:${edit ? "inline-block":"none"};">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    $("#btnNew").onclick = ()=>{ app.ui.editTemplateId = null; renderTemplates(); };
+    $$("#panelBody [data-edit]").forEach(b=> b.onclick = ()=>{ app.ui.editTemplateId = b.dataset.edit; renderTemplates(); });
+    $$("#panelBody [data-del]").forEach(b=> b.onclick = ()=>deleteTemplate_(b.dataset.del));
+
+    const nameEl = $("#tplName");
+    const idEl = $("#tplId");
+    if(!edit){
+      nameEl.oninput = ()=>{ idEl.value = normalizedId_(nameEl.value); };
+      idEl.value = normalizedId_(nameEl.value);
+    }
+
+    $("#btnCancelTpl")?.addEventListener("click", ()=>{ app.ui.editTemplateId = null; renderTemplates(); });
+
+    $("#btnSaveTpl").onclick = ()=>{
+      const name = (nameEl.value||"").trim();
+      if(!name) return alert("Template name required.");
+      const id = edit ? String(edit.id) : normalizedId_(name);
+
+      const chosen = Array.from($$("[data-seatcheck]")).filter(cb=>cb.checked).map(cb=>String(cb.value));
+      if(!chosen.length) return alert("Pick at least one seat.");
+
+      const list = templates_();
+      const existing = list.find(t=>String(t.id)===id);
+
+      if(edit){
+        edit.name = name;
+        edit.seats = chosen;
+      } else {
+        if(existing) return alert("A template with this ID already exists. Change name.");
+        list.push({ id, name, seats: chosen });
+      }
+
+      app.org.truck_seating_templates = list;
+      markDirty();
+      app.ui.editTemplateId = id;
+      renderTemplates();
+    };
+  }
+
+  function deleteTemplate_(id){
+    if(!confirm("Delete this template?")) return;
+    app.org.truck_seating_templates = templates_().filter(t=>String(t.id)!==String(id));
+
+    const map = app.org.active_seat_template_by_date || {};
+    for(const k of Object.keys(map)){
+      const v = map[k];
+      if(v && typeof v === "object"){
+        if(v.AM === id) v.AM = "";
+        if(v.PM === id) v.PM = "";
+      }
+    }
+    markDirty();
+    if(app.ui.editTemplateId === id) app.ui.editTemplateId = null;
+    renderTemplates();
+  }
+
+  function renderPlanner(){
+    ensureOrgShape_();
+    const list = templates_();
+    const opts = [`<option value="">(none)</option>`].concat(
+      list.map(t=>`<option value="${esc(t.id)}">${esc(t.name || t.id)}</option>`)
+    ).join("");
+
+    const weekStart = new Date(app.ui.weekStartIso + "T00:00:00");
+    const label = weekStart.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
+
+    const rows = [];
+    for(let i=0;i<7;i++){
+      const day = addDays(weekStart, i);
+      const iso = isoDate(day);
+      const dLabel = day.toLocaleDateString(undefined, { weekday:"short" });
+      const cur = app.org.active_seat_template_by_date?.[iso] || {};
+      rows.push({ iso, dLabel, am: cur.AM || "", pm: cur.PM || "" });
+    }
+
+    const def = app.org.ops_defaults.seat_templates || { AM:"", PM:"" };
+
+    el.panelBody.innerHTML = `
+      <div class="row" style="margin-bottom:10px;">
+        <span class="tag">Week of <span class="mono">${esc(app.ui.weekStartIso)}</span></span>
+        <span class="spacer"></span>
+        <button class="btn" id="wkPrev">◀</button>
+        <span class="pill">${esc(label)}</span>
+        <button class="btn" id="wkNext">▶</button>
+        <button class="btn" id="wkToday">Today</button>
+      </div>
+
+      <div class="split">
+        <div class="field">
+          <label>Defaults</label>
+          <div class="row">
+            <div style="flex:1; min-width:220px;">
+              <div class="small" style="margin-bottom:6px;">Default AM template</div>
+              <select id="defAM" style="width:100%;">${opts}</select>
+            </div>
+            <div style="flex:1; min-width:220px;">
+              <div class="small" style="margin-bottom:6px;">Default PM template</div>
+              <select id="defPM" style="width:100%;">${opts}</select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn primary" id="btnApplyDefaults">Apply defaults to blank days</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Quick set</label>
+          <div class="row">
+            <select id="bulkTpl" style="flex:1;">${opts}</select>
+            <button class="btn" id="bulkAM">Set AM week</button>
+            <button class="btn" id="bulkPM">Set PM week</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Week (AM/PM dropdown per date)</label>
+        <table>
+          <thead><tr><th style="width:170px;">Date</th><th>AM template</th><th>PM template</th></tr></thead>
+          <tbody>
+            ${
+              rows.map(r=>`
+                <tr>
+                  <td class="mono">${esc(r.iso)}<div class="small">${esc(r.dLabel)}</div></td>
+                  <td><select data-day="${esc(r.iso)}" data-shift="AM" style="width:100%;">${opts}</select></td>
+                  <td><select data-day="${esc(r.iso)}" data-shift="PM" style="width:100%;">${opts}</select></td>
+                </tr>
+              `).join("")
+            }
+          </tbody>
+        </table>
+        <div class="hint" style="margin-top:8px;">Saved to <span class="mono">org_settings.active_seat_template_by_date</span>.</div>
+      </div>
+    `;
+
+    $("#wkPrev").onclick = ()=>{ app.ui.weekStartIso = isoDate(addDays(weekStart, -7)); renderPlanner(); };
+    $("#wkNext").onclick = ()=>{ app.ui.weekStartIso = isoDate(addDays(weekStart, +7)); renderPlanner(); };
+    $("#wkToday").onclick = ()=>{ app.ui.weekStartIso = isoDate(startOfWeekSunday(new Date())); renderPlanner(); };
+
+    $("#defAM").value = def.AM || "";
+    $("#defPM").value = def.PM || "";
+    $("#defAM").onchange = ()=>{ app.org.ops_defaults.seat_templates.AM = ($("#defAM").value||"").trim(); markDirty(); };
+    $("#defPM").onchange = ()=>{ app.org.ops_defaults.seat_templates.PM = ($("#defPM").value||"").trim(); markDirty(); };
+
+    $$("[data-day][data-shift]").forEach(sel=>{
+      const day = sel.dataset.day;
+      const shift = sel.dataset.shift;
+      const cur = app.org.active_seat_template_by_date?.[day] || {};
+      sel.value = (shift==="AM" ? (cur.AM||"") : (cur.PM||"")) || "";
+      sel.onchange = ()=>{
+        app.org.active_seat_template_by_date ||= {};
+        app.org.active_seat_template_by_date[day] ||= {};
+        app.org.active_seat_template_by_date[day][shift] = (sel.value||"").trim();
+        markDirty();
+      };
+    });
+
+    $("#btnApplyDefaults").onclick = ()=>{
+      const dAM = (app.org.ops_defaults.seat_templates.AM||"").trim();
+      const dPM = (app.org.ops_defaults.seat_templates.PM||"").trim();
+      for(const r of rows){
+        const v = app.org.active_seat_template_by_date[r.iso] || {};
+        if(!v.AM && dAM) v.AM = dAM;
+        if(!v.PM && dPM) v.PM = dPM;
+        app.org.active_seat_template_by_date[r.iso] = v;
+      }
+      markDirty();
+      renderPlanner();
+    };
+
+    $("#bulkAM").onclick = ()=>{
+      const tid = ($("#bulkTpl").value||"").trim();
+      if(!tid) return alert("Pick a template first.");
+      for(const r of rows){
+        app.org.active_seat_template_by_date[r.iso] ||= {};
+        app.org.active_seat_template_by_date[r.iso].AM = tid;
+      }
+      markDirty(); renderPlanner();
+    };
+    $("#bulkPM").onclick = ()=>{
+      const tid = ($("#bulkTpl").value||"").trim();
+      if(!tid) return alert("Pick a template first.");
+      for(const r of rows){
+        app.org.active_seat_template_by_date[r.iso] ||= {};
+        app.org.active_seat_template_by_date[r.iso].PM = tid;
+      }
+      markDirty(); renderPlanner();
+    };
+  }
+
+  (function init(){
+    tickClock(); setInterval(tickClock, 10000);
+
+    $$("[data-tab]").forEach(b=>b.onclick = ()=>setTab(b.dataset.tab));
+    el.btnReload.onclick = loadAll;
+    el.btnSave.onclick = ()=>saveAll().catch(e=>alert(e.message||e));
+
+    loadAll().catch(e=>{
+      console.error(e);
+      setStoreStatus("bad","Error", String(e.message||e));
+    });
+  })();
+</script>
+</body>
+</html>
