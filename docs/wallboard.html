@@ -272,6 +272,26 @@ function fmtRange(a,b){
   const right = b.toLocaleDateString(undefined, opt);
   const yr = b.getFullYear();
   return `${left} – ${right}, ${yr}`;
+
+
+function fmtLocalTimeFromIso(isoStr){
+  try{
+    const d = new Date(String(isoStr));
+    if(isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
+  }catch(_e){
+    return "";
+  }
+}
+function fmtLocalDateTimeFromIso(isoStr){
+  try{
+    const d = new Date(String(isoStr));
+    if(isNaN(d.getTime())) return "";
+    return d.toLocaleString(undefined, { weekday:"short", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+  }catch(_e){
+    return "";
+  }
+}
 }
 
 /** ========= FETCH ========= **/
@@ -634,12 +654,11 @@ function renderAll(root, schedule, roster, org){
 
   // Render blocks
   renderWeekBlock(root, "", archivedStart, schedule, roster, org, { sub:"Archived" });
-  renderWeekBlock(root, "", controlled0, schedule, roster, org, { sub:"Controlled", showNeeds:true });
- renderWeekBlock(root, "", controlled1, schedule, roster, org, { sub:"Controlled", showNeeds:true });
+  renderWeekBlock(root, "", controlled0, schedule, roster, org, { sub:"Controlled" });
+  renderWeekBlock(root, "", controlled1, schedule, roster, org, { sub:"Controlled", showNeeds:true });
 
-renderWeekBlock(root, "", published2, schedule, roster, org, { sub:"Published", showNeeds:true });
-renderWeekBlock(root, "", published3, schedule, roster, org, { sub:"Published" });
-
+  renderWeekBlock(root, "", published2, schedule, roster, org, { sub:"Published" });
+  renderWeekBlock(root, "", published3, schedule, roster, org, { sub:"Published" });
 
   // Visual end-of-published line
   const div = document.createElement("div");
@@ -664,7 +683,10 @@ async function refreshBoard({initial=false}={}){
     window.__sc_lastHash ||= "";
     const h = hashLite({ schedule: data.schedule, roster: data.roster, org: data.org });
     if(!initial && h === window.__sc_lastHash){
-      pill.textContent = "Live";
+      const ra = data.schedule && data.schedule.meta ? data.schedule.meta.resolved_at : null;
+      const t = ra ? fmtLocalTimeFromIso(ra) : "";
+      pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
+      pill.title = ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "";
       pill.style.color = "#166534";
       return;
     }
@@ -685,8 +707,13 @@ async function refreshBoard({initial=false}={}){
       root.style.opacity = "1";
     }
 
-    pill.textContent = "Live";
-    pill.style.color = "#166534";
+    {
+      const ra = data.schedule && data.schedule.meta ? data.schedule.meta.resolved_at : null;
+      const t = ra ? fmtLocalTimeFromIso(ra) : "";
+      pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
+      pill.title = ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "";
+      pill.style.color = "#166534";
+    }
   }catch(err){
     console.error(err);
     pill.textContent = "Load failed";

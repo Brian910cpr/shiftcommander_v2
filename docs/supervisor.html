@@ -2368,10 +2368,17 @@ function esc(s){
   
   function normalizeScheduleMap(obj){
     // Keep only YYYY-MM-DD keys mapping to day objects.
+    // Preserve optional top-level meta (e.g., resolver run stamp).
     const out = {};
     if(!obj || typeof obj !== "object") return out;
+
+    // Preserve meta if present
+    if(obj.meta && typeof obj.meta === "object"){
+      out.meta = obj.meta;
+    }
+
     for(const [k,v] of Object.entries(obj)){
-      if(/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === "object"){
+      if(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(k) && v && typeof v === "object"){
         out[k] = v;
       }
     }
@@ -2554,9 +2561,23 @@ function esc(s){
       }
 
       setDataStatus("warn", "Saving schedule…", "Writing schedule to Drive…");
-      await storePost({ kind:"schedule", payload: normalizeScheduleMap(schedule) });
+      // Stamp resolve metadata into schedule (never shown to members as IDs)
+      const weekStartIso = isoDate(weekStartDate);
+      const weekEndIso = isoDate(addDays(weekStartDate, 6));
+      const outSched = normalizeScheduleMap(schedule);
+      const prevMeta = (outSched.meta && typeof outSched.meta === "object") ? outSched.meta : {};
+      outSched.meta = {
+        ...prevMeta,
+        resolved_at: nowIso(),
+        resolved_by: "Supervisor UI",
+        resolver_version: "beta1",
+        range_start: weekStartIso,
+        range_end: weekEndIso
+      };
 
-      app.data.schedule = schedule;
+      await storePost({ kind:"schedule", payload: outSched });
+
+      app.data.schedule = outSched;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
       alert(`Resolved week.\nChanges written: ${changes.length}`);
     }catch(e){
