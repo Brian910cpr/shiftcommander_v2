@@ -740,7 +740,7 @@ async function refreshBoard({initial=false}={}){
     const data = await loadData();
 
     // Visible “did the update push?” marker (build tag)
-    document.getElementById("buildTag").textContent = "v2026-01-16.2";
+    document.getElementById("buildTag").textContent = "v2026-01-16.3";
 
     // Only re-render if something actually changed
     window.__sc_lastHash ||= "";
@@ -751,13 +751,12 @@ async function refreshBoard({initial=false}={}){
       pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
       pill.title = ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "";
       pill.style.color = "#166534";
-    const foot = document.getElementById("resolverFooter");
-    if(foot){
-      foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
-    }
+
       const foot = document.getElementById("resolverFooter");
       if(foot){
-        foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
+        foot.innerHTML = ra
+          ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`)
+          : "Last resolver run: <strong>Unknown</strong>";
       }
       return;
     }
@@ -782,7 +781,7 @@ async function refreshBoard({initial=false}={}){
       const ra = data.schedule && data.schedule.meta ? data.schedule.meta.resolved_at : null;
       const t = ra ? fmtLocalTimeFromIso(ra) : "";
       pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
-      pill.title = (ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet") + "\n" + "Build: v2026-01-16.2";
+      pill.title = (ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet") + "\n" + "Build: v2026-01-16.3";
       pill.style.color = "#166534";
     const foot = document.getElementById("resolverFooter");
     if(foot){
