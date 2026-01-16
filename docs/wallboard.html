@@ -272,7 +272,7 @@ function fmtRange(a,b){
   const right = b.toLocaleDateString(undefined, opt);
   const yr = b.getFullYear();
   return `${left} – ${right}, ${yr}`;
-
+}
 
 function fmtLocalTimeFromIso(isoStr){
   try{
@@ -291,7 +291,6 @@ function fmtLocalDateTimeFromIso(isoStr){
   }catch(_e){
     return "";
   }
-}
 }
 
 /** ========= FETCH ========= **/

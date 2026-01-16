@@ -563,9 +563,8 @@
 
   // ---- STORE CLIENT ----
   async function storeGet(params){
-    if(!app.token) throw new Error("No token set.");
     const u = new URL(STORE_EXEC);
-    Object.entries({ ...params, token: app.token }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
+    Object.entries({ ...params }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
     const resp = await fetch(u.toString(), { method:"GET", cache:"no-store" });
     if(!resp.ok) throw new Error(`Store GET ${resp.status}`);
     return await safeJson(resp);
@@ -590,7 +589,7 @@
       return res;
     }catch(e){
       app.connected = false;
-      setDriveStatus("warn", "Drive", `Offline (or token missing). Using local JSON.\n${e.message}`);
+      setDriveStatus("warn", "Drive", `Offline. Using local JSON.\n${e.message}`);
       return null;
     }
   }
