@@ -490,8 +490,8 @@ main{ padding:12px; }
 <script>
 /* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
-  // ALWAYS go through Cloudflare Worker (handles CORS + token injection)
-  url: (location.origin + "/api/store")
+  // Cloudflare Worker (CORS + token injection)
+  url: "https://schedule-cors-910cpr.brian-9ac.workers.dev"
 };
 
 

@@ -406,7 +406,7 @@
   // ============================================================
 
   // ---- CONFIG ----
-  const STORE_EXEC = ((location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store");
+  const STORE_EXEC = "https://schedule-cors-910cpr.brian-9ac.workers.dev";
   const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
   const LOCAL_PATHS = {
     members: `${DATA_BASE}/members.json`,
@@ -539,14 +539,14 @@
 
   // ---- TOKEN ----
   function loadToken(){
-    app.token = localStorage.getItem(LS_TOKEN) || "";
-    if(!app.token){
-      setDriveStatus("warn", "Drive", "Token not set. Click Token to set your SC_TOKEN.");
-    }
+    // Token is injected by the Cloudflare Worker; no browser token needed.
+    app.token = "";
   }
 
   function promptToken(){
     const current = (app.token || "").trim();
+    alert("No token needed here — Cloudflare Worker injects SC_TOKEN.");
+    return;
     const input = prompt("Paste SC_TOKEN (saved in this browser).", current);
     if(input === null) return;
     const trimmed = input.trim();
@@ -572,11 +572,10 @@
   }
 
   async function storePost(body){
-    if(!app.token) throw new Error("No token set.");
     const resp = await fetch(STORE_EXEC, {
       method: "POST",
       headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ token: app.token, ...body })
+      body: JSON.stringify({ ...body })
     });
     if(!resp.ok) throw new Error(`Store POST ${resp.status}`);
     return await safeJson(resp);
@@ -730,11 +729,6 @@
   async function saveAll(){
     // Always save a local draft first (protect against outage)
     saveDraft();
-
-    if(!app.token){
-      alert("No token set. Click Token, paste SC_TOKEN, then Save again.");
-      return;
-    }
 
     try{
       const payload = {
