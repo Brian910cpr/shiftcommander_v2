@@ -634,11 +634,12 @@ function renderAll(root, schedule, roster, org){
 
   // Render blocks
   renderWeekBlock(root, "", archivedStart, schedule, roster, org, { sub:"Archived" });
-  renderWeekBlock(root, "", controlled0, schedule, roster, org, { sub:"Controlled" });
-  renderWeekBlock(root, "", controlled1, schedule, roster, org, { sub:"Controlled", showNeeds:true });
+  renderWeekBlock(root, "", controlled0, schedule, roster, org, { sub:"Controlled", showNeeds:true });
+ renderWeekBlock(root, "", controlled1, schedule, roster, org, { sub:"Controlled", showNeeds:true });
 
-  renderWeekBlock(root, "", published2, schedule, roster, org, { sub:"Published" });
-  renderWeekBlock(root, "", published3, schedule, roster, org, { sub:"Published" });
+renderWeekBlock(root, "", published2, schedule, roster, org, { sub:"Published", showNeeds:true });
+renderWeekBlock(root, "", published3, schedule, roster, org, { sub:"Published" });
+
 
   // Visual end-of-published line
   const div = document.createElement("div");
