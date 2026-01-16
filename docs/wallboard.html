@@ -51,6 +51,17 @@
     font-weight:900;
   }
 
+  /* Visible build/version tag so it's obvious when the latest HTML is live */
+  .ver{
+    font-size:11px;
+    font-weight:1000;
+    color:var(--muted);
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:999px;
+    padding:2px 8px;
+  }
+
   .pill{
     font-size:12px;
     font-weight:900;
@@ -144,6 +155,20 @@
   }
   .daynum{ font-size:16px; font-weight:1000; line-height:1; }
   .truck{ font-size:12px; font-weight:1000; color:var(--muted); }
+  /* Ambulance/unit label pill shown between day number and ISO date */
+  .truckpill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:2px 7px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#f8fafc;
+    color:#0f172a;
+    font-weight:1000;
+    font-size:11px;
+    line-height:1;
+  }
   .iso{ font-size:11px; color:var(--muted2); font-weight:1000; }
 
   .slot{
@@ -167,8 +192,9 @@
 
   .lines{ display:flex; flex-direction:column; gap:5px; min-width:0; }
   .line{
-    font-size:12px;
+    font-size:clamp(12px, 1.15vw, 14px);
     font-weight:900;
+    line-height:1.15;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -218,7 +244,7 @@
 <div class="top">
   <div class="top-inner">
     <div class="title">
-      <div>Wallboard</div>
+      <div>Wallboard <span class="sub" id="buildTag" style="font-weight:1000;margin-left:6px"></span></div>
       <div class="sub" id="rangeLabel">Prev + This</div>
     </div>
     <div class="pill" id="statusPill">Loading…</div>
@@ -568,7 +594,7 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
     tile.innerHTML = `
       <div class="dayhead">
         <div class="daynum">${d.getDate()}${hasCaution ? `<span class="flag">⚠</span>` : ""}</div>
-        <div class="truck">${truck ? `(${escapeHtml(truck)})` : ""}</div>
+        <div class="truck">${truck ? `<span class="truckpill">${escapeHtml(truck)}</span>` : ""}</div>
         <div class="iso">${iso}</div>
       </div>
 
@@ -678,6 +704,9 @@ async function refreshBoard({initial=false}={}){
 
     const data = await loadData();
 
+    // Visible “did the update push?” marker (build tag)
+    document.getElementById("buildTag").textContent = "v2026-01-16.1";
+
     // Only re-render if something actually changed
     window.__sc_lastHash ||= "";
     const h = hashLite({ schedule: data.schedule, roster: data.roster, org: data.org });
@@ -710,7 +739,7 @@ async function refreshBoard({initial=false}={}){
       const ra = data.schedule && data.schedule.meta ? data.schedule.meta.resolved_at : null;
       const t = ra ? fmtLocalTimeFromIso(ra) : "";
       pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
-      pill.title = ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "";
+      pill.title = (ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet") + "\n" + "Build: v2026-01-16.1";
       pill.style.color = "#166534";
     }
   }catch(err){
