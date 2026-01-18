@@ -272,6 +272,37 @@
       .main{ grid-template-columns: 1fr; }
       .modalBody{ grid-template-columns: 1fr; }
     }
+  
+    /* Schedule Browser inline override controls */
+    .sbPick{
+      font-size:12px;
+      font-weight:900;
+      color:#0f172a;
+      background:#ffffff;
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:999px;
+      padding:6px 10px;
+      min-width:180px;
+    }
+    .sbPick:disabled{
+      opacity:.7;
+      cursor:not-allowed;
+    }
+    .sbLock{
+      font-size:12px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.10);
+      color:#e2e8f0;
+      border-radius:999px;
+      padding:6px 10px;
+    }
+    .sbLock.on{
+      background:rgba(34,197,94,.18);
+      border-color:rgba(34,197,94,.45);
+      color:#dcfce7;
+    }
+
   </style>
 </head>
 
@@ -406,7 +437,7 @@
   // ============================================================
 
   // ---- CONFIG ----
-  const STORE_EXEC = ((location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store");
+  const STORE_EXEC = "https://schedule-cors-910cpr.brian-9ac.workers.dev";
   const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
   const LOCAL_PATHS = {
     members: `${DATA_BASE}/members.json`,
@@ -539,14 +570,14 @@
 
   // ---- TOKEN ----
   function loadToken(){
-    app.token = localStorage.getItem(LS_TOKEN) || "";
-    if(!app.token){
-      setDriveStatus("warn", "Drive", "Token not set. Click Token to set your SC_TOKEN.");
-    }
+    // Token is injected by the Cloudflare Worker; no browser token needed.
+    app.token = "";
   }
 
   function promptToken(){
     const current = (app.token || "").trim();
+    alert("No token needed here — Cloudflare Worker injects SC_TOKEN.");
+    return;
     const input = prompt("Paste SC_TOKEN (saved in this browser).", current);
     if(input === null) return;
     const trimmed = input.trim();
@@ -572,11 +603,10 @@
   }
 
   async function storePost(body){
-    if(!app.token) throw new Error("No token set.");
     const resp = await fetch(STORE_EXEC, {
       method: "POST",
       headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ token: app.token, ...body })
+      body: JSON.stringify({ ...body })
     });
     if(!resp.ok) throw new Error(`Store POST ${resp.status}`);
     return await safeJson(resp);
@@ -730,11 +760,6 @@
   async function saveAll(){
     // Always save a local draft first (protect against outage)
     saveDraft();
-
-    if(!app.token){
-      alert("No token set. Click Token, paste SC_TOKEN, then Save again.");
-      return;
-    }
 
     try{
       const payload = {
@@ -983,7 +1008,40 @@
     for(const w of weeks){
       wrap.appendChild(renderWeekBlockBasic(w.ws, w.rel, schedule, org));
     }
+
+    // enable inline overrides (dropdowns + lock toggles)
+    bindScheduleBrowserOverrides();
   }
+
+  
+
+  function bindScheduleBrowserOverrides(){
+    const root = el.panelBody;
+    if(!root) return;
+
+    // selects
+    root.querySelectorAll('select[data-sb-date]').forEach(sel => {
+      sel.onchange = (ev) => {
+        const d = sel.dataset.sbDate;
+        const sh = sel.dataset.sbShift;
+        const slot = Number(sel.dataset.sbSlot||0);
+        upsertSeatOverride(d, sh, slot, sel.value);
+      };
+    });
+
+    // lock buttons
+    root.querySelectorAll('button[data-sb-lock]').forEach(btn => {
+      btn.onclick = (ev) => {
+        const d = btn.dataset.sbDate;
+        const sh = btn.dataset.sbShift;
+        const slot = Number(btn.dataset.sbSlot||0);
+        toggleSeatLock(d, sh, slot);
+        // refresh browser view to reflect disabled/enabled
+        renderBrowser();
+      };
+    });
+  }
+
 
   function phaseForRelWeek(rel){
     if(rel <= -1) return "archived";
@@ -1052,8 +1110,8 @@
       const am = Array.isArray(day.AM) ? day.AM : (Array.isArray(day.am) ? day.am : null);
       const pm = Array.isArray(day.PM) ? day.PM : (Array.isArray(day.pm) ? day.pm : null);
 
-      const amTxt = formatPairBasic(am);
-      const pmTxt = formatPairBasic(pm);
+      const amTxt = formatPairBasic(am, iso, 'AM');
+      const pmTxt = formatPairBasic(pm, iso, 'PM');
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -1067,20 +1125,125 @@
     return table;
   }
 
-  function formatPairBasic(pair){
+  function formatPairBasic(pair, dateIso, shift){
     if(!pair || !Array.isArray(pair) || pair.length < 2){
       return `<span class="small">—</span>`;
     }
-    const a = String(pair[0]||"OPEN").trim() || "OPEN";
-    const b = String(pair[1]||"OPEN").trim() || "OPEN";
+    const aId = String(pair[0]||"OPEN").trim() || "OPEN";
+    const bId = String(pair[1]||"OPEN").trim() || "OPEN";
+
+    // Apply overrides for display (if present)
+    const oa = getSeatOverride(dateIso, shift, 0);
+    const ob = getSeatOverride(dateIso, shift, 1);
+    const aVal = (oa && oa.member_id) ? String(oa.member_id) : aId;
+    const bVal = (ob && ob.member_id) ? String(ob.member_id) : bId;
+
+    const aLocked = !!(oa && oa.locked);
+    const bLocked = !!(ob && ob.locked);
+
     return `
-      <div class="row" style="gap:10px; align-items:center;">
-        <span class="tag mono">${esc(a)}</span>
-        <span class="tag mono">${esc(b)}</span>
+      <div class="row" style="gap:10px; align-items:center; flex-wrap:wrap;">
+        <select class="sbPick" data-sb-date="${esc(dateIso)}" data-sb-shift="${esc(shift)}" data-sb-slot="0" ${aLocked?'disabled':''}>
+          ${seatPickOptionsHtml(aVal)}
+        </select>
+        <button class="sbLock ${aLocked?'on':''}" data-sb-lock="1" data-sb-date="${esc(dateIso)}" data-sb-shift="${esc(shift)}" data-sb-slot="0" title="Lock/unlock this slot">${aLocked?'Locked':'Lock'}</button>
+
+        <select class="sbPick" data-sb-date="${esc(dateIso)}" data-sb-shift="${esc(shift)}" data-sb-slot="1" ${bLocked?'disabled':''}>
+          ${seatPickOptionsHtml(bVal)}
+        </select>
+        <button class="sbLock ${bLocked?'on':''}" data-sb-lock="1" data-sb-date="${esc(dateIso)}" data-sb-shift="${esc(shift)}" data-sb-slot="1" title="Lock/unlock this slot">${bLocked?'Locked':'Lock'}</button>
+
         <button class="btn" data-hold="1" title="Hold to show candidates (needs bulk availability; not enabled yet)">Hold</button>
       </div>
     `;
   }
+
+
+  function seatPickOptionsHtml(selectedId){
+    const sel = String(selectedId||'OPEN').trim() || 'OPEN';
+    const opts = [];
+    // OPEN
+    opts.push(`<option value="OPEN" ${sel==='OPEN'?'selected':''}>OPEN</option>`);
+    // Members sorted by last, first
+    const members = (app.data.members||[]).slice().sort((a,b)=>{
+      const al = (a.last_name||a.last||a.name||'').toString().toLowerCase();
+      const bl = (b.last_name||b.last||b.name||'').toString().toLowerCase();
+      if(al<bl) return -1;
+      if(al>bl) return 1;
+      const af = (a.first_name||a.first||'').toString().toLowerCase();
+      const bf = (b.first_name||b.first||'').toString().toLowerCase();
+      return af.localeCompare(bf);
+    });
+    for(const m of members){
+      const id = String(m.member_id||m.id||'').trim();
+      if(!id) continue;
+      const name = memberNameById(id) || id;
+      opts.push(`<option value="${esc(id)}" ${sel===id?'selected':''}>${esc(name)}</option>`);
+    }
+    return opts.join('');
+  }
+
+  function getSeatOverride(dateIso, shift, slot){
+    const rows = app.data.overrides || [];
+    return rows.find(o => (o && o.type==='seat' && o.date===dateIso && String(o.shift||'').toUpperCase()===String(shift||'').toUpperCase() && Number(o.slot)===Number(slot))) || null;
+  }
+
+  function upsertSeatOverride(dateIso, shift, slot, memberId){
+    app.data.overrides ||= [];
+    const existing = getSeatOverride(dateIso, shift, slot);
+    const now = nowIso();
+    const member_id = String(memberId||'OPEN').trim() || 'OPEN';
+    const member_name = (member_id==='OPEN') ? 'OPEN' : (memberNameById(member_id) || 'Assigned');
+
+    if(existing){
+      existing.member_id = member_id;
+      existing.member_name = member_name;
+      existing.updated_at = now;
+    }else{
+      app.data.overrides.push({
+        type: 'seat',
+        id: `ov_${dateIso}_${String(shift).toUpperCase()}_${slot}`,
+        date: dateIso,
+        shift: String(shift).toUpperCase(),
+        slot: Number(slot),
+        member_id,
+        member_name,
+        locked: false,
+        created_at: now,
+        updated_at: now,
+        reason: ''
+      });
+    }
+    setDataStatus('warn','Unsaved changes','Override updated. Click Save.');
+    saveDraft();
+  }
+
+  function toggleSeatLock(dateIso, shift, slot){
+    app.data.overrides ||= [];
+    let o = getSeatOverride(dateIso, shift, slot);
+    if(!o){
+      // create override shell so lock persists even if member is unchanged
+      o = {
+        type:'seat',
+        id: `ov_${dateIso}_${String(shift).toUpperCase()}_${slot}`,
+        date: dateIso,
+        shift: String(shift).toUpperCase(),
+        slot: Number(slot),
+        member_id: 'OPEN',
+        member_name: 'OPEN',
+        locked: false,
+        created_at: nowIso(),
+        updated_at: nowIso(),
+        reason:''
+      };
+      app.data.overrides.push(o);
+    }
+    o.locked = !o.locked;
+    o.updated_at = nowIso();
+    setDataStatus('warn','Unsaved changes','Lock updated. Click Save.');
+    saveDraft();
+  }
+
 
   function renderOverrides(){
     el.panelBody.innerHTML = `
@@ -1135,7 +1298,7 @@
             <tr>
               <td class="mono">${esc(o.date || "")}</td>
               <td class="mono">${esc(o.shift || "")}</td>
-              <td>${esc(o.member_name || o.member_id || "")}</td>
+              <td>${esc(o.member_name || memberNameById(o.member_id) || "")}</td>
               <td>${esc(o.reason || "")}</td>
               <td><button class="btn" data-ov-edit="${i}">Edit</button> <button class="btn danger" data-ov-del="${i}">Delete</button></td>
             </tr>
@@ -1329,43 +1492,6 @@
           </div>
           <div class="row" style="margin-top:10px;">
             <button class="btn" id="rotSave">Save rotation</button>
-          </div>
-        </div>
-
-
-        <div class="field" style="flex:1; min-width:320px;">
-          <label>Duty rotation (for DUTY_A/B/C/D seat codes)</label>
-          <div class="hint">
-            Used only when you <strong>Copy forward</strong>. If enabled, any seat code containing <span class="mono">DUTY_A</span> etc
-            is rotated to the next crew letter for the new week (A→B→C→D→A by default).
-            This is <strong>planner-only</strong> (does not change resolver logic).
-          </div>
-          <div class="row" style="gap:10px; align-items:flex-end; margin-top:10px;">
-            <label class="tag" style="cursor:pointer;">
-              <input type="checkbox" id="dutyRotEnabled" style="margin-right:8px; vertical-align:middle;">
-              Enable duty rotation
-            </label>
-            <div style="flex:1; min-width:220px;">
-              <div class="small" style="margin-bottom:6px;">Rotation order (A,B,C,D)</div>
-              <div class="row" style="gap:8px;">
-                <select id="dutyA" style="flex:1;">
-                  <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                </select>
-                <select id="dutyB" style="flex:1;">
-                  <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                </select>
-                <select id="dutyC" style="flex:1;">
-                  <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                </select>
-                <select id="dutyD" style="flex:1;">
-                  <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                </select>
-              </div>
-              <div class="hint" style="margin-top:8px;">Keep all four unique. Default: A,B,C,D.</div>
-            </div>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <button class="btn" id="dutyRotSave">Save duty rotation</button>
           </div>
         </div>
 
@@ -1573,69 +1699,11 @@
       alert("Rotation saved (local). Click Save to push to Drive.");
     };
 
-
-    // Duty rotation UI (copy-forward only)
-    org.duty_rotation ||= { enabled:false, order:["A","B","C","D"] };
-    const dRot = org.duty_rotation;
-
-    const bindDutyRot = ()=>{
-      $("#dutyRotEnabled").checked = !!dRot.enabled;
-      const order = Array.isArray(dRot.order) ? dRot.order.slice(0,4) : ["A","B","C","D"];
-      while(order.length<4) order.append("A");
-      $("#dutyA").value = order[0] || "A";
-      $("#dutyB").value = order[1] || "B";
-      $("#dutyC").value = order[2] || "C";
-      $("#dutyD").value = order[3] || "D";
-    };
-    bindDutyRot();
-
-    $("#dutyRotSave").onclick = ()=>{
-      org.duty_rotation ||= { enabled:false, order:["A","B","C","D"] };
-      org.duty_rotation.enabled = !!$("#dutyRotEnabled").checked;
-      const order = [$("#dutyA").value, $("#dutyB").value, $("#dutyC").value, $("#dutyD").value].map(x=>String(x||""));
-      const set = new Set(order);
-      if(set.size !== 4 || order.some(x=>!x)){
-        alert("Duty rotation order must include A, B, C, D exactly once.");
-        return;
-      }
-      org.duty_rotation.order = order;
-      setDataStatus("warn","Unsaved changes","Duty rotation updated. Click Save.");
-      saveDraft();
-      alert("Duty rotation saved (local). Click Save to push to Drive.");
-    };
-
     // Resolve Now (this week)
     $("#opsResolveDry").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:true }); };
     $("#opsResolveWeek").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:false }); };
     // Helper: copy week selections forward N weeks (inclusive, sequential)
-    
-    // Duty seat rotation (copy-forward only)
-    function rotateDutySeatCodes(seatList, weekOffset){
-      try{
-        const rot = org.duty_rotation;
-        if(!rot || !rot.enabled) return seatList;
-        const order = Array.isArray(rot.order) ? rot.order.map(String) : ["A","B","C","D"];
-        if(order.length < 2) return seatList;
-
-        const mapNext = {};
-        for(let i=0;i<order.length;i++){
-          mapNext[order[i]] = order[(i + (weekOffset % order.length) + order.length) % order.length];
-        }
-
-        return (seatList||[]).map(code=>{
-          const s = String(code||"");
-          // Replace only the duty suffix letter in patterns like DUTY_A, DUTY_B, etc.
-          return s.replace(/\b(DUTY_)([A-D])\b/g, (m,prefix,letter)=>{
-            const nxt = mapNext[letter] || letter;
-            return prefix + nxt;
-          });
-        });
-      }catch(_e){
-        return seatList;
-      }
-    }
-
-function copyWeekForward(weeks){
+    function copyWeekForward(weeks){
       org.active_units_by_date ||= {};
       org.active_seats_by_date ||= {};
 
@@ -1659,8 +1727,8 @@ function copyWeekForward(weeks){
           const srcSeats = org.active_seats_by_date[srcIso] || {};
           if((srcSeats.AM && srcSeats.AM.length) || (srcSeats.PM && srcSeats.PM.length)){
             org.active_seats_by_date[dstIso] = {
-              AM: rotateDutySeatCodes(Array.isArray(srcSeats.AM) ? deepCopy(srcSeats.AM) : [], w),
-              PM: rotateDutySeatCodes(Array.isArray(srcSeats.PM) ? deepCopy(srcSeats.PM) : [], w)
+              AM: Array.isArray(srcSeats.AM) ? deepCopy(srcSeats.AM) : [],
+              PM: Array.isArray(srcSeats.PM) ? deepCopy(srcSeats.PM) : []
             };
           }
         }
@@ -1869,6 +1937,17 @@ function copyWeekForward(weeks){
   }
 
   // ---- Helpers for rendering ----
+  // Schedule display must never show member numbers.
+  // We keep IDs internally, but render a friendly name everywhere schedule is shown.
+  function memberNameById(id){
+    const mid = String(id ?? "").trim();
+    if(!mid || mid.toUpperCase() === "OPEN") return "OPEN";
+    const m = (app.data.members || []).find(x => String(x.member_id ?? "").trim() === mid);
+    if(m) return displayName(m);
+    return "Assigned"; // safe fallback (never leak ID)
+  }
+
+
   function displayName(m){
     if(!m) return "";
     if(m.name) return m.name;
@@ -2162,7 +2241,7 @@ function esc(s){
     const options = (app.data.members || []).map(m => {
       const mid = String(m.member_id);
       const sel = String(selectedId||"") === mid ? "selected" : "";
-      return `<option value="${esc(mid)}" ${sel}>${esc(mid)} — ${esc(displayName(m))}</option>`;
+      return `<option value="${esc(mid)}" ${sel}>${esc(displayName(m))}</option>`;
     }).join("");
     return `<select id="${esc(id)}"><option value="">Select…</option>${options}</select>`;
   }
@@ -2456,10 +2535,17 @@ function esc(s){
   
   function normalizeScheduleMap(obj){
     // Keep only YYYY-MM-DD keys mapping to day objects.
+    // Preserve optional top-level meta (e.g., resolver run stamp).
     const out = {};
     if(!obj || typeof obj !== "object") return out;
+
+    // Preserve meta if present
+    if(obj.meta && typeof obj.meta === "object"){
+      out.meta = obj.meta;
+    }
+
     for(const [k,v] of Object.entries(obj)){
-      if(/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === "object"){
+      if(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(k) && v && typeof v === "object"){
         out[k] = v;
       }
     }
@@ -2579,11 +2665,6 @@ function esc(s){
 
           // Ensure schedule day container
           schedule[dateIso] ||= {};
-
-          // Persist the planned active unit into schedule output so Wallboard can display it.
-          // (Show AM/PM if different; show one number if same.)
-          schedule[dateIso]._unit ||= {};
-          schedule[dateIso]._unit[shift] = unitId;
           const slot = schedule[dateIso][shift] || schedule[dateIso][shift.toLowerCase()] || null;
           const pair = Array.isArray(slot) ? slot.slice(0,2) : ["OPEN","OPEN"];
           const curAtt = pair[0] || "OPEN";
@@ -2647,9 +2728,23 @@ function esc(s){
       }
 
       setDataStatus("warn", "Saving schedule…", "Writing schedule to Drive…");
-      await storePost({ kind:"schedule", payload: normalizeScheduleMap(schedule) });
+      // Stamp resolve metadata into schedule (never shown to members as IDs)
+      const weekStartIso = isoDate(weekStartDate);
+      const weekEndIso = isoDate(addDays(weekStartDate, 6));
+      const outSched = normalizeScheduleMap(schedule);
+      const prevMeta = (outSched.meta && typeof outSched.meta === "object") ? outSched.meta : {};
+      outSched.meta = {
+        ...prevMeta,
+        resolved_at: nowIso(),
+        resolved_by: "Supervisor UI",
+        resolver_version: "beta1",
+        range_start: weekStartIso,
+        range_end: weekEndIso
+      };
 
-      app.data.schedule = schedule;
+      await storePost({ kind:"schedule", payload: outSched });
+
+      app.data.schedule = outSched;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
       alert(`Resolved week.\nChanges written: ${changes.length}`);
     }catch(e){
