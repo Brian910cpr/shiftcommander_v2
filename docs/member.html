@@ -184,6 +184,25 @@ main{ padding:12px; }
 .bbtn.danger{background: rgba(255,93,93,.16); border-color: rgba(255,93,93,.30)}
 .bbtn.ghost{background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.12)}
 
+
+  /* Committed shift overlay */
+  .committedBadge{
+    position:absolute;
+    top:6px;
+    right:6px;
+    font-size:10px;
+    font-weight:900;
+    padding:3px 6px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.06);
+    color:#cfe1ff;
+  }
+  .day{ position:relative; }
+  .bar.committed{
+    outline:2px solid rgba(255,255,255,.22);
+    outline-offset:-2px;
+  }
 /* Calendar month layout */
 .monthRow{
   display:grid;
@@ -490,8 +509,8 @@ main{ padding:12px; }
 <script>
 /* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
-  // Cloudflare Worker (CORS + token injection)
-  url: "https://schedule-cors-910cpr.brian-9ac.workers.dev"
+  // ALWAYS go through Cloudflare Worker (handles CORS + token injection)
+  url: (location.origin + "/api/store")
 };
 
 
@@ -617,6 +636,137 @@ function buildMemberWeekItems(schedule, memberId, weekStartDate){
     }
   }
   return items;
+}
+
+
+/* ===================== SCHEDULE COMMITMENTS (overlay) ===================== */
+// Overlay the authoritative schedule onto the Availability calendar.
+// Members can see what they're already on, and requesting off becomes a DROP request.
+let SCHEDULE_CACHE = null;   // normalized schedule map with YYYY-MM-DD keys
+let SCHEDULE_META = null;    // schedule.meta if present
+let COMMIT = {};             // { [dateISO]: { AM:true/false, PM:true/false } }
+
+function normalizeScheduleMapForMember(obj){
+  // tolerate store envelopes; keep meta if present; keep only YYYY-MM-DD keys
+  if(!obj || typeof obj !== 'object') return {};
+  let x = obj;
+  for(let i=0;i<6;i++){
+    if(x && typeof x==='object' && x.payload && typeof x.payload==='object') x = x.payload;
+    else break;
+  }
+  const out = {};
+  if(x.meta && typeof x.meta === 'object') out.meta = x.meta;
+  for(const [k,v] of Object.entries(x||{})){
+    if(/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === 'object') out[k]=v;
+  }
+  return out;
+}
+
+function computeCommitments(schedule, memberId){
+  COMMIT = {};
+  if(!schedule || typeof schedule !== 'object') return;
+  for(const [ds, day] of Object.entries(schedule)){
+    if(ds === 'meta') continue;
+    const d = day || {};
+    for(const shift of ['AM','PM']){
+      const pair = d[shift] || d[shift.toLowerCase()] || null;
+      if(!pair || !Array.isArray(pair) || pair.length < 2) continue;
+      const a = String(pair[0]||'').trim();
+      const b = String(pair[1]||'').trim();
+      if(a === memberId || b === memberId){
+        COMMIT[ds] ||= { AM:false, PM:false };
+        COMMIT[ds][shift] = true
+      }
+    }
+  }
+}
+
+function isCommitted(dateISO, shift){
+  return !!(COMMIT[dateISO] && COMMIT[dateISO][shift]);
+}
+
+function phaseForDate(dateISO){
+  // Uses the same Thu->Wed week anchor as Impact.
+  // Uses ORG.weeks.controlled / ORG.weeks.published counts.
+  const d = parseISO(dateISO);
+  const thisStart = startOfWeekThursday(new Date());
+  const ws = startOfWeekThursday(d);
+  const weekIndex = Math.floor((ws.getTime() - thisStart.getTime()) / (7*24*60*60*1000));
+  const counts = (ORG && ORG.weeks) ? ORG.weeks : DEFAULT_ORG.weeks;
+  const controlledN = Number(counts.controlled||2);
+  const publishedN  = Number(counts.published||2);
+  if(weekIndex < 0) return 'archived';
+  if(weekIndex < controlledN) return 'controlled';
+  if(weekIndex < controlledN + publishedN) return 'published';
+  return 'planning';
+}
+
+async function loadScheduleCommitments(memberId){
+  try{
+    const raw = await storeGet({ kind:'schedule' });
+    const sched = normalizeScheduleMapForMember(raw);
+    SCHEDULE_META = sched.meta || null;
+    // keep schedule days in cache (without meta key)
+    const cache = { ...sched };
+    delete cache.meta;
+    SCHEDULE_CACHE = cache;
+    computeCommitments(cache, memberId);
+  }catch(_e){
+    SCHEDULE_CACHE = null;
+    SCHEDULE_META = null;
+    COMMIT = {};
+  }
+}
+
+async function submitDropRequest(dateISO, shift){
+  const memberId = getActiveMemberId();
+  const memberName = getActiveMemberName();
+
+  // Read supervisor_patch, append request, write back.
+  // This is intentionally minimal and only touches the .requests array.
+  const now = nowISO();
+  const phase = phaseForDate(dateISO);
+  const req = {
+    id: `req_${memberId}_${dateISO}_${shift}_${Date.now()}`,
+    member_id: memberId,
+    member_name: memberName,
+    date: dateISO,
+    shift: shift,
+    action: 'DROP',
+    phase: phase,
+    status: 'PENDING',
+    created_at: now,
+    schedule_resolved_at: (SCHEDULE_META && SCHEDULE_META.resolved_at) ? String(SCHEDULE_META.resolved_at) : null
+  };
+
+  // Safety: only allow requests for controlled/published
+  if(!(phase === 'controlled' || phase === 'published')){
+    return { ok:false, error:'Not in controlled/published window' };
+  }
+
+  let patch = {};
+  try{
+    const got = await storeGet({ kind:'supervisor_patch' });
+    patch = (got && got.payload && typeof got.payload === 'object') ? got.payload : (got && typeof got === 'object' ? got : {});
+  }catch(_e){
+    patch = {};
+  }
+
+  const list = Array.isArray(patch.requests) ? patch.requests.slice() : [];
+  // prevent identical duplicates
+  const dup = list.find(x => x && x.member_id === memberId && x.date === dateISO && x.shift === shift && x.action === 'DROP' && (x.status||'PENDING') === 'PENDING');
+  if(dup){
+    return { ok:true, duplicate:true };
+  }
+  list.push(req);
+  patch.requests = list;
+
+  try{
+    await storePut({ kind:'supervisor_patch', payload: patch });
+    return { ok:true };
+  }catch(e){
+    return { ok:false, error:String(e.message||e) };
+  }
 }
 /* ===================== STORE HELPERS ===================== */
 async function readJsonOrThrow(resp){
@@ -816,6 +966,7 @@ async function loadMember(memberId){
 
   // refresh UI
   syncPrefsUI();
+  await loadScheduleCommitments(memberId);
   buildCalendar();
   renderAvoidRoster();
   await loadImpact(); // best effort
@@ -1056,6 +1207,11 @@ function dayCell(dateISO, day){
 
   // Day-number toggles AM+PM together (full-day shortcut)
   num.onclick=()=>{
+    // Full-day toggle is disabled if any shift is already committed.
+    if(isCommitted(dateISO,'AM') || isCommitted(dateISO,'PM')){
+      alert('This day includes a committed shift. Use the AM/PM bars to request a drop.');
+      return;
+    }
     const next = cycle(stateDays[dateISO].am);
     stateDays[dateISO].am = next;
     stateDays[dateISO].pm = next;
@@ -1068,14 +1224,56 @@ function dayCell(dateISO, day){
   const bars=document.createElement("div");
   bars.className="bars";
 
-  const am=bar(()=>{
+  const am=bar(async ()=>{
+    if(isCommitted(dateISO,'AM')){
+      const ph = phaseForDate(dateISO);
+      if(ph === 'controlled' || ph === 'published'){
+        const ok = confirm(`You are scheduled for ${dateISO} AM (${ph.toUpperCase()}).
+
+Request to DROP this shift?`);
+        if(!ok) return;
+        const res = await submitDropRequest(dateISO,'AM');
+        if(res && res.ok){
+          stateDays[dateISO].am = 'no';
+          render();
+          onAnyChange();
+          alert(res.duplicate ? 'Drop request already pending.' : 'Drop request submitted.');
+        }else{
+          alert('Could not submit request. ' + (res && res.error ? res.error : ''));
+        }
+      }else{
+        alert('This shift is committed, but not in the controlled/published window.');
+      }
+      return;
+    }
     stateDays[dateISO].am = cycle(stateDays[dateISO].am);
     render();
     onAnyChange();
     if(document.getElementById("tabImpact").classList.contains("active")) loadImpact();
   },"AM");
 
-  const pm=bar(()=>{
+  const pm=bar(async ()=>{
+    if(isCommitted(dateISO,'PM')){
+      const ph = phaseForDate(dateISO);
+      if(ph === 'controlled' || ph === 'published'){
+        const ok = confirm(`You are scheduled for ${dateISO} PM (${ph.toUpperCase()}).
+
+Request to DROP this shift?`);
+        if(!ok) return;
+        const res = await submitDropRequest(dateISO,'PM');
+        if(res && res.ok){
+          stateDays[dateISO].pm = 'no';
+          render();
+          onAnyChange();
+          alert(res.duplicate ? 'Drop request already pending.' : 'Drop request submitted.');
+        }else{
+          alert('Could not submit request. ' + (res && res.error ? res.error : ''));
+        }
+      }else{
+        alert('This shift is committed, but not in the controlled/published window.');
+      }
+      return;
+    }
     stateDays[dateISO].pm = cycle(stateDays[dateISO].pm);
     render();
     onAnyChange();
@@ -1083,11 +1281,18 @@ function dayCell(dateISO, day){
   },"PM");
 
   bars.append(am, pm);
+  // Committed overlay badge
+  if(isCommitted(dateISO,'AM') || isCommitted(dateISO,'PM')){
+    const badge=document.createElement('div');
+    badge.className='committedBadge';
+    badge.textContent='On schedule';
+    d.appendChild(badge);
+  }
   d.append(num, bars);
 
   function render(){
-    am.className = `bar ${stateDays[dateISO].am}`;
-    pm.className = `bar ${stateDays[dateISO].pm}`;
+    am.className = `bar ${stateDays[dateISO].am}${isCommitted(dateISO,'AM')?' committed':''}`;
+    pm.className = `bar ${stateDays[dateISO].pm}${isCommitted(dateISO,'PM')?' committed':''}`;
   }
   render();
   return d;
