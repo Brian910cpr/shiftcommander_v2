@@ -200,6 +200,11 @@
       outline:none;
     }
     textarea{ min-height: 90px; resize: vertical; }
+    /* Dropdown readability */
+    select{ background: rgba(0,0,0,.22); color: var(--text); }
+    option{ background:#ffffff; color:#000000; }
+    select:focus{ box-shadow: 0 0 0 3px rgba(124,92,255,.25); }
+
 
     table{ width:100%; border-collapse:separate; border-spacing:0; }
     th, td{ text-align:left; padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.08); vertical-align:top; }
@@ -406,7 +411,7 @@
   // ============================================================
 
   // ---- CONFIG ----
-  const STORE_EXEC = ((location.origin && location.origin.startsWith("http")) ? (location.origin + "/api/store") : "https://adr-fr.org/api/store");
+  const STORE_EXEC = "https://schedule-cors-910cpr.brian-9ac.workers.dev";
   const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
   const LOCAL_PATHS = {
     members: `${DATA_BASE}/members.json`,
@@ -539,14 +544,14 @@
 
   // ---- TOKEN ----
   function loadToken(){
-    app.token = localStorage.getItem(LS_TOKEN) || "";
-    if(!app.token){
-      setDriveStatus("warn", "Drive", "Token not set. Click Token to set your SC_TOKEN.");
-    }
+    // Token is injected by the Cloudflare Worker; no browser token needed.
+    app.token = "";
   }
 
   function promptToken(){
     const current = (app.token || "").trim();
+    alert("No token needed here — Cloudflare Worker injects SC_TOKEN.");
+    return;
     const input = prompt("Paste SC_TOKEN (saved in this browser).", current);
     if(input === null) return;
     const trimmed = input.trim();
@@ -572,11 +577,10 @@
   }
 
   async function storePost(body){
-    if(!app.token) throw new Error("No token set.");
     const resp = await fetch(STORE_EXEC, {
       method: "POST",
       headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ token: app.token, ...body })
+      body: JSON.stringify({ ...body })
     });
     if(!resp.ok) throw new Error(`Store POST ${resp.status}`);
     return await safeJson(resp);
@@ -730,11 +734,6 @@
   async function saveAll(){
     // Always save a local draft first (protect against outage)
     saveDraft();
-
-    if(!app.token){
-      alert("No token set. Click Token, paste SC_TOKEN, then Save again.");
-      return;
-    }
 
     try{
       const payload = {
@@ -1071,12 +1070,14 @@
     if(!pair || !Array.isArray(pair) || pair.length < 2){
       return `<span class="small">—</span>`;
     }
-    const a = String(pair[0]||"OPEN").trim() || "OPEN";
-    const b = String(pair[1]||"OPEN").trim() || "OPEN";
+    const aId = String(pair[0]||"OPEN").trim() || "OPEN";
+    const bId = String(pair[1]||"OPEN").trim() || "OPEN";
+    const a = memberNameById(aId);
+    const b = memberNameById(bId);
     return `
       <div class="row" style="gap:10px; align-items:center;">
-        <span class="tag mono">${esc(a)}</span>
-        <span class="tag mono">${esc(b)}</span>
+        <span class="tag">${esc(a)}</span>
+        <span class="tag">${esc(b)}</span>
         <button class="btn" data-hold="1" title="Hold to show candidates (needs bulk availability; not enabled yet)">Hold</button>
       </div>
     `;
@@ -1135,7 +1136,7 @@
             <tr>
               <td class="mono">${esc(o.date || "")}</td>
               <td class="mono">${esc(o.shift || "")}</td>
-              <td>${esc(o.member_name || o.member_id || "")}</td>
+              <td>${esc(o.member_name || memberNameById(o.member_id) || "")}</td>
               <td>${esc(o.reason || "")}</td>
               <td><button class="btn" data-ov-edit="${i}">Edit</button> <button class="btn danger" data-ov-del="${i}">Delete</button></td>
             </tr>
@@ -1774,6 +1775,17 @@
   }
 
   // ---- Helpers for rendering ----
+  // Schedule display must never show member numbers.
+  // We keep IDs internally, but render a friendly name everywhere schedule is shown.
+  function memberNameById(id){
+    const mid = String(id ?? "").trim();
+    if(!mid || mid.toUpperCase() === "OPEN") return "OPEN";
+    const m = (app.data.members || []).find(x => String(x.member_id ?? "").trim() === mid);
+    if(m) return displayName(m);
+    return "Assigned"; // safe fallback (never leak ID)
+  }
+
+
   function displayName(m){
     if(!m) return "";
     if(m.name) return m.name;
@@ -1793,7 +1805,7 @@
   function serializeSeatRules(seat){
     // Return a JSON string of non-basic fields so they can be preserved via the editor.
     try{
-      const baseKeys = new Set(["code","label","required_qual"]);
+      const baseKeys = new Set(["code","label","required_qual","must_any","must_all","prefer_any"]);
       const out = {};
       for(const [k,v] of Object.entries(seat || {})){
         if(baseKeys.has(k)) continue;
@@ -1966,6 +1978,43 @@ function esc(s){
     return Array.from(sel.selectedOptions).map(o => o.value);
   }
 
+
+  // ---- QUAL CHECK GROUP (Seat rule builder) ----
+  function renderQualCheckboxGroup(groupId, selectedList, opts){
+    const selected = new Set((selectedList||[]).map(String));
+    const includeUnitOp = !(opts && opts.includeUnitOp === false);
+    const quals = (app.data.org_settings.qualifications || []).map(q => (q && q.code) ? String(q.code) : String(q)).filter(Boolean);
+
+    // build rows (optionally include special token first)
+    const rows = [];
+    if(includeUnitOp){ rows.push({ code: "UNIT_OP_QUAL", label: "(active unit operator qual)" }); }
+
+    for(const code of quals){
+      if(code === "UNIT_OP_QUAL") continue;
+      const qObj = (app.data.org_settings.qualifications || []).find(x => x && x.code === code);
+      const label = (qObj && qObj.label) ? String(qObj.label) : code;
+      rows.push({ code, label });
+    }
+
+    return `
+      <div class="row" style="gap:10px; align-items:flex-start; flex-wrap:wrap;">
+        ${rows.map(r=>{
+          const checked = selected.has(r.code) ? "checked" : "";
+          return `
+            <label class="tag" style="cursor:pointer; user-select:none;">
+              <input type="checkbox" data-qgroup="${esc(groupId)}" value="${esc(r.code)}" ${checked}
+                style="margin-right:8px; vertical-align:middle;" />
+              <span class="mono">${esc(r.code)}</span>${(r.label && r.label!==r.code) ? ` — ${esc(r.label)}` : ""}
+            </label>`;
+        }).join("")}
+      </div>`;
+  }
+
+  function readQualCheckboxGroup(groupId){
+    const sel = document.querySelectorAll(`input[data-qgroup="${CSS.escape(groupId)}"]:checked`);
+    return Array.from(sel).map(x => String(x.value));
+  }
+
   // Overrides modal
   function openModalOverrideCreate(){
     const body = `
@@ -2067,7 +2116,7 @@ function esc(s){
     const options = (app.data.members || []).map(m => {
       const mid = String(m.member_id);
       const sel = String(selectedId||"") === mid ? "selected" : "";
-      return `<option value="${esc(mid)}" ${sel}>${esc(mid)} — ${esc(displayName(m))}</option>`;
+      return `<option value="${esc(mid)}" ${sel}>${esc(displayName(m))}</option>`;
     }).join("");
     return `<select id="${esc(id)}"><option value="">Select…</option>${options}</select>`;
   }
@@ -2152,24 +2201,45 @@ function esc(s){
 
   function openModalSeatCreate(){
     const body = `
-      <div class="field"><label>Code</label><input id="s_code" class="mono" placeholder="third_rider" /></div>
-      <div class="field"><label>Label</label><input id="s_label" placeholder="3rd Rider" /></div>
-      <div class="field full"><label>Required qualification (optional)</label>
-        <input id="s_req" class="mono" placeholder="qual_FTO or qual_student (optional)" />
-        <div class="hint" style="margin-top:8px;">Leave blank if no strict requirement. Keep strict rules rare.</div>
+      <div class="field"><label>Code</label><input id="s_code" class="mono" placeholder="driver" /></div>
+      <div class="field"><label>Label</label><input id="s_label" placeholder="Driver" /></div>
+      <div class="field full"><label>Required qualification (legacy, optional)</label>
+        <input id="s_req" class="mono" placeholder="(optional)" />
+        <div class="hint" style="margin-top:8px;">Use the rule fields below for most logic. Keep strict rules rare.</div>
+      </div>
+
+      <div class="field full"><label>Rules — MUST (any of)</label>
+        ${renderQualCheckboxGroup("s_must_any", [], {includeUnitOp:false})}
+        <div class="hint" style="margin-top:8px;">Candidate must have <strong>at least one</strong> of these quals.</div>
+      </div>
+
+      <div class="field full"><label>Rules — MUST (all of)</label>
+        ${renderQualCheckboxGroup("s_must_all", [], {includeUnitOp:true})}
+        <div class="hint" style="margin-top:8px;">Candidate must have <strong>all</strong> of these quals. Use <span class="mono">UNIT_OP_QUAL</span> for "active unit operator qual".</div>
+      </div>
+
+      <div class="field full"><label>Rules — PREFER (any of)</label>
+        ${renderQualCheckboxGroup("s_prefer_any", [], {includeUnitOp:false})}
+        <div class="hint" style="margin-top:8px;">These don’t block staffing — they only help break ties / rank candidates.</div>
       </div>
 
       <div class="field full"><label>Advanced rules (JSON, optional)</label>
-        <textarea id="s_rules" class="mono" placeholder='{"eligibility":{"anyOf":["..."]},"constraints":[...],"preference":{...},"meta":{...}}'></textarea>
-        <div class="hint" style="margin-top:8px;">Optional. If provided, it will be merged into the seat template object and preserved on edits.</div>
+        <textarea id="s_rules" class="mono" placeholder='{"notes":"optional extra fields"}'></textarea>
+        <div class="hint" style="margin-top:8px;">Optional. Any extra fields are preserved on edits.</div>
       </div>
-    `;
+`;
     openModal("Add seat template", body, ()=>{
       const s = {
         code: ($("#s_code").value||"").trim(),
         label: ($("#s_label").value||"").trim(),
         required_qual: ($("#s_req").value||"").trim()
       };
+
+      // Rule fields (readable, guided)
+      s.must_any = readQualCheckboxGroup("s_must_any");
+      s.must_all = readQualCheckboxGroup("s_must_all");
+      s.prefer_any = readQualCheckboxGroup("s_prefer_any");
+
 
       // Advanced JSON (optional) — merge into template without losing future fields
       const rawRules = ($("#s_rules") ? ($("#s_rules").value||"").trim() : "");
@@ -2199,22 +2269,40 @@ function esc(s){
     const body = `
       <div class="field"><label>Code</label><input id="s_code" class="mono" value="${esc(s.code||"")}" /></div>
       <div class="field"><label>Label</label><input id="s_label" value="${esc(s.label||"")}" /></div>
-      <div class="field full"><label>Required qualification (optional)</label>
+      <div class="field full"><label>Required qualification (legacy, optional)</label>
         <input id="s_req" class="mono" value="${esc(s.required_qual||"")}" />
-        <div class="hint" style="margin-top:8px;">Leave blank if no strict requirement.</div>
+        <div class="hint" style="margin-top:8px;">Use the rule fields below for most logic.</div>
+      </div>
+
+      <div class="field full"><label>Rules — MUST (any of)</label>
+        ${renderQualCheckboxGroup("s_must_any", (s.must_any||[]), {includeUnitOp:false})}
+      </div>
+
+      <div class="field full"><label>Rules — MUST (all of)</label>
+        ${renderQualCheckboxGroup("s_must_all", (s.must_all||[]), {includeUnitOp:true})}
+        <div class="hint" style="margin-top:8px;">Use <span class="mono">UNIT_OP_QUAL</span> for "active unit operator qual".</div>
+      </div>
+
+      <div class="field full"><label>Rules — PREFER (any of)</label>
+        ${renderQualCheckboxGroup("s_prefer_any", (s.prefer_any||[]), {includeUnitOp:false})}
       </div>
 
       <div class="field full"><label>Advanced rules (JSON, optional)</label>
         <textarea id="s_rules" class="mono">${esc(serializeSeatRules(s))}</textarea>
-        <div class="hint" style="margin-top:8px;">Optional. These fields are preserved even if the main UI doesn’t use them yet.</div>
       </div>
-    `;
+`;
     openModal("Edit seat template", body, ()=>{
       const updated = {
         code: ($("#s_code").value||"").trim(),
         label: ($("#s_label").value||"").trim(),
         required_qual: ($("#s_req").value||"").trim()
       };
+
+      // Rule fields (readable, guided)
+      updated.must_any = readQualCheckboxGroup("s_must_any");
+      updated.must_all = readQualCheckboxGroup("s_must_all");
+      updated.prefer_any = readQualCheckboxGroup("s_prefer_any");
+
       if(!updated.code){ alert("Seat code required."); return; }
 
       // Preserve any advanced fields already on the seat template
@@ -2484,11 +2572,6 @@ function esc(s){
 
           // Ensure schedule day container
           schedule[dateIso] ||= {};
-
-          // Persist the planned active unit into schedule output so Wallboard can display it.
-          // (Show AM/PM if different; show one number if same.)
-          schedule[dateIso]._unit ||= {};
-          schedule[dateIso]._unit[shift] = unitId;
           const slot = schedule[dateIso][shift] || schedule[dateIso][shift.toLowerCase()] || null;
           const pair = Array.isArray(slot) ? slot.slice(0,2) : ["OPEN","OPEN"];
           const curAtt = pair[0] || "OPEN";
