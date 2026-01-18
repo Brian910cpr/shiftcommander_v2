@@ -199,6 +199,12 @@ main{ padding:12px; }
     color:#cfe1ff;
   }
   .day{ position:relative; }
+  /* Make committed days visually obvious without changing layout */
+  .day.committedDay{
+    border:2px solid rgba(255,255,255,.55);
+    padding:2px 3px; /* compensate for thicker border */
+    background: rgba(92,141,255,.06);
+  }
   .bar.committed{
     outline:2px solid rgba(255,255,255,.22);
     outline-offset:-2px;
@@ -1283,6 +1289,7 @@ Request to DROP this shift?`);
   bars.append(am, pm);
   // Committed overlay badge
   if(isCommitted(dateISO,'AM') || isCommitted(dateISO,'PM')){
+    d.classList.add('committedDay');
     const badge=document.createElement('div');
     badge.className='committedBadge';
     badge.textContent='On schedule';
