@@ -184,30 +184,11 @@ main{ padding:12px; }
 .bbtn.danger{background: rgba(255,93,93,.16); border-color: rgba(255,93,93,.30)}
 .bbtn.ghost{background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.12)}
 
-
-  /* Committed shift overlay */
-  .committedBadge{
-    position:absolute;
-    top:6px;
-    right:6px;
-    font-size:10px;
-    font-weight:900;
-    padding:3px 6px;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,.18);
-    background:rgba(255,255,255,.06);
-    color:#cfe1ff;
-  }
   .day{ position:relative; }
-  /* Make committed days visually obvious without changing layout */
-  .day.committedDay{
-    border:2px solid rgba(255,255,255,.55);
-    padding:2px 3px; /* compensate for thicker border */
-    background: rgba(92,141,255,.06);
-  }
   .bar.committed{
-    outline:2px solid rgba(255,255,255,.22);
-    outline-offset:-2px;
+    outline:3px solid rgba(255,255,255,.85);
+    outline-offset:-3px;
+    box-shadow: 0 0 0 2px rgba(92,141,255,.25), 0 0 10px rgba(92,141,255,.18);
   }
 /* Calendar month layout */
 .monthRow{
@@ -1287,14 +1268,6 @@ Request to DROP this shift?`);
   },"PM");
 
   bars.append(am, pm);
-  // Committed overlay badge
-  if(isCommitted(dateISO,'AM') || isCommitted(dateISO,'PM')){
-    d.classList.add('committedDay');
-    const badge=document.createElement('div');
-    badge.className='committedBadge';
-    badge.textContent='On schedule';
-    d.appendChild(badge);
-  }
   d.append(num, bars);
 
   function render(){
