@@ -504,7 +504,6 @@ const STORE = {
 // ---- org_settings (shared config) ----
 const DEFAULT_ORG = {
   weeks: { archived: 1, controlled: 2, published: 2, planning: 6 },
-  pay: { shift_hours: { AM: 12, PM: 12 } },
   ui: {
     use_first_name_only: true,
     grey_past_days: true,
@@ -513,77 +512,6 @@ const DEFAULT_ORG = {
   }
 };
 let ORG = structuredClone(DEFAULT_ORG);
-
-function shiftHoursForMemberView(shift){
-  const sh = String(shift||'').toUpperCase();
-  const h = ORG?.pay?.shift_hours?.[sh];
-  const n = Number(h);
-  return Number.isFinite(n) && n > 0 ? n : 12;
-}
-
-function payCfgForMemberId(memberId){
-  const m = ROSTER_FULL_BY_ID[String(memberId)] || {};
-  const rate = Number(m.hourly_rate);
-  const thr = Number(m.ot_threshold_hours);
-  const mult = Number(m.ot_multiplier);
-  return {
-    hourly_rate: Number.isFinite(rate) ? rate : 0,
-    ot_threshold_hours: Number.isFinite(thr) ? thr : 40,
-    ot_multiplier: Number.isFinite(mult) ? mult : 1.5
-  };
-}
-
-function computePayWindow(memberId){
-  // Returns { total_hours, total_est_pay, weeks:[{week_start, hours, ot_hours, reg_hours, est_pay}] }
-  const out = { total_hours:0, total_est_pay:0, weeks:[] };
-  if(!SCHEDULE_CACHE) return out;
-
-  const counts = (ORG && ORG.weeks) ? ORG.weeks : DEFAULT_ORG.weeks;
-  const controlledN = Number(counts.controlled||2);
-  const publishedN  = Number(counts.published||2);
-  const totalWeeks = controlledN + publishedN;
-
-  const cfg = payCfgForMemberId(memberId);
-  const baseStart = startOfWeekThursday(new Date());
-
-  for(let w=0; w<totalWeeks; w++){
-    const ws = addDays(baseStart, w*7);
-    let hours = 0;
-    for(let i=0;i<7;i++){
-      const ds = iso(addDays(ws, i));
-      const day = SCHEDULE_CACHE[ds] || {};
-      for(const shift of ['AM','PM']){
-        const pair = day[shift] || day[shift.toLowerCase()] || null;
-        if(!pair || !Array.isArray(pair) || pair.length < 2) continue;
-        const a = String(pair[0]||'').trim();
-        const b = String(pair[1]||'').trim();
-        if(a === String(memberId) || b === String(memberId)){
-          hours += shiftHoursForMemberView(shift);
-        }
-      }
-    }
-
-    const ot = Math.max(0, hours - cfg.ot_threshold_hours);
-    const reg = Math.max(0, hours - ot);
-    const est = (cfg.hourly_rate>0) ? (reg*cfg.hourly_rate + ot*cfg.hourly_rate*cfg.ot_multiplier) : 0;
-
-    out.weeks.push({
-      week_start: iso(ws),
-      hours: Math.round(hours*100)/100,
-      ot_hours: Math.round(ot*100)/100,
-      reg_hours: Math.round(reg*100)/100,
-      est_pay: Math.round(est*100)/100
-    });
-
-    out.total_hours += hours;
-    out.total_est_pay += est;
-  }
-
-  out.total_hours = Math.round(out.total_hours*100)/100;
-  out.total_est_pay = Math.round(out.total_est_pay*100)/100;
-  return out;
-}
-
 
 async function loadOrgSettings(){
   try{
@@ -1514,24 +1442,6 @@ async function loadImpact(){
 
       // Render
       wrap.innerHTML = "";
-
-      // Hours / OT summary (uses member pay fields if present)
-      try{
-        const memberId2 = getActiveMemberId();
-        const cfg = payCfgForMemberId(memberId2);
-        const roll = computePayWindow(memberId2);
-        const panel = document.createElement('div');
-        panel.className = 'panel';
-        const hasPay = (cfg.hourly_rate && cfg.hourly_rate > 0);
-        panel.innerHTML = `
-          <div class="panelTitle">Hours & ${hasPay ? 'estimated pay' : 'OT'} (controlled + published)</div>
-          <div class="panelHint">${hasPay ? `Rate: $${cfg.hourly_rate}/hr • OT after ${cfg.ot_threshold_hours}h @ x${cfg.ot_multiplier}` : 'No hourly rate set for this member (hours still shown).'} </div>
-          <div class="smallNote" style="margin-top:8px;">Total hours: <b>${roll.total_hours}</b>${hasPay ? ` • Estimated pay: <b>$${roll.total_est_pay}</b>` : ''}</div>
-          <div class="smallNote" style="margin-top:8px;">${roll.weeks.map(w=>`<span class="tag"><span class="mono">${w.week_start}</span> • ${w.hours}h (${w.ot_hours} OT)${hasPay ? ` • $${w.est_pay}` : ''}</span>`).join(' ')}</div>
-        `;
-        wrap.appendChild(panel);
-      }catch(_e){}
-
       for(const w of weeks){
         wrap.appendChild(renderWeekBlock(w));
       }

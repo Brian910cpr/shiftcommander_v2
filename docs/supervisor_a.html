@@ -594,10 +594,9 @@
 
   // ---- STORE CLIENT ----
   async function storeGet(params){
-    // Token is injected server-side by the Cloudflare Worker. We only include a token param
-    // if you explicitly set one for debugging.
+    if(!app.token) throw new Error("No token set.");
     const u = new URL(STORE_EXEC);
-    Object.entries({ ...(params||{}), ...(app.token ? { token: app.token } : {}) }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
+    Object.entries({ ...params, token: app.token }).forEach(([k,v])=> u.searchParams.set(k, String(v)));
     const resp = await fetch(u.toString(), { method:"GET", cache:"no-store" });
     if(!resp.ok) throw new Error(`Store GET ${resp.status}`);
     return await safeJson(resp);
@@ -2031,19 +2030,6 @@ function esc(s){
         <label>Rank (optional)</label>
         <input id="m_rank" placeholder="FF / LT / CPT / Chief…" />
       </div>
-      <div class="field">
-        <label>Pay — hourly rate (optional)</label>
-        <input id="m_rate" class="mono" placeholder="25" />
-        <div class="hint">Leave blank/0 if this member isn’t paid hourly (volunteer).</div>
-      </div>
-      <div class="field">
-        <label>OT threshold hours (per week)</label>
-        <input id="m_ot_thresh" class="mono" placeholder="40" />
-      </div>
-      <div class="field">
-        <label>OT multiplier</label>
-        <input id="m_ot_mult" class="mono" placeholder="1.5" />
-      </div>
       <div class="field full">
         <label>Qualifications</label>
         ${qualMultiSelect("m_quals")}
@@ -2080,19 +2066,6 @@ function esc(s){
       <div class="field">
         <label>Rank (optional)</label>
         <input id="m_rank" value="${esc(m.rank || "")}" />
-      </div>
-      <div class="field">
-        <label>Pay — hourly rate (optional)</label>
-        <input id="m_rate" class="mono" value="${esc(m.hourly_rate ?? "")}" placeholder="25" />
-        <div class="hint">Leave blank/0 if this member isn’t paid hourly (volunteer).</div>
-      </div>
-      <div class="field">
-        <label>OT threshold hours (per week)</label>
-        <input id="m_ot_thresh" class="mono" value="${esc(m.ot_threshold_hours ?? "40")}" />
-      </div>
-      <div class="field">
-        <label>OT multiplier</label>
-        <input id="m_ot_mult" class="mono" value="${esc(m.ot_multiplier ?? "1.5")}" />
       </div>
       <div class="field full">
         <label>Qualifications</label>
@@ -2133,24 +2106,12 @@ function esc(s){
     const rank = ($("#m_rank").value || "").trim();
     const quals = getMultiSelected("m_quals");
 
-    const rateRaw = ($("#m_rate").value || "").trim();
-    const otThrRaw = ($("#m_ot_thresh").value || "").trim();
-    const otMultRaw = ($("#m_ot_mult").value || "").trim();
-
-    const hourly_rate = rateRaw ? Number(rateRaw) : 0;
-    const ot_threshold_hours = otThrRaw ? Number(otThrRaw) : 40;
-    const ot_multiplier = otMultRaw ? Number(otMultRaw) : 1.5;
-
     return {
       member_id: id,
       first_name: first,
       last_name: last,
       rank: rank || "",
-      qualifications: quals,
-      // pay fields (optional)
-      hourly_rate: Number.isFinite(hourly_rate) ? hourly_rate : 0,
-      ot_threshold_hours: Number.isFinite(ot_threshold_hours) ? ot_threshold_hours : 40,
-      ot_multiplier: Number.isFinite(ot_multiplier) ? ot_multiplier : 1.5
+      qualifications: quals
     };
   }
 
@@ -2591,136 +2552,6 @@ function esc(s){
     return out;
   }
 
-
-
-  // ============================================================
-  // Overtime / Pay helpers (v1)
-  //
-  // - Pay fields live on member records (optional):
-  //     hourly_rate, ot_threshold_hours, ot_multiplier
-  // - Weekly rollups are written to assignments_history.weekly[weekStartIso][memberId]
-  // - Shift hours are configurable in org_settings.pay.shift_hours (default 12/12)
-  // ============================================================
-  function shiftHoursFor(shift, org){
-    const sh = String(shift||'').toUpperCase();
-    const h = org?.pay?.shift_hours?.[sh];
-    const n = Number(h);
-    return Number.isFinite(n) && n > 0 ? n : 12;
-  }
-
-  function payCfgForMember(m, org){
-    const rate = Number(m?.hourly_rate);
-    const thr = Number(m?.ot_threshold_hours);
-    const mult = Number(m?.ot_multiplier);
-    return {
-      hourly_rate: Number.isFinite(rate) ? rate : 0,
-      ot_threshold_hours: Number.isFinite(thr) ? thr : 40,
-      ot_multiplier: Number.isFinite(mult) ? mult : 1.5,
-      shift_hours_AM: shiftHoursFor('AM', org),
-      shift_hours_PM: shiftHoursFor('PM', org)
-    };
-  }
-
-  function computeWeekRollup(weekStartDate, scheduleMap, members, org){
-    const weekStartIso = isoDate(weekStartDate);
-    const byId = {};
-    const memberById = {};
-    for(const m of (members||[])){
-      const id = String(m.member_id||'').trim();
-      if(id) memberById[id] = m;
-    }
-
-    for(let i=0;i<7;i++){
-      const d = addDays(weekStartDate, i);
-      const iso = isoDate(d);
-      const day = scheduleMap?.[iso] || {};
-      for(const shift of ['AM','PM']){
-        const pair = day[shift] || day[shift.toLowerCase()] || null;
-        if(!pair || !Array.isArray(pair) || pair.length < 2) continue;
-        const h = shiftHoursFor(shift, org);
-        for(const mid of [String(pair[0]||'').trim(), String(pair[1]||'').trim()]){
-          if(!mid || mid.toUpperCase()==='OPEN') continue;
-          byId[mid] ||= { hours:0 };
-          byId[mid].hours += h;
-        }
-      }
-    }
-
-    const weekly = {};
-    for(const [mid,rec] of Object.entries(byId)){
-      const m = memberById[mid] || {};
-      const cfg = payCfgForMember(m, org);
-      const hours = Number(rec.hours||0);
-      const thr = cfg.ot_threshold_hours;
-      const ot = Math.max(0, hours - thr);
-      const reg = Math.max(0, hours - ot);
-      const pay = (cfg.hourly_rate>0)
-        ? (reg*cfg.hourly_rate + ot*cfg.hourly_rate*cfg.ot_multiplier)
-        : 0;
-
-      weekly[mid] = {
-        hours: round2(hours),
-        ot_hours: round2(ot),
-        reg_hours: round2(reg),
-        hourly_rate: cfg.hourly_rate,
-        ot_threshold_hours: thr,
-        ot_multiplier: cfg.ot_multiplier,
-        est_pay: round2(pay)
-      };
-    }
-
-    return { week_start: weekStartIso, weekly };
-  }
-
-  function round2(n){
-    const x = Number(n);
-    if(!Number.isFinite(x)) return 0;
-    return Math.round(x*100)/100;
-  }
-
-  async function updateAssignmentsHistoryForWeek(weekStartDate, scheduleMap){
-    // Best-effort: if history kind doesn't exist yet, we create it.
-    let hist = {};
-    try{
-      const got = await storeGet({ kind:'assignments_history' });
-      hist = unwrapStorePayload(got) || {};
-    }catch(_e){
-      hist = {};
-    }
-
-    hist.members ||= {};
-    hist.weekly ||= {};
-
-    // Update per-day flags for this week (member -> date -> {AM,PM})
-    for(let i=0;i<7;i++){
-      const d = addDays(weekStartDate, i);
-      const iso = isoDate(d);
-      const day = scheduleMap?.[iso] || {};
-      for(const shift of ['AM','PM']){
-        const pair = day[shift] || day[shift.toLowerCase()] || null;
-        if(!pair || !Array.isArray(pair) || pair.length < 2) continue;
-        const a = String(pair[0]||'').trim();
-        const b = String(pair[1]||'').trim();
-        for(const mid of [a,b]){
-          if(!mid || mid.toUpperCase()==='OPEN') continue;
-          hist.members[mid] ||= {};
-          hist.members[mid][iso] ||= { AM:false, PM:false };
-          hist.members[mid][iso][shift] = true;
-        }
-      }
-    }
-
-    // Add weekly rollup
-    const roll = computeWeekRollup(weekStartDate, scheduleMap, app.data.members, app.data.org_settings);
-    hist.weekly[roll.week_start] = {
-      generated_at: nowIso(),
-      ...roll
-    };
-
-    // Write back
-    await storePost({ kind:'assignments_history', payload: hist });
-  }
-
 // ============================================================
   // Resolver (Beta) — Ambulance-only
   //
@@ -2746,21 +2577,14 @@ function esc(s){
     return new Set(arr);
   }
 
-  async function loadAllAvailabilities(memberIds, onProgress){
+  async function loadAllAvailabilities(memberIds){
     const out = {};
-    const total = Array.isArray(memberIds) ? memberIds.length : 0;
-    let done = 0;
-    for(const mid of (memberIds||[])){
+    for(const mid of memberIds){
       try{
         const payload = await storeGet({ kind:"member_availability", member_id: mid });
         out[mid] = payload || null;
       }catch(e){
         out[mid] = null; // treat as no data (blank_ok handled per member if exists)
-      }finally{
-        done++;
-        if(typeof onProgress === 'function'){
-          try{ onProgress({ done, total, member_id: mid }); }catch(_e){}
-        }
       }
     }
     return out;
@@ -2825,10 +2649,7 @@ function esc(s){
 
       // Load all member availability (can be slow; show a simple progress pill)
       setDataStatus("warn", "Resolving…", "Loading member availability…");
-      const avBy = await loadAllAvailabilities(memberIds, ({done,total})=>{
-        // lightweight progress feedback in the header chip
-        setDataStatus("warn", `Resolving… ${done}/${total}`, "Loading member availability…");
-      });
+      const avBy = await loadAllAvailabilities(memberIds);
 
       const changes = [];
       for(let i=0;i<7;i++){
@@ -2922,16 +2743,6 @@ function esc(s){
       };
 
       await storePost({ kind:"schedule", payload: outSched });
-
-      // Best-effort: update assignments_history (per-member shift flags + weekly OT rollup)
-      try{
-        setDataStatus("warn", "Updating history…", "Writing assignments_history weekly rollup…");
-        await updateAssignmentsHistoryForWeek(weekStartDate, outSched);
-      }catch(e){
-        console.warn('assignments_history update failed', e);
-        // Do not fail the resolver; schedule is already saved.
-      }
-
 
       app.data.schedule = outSched;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
