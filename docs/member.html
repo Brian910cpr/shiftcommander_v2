@@ -408,6 +408,42 @@ main{ padding:12px; }
   </div>
 </header>
 
+<!-- Lite Security Login Modal -->
+<div id="authModal" class="modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6);">
+  <div style="max-width:460px; margin:8vh auto; background:rgba(15,23,49,.98); border:1px solid rgba(255,255,255,.18); border-radius:16px; padding:16px 16px 14px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div style="font-weight:800; letter-spacing:.2px;">Sign in</div>
+      <div class="tiny" id="authModeTip" style="opacity:.8;">Lite security</div>
+    </div>
+    <div class="tiny" style="opacity:.75; margin-top:6px;">
+      Select your name, then enter your PIN. This prevents accidental/mischief logins without turning it into “Fort Knox”.
+    </div>
+
+    <div style="margin-top:12px; display:grid; gap:10px;">
+      <label class="tiny" style="opacity:.85;">Selected member</label>
+      <div class="pill" style="justify-content:space-between;">
+        <span id="authMemberName">—</span>
+        <span class="tiny" id="authMemberId" style="opacity:.6;"></span>
+      </div>
+
+      <label class="tiny" style="opacity:.85;">PIN</label>
+      <input id="authPin" type="password" inputmode="numeric" autocomplete="off"
+             placeholder="Enter PIN" style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:#fff; color:#0b1020; font-weight:700;">
+      <div class="tiny" id="authError" style="color:#ffb3b3; display:none;"></div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+        <button id="authCancel" class="btn" type="button" style="opacity:.85;">Cancel</button>
+        <button id="authGo" class="btn primary" type="button">Unlock</button>
+      </div>
+
+      <div class="tiny" style="opacity:.55; margin-top:4px;">
+        Tip: PINs live in members.json as <code>pin_hash</code> (SHA-256). Ask an admin if yours isn’t set yet.
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div class="tabbar">
   <div class="tabbtn active" data-tab="tabAvail">Availability</div>
   <div class="tabbtn" data-tab="tabPrefs">Preferences</div>
@@ -673,6 +709,165 @@ function memberQuals(memberId){
 let memberAssignments = null;
 
 /* ===================== HELPERS ===================== */
+
+/* ===================== LITE SECURITY ===================== */
+const AUTH = {
+  enabled: true,             // can be disabled via org_settings.security.enabled=false
+  session_hours: 8,
+  max_fails: 5,
+  lock_minutes: 10
+};
+function authKey(memberId){ return `sc:auth:${memberId}`; }
+function authFailKey(memberId){ return `sc:authfail:${memberId}`; }
+
+async function sha256Hex(str){
+  const enc = new TextEncoder().encode(String(str));
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function nowMs(){ return Date.now(); }
+
+function isAuthed(memberId){
+  try{
+    const raw = localStorage.getItem(authKey(memberId));
+    if(!raw) return false;
+    const j = JSON.parse(raw);
+    const ttl = Number(AUTH.session_hours||8) * 3600 * 1000;
+    return !!j?.ok && (nowMs() - Number(j.ts||0) < ttl);
+  }catch(e){ return false; }
+}
+function setAuthed(memberId){
+  try{ localStorage.setItem(authKey(memberId), JSON.stringify({ ok:true, ts: nowMs() })); }catch(e){}
+}
+function clearAuthed(memberId){
+  try{ localStorage.removeItem(authKey(memberId)); }catch(e){}
+}
+
+function getFailState(memberId){
+  try{
+    const raw = localStorage.getItem(authFailKey(memberId));
+    if(!raw) return { fails:0, locked_until:0 };
+    const j = JSON.parse(raw);
+    return { fails:Number(j.fails||0), locked_until:Number(j.locked_until||0) };
+  }catch(e){ return { fails:0, locked_until:0 }; }
+}
+function setFailState(memberId, st){
+  try{ localStorage.setItem(authFailKey(memberId), JSON.stringify(st||{})); }catch(e){}
+}
+
+function showAuthModal({memberId, memberName, onSuccess}){
+  const modal = document.getElementById("authModal");
+  const pin = document.getElementById("authPin");
+  const err = document.getElementById("authError");
+  const nameEl = document.getElementById("authMemberName");
+  const idEl = document.getElementById("authMemberId");
+  if(!modal || !pin) return;
+
+  nameEl.textContent = memberName || "—";
+  idEl.textContent = memberId ? `#${memberId}` : "";
+  err.style.display="none";
+  err.textContent="";
+  pin.value="";
+  modal.style.display="block";
+  setTimeout(()=> pin.focus(), 50);
+
+  const close = ()=>{
+    modal.style.display="none";
+    pin.value="";
+  };
+
+  const cancelBtn = document.getElementById("authCancel");
+  const goBtn = document.getElementById("authGo");
+
+  const handler = async ()=>{
+    const mid = String(memberId||"").trim();
+    const full = (window.ROSTER_FULL_BY_ID || {})[mid] || null;
+    const sec = (window.ORG?.security) ? window.ORG.security : null;
+    const enabled = (sec && sec.enabled === false) ? false : true;
+    if(!enabled){
+      setAuthed(mid);
+      close();
+      onSuccess && onSuccess();
+      return;
+    }
+
+    const st = getFailState(mid);
+    if(st.locked_until && nowMs() < st.locked_until){
+      const mins = Math.ceil((st.locked_until - nowMs())/60000);
+      err.textContent = `Too many tries. Locked for ~${mins} min.`;
+      err.style.display="block";
+      return;
+    }
+
+    const entered = String(pin.value||"").trim();
+    if(!entered){
+      err.textContent = "Enter your PIN.";
+      err.style.display="block";
+      return;
+    }
+
+    // expected hash from member record
+    const expected = String(full?.pin_hash || "").trim();
+    if(!expected){
+      err.textContent = "PIN not set for this member yet. Ask an admin.";
+      err.style.display="block";
+      return;
+    }
+
+    const salt = String(sec?.salt || "").trim();
+    const h = await sha256Hex(salt ? (salt + ":" + entered) : entered);
+
+    if(h === expected){
+      setAuthed(mid);
+      setFailState(mid, { fails:0, locked_until:0 });
+      close();
+      onSuccess && onSuccess();
+      return;
+    }
+
+    // fail path
+    const fails = (st.fails||0) + 1;
+    const locked = fails >= Number(AUTH.max_fails||5);
+    setFailState(mid, {
+      fails,
+      locked_until: locked ? (nowMs() + Number(AUTH.lock_minutes||10)*60000) : 0
+    });
+    err.textContent = locked ? "Too many incorrect PIN attempts. Try again later." : "Incorrect PIN.";
+    err.style.display="block";
+  };
+
+  const cleanup = ()=>{
+    cancelBtn?.removeEventListener("click", onCancel);
+    goBtn?.removeEventListener("click", onGo);
+    pin?.removeEventListener("keydown", onKey);
+  };
+
+  const onCancel = ()=>{ cleanup(); close(); };
+  const onGo = async ()=>{ await handler(); if(modal.style.display==="none") cleanup(); };
+  const onKey = async (e)=>{ if(e.key==="Enter"){ e.preventDefault(); await onGo(); } };
+
+  cancelBtn?.addEventListener("click", onCancel);
+  goBtn?.addEventListener("click", onGo);
+  pin?.addEventListener("keydown", onKey);
+}
+
+async function ensureAuthForSelectedMember(){
+  const memberId = getActiveMemberId();
+  const memberName = getActiveMemberName();
+  const enabled = (window.ORG?.security && window.ORG.security.enabled === false) ? false : true;
+  if(!enabled) return true;
+
+  if(isAuthed(memberId)) return true;
+
+  return await new Promise(resolve=>{
+    showAuthModal({
+      memberId, memberName,
+      onSuccess: ()=> resolve(true)
+    });
+  });
+}
+
+
 function iso(d){ return d.toISOString().slice(0,10); }
 function parseISO(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
 function addDays(d,n){ const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
