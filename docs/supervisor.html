@@ -303,7 +303,30 @@
       color:#dcfce7;
     }
 
-  </style>
+  
+    /* ===================== CONTRAST / LEGIBILITY FIXES ===================== */
+    /* Dropdowns: force readable (dark text on light background) */
+    select{
+      background: rgba(255,255,255,.96) !important;
+      color:#0b1020 !important;
+      border:1px solid rgba(0,0,0,.35) !important;
+      box-shadow:none !important;
+    }
+    select option{
+      background:#ffffff !important;
+      color:#0b1020 !important;
+    }
+    select:focus{
+      outline: 3px solid rgba(124,92,255,.35) !important;
+      outline-offset: 2px !important;
+    }
+
+    /* Modal/dialog panels: reduce transparency so text is easy to read */
+    .modal{
+      background: rgba(15,23,49,.98) !important;
+    }
+
+\1
 </head>
 
 <body>
