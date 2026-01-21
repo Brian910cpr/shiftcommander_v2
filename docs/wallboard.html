@@ -269,30 +269,7 @@
   }
   .footer strong{ color:var(--text); }
 
-
-    /* ===================== CONTRAST / LEGIBILITY FIXES ===================== */
-    /* Dropdowns: force readable (dark text on light background) */
-    select{
-      background: rgba(255,255,255,.96) !important;
-      color:#0b1020 !important;
-      border:1px solid rgba(0,0,0,.35) !important;
-      box-shadow:none !important;
-    }
-    select option{
-      background:#ffffff !important;
-      color:#0b1020 !important;
-    }
-    select:focus{
-      outline: 3px solid rgba(124,92,255,.35) !important;
-      outline-offset: 2px !important;
-    }
-
-    /* Modal/dialog panels: reduce transparency so text is easy to read */
-    .modal{
-      background: rgba(15,23,49,.98) !important;
-    }
-
-\1
+</style>
 </head>
 <body>
 
@@ -894,5 +871,31 @@ async function refreshBoard({initial=false}={}){
 refreshBoard({initial:true});
 setInterval(()=> refreshBoard({initial:false}), AUTO_REFRESH_MS);
 </script>
+
+<script>
+(function(){
+  function show(msg){
+    try{
+      var d=document.getElementById('scFatal');
+      if(!d){
+        d=document.createElement('div');
+        d.id='scFatal';
+        d.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);color:#fff;padding:14px;font:14px/1.35 ui-monospace,Menlo,Consolas,monospace;overflow:auto;';
+        d.innerHTML='<div style="font-weight:900;font-size:16px;margin-bottom:8px;">ShiftCommander error</div><pre id="scFatalMsg" style="white-space:pre-wrap;margin:0;"></pre>';
+        document.body.appendChild(d);
+      }
+      var pre=document.getElementById('scFatalMsg');
+      if(pre) pre.textContent=String(msg||'Unknown error');
+    }catch(_e){}
+  }
+  window.addEventListener('error', function(e){
+    show((e && (e.message||e.error)) ? (e.message||e.error) : e);
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    show('Unhandled Promise rejection: ' + (e && e.reason ? (e.reason.stack||e.reason.message||String(e.reason)) : 'unknown'));
+  });
+})();
+</script>
+
 </body>
 </html>
