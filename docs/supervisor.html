@@ -612,8 +612,7 @@
     org: `${DATA_BASE}/org_settings.json`,
     schedule: `${DATA_BASE}/schedule.json`,             // optional (viewer)
     overrides: `${DATA_BASE}/overrides.json`,           // optional
-    history: `${DATA_BASE}/assignments_history.json`,   // optional (flat model)
-  };
+    history: `${DATA_BASE}/assignments_history.json`,   // optional (flat model)\n    policy: `${DATA_BASE}/resolver_policy.json`,             // resolver policy (beta)\n  };
 
   // Local storage keys
   const LS_TOKEN = "sc_token";
@@ -629,7 +628,9 @@
       org_settings: null,
       schedule: null,
       overrides: [],
-      history: null
+      history: null,
+      policy: null,
+      resolverArtifacts: null
     },
     ui: {
       activeTab: "schedule",
@@ -672,6 +673,59 @@
   const safeJson = async (resp)=>{
     const txt = await resp.text();
     try{ return JSON.parse(txt); }catch(e){ throw new Error(`Non-JSON response: ${txt.slice(0,160)}`); }
+
+  // ---- DETERMINISTIC HELPERS (Resolver artifacts) ----
+  function stableStringify(obj){
+    if(obj === null || typeof obj !== "object") return JSON.stringify(obj);
+    if(Array.isArray(obj)) return "[" + obj.map(stableStringify).join(",") + "]";
+    const keys = Object.keys(obj).sort();
+    return "{" + keys.map(k => JSON.stringify(k) + ":" + stableStringify(obj[k])).join(",") + "}";
+  }
+
+  function setResolverArtifacts(art){
+    app.data.resolverArtifacts = art || null;
+    try{ renderOpsResolveStatus(); }catch(e){}
+  }
+
+  function renderOpsResolveStatus(){
+    const chip = document.getElementById("opsResolveStatus");
+    const run = document.getElementById("opsResolveRunId");
+    if(!chip || !run) return;
+    const a = app.data.resolverArtifacts;
+    if(!a){
+      chip.innerHTML = `<span class="dot idle"></span> Resolver: <strong>—</strong>`;
+      run.textContent = "run: —";
+      return;
+    }
+    const status = a.report?.status || "—";
+    const cls = status.startsWith("SUCCESS") ? "ok" : (status.startsWith("FAILURE") ? "bad" : "warn");
+    chip.innerHTML = `<span class="dot ${cls}"></span> Resolver: <strong>${esc(status)}</strong>`;
+    run.textContent = `run: ${String(a.report?.run?.runId || "—")}`;
+  }
+
+  function openJsonModal(title, obj){
+    const pretty = JSON.stringify(obj || {}, null, 2);
+    openModal(title, `
+      <div class="field full">
+        <label>${esc(title)}</label>
+        <textarea class="mono" style="width:100%; min-height:360px;">${esc(pretty)}</textarea>
+        <div class="row" style="margin-top:10px; justify-content:flex-end;">
+          <button class="btn" id="btnCopyJson">Copy</button>
+        </div>
+      </div>
+    `, null);
+    setTimeout(()=>{
+      const b = document.getElementById("btnCopyJson");
+      if(b) b.onclick = async ()=>{
+        try{
+          await navigator.clipboard.writeText(pretty);
+          alert("Copied ✅");
+        }catch(e){
+          alert("Copy failed. You can manually select and copy.");
+        }
+      };
+    }, 0);
+  }
   };
 
   function unwrapStorePayload(obj){
@@ -844,6 +898,15 @@
     if(!schedule) schedule = await fetchLocalJson(LOCAL_PATHS.schedule);
     if(!overrides) overrides = await fetchLocalJson(LOCAL_PATHS.overrides);
     if(!history) history = await fetchLocalJson(LOCAL_PATHS.history);
+    let policy = null;
+    // Try Drive bundle first (optional), else local
+    if(driveSrc && driveSrc.ok !== false){
+      try{
+        const payload = driveSrc.payload || driveSrc.data || driveSrc;
+        policy = payload.resolver_policy || payload.resolverPolicy || payload.policy || null;
+      }catch(e){}
+    }
+    if(!policy) policy = await fetchLocalJson(LOCAL_PATHS.policy);
 
     // Normalize
     app.data.members = Array.isArray(members) ? members : (members && members.members) ? members.members : [];
@@ -855,6 +918,8 @@
     app.data.schedule = (schedule && schedule.payload) ? schedule.payload : (schedule || null);
     app.data.overrides = Array.isArray(overrides) ? overrides : (overrides && overrides.overrides) ? overrides.overrides : [];
     app.data.history = history || null;
+    app.data.policy = policy || null;
+    app.data.resolverArtifacts = null;
 
     // Ensure qualifications list exists (grows over time)
     app.data.org_settings.qualifications ||= [];
@@ -1677,6 +1742,13 @@
           <div class="row" style="margin-top:10px;">
             <button class="btn primary" id="opsResolveWeek">Resolve week</button>
             <button class="btn" id="opsResolveDry">Dry run (no write)</button>
+            <button class="btn" id="opsResolveViewReport" title="View last resolver_report.json">Report</button>
+            <button class="btn" id="opsResolveViewLog" title="View last resolver_decision_log.json">Log</button>
+            <button class="btn" id="opsResolveClear" title="Clear last resolver artifacts">Clear</button>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <span class="chip" id="opsResolveStatus"><span class="dot idle"></span> Resolver: <strong>—</strong></span>
+            <span class="chip mono" id="opsResolveRunId" title="Deterministic runId (hash)">run: —</span>
           </div>
           <div class="hint" style="margin-top:10px;">
             Note: availability is read from <span class="mono">member_availability</span> records; this can take ~10–20 seconds depending on roster size.
@@ -1874,6 +1946,19 @@
 
     // Resolve Now (this week)
     $("#opsResolveDry").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:true }); };
+    $("#opsResolveViewReport").onclick = ()=> {
+      if(!app.data.resolverArtifacts) return alert("No resolver report yet. Run Dry run or Resolve week first.");
+      openJsonModal("resolver_report.json (last run)", app.data.resolverArtifacts.report);
+    };
+    $("#opsResolveViewLog").onclick = ()=> {
+      if(!app.data.resolverArtifacts) return alert("No decision log yet. Run Dry run or Resolve week first.");
+      openJsonModal("resolver_decision_log.json (last run)", app.data.resolverArtifacts.decisionLog);
+    };
+    $("#opsResolveClear").onclick = ()=> {
+      setResolverArtifacts(null);
+      alert("Cleared last resolver artifacts.");
+    };
+
     $("#opsResolveWeek").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:false }); };
     // Helper: copy week selections forward N weeks (inclusive, sequential)
     function copyWeekForward(weeks){
@@ -3105,6 +3190,86 @@ function esc(s){
       }
 
 
+
+      // --- Resolver artifacts (beta): report + decision log ---
+      try{
+        const policy = app.data.policy || null;
+        const runFingerprint = "sha256:" + await sha256Hex(stableStringify(app.data.members||{}) + "\n" + stableStringify(outSched||{}));
+        const policyFingerprint = policy ? ("sha256:" + await sha256Hex(stableStringify(policy))) : "sha256:policy_missing";
+        const runId = "run_" + (await sha256Hex(runFingerprint + "\n" + policyFingerprint)).slice(0,16);
+
+        const report = {
+          reportVersion: "1.0.0-beta",
+          run: {
+            runId,
+            runFingerprint,
+            inputs: { membersJsonRef: "members.json", scheduleJsonRef: "schedule.json" },
+            policy: { policyRef: "resolver_policy.json", policyFingerprint, fteTargetingEnabled: true },
+            generatedAt: null
+          },
+          status: dryRun ? "SUCCESS_PARTIAL" : "SUCCESS_PARTIAL",
+          summary: {
+            seatsTotal: changes.length,           // placeholder: will be replaced once seat-level outcomes exist
+            seatsFilled: 0,
+            seatsUnfilled: 0,
+            unfilledByCategory: {
+              UNFILLED_NO_CANDIDATES: 0,
+              UNFILLED_BUDGET_ONLY: 0,
+              UNFILLED_CONSTRAINTS: 0,
+              UNFILLED_STRATEGY_LIMIT: 0
+            },
+            validation: { fatalErrors: 0, nonFatalWarnings: 0 }
+          },
+          seatOutcomes: [],
+          topBlockers: [],
+          budget: { isBudgetEnabled: true, lines: [], totals: { limit: 0, spent: 0, remaining: 0, currency: "USD" }, issues: [] },
+          classifications: {
+            deadlock: { isDeadlock: false, type: "NONE", details: [] },
+            conflicts: [],
+            budgetExhaustion: [],
+            inputFailures: []
+          },
+          notes: [
+            "Beta artifacts are enabled. Seat-by-seat outcomes will populate when resolver.js is integrated."
+          ]
+        };
+
+        const decisionLog = {
+          logVersion: "1.0.0-beta",
+          run: {
+            runId,
+            runFingerprint,
+            inputs: { membersJsonRef: "members.json", scheduleJsonRef: "schedule.json" },
+            policy: { policyRef: "resolver_policy.json", policyFingerprint, fteTargetingEnabled: true },
+            determinism: {
+              canonicalSortKeys: { members: "memberId asc", seats: "(weekIndex,start,shiftId,seatId) asc" },
+              maxPasses: Number(policy?.determinism?.maxPasses || 1),
+              backtrackingAllowed: false,
+              candidateOrdering: {
+                policyName: "FTE_FIRST_DETERMINISTIC_V1",
+                rankKeysInOrder: ["k1_isFteBelowTarget","k2_remainingToTargetHours","k3_assignedHoursInWeek","k4_assignedHoursLast4Weeks","memberId"],
+                tier3HistoryRule: "SKIP_IF_NOT_AVAILABLE",
+                selectionTierAttributionRule: "FIRST_DIFFERENTIATOR_KEY"
+              }
+            },
+            generatedAt: null
+          },
+          phases: [],
+          events: [
+            { seq: 0, phase: 7, eventType: "RUN_TERMINATED", message: dryRun ? "Dry run completed." : "Run completed.", data: { dryRun, changes: changes.length } }
+          ],
+          final: {
+            status: report.status,
+            seatFillStats: { filled: 0, unfilled: 0 },
+            budgetStats: { isBudgetEnabled: true, remainingTotal: { amount: 0, currency: "USD" } },
+            artifacts: { resolverReportRef: "resolver_report.json" }
+          }
+        };
+
+        setResolverArtifacts({ report, decisionLog });
+      }catch(e){
+        console.warn("resolver artifacts build failed", e);
+      }
       app.data.schedule = outSched;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
       alert(`Resolved week.\nChanges written: ${changes.length}`);

@@ -1,0 +1,26 @@
+{
+  "policyVersion": "1.0.0-beta",
+  "determinism": {
+    "maxPasses": 1,
+    "backtrackingAllowed": false
+  },
+  "fte": {
+    "defaultWeeklyTargetHours": 36,
+    "members": {
+      "mem_LYNNSEY": { "isFte": true, "weeklyTargetHours": 36 },
+      "mem_BRIAN": { "isFte": true, "weeklyTargetHours": 36 }
+    }
+  },
+  "budgeting": {
+    "salaryWeeklyDraw": {
+      "enabled": true,
+      "currency": "USD",
+      "amountByWeekId": {
+        "week_2026_01_26": 3200
+      }
+    }
+  },
+  "history": {
+    "isAvailable": false
+  }
+}
