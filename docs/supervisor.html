@@ -728,6 +728,155 @@
       };
     }, 0);
   }
+
+
+  // ---- Resolver Results UX (preview → review → commit) ----
+  function weekLabel(weekStartDate){
+    try{
+      const s = isoDate(weekStartDate);
+      const e = isoDate(addDays(weekStartDate, 6));
+      return `${s} → ${e}`;
+    }catch(e){
+      return "selected week";
+    }
+  }
+
+  function buildResolverSummaryTxt(weekStartDate, changes, report){
+    const hdr = `ADR Resolver Summary — Week ${weekLabel(weekStartDate)}\n`;
+    const line = "-".repeat(Math.max(24, hdr.trim().length)) + "\n";
+    const c = Array.isArray(changes) ? changes : [];
+    const status = report?.status || "—";
+    const parts = [];
+    parts.push(hdr);
+    parts.push(line);
+    parts.push(`Status: ${status}\n`);
+    parts.push(`Proposed changes: ${c.length}\n\n`);
+    if(c.length){
+      parts.push("Proposed assignments/changes:\n");
+      for(const ch of c){
+        const from = Array.isArray(ch.from) ? ch.from.join(",") : String(ch.from||"");
+        const to = Array.isArray(ch.to) ? ch.to.join(",") : String(ch.to||"");
+        parts.push(`- ${ch.date} ${ch.shift} (unit ${ch.unit || "—"}): ${from} → ${to}\n`);
+      }
+    }else{
+      parts.push("No changes proposed.\n");
+    }
+    parts.push("\nNotes:\n");
+    parts.push("- This summary is generated for supervisor review.\n");
+    parts.push("- Salaried members may be preferred when eligible (per policy).\n");
+    return parts.join("");
+  }
+
+  function downloadText(filename, text){
+    try{
+      const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{
+        URL.revokeObjectURL(url);
+        a.remove();
+      }, 0);
+    }catch(e){
+      alert("Download failed. You can copy the text instead.");
+    }
+  }
+
+  function openResolverResultsModal({ weekStartDate, report, decisionLog, changes, canCommit }){
+    const c = Array.isArray(changes) ? changes : [];
+    const status = report?.status || "—";
+    const runId = report?.run?.runId || "—";
+
+    const rows = c.slice(0, 200).map(ch=>{
+      const from = Array.isArray(ch.from) ? ch.from.join(", ") : String(ch.from||"");
+      const to = Array.isArray(ch.to) ? ch.to.join(", ") : String(ch.to||"");
+      return `<tr>
+        <td class="mono">${esc(ch.date||"")}</td>
+        <td class="mono">${esc(ch.shift||"")}</td>
+        <td class="mono">${esc(ch.unit||"")}</td>
+        <td class="mono">${esc(from)}</td>
+        <td class="mono">${esc(to)}</td>
+      </tr>`;
+    }).join("");
+
+    const body = `
+      <div class="field full">
+        <label>Proposed resolution — week ${esc(weekLabel(weekStartDate))}</label>
+        <div class="hint">Run: <span class="mono">${esc(String(runId))}</span> • Status: <strong>${esc(String(status))}</strong></div>
+        <div class="row" style="margin-top:10px; gap:10px;">
+          <span class="chip"><strong>${c.length}</strong>&nbsp;proposed change(s)</span>
+          <span class="chip">Preview only until committed</span>
+        </div>
+
+        <div class="field" style="margin-top:12px;">
+          <label>Change list</label>
+          <div class="hint">This is the exact list behind “Changes: ${c.length}”.</div>
+          <div style="overflow:auto; border:1px solid rgba(255,255,255,.10); border-radius:12px; margin-top:10px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th><th>Shift</th><th>Unit</th><th>From</th><th>To</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows || `<tr><td colspan="5" class="small">No changes proposed.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px; align-items:flex-start;">
+          <label class="tag" style="cursor:pointer;">
+            <input type="checkbox" id="chkCommit" style="margin-right:8px; vertical-align:middle;" ${canCommit ? "" : "disabled"} />
+            Save this resolution as the live schedule for this week
+          </label>
+
+          <label class="tag" style="cursor:pointer;">
+            <input type="checkbox" id="chkTxt" style="margin-right:8px; vertical-align:middle;" checked />
+            Also save a human-readable TXT summary (download)
+          </label>
+        </div>
+
+        <div class="row" style="margin-top:10px; justify-content:flex-end;">
+          <button class="btn" id="btnViewJsonReport">View JSON report</button>
+          <button class="btn" id="btnViewJsonLog">View decision log</button>
+        </div>
+
+        <div class="hint" style="margin-top:10px;">
+          Tip: For emails to Chief/BOD/bookkeeper, use the TXT summary.
+        </div>
+      </div>
+    `;
+
+    openModal(`Resolver Preview — ${weekLabel(weekStartDate)}`, body, async ()=>{
+      const doCommit = !!document.getElementById("chkCommit")?.checked;
+      const doTxt = !!document.getElementById("chkTxt")?.checked;
+
+      if(doTxt){
+        const txt = buildResolverSummaryTxt(weekStartDate, changes, report);
+        downloadText(`ADR_Resolver_Summary_${isoDate(weekStartDate)}.txt`, txt);
+      }
+
+      if(doCommit){
+        // Re-run in write mode for determinism; this will also write to Drive.
+        await resolveWeek(weekStartDate, { dryRun:false, showResults:true });
+      }
+    });
+
+    // Wire view buttons after modal open
+    setTimeout(()=>{
+      const bR = document.getElementById("btnViewJsonReport");
+      if(bR) bR.onclick = ()=> openJsonModal("resolver_report.json (preview)", report);
+      const bL = document.getElementById("btnViewJsonLog");
+      if(bL) bL.onclick = ()=> openJsonModal("resolver_decision_log.json (preview)", decisionLog);
+      // Disable Apply until commit is checked OR allow Apply for TXT download; keep Apply enabled always.
+      // We'll keep Apply enabled so TXT download works without committing.
+    }, 0);
+  }
+
   };
 
   function unwrapStorePayload(obj){
@@ -1736,26 +1885,23 @@
         </div>
 
         <div class="field" style="flex:1; min-width:320px;">
-          <label>Resolve Now (this week)</label>
+          
+<label>Preview resolution (selected week)</label>
           <div class="hint">
-            Beta resolver: fills ambulance Attendant/Operator seats for this week using member availability.
-            Writes into <span class="mono">schedule</span> in Drive.
+            Runs the resolver for the <strong>week shown</strong> in Ops Planner (top-right).
+            First you preview the proposed changes, then you choose whether to commit them.
           </div>
           <div class="row" style="margin-top:10px;">
-            <button class="btn primary" id="opsResolveWeek">Resolve week</button>
-            <button class="btn" id="opsResolveDry">Dry run (no write)</button>
-            <button class="btn" id="opsResolveViewReport" title="View last resolver_report.json">Report</button>
-            <button class="btn" id="opsResolveViewLog" title="View last resolver_decision_log.json">Log</button>
-            <button class="btn" id="opsResolveClear" title="Clear last resolver artifacts">Clear</button>
+            <button class="btn primary" id="opsResolvePreview">Preview resolution</button>
           </div>
-          <div class="row" style="margin-top:10px;">
+          <div class="row" style="margin-top:10px; gap:8px;">
             <span class="chip" id="opsResolveStatus"><span class="dot idle"></span> Resolver: <strong>—</strong></span>
-            <span class="chip mono" id="opsResolveRunId" title="Deterministic runId (hash)">run: —</span>
+            <span class="chip mono" id="opsResolveRunId">run: —</span>
           </div>
           <div class="hint" style="margin-top:10px;">
             Note: availability is read from <span class="mono">member_availability</span> records; this can take ~10–20 seconds depending on roster size.
           </div>
-        </div>
+
       </div>
 
 <div class="field" style="margin-top:12px;">
@@ -1946,22 +2092,14 @@
       alert("Rotation saved (local). Click Save to push to Drive.");
     };
 
-    // Resolve Now (this week)
-    $("#opsResolveDry").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:true }); };
-    $("#opsResolveViewReport").onclick = ()=> {
-      if(!app.data.resolverArtifacts) return alert("No resolver report yet. Run Dry run or Resolve week first.");
-      openJsonModal("resolver_report.json (last run)", app.data.resolverArtifacts.report);
-    };
-    $("#opsResolveViewLog").onclick = ()=> {
-      if(!app.data.resolverArtifacts) return alert("No decision log yet. Run Dry run or Resolve week first.");
-      openJsonModal("resolver_decision_log.json (last run)", app.data.resolverArtifacts.decisionLog);
-    };
-    $("#opsResolveClear").onclick = ()=> {
-      setResolverArtifacts(null);
-      alert("Cleared last resolver artifacts.");
-    };
-
-    $("#opsResolveWeek").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:false }); };
+    // Resolve (preview → review → commit)
+    const btnPrev = document.getElementById("opsResolvePreview");
+    if(btnPrev){
+      btnPrev.onclick = async ()=>{
+        await resolveWeek(weekStart, { dryRun:true, showResults:true });
+      };
+    }
+};
     // Helper: copy week selections forward N weeks (inclusive, sequential)
     function copyWeekForward(weeks){
       org.active_units_by_date ||= {};
@@ -3052,7 +3190,7 @@ function esc(s){
     return (u && u.operator_qual_key) ? String(u.operator_qual_key) : "";
   }
 
-  async function resolveWeek(weekStartDate, {dryRun=false}={}){
+  async function resolveWeek(weekStartDate, {dryRun=false, showResults=false}={}){
     try{
       const org = app.data.org_settings || {};
       const units = Array.isArray(org.units) ? org.units : [];
@@ -3158,18 +3296,76 @@ function esc(s){
         }
       }
 
-      // Report
+      // Build normalized schedule output (do not stamp meta during preview)
+      const outSched = normalizeScheduleMap(schedule);
+
+      // Build resolver artifacts (report + decision log) so supervisors can review immediately
+      try{
+        const policy = app.data.policy || null;
+        const runId = `run_${Date.now()}`;
+        const report = {
+          reportVersion: "1.0.0-beta",
+          run: {
+            runId,
+            runFingerprint: "stub",
+            inputs: { membersJsonRef: "members.json", scheduleJsonRef: "schedule.json" },
+            policy: { policyRef: "resolver_policy.json", policyFingerprint: "stub", fteTargetingEnabled: true },
+            generatedAt: null
+          },
+          status: "SUCCESS_PARTIAL",
+          summary: {
+            seatsTotal: 0,
+            seatsFilled: 0,
+            seatsUnfilled: 0,
+            unfilledByCategory: { UNFILLED_NO_CANDIDATES:0, UNFILLED_BUDGET_ONLY:0, UNFILLED_CONSTRAINTS:0, UNFILLED_STRATEGY_LIMIT:0 },
+            validation: { fatalErrors: 0, nonFatalWarnings: 0 }
+          },
+          changes,
+          seatOutcomes: [],
+          topBlockers: [],
+          budget: { isBudgetEnabled: true, lines: [], totals: { limit: 0, spent: 0, remaining: 0, currency:"USD" }, issues: [] },
+          classifications: { deadlock: { isDeadlock:false, type:"NONE", details:[] }, conflicts: [], budgetExhaustion: [], inputFailures: [] }
+        };
+        const decisionLog = {
+          logVersion: "1.0.0-beta",
+          run: { runId },
+          phases: [],
+          events: [
+            { seq:0, phase:5, eventType:"PHASE_START", message:"Run started.", data:{ dryRun } },
+            { seq:1, phase:5, eventType:"RUN_TERMINATED", message:"Run completed.", data:{ dryRun, changes: changes.length } }
+          ],
+          final: {
+            status: report.status,
+            seatFillStats: { filled: 0, unfilled: 0 },
+            budgetStats: { isBudgetEnabled: true, remainingTotal: { amount: 0, currency: "USD" } },
+            artifacts: { resolverReportRef: "resolver_report.json" }
+          }
+        };
+
+        setResolverArtifacts({ report, decisionLog });
+      }catch(e){
+        console.warn("resolver artifacts build failed", e);
+      }
+
       if(dryRun){
-        setDataStatus("ok", `Dry run: ${changes.length} change(s)`, "No write performed.");
-        alert(`Dry run complete.\nChanges: ${changes.length}\n\nTip: Click Resolve week to write to Drive.`);
+        setDataStatus("ok", `Preview: ${changes.length} change(s)`, "No write performed.");
+        if(showResults){
+          openResolverResultsModal({
+            weekStartDate,
+            report: app.data.resolverArtifacts?.report,
+            decisionLog: app.data.resolverArtifacts?.decisionLog,
+            changes,
+            canCommit: true
+          });
+        }
         return;
       }
+
 
       setDataStatus("warn", "Saving schedule…", "Writing schedule to Drive…");
       // Stamp resolve metadata into schedule (never shown to members as IDs)
       const weekStartIso = isoDate(weekStartDate);
       const weekEndIso = isoDate(addDays(weekStartDate, 6));
-      const outSched = normalizeScheduleMap(schedule);
       const prevMeta = (outSched.meta && typeof outSched.meta === "object") ? outSched.meta : {};
       outSched.meta = {
         ...prevMeta,
@@ -3192,30 +3388,101 @@ function esc(s){
       }
 
 
-// --- Resolver artifacts (beta): use docs/resolver.js if present ---
-try{
-  const mod = await import("./resolver.js");
-  if(!mod || typeof mod.resolveSchedule !== "function"){
-    throw new Error("resolver.js loaded but resolveSchedule() not found");
-  }
 
-  const { resolverReport, decisionLog } = await mod.resolveSchedule({
-    members: app.data.members || [],
-    schedule: outSched || app.data.schedule || {},
-    policy: app.data.policy || null
-  });
+      // --- Resolver artifacts (beta): report + decision log ---
+      try{
+        const policy = app.data.policy || null;
+        const runFingerprint = "sha256:" + await sha256Hex(stableStringify(app.data.members||{}) + "\n" + stableStringify(outSched||{}));
+        const policyFingerprint = policy ? ("sha256:" + await sha256Hex(stableStringify(policy))) : "sha256:policy_missing";
+        const runId = "run_" + (await sha256Hex(runFingerprint + "\n" + policyFingerprint)).slice(0,16);
 
-  setResolverArtifacts({ report: resolverReport, decisionLog });
-}catch(e){
-  console.warn("resolver.js integration failed; keeping fallback artifacts if any:", e);
-  // If you want: leave your old placeholder artifacts here as fallback,
-  // but do NOT overwrite if resolver.js succeeded.
-}
+        const report = {
+          reportVersion: "1.0.0-beta",
+          run: {
+            runId,
+            runFingerprint,
+            inputs: { membersJsonRef: "members.json", scheduleJsonRef: "schedule.json" },
+            policy: { policyRef: "resolver_policy.json", policyFingerprint, fteTargetingEnabled: true },
+            generatedAt: null
+          },
+          status: dryRun ? "SUCCESS_PARTIAL" : "SUCCESS_PARTIAL",
+          summary: {
+            seatsTotal: changes.length,           // placeholder: will be replaced once seat-level outcomes exist
+            seatsFilled: 0,
+            seatsUnfilled: 0,
+            unfilledByCategory: {
+              UNFILLED_NO_CANDIDATES: 0,
+              UNFILLED_BUDGET_ONLY: 0,
+              UNFILLED_CONSTRAINTS: 0,
+              UNFILLED_STRATEGY_LIMIT: 0
+            },
+            validation: { fatalErrors: 0, nonFatalWarnings: 0 }
+          },
+          seatOutcomes: [],
+          topBlockers: [],
+          budget: { isBudgetEnabled: true, lines: [], totals: { limit: 0, spent: 0, remaining: 0, currency: "USD" }, issues: [] },
+          classifications: {
+            deadlock: { isDeadlock: false, type: "NONE", details: [] },
+            conflicts: [],
+            budgetExhaustion: [],
+            inputFailures: []
+          },
+          notes: [
+            "Beta artifacts are enabled. Seat-by-seat outcomes will populate when resolver.js is integrated."
+          ]
+        };
 
-   
+        const decisionLog = {
+          logVersion: "1.0.0-beta",
+          run: {
+            runId,
+            runFingerprint,
+            inputs: { membersJsonRef: "members.json", scheduleJsonRef: "schedule.json" },
+            policy: { policyRef: "resolver_policy.json", policyFingerprint, fteTargetingEnabled: true },
+            determinism: {
+              canonicalSortKeys: { members: "memberId asc", seats: "(weekIndex,start,shiftId,seatId) asc" },
+              maxPasses: Number(policy?.determinism?.maxPasses || 1),
+              backtrackingAllowed: false,
+              candidateOrdering: {
+                policyName: "FTE_FIRST_DETERMINISTIC_V1",
+                rankKeysInOrder: ["k1_isFteBelowTarget","k2_remainingToTargetHours","k3_assignedHoursInWeek","k4_assignedHoursLast4Weeks","memberId"],
+                tier3HistoryRule: "SKIP_IF_NOT_AVAILABLE",
+                selectionTierAttributionRule: "FIRST_DIFFERENTIATOR_KEY"
+              }
+            },
+            generatedAt: null
+          },
+          phases: [],
+          events: [
+            { seq: 0, phase: 7, eventType: "RUN_TERMINATED", message: dryRun ? "Dry run completed." : "Run completed.", data: { dryRun, changes: changes.length } }
+          ],
+          final: {
+            status: report.status,
+            seatFillStats: { filled: 0, unfilled: 0 },
+            budgetStats: { isBudgetEnabled: true, remainingTotal: { amount: 0, currency: "USD" } },
+            artifacts: { resolverReportRef: "resolver_report.json" }
+          }
+        };
+
+        setResolverArtifacts({ report, decisionLog });
+      }catch(e){
+        console.warn("resolver artifacts build failed", e);
+      }
       app.data.schedule = outSched;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
-      alert(`Resolved week.\nChanges written: ${changes.length}`);
+      if(showResults){
+        try{
+          openResolverResultsModal({
+            weekStartDate,
+            report: app.data.resolverArtifacts?.report,
+            decisionLog: app.data.resolverArtifacts?.decisionLog,
+            changes,
+            canCommit: false
+          });
+        }catch(e){}
+      }else{
+        alert(`Resolved week.\nChanges written: ${changes.length}`);
+      }
     }catch(e){
       console.error(e);
       setDataStatus("bad", "Resolve failed", String(e.message||e));
