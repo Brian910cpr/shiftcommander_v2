@@ -327,6 +327,8 @@
       background: rgba(15,23,49,.98) !important;
     }
 
+
+</style>
 </head>
 
 <body>
@@ -490,6 +492,9 @@
   
 
   /* ===================== LITE SECURITY ===================== */
+  // ORG is an alias to loaded org_settings (set after loadAll)
+  let ORG = {};
+
   const ADMIN_AUTH = {
     session_hours: 8,
     max_fails: 5,
@@ -632,10 +637,6 @@
       modal: { mode:null, payload:null }
     }
   };
-
-  // ORG alias used by lite security helpers (set after loadAll)
-  let ORG = null;
-
 
   // ---- DOM ----
   const $ = (sel)=> document.querySelector(sel);
@@ -848,8 +849,8 @@
     app.data.members = Array.isArray(members) ? members : (members && members.members) ? members.members : [];
     app.data.org_settings = org || { qualifications: [], units: [], seat_templates: [] };
 
-    // keep an alias for security helpers
-    ORG = app.data.org_settings;
+    // Keep global alias for security helpers
+    ORG = app.data.org_settings || {};
 
     app.data.schedule = (schedule && schedule.payload) ? schedule.payload : (schedule || null);
     app.data.overrides = Array.isArray(overrides) ? overrides : (overrides && overrides.overrides) ? overrides.overrides : [];

@@ -387,6 +387,8 @@ main{ padding:12px; }
       background: rgba(15,23,49,.98) !important;
     }
 
+
+</style>
 </head>
 
 <body>
@@ -554,9 +556,8 @@ main{ padding:12px; }
 <script>
 /* ===================== DRIVE STORE CONFIG ===================== */
 const STORE = {
-  // Use Cloudflare Worker (CORS + token injection).
-  url: "https://schedule-cors-910cpr.brian-9ac.workers.dev"
-};
+  // Prefer same-origin /api/store when hosted, but fall back to the Worker when opened as a local file.
+  url: "https://schedule-cors-910cpr.brian-9ac.workers.dev"};
 
 
 // ---- org_settings (shared config) ----
