@@ -335,13 +335,60 @@
 
 
 <div id="__sc_build_stamp" style="position:sticky;top:0;z-index:99999;background:#111827;color:#f9fafb;padding:8px 12px;font:700 12px system-ui;border-bottom:2px solid #7c5cff;">
-  SUPERVISOR HTML LOADED • build stamp: 2026-01-21 02:52 UTC • url: <span id="__sc_url" style="font-weight:900"></span>
+  SUPERVISOR HTML LOADED • last updated: <span id="__sc_lastmod">…</span> • url: <span id="__sc_url" style="font-weight:900"></span>
 </div>
 <script>
-  try {
-    const el = document.getElementById("__sc_url");
-    if(el) el.textContent = location.href;
-  } catch(e) {}
+(async function(){
+  try{
+    const urlEl = document.getElementById("__sc_url");
+    if(urlEl) urlEl.textContent = location.href;
+
+    const out = document.getElementById("__sc_lastmod");
+    if(!out) return;
+
+    // Prefer server's Last-Modified header (best signal for "did my deploy update?")
+    let lm = null;
+    try{
+      const r = await fetch(location.href, { method: "HEAD", cache: "no-store" });
+      lm = r.headers.get("Last-Modified");
+    }catch(e){}
+
+    if(!lm){
+      // Fallback: browser's document.lastModified (often set even when HEAD is blocked)
+      const d2 = new Date(document.lastModified);
+      if(!isNaN(d2.getTime())){
+        out.textContent = d2.toLocaleString("en-US", {
+          timeZone: "America/New_York",
+          weekday: "short",
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        }) + " ET (fallback)";
+        return;
+      }
+      out.textContent = "(no Last-Modified)";
+      return;
+    }
+
+    const d = new Date(lm);
+    out.textContent = d.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    }) + " ET";
+  }catch(e){
+    const out = document.getElementById("__sc_lastmod");
+    if(out) out.textContent = "(stamp error)";
+  }
+})();
 </script>
 
 <!-- Lite Security (Supervisor) -->
