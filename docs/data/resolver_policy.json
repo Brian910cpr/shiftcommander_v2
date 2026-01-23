@@ -1,9 +1,6 @@
 {
   "policyVersion": "1.0.0-beta",
-  "determinism": {
-    "maxPasses": 1,
-    "backtrackingAllowed": false
-  },
+  "determinism": { "maxPasses": 1, "backtrackingAllowed": false },
   "fte": {
     "defaultWeeklyTargetHours": 36,
     "members": {
@@ -15,12 +12,8 @@
     "salaryWeeklyDraw": {
       "enabled": true,
       "currency": "USD",
-      "amountByWeekId": {
-        "week_2026_01_26": 3200
-      }
+      "amountByWeekId": { "*": 3200 }
     }
   },
-  "history": {
-    "isAvailable": false
-  }
+  "history": { "isAvailable": false }
 }
