@@ -675,6 +675,7 @@
   const safeJson = async (resp)=>{
     const txt = await resp.text();
     try{ return JSON.parse(txt); }catch(e){ throw new Error(`Non-JSON response: ${txt.slice(0,160)}`); }
+  };
 
   // ---- DETERMINISTIC HELPERS (Resolver artifacts) ----
   function stableStringify(obj){
