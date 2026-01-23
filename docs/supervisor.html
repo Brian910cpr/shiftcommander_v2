@@ -3192,86 +3192,27 @@ function esc(s){
       }
 
 
+// --- Resolver artifacts (beta): use docs/resolver.js if present ---
+try{
+  const mod = await import("./resolver.js");
+  if(!mod || typeof mod.resolveSchedule !== "function"){
+    throw new Error("resolver.js loaded but resolveSchedule() not found");
+  }
 
-      // --- Resolver artifacts (beta): report + decision log ---
-      try{
-        const policy = app.data.policy || null;
-        const runFingerprint = "sha256:" + await sha256Hex(stableStringify(app.data.members||{}) + "\n" + stableStringify(outSched||{}));
-        const policyFingerprint = policy ? ("sha256:" + await sha256Hex(stableStringify(policy))) : "sha256:policy_missing";
-        const runId = "run_" + (await sha256Hex(runFingerprint + "\n" + policyFingerprint)).slice(0,16);
+  const { resolverReport, decisionLog } = await mod.resolveSchedule({
+    members: app.data.members || [],
+    schedule: outSched || app.data.schedule || {},
+    policy: app.data.policy || null
+  });
 
-        const report = {
-          reportVersion: "1.0.0-beta",
-          run: {
-            runId,
-            runFingerprint,
-            inputs: { membersJsonRef: "members.json", scheduleJsonRef: "schedule.json" },
-            policy: { policyRef: "resolver_policy.json", policyFingerprint, fteTargetingEnabled: true },
-            generatedAt: null
-          },
-          status: dryRun ? "SUCCESS_PARTIAL" : "SUCCESS_PARTIAL",
-          summary: {
-            seatsTotal: changes.length,           // placeholder: will be replaced once seat-level outcomes exist
-            seatsFilled: 0,
-            seatsUnfilled: 0,
-            unfilledByCategory: {
-              UNFILLED_NO_CANDIDATES: 0,
-              UNFILLED_BUDGET_ONLY: 0,
-              UNFILLED_CONSTRAINTS: 0,
-              UNFILLED_STRATEGY_LIMIT: 0
-            },
-            validation: { fatalErrors: 0, nonFatalWarnings: 0 }
-          },
-          seatOutcomes: [],
-          topBlockers: [],
-          budget: { isBudgetEnabled: true, lines: [], totals: { limit: 0, spent: 0, remaining: 0, currency: "USD" }, issues: [] },
-          classifications: {
-            deadlock: { isDeadlock: false, type: "NONE", details: [] },
-            conflicts: [],
-            budgetExhaustion: [],
-            inputFailures: []
-          },
-          notes: [
-            "Beta artifacts are enabled. Seat-by-seat outcomes will populate when resolver.js is integrated."
-          ]
-        };
+  setResolverArtifacts({ report: resolverReport, decisionLog });
+}catch(e){
+  console.warn("resolver.js integration failed; keeping fallback artifacts if any:", e);
+  // If you want: leave your old placeholder artifacts here as fallback,
+  // but do NOT overwrite if resolver.js succeeded.
+}
 
-        const decisionLog = {
-          logVersion: "1.0.0-beta",
-          run: {
-            runId,
-            runFingerprint,
-            inputs: { membersJsonRef: "members.json", scheduleJsonRef: "schedule.json" },
-            policy: { policyRef: "resolver_policy.json", policyFingerprint, fteTargetingEnabled: true },
-            determinism: {
-              canonicalSortKeys: { members: "memberId asc", seats: "(weekIndex,start,shiftId,seatId) asc" },
-              maxPasses: Number(policy?.determinism?.maxPasses || 1),
-              backtrackingAllowed: false,
-              candidateOrdering: {
-                policyName: "FTE_FIRST_DETERMINISTIC_V1",
-                rankKeysInOrder: ["k1_isFteBelowTarget","k2_remainingToTargetHours","k3_assignedHoursInWeek","k4_assignedHoursLast4Weeks","memberId"],
-                tier3HistoryRule: "SKIP_IF_NOT_AVAILABLE",
-                selectionTierAttributionRule: "FIRST_DIFFERENTIATOR_KEY"
-              }
-            },
-            generatedAt: null
-          },
-          phases: [],
-          events: [
-            { seq: 0, phase: 7, eventType: "RUN_TERMINATED", message: dryRun ? "Dry run completed." : "Run completed.", data: { dryRun, changes: changes.length } }
-          ],
-          final: {
-            status: report.status,
-            seatFillStats: { filled: 0, unfilled: 0 },
-            budgetStats: { isBudgetEnabled: true, remainingTotal: { amount: 0, currency: "USD" } },
-            artifacts: { resolverReportRef: "resolver_report.json" }
-          }
-        };
-
-        setResolverArtifacts({ report, decisionLog });
-      }catch(e){
-        console.warn("resolver artifacts build failed", e);
-      }
+   
       app.data.schedule = outSched;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
       alert(`Resolved week.\nChanges written: ${changes.length}`);
