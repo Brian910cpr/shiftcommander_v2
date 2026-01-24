@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ShiftCommander — Supervisor</title>
+<!-- AI PATCH: 2026-01-24 08:42 UTC -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230b1020'/%3E%3Ccircle cx='50' cy='50' r='28' fill='%237c5cff'/%3E%3C/svg%3E" />
 <style>
     :root{
@@ -496,7 +497,37 @@
     </div>
   </div>
 
-  <!-- MODAL: Member editor -->
+  
+  <!-- MODAL: AI Resolve Log -->
+  <div class="modalBackdrop" id="aiLogBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" style="width:min(980px, 96vw);">
+      <div class="modalHeader">
+        <h3>AI Resolver — Live Log</h3>
+        <button class="btn ghost" id="btnCloseAiLog">Close</button>
+      </div>
+      <div class="modalBody full" style="display:block; padding:14px;">
+        <div class="field" style="margin:0;">
+          <label>Status</label>
+          <div class="row" style="margin-top:6px;">
+            <span class="chip" id="aiLogStatusChip"><span class="dot idle" id="aiLogDot"></span><span id="aiLogStatus">Idle</span></span>
+            <span class="chip"><span class="dot idle"></span><span class="mono" id="aiLogWeek">—</span></span>
+            <span class="spacer"></span>
+            <button class="btn" id="btnCopyAiLog">Copy log</button>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label>Log</label>
+          <textarea id="aiLogText" class="mono" style="width:100%; min-height:280px;" readonly></textarea>
+          <div class="hint" id="aiLogHint" style="margin-top:8px;">This log is appended as steps arrive. If the call stalls, a watchdog line will appear.</div>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button class="btn" id="btnAiLogOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+<!-- MODAL: Member editor -->
   <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal">
       <div class="modalHeader">
@@ -629,7 +660,11 @@
 
   // ---- CONFIG ----
   const STORE_EXEC = "https://schedule-cors-910cpr.brian-9ac.workers.dev";
-  const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
+  
+  // ---- AI (Cloudflare Worker) ----
+  const AI_RESOLVE_URL = "https://shiftcommander-ai.brian-9ac.workers.dev/resolve";
+  const AI_HTTP_TIMEOUT_MS = 45000;
+const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
   const LOCAL_PATHS = {
     members: `${DATA_BASE}/members.json`,
     org: `${DATA_BASE}/org_settings.json`,
@@ -866,7 +901,231 @@ const safeJson = async (resp)=>{
   const deepCopy = (x)=> JSON.parse(JSON.stringify(x));
   const uid = ()=> Math.random().toString(16).slice(2) + Date.now().toString(16);
 
-  // ---- DATE UTILS (Ops Planner) ----
+  
+
+  // ===================== AI RESOLVER (Cloudflare Worker) =====================
+  let __ai_watchdog = null;
+
+  function openAiLog(weekStartIso){
+    const bd = document.getElementById("aiLogBackdrop");
+    const week = document.getElementById("aiLogWeek");
+    const txt = document.getElementById("aiLogText");
+    const st = document.getElementById("aiLogStatus");
+    const dot = document.getElementById("aiLogDot");
+    if(!bd) return;
+    bd.classList.add("is-open");
+    bd.setAttribute("aria-hidden","false");
+    if(week) week.textContent = weekStartIso || "—";
+    if(txt) txt.value = "";
+    if(st) st.textContent = "Starting…";
+    if(dot) dot.className = "dot warn";
+  }
+
+  function closeAiLog(){
+    const bd = document.getElementById("aiLogBackdrop");
+    if(!bd) return;
+    bd.classList.remove("is-open");
+    bd.setAttribute("aria-hidden","true");
+  }
+
+  function aiLogAppend(line){
+    const txt = document.getElementById("aiLogText");
+    if(!txt) return;
+    txt.value += (txt.value ? "\n" : "") + String(line||"");
+    txt.scrollTop = txt.scrollHeight;
+  }
+
+  function setAiStatus(state, text){
+    const st = document.getElementById("aiLogStatus");
+    const dot = document.getElementById("aiLogDot");
+    if(st) st.textContent = text || "—";
+    if(dot) dot.className = "dot " + (state || "idle");
+  }
+
+  async function fetchWithTimeout(url, opts, timeoutMs){
+    const ctrl = new AbortController();
+    const id = setTimeout(()=>ctrl.abort("timeout"), timeoutMs||AI_HTTP_TIMEOUT_MS);
+    try{
+      const resp = await fetch(url, {...opts, signal: ctrl.signal});
+      clearTimeout(id);
+      return resp;
+    }catch(e){
+      clearTimeout(id);
+      throw e;
+    }
+  }
+
+  function isPlanningWeek(weekStartDate){
+    const todayWs = startOfWeek(new Date());
+    const rel = Math.round((weekStartDate.getTime() - todayWs.getTime()) / (7*24*60*60*1000));
+    return rel >= 4;
+  }
+
+  function buildAiPayload(weekStartDate){
+    const weekStartIso = isoDate(weekStartDate);
+    const week = {};
+    for(let i=0;i<7;i++){
+      const d = addDays(weekStartDate,i);
+      const iso = isoDate(d);
+      week[iso] = (app.data.schedule && app.data.schedule[iso]) ? deepCopy(app.data.schedule[iso]) : {};
+    }
+    const org = app.data.org_settings || {};
+    const constraints = {
+      week_start: weekStartIso,
+      shift_length_hours: 12,
+      paid_days: ["Mon","Tue","Wed","Thu","Fri"],
+      unpaid_days: ["Sat","Sun"],
+      weekly_budget_cap_usd: (org.payroll && org.payroll.weekly_budget_cap_usd) ? org.payroll.weekly_budget_cap_usd : 5500,
+      weekly_salary_baseline_usd: (org.payroll && org.payroll.weekly_salary_baseline_usd) ? org.payroll.weekly_salary_baseline_usd : 0,
+      no_double_same_day_default: true
+    };
+    return {
+      kind: "resolve_week",
+      week_start: weekStartIso,
+      constraints,
+      members: app.data.members || [],
+      org_settings: org,
+      current_schedule: week,
+      availability: { note: "availability aggregation not yet wired; assume unknown preference" }
+    };
+  }
+
+  async function aiResolveWeek(weekStartDate, {dryRun}={dryRun:true}){
+    const weekStartIso = isoDate(weekStartDate);
+    openAiLog(weekStartIso);
+    aiLogAppend("AI Resolve started • 2026-01-24 08:42 UTC");
+    aiLogAppend("Endpoint: " + AI_RESOLVE_URL);
+    aiLogAppend("Mode: " + (dryRun ? "DRY RUN (no write)" : "WRITE (planning week only)"));
+
+    if(!isPlanningWeek(weekStartDate)){
+      setAiStatus("bad", "Refused (not a Planning week)");
+      aiLogAppend("REFUSED: This week is not Planning. Use supervisor overrides for Controlled/Published.");
+      return;
+    }
+
+    setAiStatus("warn", "Calling AI…");
+
+    if(__ai_watchdog) clearTimeout(__ai_watchdog);
+    __ai_watchdog = setTimeout(()=>{
+      aiLogAppend("WATCHDOG: AI call exceeded " + (AI_HTTP_TIMEOUT_MS/1000) + "s. Check Worker logs.");
+      setAiStatus("warn", "Stalled (watchdog)");
+    }, AI_HTTP_TIMEOUT_MS + 2000);
+
+    const payload = buildAiPayload(weekStartDate);
+
+    try{
+      const resp = await fetchWithTimeout(AI_RESOLVE_URL, {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      }, AI_HTTP_TIMEOUT_MS);
+
+      const data = await resp.json().catch(()=>null);
+      clearTimeout(__ai_watchdog);
+
+      if(!resp.ok){
+        setAiStatus("bad", "HTTP " + resp.status);
+        aiLogAppend("ERROR: HTTP " + resp.status);
+        aiLogAppend(JSON.stringify(data||{}, null, 2));
+        return;
+      }
+
+      let parsed = null;
+      const tryText = ()=>{
+        try{
+          const out = data && data.output ? data.output : [];
+          for(const item of out){
+            const c = item && item.content ? item.content : [];
+            for(const seg of c){
+              if(seg && (seg.type === "output_text" || seg.type === "text") && typeof seg.text === "string") return seg.text;
+            }
+          }
+        }catch(e){}
+        return null;
+      };
+
+      const txt = tryText();
+      if(txt){
+        aiLogAppend("AI returned text. Parsing JSON…");
+        try{ parsed = JSON.parse(txt); }
+        catch(e){ parsed = null; aiLogAppend("PARSE ERROR: " + e.message); aiLogAppend(txt.slice(0,2000)); }
+      } else if(data && typeof data === "object" && (data.assignments || data.assignments_by_date)){
+        parsed = data;
+      } else {
+        parsed = data;
+      }
+
+      if(!parsed || parsed.ok === false){
+        setAiStatus("bad", "Invalid result");
+        aiLogAppend("AI RESULT INVALID or ok:false");
+        aiLogAppend(JSON.stringify(parsed||data||{}, null, 2));
+        return;
+      }
+
+      if(Array.isArray(parsed.log)){
+        setAiStatus("ok", "AI result received");
+        aiLogAppend("— LOG —");
+        for(const line of parsed.log) aiLogAppend(String(line));
+        aiLogAppend("— END LOG —");
+      } else {
+        setAiStatus("ok", "AI result received (no log)");
+      }
+
+      const assignments = parsed.assignments || parsed.assignments_by_date || null;
+      if(!assignments || typeof assignments !== "object"){
+        setAiStatus("bad","Missing assignments");
+        aiLogAppend("Missing assignments object in AI output.");
+        aiLogAppend(JSON.stringify(parsed, null, 2));
+        return;
+      }
+
+      if(dryRun){
+        setAiStatus("ok", "Dry run complete (no write)");
+        aiLogAppend("DRY RUN: Not writing schedule.");
+        return;
+      }
+
+      if(!app.data.schedule) app.data.schedule = {};
+      for(const [dateIso, dayObj] of Object.entries(assignments)){
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) continue;
+        const d = new Date(dateIso + "T00:00:00");
+        const rel = Math.floor((d.getTime() - weekStartDate.getTime())/(24*60*60*1000));
+        if(rel < 0 || rel > 6) continue;
+
+        const AM = dayObj.AM || dayObj.am || null;
+        const PM = dayObj.PM || dayObj.pm || null;
+        if(AM) app.data.schedule[dateIso] = { ...(app.data.schedule[dateIso]||{}), AM };
+        if(PM) app.data.schedule[dateIso] = { ...(app.data.schedule[dateIso]||{}), PM };
+      }
+
+      setDataStatus("warn","Unsaved changes","AI wrote planning week into local schedule. Click Save to push.");
+      saveDraft();
+      setAiStatus("ok", "Written locally. Click Save.");
+      aiLogAppend("WROTE: assignments applied to local schedule object. Click Save in Supervisor to push to Drive.");
+    }catch(e){
+      clearTimeout(__ai_watchdog);
+      setAiStatus("bad", "Exception");
+      aiLogAppend("EXCEPTION: " + (e && e.message ? e.message : String(e)));
+    }
+  }
+
+  (function bindAiLogUi(){
+    const bd = document.getElementById("aiLogBackdrop");
+    const closeBtn = document.getElementById("btnCloseAiLog");
+    const okBtn = document.getElementById("btnAiLogOk");
+    const copyBtn = document.getElementById("btnCopyAiLog");
+    const txt = document.getElementById("aiLogText");
+    if(closeBtn) closeBtn.onclick = closeAiLog;
+    if(okBtn) okBtn.onclick = closeAiLog;
+    if(copyBtn) copyBtn.onclick = async ()=>{
+      try{ await navigator.clipboard.writeText(txt ? (txt.value||"") : ""); alert("Copied log"); }
+      catch(e){ alert("Copy failed"); }
+    };
+    if(bd) bd.addEventListener("click",(e)=>{ if(e.target===bd) closeAiLog(); });
+  })();
+  // =================== END AI RESOLVER ===================
+
+// ---- DATE UTILS (Ops Planner) ----
   function isoDate(d){
     const y = d.getFullYear();
     const m = String(d.getMonth()+1).padStart(2,"0");
@@ -2074,6 +2333,11 @@ const weekLabel = weekStart.toLocaleDateString(undefined, { month:"short", day:"
     }catch(e){}
     $("#opsResolveDry").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:true }); };
     $("#opsResolveWeek").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:false }); };
+    // AI resolve buttons
+    const aiDry = document.getElementById("opsAiResolveDry");
+    const aiWeek = document.getElementById("opsAiResolveWeek");
+    if(aiDry) aiDry.onclick = async ()=>{ await aiResolveWeek(weekStart, {dryRun:true}); };
+    if(aiWeek) aiWeek.onclick = async ()=>{ await aiResolveWeek(weekStart, {dryRun:false}); };
 
     // Budget HUD
     refreshBudgetHud();
