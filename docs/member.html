@@ -272,6 +272,10 @@ main{ padding:12px; }
   color: rgba(255,255,255,.80);
   user-select:none;
 }
+
+.bar.scheduled{
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.95);
+}
 .bar::after{ content: attr(data-label); }
 .bar.pref{ background:var(--pref); border-color:var(--pref); color: rgba(0,0,0,.70); }
 .bar.avail{ background:var(--avail); border-color:var(--avail); color: rgba(0,0,0,.70); }
@@ -1590,7 +1594,11 @@ function templateWeek(start){
     const ds = iso(addDays(start, i));
     const v = ensureDay(ds);
     out.push({ date: ds, am: v.am, pm: v.pm });
-  }
+  
+  
+  if(isCommitted(dateISO,'PM')) pm.classList.add('scheduled');
+if(isCommitted(dateISO,'AM')) am.classList.add('scheduled');
+}
   return out;
 }
 
