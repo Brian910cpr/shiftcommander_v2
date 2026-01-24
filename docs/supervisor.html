@@ -335,46 +335,13 @@
 
 
 <div id="__sc_build_stamp" style="position:sticky;top:0;z-index:99999;background:#111827;color:#f9fafb;padding:8px 12px;font:700 12px system-ui;border-bottom:2px solid #7c5cff;">
-  SUPERVISOR HTML LOADED • last updated: <span id="__sc_lastmod">…</span> • url: <span id="__sc_url" style="font-weight:900"></span>
+  SUPERVISOR HTML LOADED • build stamp: 2026-01-21 02:52 UTC • url: <span id="__sc_url" style="font-weight:900"></span>
 </div>
 <script>
-(async function(){
   try {
-    const urlEl = document.getElementById("__sc_url");
-    if(urlEl) urlEl.textContent = location.href;
-
-    const out = document.getElementById("__sc_lastmod");
-    if(!out) return;
-
-    // Prefer server Last-Modified (best “did it deploy?” signal)
-    try{
-      const r = await fetch(location.href, { method: "HEAD", cache: "no-store" });
-      const lm = r.headers.get("Last-Modified");
-      if(lm){
-        const d = new Date(lm);
-        out.textContent = d.toLocaleString("en-US", {
-          timeZone: "America/New_York",
-          weekday: "short",
-          year: "numeric",
-          month: "short",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
-        }) + " ET";
-        return;
-      }
-    }catch(e){ /* fall through */ }
-
-    // Fallback: browser’s document timestamp
-    const d2 = new Date(document.lastModified);
-    if(!isNaN(d2.getTime())){
-      out.textContent = d2.toLocaleString("en-US", { timeZone: "America/New_York" }) + " ET (fallback)";
-    }else{
-      out.textContent = "(unknown)";
-    }
+    const el = document.getElementById("__sc_url");
+    if(el) el.textContent = location.href;
   } catch(e) {}
-})();
 </script>
 
 <!-- Lite Security (Supervisor) -->
@@ -503,6 +470,29 @@
         <div class="panelBody" id="panelBody"></div>
       </section>
 
+    </div>
+  </div>
+
+  <!-- MODAL: Resolver log -->
+  <div class="modalBackdrop" id="resolverLogBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" style="width:min(980px, 96vw);">
+      <div class="modalHeader">
+        <h3>Resolver log</h3>
+        <button class="btn ghost" id="btnCloseResolverLog">Close</button>
+      </div>
+      <div class="modalBody full" style="display:block; padding:14px;">
+        <div class="row" style="margin-bottom:10px;">
+          <span class="chip" id="rlStatus"><span class="dot idle" id="rlDot"></span><span id="rlText">Idle</span></span>
+          <span class="chip"><span class="dot idle"></span><span class="mono" id="rlProgress">0/0</span></span>
+          <span class="spacer"></span>
+          <button class="btn" id="btnRlCopy">Copy</button>
+          <button class="btn danger" id="btnRlClear">Clear</button>
+        </div>
+        <textarea id="resolverLog" class="mono" style="width:100%; min-height:360px; background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:12px;"></textarea>
+        <div class="hint" style="margin-top:10px;">
+          If the resolver stalls, the last line here usually shows the step it died on (availability fetch, candidate scoring, budget check, write-back).
+        </div>
+      </div>
     </div>
   </div>
 
@@ -646,7 +636,6 @@
     schedule: `${DATA_BASE}/schedule.json`,             // optional (viewer)
     overrides: `${DATA_BASE}/overrides.json`,           // optional
     history: `${DATA_BASE}/assignments_history.json`,   // optional (flat model)
-    policy: `${DATA_BASE}/resolver_policy.json`         // resolver policy (beta)
   };
 
   // Local storage keys
@@ -663,9 +652,7 @@
       org_settings: null,
       schedule: null,
       overrides: [],
-      history: null,
-      policy: null,
-      resolverArtifacts: null
+      history: null
     },
     ui: {
       activeTab: "schedule",
@@ -705,63 +692,162 @@
 
   // ---- UTIL ----
   const nowIso = ()=> new Date().toISOString();
-  const safeJson = async (resp)=>{
+  
+  // ---- PAYROLL / BUDGET ----
+  function getMemberById(mid){
+    const id = String(mid||"").trim();
+    if(!id || id.toUpperCase()==="OPEN") return null;
+    return (app.data.members||[]).find(m=>String(m.member_id||m.id||"").trim()===id) || null;
+  }
+
+  function memberPayType(m){
+    const t = (m && (m.pay_type || m.payType)) ? String(m.pay_type || m.payType).toLowerCase() : "";
+    if(t) return t;
+    if(m && Number(m.salary_weekly_usd||0) > 0) return "salary_weekly";
+    return "hourly";
+  }
+
+  function getOrgPayrollSettings(){
+    const org = app.data.org_settings || {};
+    org.payroll ||= {};
+    const cap = Number(org.payroll.weekly_budget_cap_usd ?? 5500);
+    const baseline = Number(org.payroll.weekly_salary_baseline_usd ?? 0);
+    return { cap: (Number.isFinite(cap)?cap:5500), baseline:(Number.isFinite(baseline)?baseline:0) };
+  }
+
+  function calcWeekPayroll(weekStartDate){
+    const {cap, baseline} = getOrgPayrollSettings();
+
+    // Compute salary baseline if not explicitly set
+    let computedBaseline = baseline;
+    if(!(computedBaseline > 0)){
+      computedBaseline = 0;
+      for(const m of (app.data.members||[])){
+        if(memberPayType(m)==="salary_weekly"){
+          const s = Number(m.salary_weekly_usd||0);
+          if(Number.isFinite(s) && s>0) computedBaseline += s;
+        }
+      }
+    }
+
+    const schedule = app.data.schedule || {};
+    const hoursByMember = new Map();
+
+    for(let i=0;i<7;i++){
+      const d = addDays(weekStartDate, i);
+      const iso = isoDate(d);
+      const dow = d.getDay(); // 0 Sun..6 Sat
+      const paid = (dow>=1 && dow<=5); // Mon-Fri paid
+      const day = schedule[iso] || {};
+      for(const shift of ["AM","PM"]){
+        const pair = Array.isArray(day[shift]) ? day[shift] : (Array.isArray(day[shift.toLowerCase()]) ? day[shift.toLowerCase()] : null);
+        if(!pair) continue;
+        for(const mid of pair.slice(0,2)){ // only 2 seats tracked in payroll right now
+          const m = getMemberById(mid);
+          if(!m) continue;
+          if(memberPayType(m)==="salary_weekly") continue;
+          if(!paid) continue;
+          const key = String(m.member_id);
+          const prev = hoursByMember.get(key) || 0;
+          hoursByMember.set(key, prev + 12);
+        }
+      }
+    }
+
+    let hourlyTotal = 0;
+    const detail = [];
+    for(const [mid, hrs] of hoursByMember.entries()){
+      const m = getMemberById(mid);
+      if(!m) continue;
+      const rate = Number(m.hourly_rate_usd ?? m.hourly_rate ?? 0);
+      const thr = Number(m.ot_threshold_hours ?? 40);
+      const mult = Number(m.ot_multiplier ?? 1.5);
+      if(!Number.isFinite(rate) || rate<=0){
+        detail.push({mid, name: memberNameById(mid), hrs, rate:0, pay:0, note:"no rate"});
+        continue;
+      }
+      const regHrs = Math.min(hrs, Number.isFinite(thr)?thr:40);
+      const otHrs = Math.max(0, hrs - regHrs);
+      const pay = regHrs*rate + otHrs*rate*(Number.isFinite(mult)?mult:1.5);
+      hourlyTotal += pay;
+      detail.push({mid, name: memberNameById(mid), hrs, rate, regHrs, otHrs, pay});
+    }
+
+    const total = computedBaseline + hourlyTotal;
+    return { cap, baseline: computedBaseline, hourlyTotal, total, remaining: cap - total, detail };
+  }
+
+  function formatUsd(n){
+    const x = Number(n||0);
+    return x.toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0});
+  }
+
+  function refreshBudgetHud(){
+    if(app.ui.activeTab !== "ops") return;
+    const hud = document.getElementById("budgetHud");
+    if(!hud) return;
+
+    const ws = new Date(app.ui.opsWeekStartIso + "T00:00:00");
+    const p = calcWeekPayroll(ws);
+    const ok = p.remaining >= 0;
+
+    hud.innerHTML = `
+      <div class="row" style="gap:10px; align-items:center; flex-wrap:wrap;">
+        <span class="tag">${esc(formatUsd(p.baseline))} salary baseline</span>
+        <span class="tag">${esc(formatUsd(p.hourlyTotal))} projected hourly</span>
+        <span class="tag">${esc(formatUsd(p.total))} total vs cap ${esc(formatUsd(p.cap))}</span>
+        <span class="tag" style="border-color:${ok?'rgba(46,229,157,.35)':'rgba(255,77,109,.45)'}; background:${ok?'rgba(46,229,157,.10)':'rgba(255,77,109,.10)'}; color:${ok?'#dcfce7':'#ffd1d9'};">
+          ${ok ? "✅ Remaining: "+esc(formatUsd(p.remaining)) : "❌ Over cap by: "+esc(formatUsd(-p.remaining))}
+        </span>
+      </div>
+      <div class="hint" style="margin-top:8px;">
+        Uses the current <span class="mono">schedule</span> assignments for this week. Weekends are treated as unpaid. Salaries always count, even if no shifts are worked.
+      </div>
+    `;
+  }
+
+  // ---- RESOLVER LOG ----
+  const RL = { lines: [], total:0, done:0 };
+  function rlOpen(){
+    const b = document.getElementById("resolverLogBackdrop");
+    if(b){ b.classList.add("is-open"); b.setAttribute("aria-hidden","false"); }
+  }
+  function rlClose(){
+    const b = document.getElementById("resolverLogBackdrop");
+    if(b){ b.classList.remove("is-open"); b.setAttribute("aria-hidden","true"); }
+  }
+  function rlSet(status, dotClass){
+    const d = document.getElementById("rlDot");
+    const t = document.getElementById("rlText");
+    if(d) d.className = "dot " + (dotClass||"idle");
+    if(t) t.textContent = status||"";
+  }
+  function rlProgress(done,total){
+    RL.done = (done ?? RL.done);
+    RL.total = (total ?? RL.total);
+    const p = document.getElementById("rlProgress");
+    if(p) p.textContent = `${RL.done}/${RL.total}`;
+  }
+  function rlWrite(line){
+    RL.lines.push(line);
+    const ta = document.getElementById("resolverLog");
+    if(ta){
+      ta.value = RL.lines.join("\n");
+      ta.scrollTop = ta.scrollHeight;
+    }
+  }
+  function rlClear(){
+    RL.lines = [];
+    RL.done = 0; RL.total = 0;
+    const ta = document.getElementById("resolverLog");
+    if(ta) ta.value = "";
+    rlSet("Idle","idle");
+    rlProgress(0,0);
+  }
+const safeJson = async (resp)=>{
     const txt = await resp.text();
     try{ return JSON.parse(txt); }catch(e){ throw new Error(`Non-JSON response: ${txt.slice(0,160)}`); }
   };
-
-  // ---- DETERMINISTIC HELPERS (Resolver artifacts) ----
-  function stableStringify(obj){
-    if(obj === null || typeof obj !== "object") return JSON.stringify(obj);
-    if(Array.isArray(obj)) return "[" + obj.map(stableStringify).join(",") + "]";
-    const keys = Object.keys(obj).sort();
-    return "{" + keys.map(k => JSON.stringify(k) + ":" + stableStringify(obj[k])).join(",") + "}";
-  }
-
-  function setResolverArtifacts(art){
-    app.data.resolverArtifacts = art || null;
-    try{ renderOpsResolveStatus(); }catch(e){}
-  }
-
-  function renderOpsResolveStatus(){
-    const chip = document.getElementById("opsResolveStatus");
-    const run = document.getElementById("opsResolveRunId");
-    if(!chip || !run) return;
-    const a = app.data.resolverArtifacts;
-    if(!a){
-      chip.innerHTML = `<span class="dot idle"></span> Resolver: <strong>—</strong>`;
-      run.textContent = "run: —";
-      return;
-    }
-    const status = a.report?.status || "—";
-    const cls = status.startsWith("SUCCESS") ? "ok" : (status.startsWith("FAILURE") ? "bad" : "warn");
-    chip.innerHTML = `<span class="dot ${cls}"></span> Resolver: <strong>${esc(status)}</strong>`;
-    run.textContent = `run: ${String(a.report?.run?.runId || "—")}`;
-  }
-
-  function openJsonModal(title, obj){
-    const pretty = JSON.stringify(obj || {}, null, 2);
-    openModal(title, `
-      <div class="field full">
-        <label>${esc(title)}</label>
-        <textarea class="mono" style="width:100%; min-height:360px;">${esc(pretty)}</textarea>
-        <div class="row" style="margin-top:10px; justify-content:flex-end;">
-          <button class="btn" id="btnCopyJson">Copy</button>
-        </div>
-      </div>
-    `, null);
-    setTimeout(()=>{
-      const b = document.getElementById("btnCopyJson");
-      if(b) b.onclick = async ()=>{
-        try{
-          await navigator.clipboard.writeText(pretty);
-          alert("Copied ✅");
-        }catch(e){
-          alert("Copy failed. You can manually select and copy.");
-        }
-      };
-    }, 0);
-  }
 
   function unwrapStorePayload(obj){
     // Unwrap nested store envelopes: {ok,kind,payload:{...}} possibly multiple layers
@@ -933,15 +1019,6 @@
     if(!schedule) schedule = await fetchLocalJson(LOCAL_PATHS.schedule);
     if(!overrides) overrides = await fetchLocalJson(LOCAL_PATHS.overrides);
     if(!history) history = await fetchLocalJson(LOCAL_PATHS.history);
-    let policy = null;
-    // Try Drive bundle first (optional), else local
-    if(driveSrc && driveSrc.ok !== false){
-      try{
-        const payload = driveSrc.payload || driveSrc.data || driveSrc;
-        policy = payload.resolver_policy || payload.resolverPolicy || payload.policy || null;
-      }catch(e){}
-    }
-    if(!policy) policy = await fetchLocalJson(LOCAL_PATHS.policy);
 
     // Normalize
     app.data.members = Array.isArray(members) ? members : (members && members.members) ? members.members : [];
@@ -953,8 +1030,6 @@
     app.data.schedule = (schedule && schedule.payload) ? schedule.payload : (schedule || null);
     app.data.overrides = Array.isArray(overrides) ? overrides : (overrides && overrides.overrides) ? overrides.overrides : [];
     app.data.history = history || null;
-    app.data.policy = policy || null;
-    app.data.resolverArtifacts = null;
 
     // Ensure qualifications list exists (grows over time)
     app.data.org_settings.qualifications ||= [];
@@ -1676,7 +1751,12 @@
       app.ui.opsWeekStartIso = isoDate(startOfWeek(new Date()));
     }
     const weekStart = new Date(app.ui.opsWeekStartIso + "T00:00:00");
-    const weekLabel = weekStart.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
+    
+    // Gate resolver controls: only PLANNING weeks can be resolved
+    const curWs = startOfWeek(new Date());
+    const relWeek = Math.round((weekStart.getTime() - curWs.getTime())/(7*24*60*60*1000));
+    const weekPhase = phaseForRelWeek(relWeek);
+const weekLabel = weekStart.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
 
     const unitOptions = [`<option value="">(none)</option>`]
       .concat(units.map(u => `<option value="${esc(u.unit_id)}">${esc(u.unit_id)} — ${esc(u.name||u.unit_id)}</option>`))
@@ -1769,21 +1849,19 @@
         </div>
 
         <div class="field" style="flex:1; min-width:320px;">
+          <label>Budget & Payroll (this week)</label>
+          <div id="budgetHud" class="hint" style="margin-top:6px;">Loading payroll…</div>
+        </div>
+
+        <div class="field" style="flex:1; min-width:320px;">
           <label>Resolve Now (this week)</label>
           <div class="hint">
             Beta resolver: fills ambulance Attendant/Operator seats for this week using member availability.
             Writes into <span class="mono">schedule</span> in Drive.
           </div>
           <div class="row" style="margin-top:10px;">
-            <button class="btn primary" id="opsResolveWeek">Resolve week</button>
+            <button class="btn primary" id="opsResolveWeek">Resolve week</button><span class="small" id="opsResolveGateNote" style="margin-left:8px; opacity:.85;"></span>
             <button class="btn" id="opsResolveDry">Dry run (no write)</button>
-            <button class="btn" id="opsResolveViewReport" title="View last resolver_report.json">Report</button>
-            <button class="btn" id="opsResolveViewLog" title="View last resolver_decision_log.json">Log</button>
-            <button class="btn" id="opsResolveClear" title="Clear last resolver artifacts">Clear</button>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <span class="chip" id="opsResolveStatus"><span class="dot idle"></span> Resolver: <strong>—</strong></span>
-            <span class="chip mono" id="opsResolveRunId" title="Deterministic runId (hash)">run: —</span>
           </div>
           <div class="hint" style="margin-top:10px;">
             Note: availability is read from <span class="mono">member_availability</span> records; this can take ~10–20 seconds depending on roster size.
@@ -1980,21 +2058,26 @@
     };
 
     // Resolve Now (this week)
+    try{
+      const noteEl = document.getElementById("opsResolveGateNote");
+      const btnW = document.getElementById("opsResolveWeek");
+      const btnD = document.getElementById("opsResolveDry");
+      if(weekPhase !== "planning"){
+        if(noteEl) noteEl.textContent = `Resolver locked (${weekPhase.toUpperCase()})`;
+        if(btnW) btnW.disabled = true;
+        if(btnD) btnD.disabled = true;
+      }else{
+        if(noteEl) noteEl.textContent = "Planning week — resolver enabled";
+        if(btnW) btnW.disabled = false;
+        if(btnD) btnD.disabled = false;
+      }
+    }catch(e){}
     $("#opsResolveDry").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:true }); };
-    $("#opsResolveViewReport").onclick = ()=> {
-      if(!app.data.resolverArtifacts) return alert("No resolver report yet. Run Dry run or Resolve week first.");
-      openJsonModal("resolver_report.json (last run)", app.data.resolverArtifacts.report);
-    };
-    $("#opsResolveViewLog").onclick = ()=> {
-      if(!app.data.resolverArtifacts) return alert("No decision log yet. Run Dry run or Resolve week first.");
-      openJsonModal("resolver_decision_log.json (last run)", app.data.resolverArtifacts.decisionLog);
-    };
-    $("#opsResolveClear").onclick = ()=> {
-      setResolverArtifacts(null);
-      alert("Cleared last resolver artifacts.");
-    };
-
     $("#opsResolveWeek").onclick = async ()=>{ await resolveWeek(weekStart, { dryRun:false }); };
+
+    // Budget HUD
+    refreshBudgetHud();
+
     // Helper: copy week selections forward N weeks (inclusive, sequential)
     function copyWeekForward(weeks){
       org.active_units_by_date ||= {};
@@ -2051,6 +2134,11 @@
         `;
       }).join("");
     }
+    clearTimeout(__watchdog);
+    rlSet("Done","ok");
+    rlWrite("Resolver finished.");
+    try{ refreshBudgetHud(); }catch(e){}
+
   }
 
   function renderUnits(){
@@ -2294,6 +2382,34 @@ function esc(s){
   }
 
   el.btnCloseModal.onclick = closeModal;
+
+  // Resolver log modal handlers
+  const __btnCloseRl = document.getElementById('btnCloseResolverLog');
+  if(__btnCloseRl) __btnCloseRl.onclick = rlClose;
+  const __rlBackdrop = document.getElementById('resolverLogBackdrop');
+  if(__rlBackdrop) __rlBackdrop.addEventListener('click', (e)=>{ if(e.target === __rlBackdrop) rlClose(); });
+
+  const __btnRlCopy = document.getElementById('btnRlCopy');
+  if(__btnRlCopy) __btnRlCopy.onclick = async ()=>{
+    try{
+      const ta = document.getElementById('resolverLog');
+      const txt = ta ? ta.value : "";
+      await navigator.clipboard.writeText(txt);
+      alert("Resolver log copied.");
+    }catch(e){
+      try{
+        const ta = document.getElementById('resolverLog');
+        if(ta){ ta.focus(); ta.select(); document.execCommand('copy'); }
+        alert("Resolver log copied.");
+      }catch(_){
+        alert("Copy failed (browser blocked clipboard).");
+      }
+    }
+  };
+
+  const __btnRlClear = document.getElementById('btnRlClear');
+  if(__btnRlClear) __btnRlClear.onclick = ()=> rlClear();
+
   el.btnCancelModal.onclick = closeModal;
   el.modalBackdrop.addEventListener("click", (e)=>{ if(e.target === el.modalBackdrop) closeModal(); });
   document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeModal(); });
@@ -2324,54 +2440,18 @@ function esc(s){
         <input id="m_rank" placeholder="FF / LT / CPT / Chief…" />
       </div>
       <div class="field">
-        <label>Pay — hourly rate (optional)</label>
-        <input id="m_rate" class="mono" placeholder="25" />
-        <div class="hint">Leave blank/0 if this member isn’t paid hourly (volunteer).</div>
+        <label>Pay type</label>
+        <select id="m_pay_type">
+          <option value="hourly" ${((m.pay_type||"hourly")+"")==="hourly"?"selected":""}>hourly</option>
+          <option value="salary_weekly" ${((m.pay_type||"")+"")==="salary_weekly"?"selected":""}>salary_weekly</option>
+          <option value="unpaid" ${((m.pay_type||"")+"")==="unpaid"?"selected":""}>unpaid</option>
+        </select>
+        <div class="hint">Hourly uses hourly rate. Salary is counted weekly even if no shifts are worked. Unpaid has $0 cost.</div>
       </div>
       <div class="field">
-        <label>OT threshold hours (per week)</label>
-        <input id="m_ot_thresh" class="mono" placeholder="40" />
-      </div>
-      <div class="field">
-        <label>OT multiplier</label>
-        <input id="m_ot_mult" class="mono" placeholder="1.5" />
-      </div>
-      <div class="field full">
-        <label>Qualifications</label>
-        ${qualMultiSelect("m_quals")}
-      </div>
-    `;
-    openModal("Add member", body, ()=>{
-      const m = collectMemberFromModal();
-      if(!m) return;
-      app.data.members.push(m);
-      setDataStatus("warn","Unsaved changes","Member added. Click Save.");
-      saveDraft();
-      closeModal();
-      renderMembers();
-    });
-  }
-
-  function openModalMemberEdit(idx){
-    const m = app.data.members[idx];
-    if(!m) return;
-
-    const body = `
-      <div class="field">
-        <label>Member ID</label>
-        <input id="m_id" value="${esc(m.member_id ?? "")}" class="mono" />
-      </div>
-      <div class="field">
-        <label>First name</label>
-        <input id="m_first" value="${esc(m.first_name || "")}" />
-      </div>
-      <div class="field">
-        <label>Last name</label>
-        <input id="m_last" value="${esc(m.last_name || "")}" />
-      </div>
-      <div class="field">
-        <label>Rank (optional)</label>
-        <input id="m_rank" value="${esc(m.rank || "")}" />
+        <label>Salary — weekly (optional)</label>
+        <input id="m_salary_weekly" class="mono" value="${esc(m.salary_weekly_usd ?? "")}" placeholder="1150" />
+        <div class="hint">Use for salary_weekly members (Nick/Gracie). Leave blank/0 for others.</div>
       </div>
       <div class="field">
         <label>Pay — hourly rate (optional)</label>
@@ -2386,6 +2466,11 @@ function esc(s){
         <label>OT multiplier</label>
         <input id="m_ot_mult" class="mono" value="${esc(m.ot_multiplier ?? "1.5")}" />
       </div>
+      <div class="field">
+        <label><input id="m_pref24" type="checkbox" style="margin-right:8px; vertical-align:middle;"> Prefer 24s (allow AM+PM same day)</label>
+        <div class="hint">If checked, resolver may schedule this member for both AM and PM on the same date (when it helps travel/coverage).</div>
+      </div>
+
       <div class="field full">
         <label>Qualifications</label>
         ${qualMultiSelect("m_quals", m.qualifications || [])}
@@ -2425,9 +2510,16 @@ function esc(s){
     const rank = ($("#m_rank").value || "").trim();
     const quals = getMultiSelected("m_quals");
 
+    
+    const prefer_24s = !!(document.getElementById('m_pref24') && document.getElementById('m_pref24').checked);
+const pay_type = ($("#m_pay_type").value || "hourly").trim();
+    const salRaw = ($("#m_salary_weekly").value || "").trim();
+
     const rateRaw = ($("#m_rate").value || "").trim();
     const otThrRaw = ($("#m_ot_thresh").value || "").trim();
     const otMultRaw = ($("#m_ot_mult").value || "").trim();
+
+    const salary_weekly_usd = salRaw ? Number(salRaw) : 0;
 
     const hourly_rate = rateRaw ? Number(rateRaw) : 0;
     const ot_threshold_hours = otThrRaw ? Number(otThrRaw) : 40;
@@ -2439,7 +2531,10 @@ function esc(s){
       last_name: last,
       rank: rank || "",
       qualifications: quals,
+      prefer_24s: prefer_24s,
       // pay fields (optional)
+      pay_type: pay_type || "hourly",
+      salary_weekly_usd: Number.isFinite(salary_weekly_usd) ? salary_weekly_usd : 0,
       hourly_rate: Number.isFinite(hourly_rate) ? hourly_rate : 0,
       ot_threshold_hours: Number.isFinite(ot_threshold_hours) ? ot_threshold_hours : 40,
       ot_multiplier: Number.isFinite(ot_multiplier) ? ot_multiplier : 1.5
@@ -3086,7 +3181,28 @@ function esc(s){
   }
 
   async function resolveWeek(weekStartDate, {dryRun=false}={}){
+    
+    
+    // --- SAFETY GATE: resolver may ONLY modify PLANNING weeks ---
     try{
+      const curWs = startOfWeek(new Date());
+      const tgtWs = startOfWeek(weekStartDate);
+      const relWeek = Math.round((tgtWs.getTime() - curWs.getTime())/(7*24*60*60*1000));
+      const phase = phaseForRelWeek(relWeek);
+      if(phase !== "planning"){
+        rlClear(); rlOpen();
+        rlSet("Refused","bad");
+        rlWrite(`Refused: week is ${phase.toUpperCase()} (rel ${relWeek}). Resolver only runs for PLANNING weeks.`);
+        alert(`Resolver refused.\n\nThis week is ${phase.toUpperCase()}.\nResolver can only modify PLANNING weeks.\nUse Overrides for Controlled/Published.`);
+        return;
+      }
+    }catch(e){ /* if phase calc fails, do not block */ }
+rlClear();
+    rlOpen();
+    rlSet("Running…","warn");
+    rlWrite("Resolver started: " + new Date().toLocaleString());
+    const __watchdog = setTimeout(()=>{ try{ rlSet("Stalled (watchdog)","bad"); rlWrite("WATCHDOG: Resolver exceeded 45s. Last step may be above."); }catch(e){} }, 45000);
+try{
       const org = app.data.org_settings || {};
       const units = Array.isArray(org.units) ? org.units : [];
       const members = Array.isArray(app.data.members) ? app.data.members : [];
@@ -3155,6 +3271,8 @@ function esc(s){
               const isAls = ALS_KEYS.some(k => mem._q.has(k));
               if(!isAls) continue;
 
+              // avoid day+night same day unless Prefer 24s
+              if(hasOtherShift(mid, dateIso, shift) && !prefers24(mem)) continue;
               const av = availabilityScore(avBy[mid], dateIso, shift);
               if(av.score <= -999) continue; // NO
               cands.push({ id: mid, score: av.score, detail: av.state });
@@ -3170,8 +3288,14 @@ function esc(s){
               const mem = mById[mid];
               if(!mem) continue;
               if(!mem._q.has(EMT_KEY)) continue;
+              // never assign same member to both seats in the same shift
+              if(String(mid) === String(newAtt)) continue;
+              // avoid day+night same day unless Prefer 24s
+              if(hasOtherShift(mid, dateIso, shift) && !prefers24(mem)) continue;
               if(opKey && !mem._q.has(opKey)) continue;
 
+              // avoid day+night same day unless Prefer 24s
+              if(hasOtherShift(mid, dateIso, shift) && !prefers24(mem)) continue;
               const av = availabilityScore(avBy[mid], dateIso, shift);
               if(av.score <= -999) continue;
               cands.push({ id: mid, score: av.score, detail: av.state });
@@ -3179,6 +3303,10 @@ function esc(s){
             const best = pickBestCandidate(cands);
             if(best) newOp = best.id;
           }
+
+          // record assignments for same-day conflict checks (including existing non-open)
+          markAssigned(String(newAtt||'OPEN'), dateIso, shift);
+          markAssigned(String(newOp||'OPEN'), dateIso, shift);
 
           const changed = (newAtt !== curAtt) || (newOp !== curOp);
           if(changed){
@@ -3225,27 +3353,6 @@ function esc(s){
       }
 
 
-// --- Resolver artifacts (beta): use docs/resolver.js if present ---
-try{
-  const mod = await import("./resolver.js");
-  if(!mod || typeof mod.resolveSchedule !== "function"){
-    throw new Error("resolver.js loaded but resolveSchedule() not found");
-  }
-
-  const { resolverReport, decisionLog } = await mod.resolveSchedule({
-    members: app.data.members || [],
-    schedule: outSched || app.data.schedule || {},
-    policy: app.data.policy || null
-  });
-
-  setResolverArtifacts({ report: resolverReport, decisionLog });
-}catch(e){
-  console.warn("resolver.js integration failed; keeping fallback artifacts if any:", e);
-  // If you want: leave your old placeholder artifacts here as fallback,
-  // but do NOT overwrite if resolver.js succeeded.
-}
-
-   
       app.data.schedule = outSched;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
       alert(`Resolved week.\nChanges written: ${changes.length}`);
