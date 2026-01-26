@@ -1,0 +1,7 @@
+name = "adr-scheduler"
+main = "src/index.js"
+compatibility_date = "2025-09-27"
+
+kv_namespaces = [
+  { binding = "ADR_KV", id = "1674ead5ba804203adfbaa892545b588" }
+]

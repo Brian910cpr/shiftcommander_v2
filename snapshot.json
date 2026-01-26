@@ -1,0 +1,91 @@
+{
+  "schema": "sc.resolver_snapshot.v1",
+  "week": "2026-W06",
+  "org": {
+    "timezone": "America/New_York"
+  },
+  "seats": [
+    {
+      "shift_id": "2026-02-02_DAY",
+      "seat_id": "ALS"
+    },
+    {
+      "shift_id": "2026-02-02_DAY",
+      "seat_id": "BLS"
+    },
+    {
+      "shift_id": "2026-02-02_NIGHT",
+      "seat_id": "ALS"
+    },
+    {
+      "shift_id": "2026-02-02_NIGHT",
+      "seat_id": "BLS"
+    },
+    {
+      "shift_id": "2026-02-03_DAY",
+      "seat_id": "ALS"
+    },
+    {
+      "shift_id": "2026-02-03_DAY",
+      "seat_id": "BLS"
+    }
+  ],
+  "members": [
+    {
+      "member_id": "m_nick",
+      "name": "Nick",
+      "quals": [
+        "ALS"
+      ],
+      "employment": "SAL"
+    },
+    {
+      "member_id": "m_brian",
+      "name": "Brian",
+      "quals": [
+        "BLS"
+      ],
+      "employment": "HOURLY"
+    },
+    {
+      "member_id": "m_anna",
+      "name": "Anna",
+      "quals": [
+        "ALS"
+      ],
+      "employment": "SAL"
+    }
+  ],
+  "availability": {
+    "m_nick": [
+      {
+        "shift_id": "2026-02-02_DAY",
+        "kind": "full"
+      },
+      {
+        "shift_id": "2026-02-03_DAY",
+        "kind": "full"
+      }
+    ],
+    "m_brian": [
+      {
+        "shift_id": "2026-02-02_DAY",
+        "kind": "full"
+      },
+      {
+        "shift_id": "2026-02-02_NIGHT",
+        "kind": "partial"
+      }
+    ],
+    "m_anna": [
+      {
+        "shift_id": "2026-02-02_NIGHT",
+        "kind": "full"
+      }
+    ]
+  },
+  "existing_assignments": [],
+  "constraints": {
+    "prefer_full_shift": true
+  }
+}
