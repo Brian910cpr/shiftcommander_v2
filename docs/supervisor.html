@@ -365,50 +365,6 @@
       <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
         <button id="adminAuthGo" class="btn primary" type="button">Unlock</button>
       </div>
-      <div class="card" id="adrApiBox" style="margin:10px 0; padding:12px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); border-radius:14px;">
-        <div class="row" style="gap:10px; align-items:center; margin-bottom:10px;">
-          <span class="chip"><span class="dot idle"></span> ADR Scheduler API</span>
-          <span class="hint" style="margin:0;">KV-backed preview/commit + supervisor locks</span>
-          <span class="spacer"></span>
-          <button class="btn" id="adrBtnBuild">Build Snapshot</button>
-          <button class="btn" id="adrBtnPreview">Preview</button>
-          <button class="btn" id="adrBtnCommit">Commit</button>
-          <button class="btn" id="adrBtnLogs">Logs</button>
-        </div>
-
-        <div class="grid" style="grid-template-columns: 200px 1fr; gap:10px; align-items:center;">
-          <label class="mono">Week (e.g. 2026-W06)</label>
-          <input class="input" id="adrWeek" value="2026-W06" />
-
-          <label class="mono">Lock target</label>
-          <div class="row" style="gap:10px; flex-wrap:wrap;">
-            <input class="input mono" id="adrShiftId" placeholder="shift_id (e.g. 2026-02-02_DAY)" style="min-width:240px;" />
-            <input class="input mono" id="adrSeatId" placeholder="seat_id (e.g. BLS)" style="min-width:140px;" />
-            <input class="input mono" id="adrMemberId" placeholder="member_id (e.g. m_gracie)" style="min-width:180px;" />
-            <label class="row" style="gap:8px; align-items:center; margin-left:6px;">
-              <input type="checkbox" id="adrOverrideAvail" />
-              <span class="mono">Override availability</span>
-            </label>
-          </div>
-
-          <label class="mono">Override note</label>
-          <input class="input" id="adrNote" placeholder="Required if overriding availability (e.g. 'Confirmed by phone')" />
-
-          <label class="mono">Actions</label>
-          <div class="row" style="gap:10px; flex-wrap:wrap;">
-            <button class="btn" id="adrBtnLock">Set Lock</button>
-            <button class="btn" id="adrBtnUnlock">Remove Lock</button>
-            <button class="btn" id="adrBtnViewLocks">View Locks</button>
-          </div>
-
-          <label class="mono">Output</label>
-          <pre class="mono" id="adrOut" style="max-height:220px; overflow:auto; padding:10px; border-radius:12px; background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.12); margin:0;"></pre>
-
-          <label class="mono">Live Logs</label>
-          <pre class="mono" id="adrLogs" style="max-height:220px; overflow:auto; padding:10px; border-radius:12px; background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.12); margin:0;"></pre>
-        </div>
-      </div>
-
 
       <div class="tiny" style="opacity:.55; margin-top:4px;">
         Tip: set <code>org_settings.security.supervisor_pin_hash</code> (SHA-256). Optional <code>security.salt</code>.
@@ -704,50 +660,9 @@
 
   // ---- CONFIG ----
   const STORE_EXEC = "https://schedule-cors-910cpr.brian-9ac.workers.dev";
-  const ADR_SCHEDULER_BASE = "https://adr-scheduler.brian-9ac.workers.dev";
   
   // ---- AI (Cloudflare Worker) ----
   const AI_RESOLVE_URL = "https://shiftcommander-ai.brian-9ac.workers.dev/resolve";
-
-  // ---- ADR Scheduler API helpers (Cloudflare Worker) ----
-  async function adrFetch(path, opts = {}) {
-    const url = ADR_SCHEDULER_BASE.replace(/\/$/, "") + path;
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 15000);
-    try {
-      const res = await fetch(url, { ...opts, signal: controller.signal });
-      const txt = await res.text();
-      let data = null;
-      try { data = txt ? JSON.parse(txt) : null; } catch { data = txt; }
-      if (!res.ok) {
-        throw new Error(`ADR ${res.status}: ${typeof data === "string" ? data : (data?.error || txt)}`);
-      }
-      return data;
-    } finally {
-      clearTimeout(t);
-    }
-  }
-
-  async function adrBuildSnapshot() { return adrFetch("/snapshot/build"); }
-  async function adrPreview() { return adrFetch("/resolver/preview", { method: "POST" }); }
-  async function adrCommit() { return adrFetch("/resolver/commit", { method: "POST" }); }
-  async function adrLogs() { return adrFetch("/resolver/logs"); }
-  async function adrLocks(week) { return adrFetch(`/supervisor/locks?week=${encodeURIComponent(week)}`); }
-  async function adrLock(body) {
-    return adrFetch("/supervisor/lock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-  }
-  async function adrUnlock(body) {
-    return adrFetch("/supervisor/unlock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-  }
-
   const AI_HTTP_TIMEOUT_MS = 45000;
 const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
   const LOCAL_PATHS = {
@@ -2483,7 +2398,7 @@ const weekLabel = weekStart.toLocaleDateString(undefined, { month:"short", day:"
         `;
       }).join("");
     }
-    if (window.__watchdogTimer) { clearTimeout(window.__watchdogTimer); window.__watchdogTimer = null; }
+    if (window.__opsWatchdogTimer) clearTimeout(window.__opsWatchdogTimer);
     rlSet("Done","ok");
     rlWrite("Resolver finished.");
     try{ refreshBudgetHud(); }catch(e){}
@@ -3550,7 +3465,7 @@ rlClear();
     rlOpen();
     rlSet("Running…","warn");
     rlWrite("Resolver started: " + new Date().toLocaleString());
-    window.__watchdogTimer = setTimeout(()=>{ try{ rlSet("Stalled (watchdog)","bad"); rlWrite("WATCHDOG: Resolver exceeded 45s. Last step may be above."); }catch(e){} }, 45000);
+    window.__opsWatchdogTimer = setTimeout(()=>{ try{ rlSet("Stalled (watchdog)","bad"); rlWrite("WATCHDOG: Resolver exceeded 45s. Last step may be above."); }catch(e){} }, 45000);
 try{
       const org = app.data.org_settings || {};
       const units = Array.isArray(org.units) ? org.units : [];
