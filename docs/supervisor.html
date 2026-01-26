@@ -2483,7 +2483,7 @@ const weekLabel = weekStart.toLocaleDateString(undefined, { month:"short", day:"
         `;
       }).join("");
     }
-    clearTimeout(__watchdog);
+    if (window.__watchdogTimer) { clearTimeout(window.__watchdogTimer); window.__watchdogTimer = null; }
     rlSet("Done","ok");
     rlWrite("Resolver finished.");
     try{ refreshBudgetHud(); }catch(e){}
@@ -3550,7 +3550,7 @@ rlClear();
     rlOpen();
     rlSet("Running…","warn");
     rlWrite("Resolver started: " + new Date().toLocaleString());
-    const __watchdog = setTimeout(()=>{ try{ rlSet("Stalled (watchdog)","bad"); rlWrite("WATCHDOG: Resolver exceeded 45s. Last step may be above."); }catch(e){} }, 45000);
+    window.__watchdogTimer = setTimeout(()=>{ try{ rlSet("Stalled (watchdog)","bad"); rlWrite("WATCHDOG: Resolver exceeded 45s. Last step may be above."); }catch(e){} }, 45000);
 try{
       const org = app.data.org_settings || {};
       const units = Array.isArray(org.units) ? org.units : [];
