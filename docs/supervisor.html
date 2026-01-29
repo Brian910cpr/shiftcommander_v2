@@ -2398,11 +2398,6 @@ const weekLabel = weekStart.toLocaleDateString(undefined, { month:"short", day:"
         `;
       }).join("");
     }
-    if (window.__opsWatchdogTimer) clearTimeout(window.__opsWatchdogTimer);
-    rlSet("Done","ok");
-    rlWrite("Resolver finished.");
-    try{ refreshBudgetHud(); }catch(e){}
-
   }
 
   function renderUnits(){
@@ -2684,6 +2679,7 @@ function esc(s){
     }
   };
 
+  
   function openModalMemberCreate(){
     const nextId = suggestNextMemberId();
     const body = `
@@ -2703,33 +2699,38 @@ function esc(s){
         <label>Rank (optional)</label>
         <input id="m_rank" placeholder="FF / LT / CPT / Chief…" />
       </div>
+
       <div class="field">
         <label>Pay type</label>
         <select id="m_pay_type">
-          <option value="hourly" ${((m.pay_type||"hourly")+"")==="hourly"?"selected":""}>hourly</option>
-          <option value="salary_weekly" ${((m.pay_type||"")+"")==="salary_weekly"?"selected":""}>salary_weekly</option>
-          <option value="unpaid" ${((m.pay_type||"")+"")==="unpaid"?"selected":""}>unpaid</option>
+          <option value="hourly" selected>hourly</option>
+          <option value="salary_weekly">salary_weekly</option>
+          <option value="unpaid">unpaid</option>
         </select>
         <div class="hint">Hourly uses hourly rate. Salary is counted weekly even if no shifts are worked. Unpaid has $0 cost.</div>
       </div>
+
       <div class="field">
         <label>Salary — weekly (optional)</label>
-        <input id="m_salary_weekly" class="mono" value="${esc(m.salary_weekly_usd ?? "")}" placeholder="1150" />
-        <div class="hint">Use for salary_weekly members (Nick/Gracie). Leave blank/0 for others.</div>
+        <input id="m_salary_weekly" class="mono" placeholder="1150" />
+        <div class="hint">Use for salary_weekly members. Leave blank/0 for others.</div>
       </div>
+
       <div class="field">
         <label>Pay — hourly rate (optional)</label>
-        <input id="m_rate" class="mono" value="${esc(m.hourly_rate ?? "")}" placeholder="25" />
+        <input id="m_rate" class="mono" placeholder="25" />
         <div class="hint">Leave blank/0 if this member isn’t paid hourly (volunteer).</div>
       </div>
+
       <div class="field">
         <label>OT threshold hours (per week)</label>
-        <input id="m_ot_thresh" class="mono" value="${esc(m.ot_threshold_hours ?? "40")}" />
+        <input id="m_ot_thresh" class="mono" value="40" />
       </div>
       <div class="field">
         <label>OT multiplier</label>
-        <input id="m_ot_mult" class="mono" value="${esc(m.ot_multiplier ?? "1.5")}" />
+        <input id="m_ot_mult" class="mono" value="1.5" />
       </div>
+
       <div class="field">
         <label><input id="m_pref24" type="checkbox" style="margin-right:8px; vertical-align:middle;"> Prefer 24s (allow AM+PM same day)</label>
         <div class="hint">If checked, resolver may schedule this member for both AM and PM on the same date (when it helps travel/coverage).</div>
@@ -2737,20 +2738,30 @@ function esc(s){
 
       <div class="field full">
         <label>Qualifications</label>
-        ${qualMultiSelect("m_quals", m.qualifications || [])}
+        ${qualMultiSelect("m_quals", [])}
       </div>
     `;
 
-    openModal(`Edit member — ${displayName(m)}`, body, ()=>{
-      const updated = collectMemberFromModal();
-      if(!updated) return;
-      app.data.members[idx] = updated;
+    openModal("Add member", body, ()=>{
+      const created = collectMemberFromModal();
+      if(!created) return;
+
+      // Prevent duplicate IDs
+      const exists = (app.data.members||[]).some(m=>String(m.member_id||"").trim()===String(created.member_id||"").trim());
+      if(exists){
+        alert("That Member ID already exists. Pick a new ID.");
+        return;
+      }
+
+      app.data.members.push(created);
+
       // Add quals to org list if new
       app.data.org_settings.qualifications = normalizeQualList([
         ...app.data.org_settings.qualifications,
-        ...(updated.qualifications||[]).map(code => ({code, label: code}))
+        ...(created.qualifications||[]).map(code => ({code, label: code}))
       ]);
-      setDataStatus("warn","Unsaved changes","Member updated. Click Save.");
+
+      setDataStatus("warn","Unsaved changes","Member added. Click Save.");
       saveDraft();
       closeModal();
       renderMembers();
@@ -3444,7 +3455,68 @@ const pay_type = ($("#m_pay_type").value || "hourly").trim();
     return (u && u.operator_qual_key) ? String(u.operator_qual_key) : "";
   }
 
-  async function resolveWeek(weekStartDate, {dryRun=false}={}){
+  
+  // ---- Resolver helpers (conflict tracking) ----
+  // Track same-day assignments while resolving so we can prevent AM+PM double-shifts
+  // unless the member has prefer_24s = true.
+  let __assignedByDate = null; // { [dateIso]: { [memberId]: Set(["AM","PM"]) } }
+
+  function prefers24(mem){
+    return !!(mem && (mem.prefer_24s === true || mem.prefer24 === true || mem.pref24 === true));
+  }
+
+  function initAssignedForWeek(weekStartDate, scheduleMap){
+    __assignedByDate = {};
+    for(let i=0;i<7;i++){
+      const d = addDays(weekStartDate, i);
+      const dateIso = isoDate(d);
+      __assignedByDate[dateIso] = {};
+      const day = scheduleMap?.[dateIso] || {};
+      for(const shift of ["AM","PM"]){
+        const pair = day[shift] || day[shift.toLowerCase()] || null;
+        if(!pair || !Array.isArray(pair) || pair.length < 2) continue;
+        for(const midRaw of [pair[0], pair[1]]){
+          const mid = String(midRaw||"").trim();
+          if(!mid || mid.toUpperCase()==="OPEN") continue;
+          __assignedByDate[dateIso][mid] ||= new Set();
+          __assignedByDate[dateIso][mid].add(shift);
+        }
+      }
+    }
+  }
+
+  function markAssigned(memberId, dateIso, shift){
+    const mid = String(memberId||"").trim();
+    if(!mid || mid.toUpperCase()==="OPEN") return;
+    if(!__assignedByDate) __assignedByDate = {};
+    __assignedByDate[dateIso] ||= {};
+    __assignedByDate[dateIso][mid] ||= new Set();
+    __assignedByDate[dateIso][mid].add(String(shift||"").toUpperCase());
+  }
+
+  function hasOtherShift(memberId, dateIso, currentShift){
+    const mid = String(memberId||"").trim();
+    if(!mid || mid.toUpperCase()==="OPEN") return false;
+    const sh = String(currentShift||"").toUpperCase();
+    const other = (sh === "AM") ? "PM" : (sh === "PM" ? "AM" : "");
+    if(!other) return false;
+    const day = __assignedByDate?.[dateIso];
+    if(!day) return false;
+    const set = day[mid];
+    if(!set) return false;
+    return set.has(other);
+  }
+
+  function clearOpsWatchdog(){
+    try{
+      if(window.__opsWatchdogTimer){
+        clearTimeout(window.__opsWatchdogTimer);
+        window.__opsWatchdogTimer = null;
+      }
+    }catch(_e){}
+  }
+
+async function resolveWeek(weekStartDate, {dryRun=false}={}){
     
     
     // --- SAFETY GATE: resolver may ONLY modify PLANNING weeks ---
@@ -3485,6 +3557,9 @@ try{
         // If schedule doesn't exist yet, we start a new object
         schedule = {};
       }
+
+      // Initialize same-day assignment map from current schedule (so conflicts include existing assignments)
+      initAssignedForWeek(weekStartDate, schedule);
 
       // Build member qual sets
       const mById = {};
@@ -3557,9 +3632,6 @@ try{
               // avoid day+night same day unless Prefer 24s
               if(hasOtherShift(mid, dateIso, shift) && !prefers24(mem)) continue;
               if(opKey && !mem._q.has(opKey)) continue;
-
-              // avoid day+night same day unless Prefer 24s
-              if(hasOtherShift(mid, dateIso, shift) && !prefers24(mem)) continue;
               const av = availabilityScore(avBy[mid], dateIso, shift);
               if(av.score <= -999) continue;
               cands.push({ id: mid, score: av.score, detail: av.state });
@@ -3587,6 +3659,8 @@ try{
       if(dryRun){
         setDataStatus("ok", `Dry run: ${changes.length} change(s)`, "No write performed.");
         alert(`Dry run complete.\nChanges: ${changes.length}\n\nTip: Click Resolve week to write to Drive.`);
+        rlSet("Done","ok");
+        rlWrite("Dry run finished.");
         return;
       }
 
@@ -3620,10 +3694,16 @@ try{
       app.data.schedule = outSched;
       setDataStatus("ok", `Resolved: ${changes.length} change(s)`, "Schedule written to Drive.");
       alert(`Resolved week.\nChanges written: ${changes.length}`);
+      rlSet("Done","ok");
+      rlWrite("Resolver finished.");
     }catch(e){
       console.error(e);
       setDataStatus("bad", "Resolve failed", String(e.message||e));
-      alert("Resolve failed:\n\n" + (e.message||e));
+      alert("Resolve failed:
+
+" + (e.message||e));
+    } finally {
+      clearOpsWatchdog();
     }
   }
 
