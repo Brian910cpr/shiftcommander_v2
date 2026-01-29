@@ -6,6 +6,7 @@
 <title>ShiftCommander — Wallboard</title>
 <style>
   :root{
+    /* ===== Light theme (default) ===== */
     --bg:#f4f7fb;
     --card:#ffffff;
     --line:#d9e1ee;
@@ -30,6 +31,55 @@
     --headH:30px;
     --nameMin:13px;
     --nameMax:16px;
+
+    /* Topbar */
+    --topbg1:#ffffff;
+    --topbg2:#fbfdff;
+    --topborder:var(--line);
+
+    /* Pills / buttons */
+    --pillbg:#ffffff;
+    --pillborder:var(--line);
+    --pilltext:var(--muted);
+    --btnbg:#ffffff;
+    --btnborder:var(--line);
+    --btntext:var(--text);
+    --btnhover:#f8fafc;
+
+    /* Notes */
+    --needsbg:#fff1f2;
+    --needsborder:#fecdd3;
+  }
+
+  /* ===== Dark theme ===== */
+  body[data-theme="dark"]{
+    --bg:#0b1220;
+    --card:#0f172a;
+    --line:#22304a;
+    --line2:#1a2740;
+    --text:#e5e7eb;
+    --muted:#b6c2d3;
+    --muted2:#93a4bf;
+    --open:#93a4bf;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+
+    --gray:#6b7ea6;
+
+    --topbg1:#0f172a;
+    --topbg2:#0b1220;
+    --topborder:#22304a;
+
+    --pillbg:#0b1220;
+    --pillborder:#22304a;
+    --pilltext:#b6c2d3;
+
+    --btnbg:#0b1220;
+    --btnborder:#22304a;
+    --btntext:#e5e7eb;
+    --btnhover:#111c33;
+
+    --needsbg:rgba(212,0,0,.08);
+    --needsborder:rgba(212,0,0,.28);
   }
 
   body{
@@ -42,8 +92,8 @@
   /* Top bar stays fixed; board below becomes its own scroll region */
   .top{
     position:sticky; top:0; z-index:10;
-    background:linear-gradient(#fff,#fbfdff);
-    border-bottom:1px solid var(--line);
+    background:linear-gradient(var(--topbg1),var(--topbg2));
+    border-bottom:1px solid var(--topborder);
     box-shadow:var(--shadow);
   }
   .top-inner{
@@ -63,11 +113,39 @@
   .pill{
     font-size:12px;
     font-weight:900;
-    color:var(--muted);
-    border:1px solid var(--line);
-    background:#fff;
+    color:var(--pilltext);
+    border:1px solid var(--pillborder);
+    background:var(--pillbg);
     border-radius:999px;
     padding:6px 10px;
+  }
+
+  .top-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .btn{
+    appearance:none;
+    border:1px solid var(--btnborder);
+    background:var(--btnbg);
+    color:var(--btntext);
+    border-radius:999px;
+    padding:6px 10px;
+    font-weight:1000;
+    font-size:12px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    user-select:none;
+  }
+  .btn:hover{ background:var(--btnhover); }
+  .btn:active{ transform:translateY(1px); }
+  .btn .ico{
+    width:14px; height:14px;
+    display:inline-block;
   }
 
   /* VIEWPORT-FIT: root becomes a scroll container */
@@ -121,7 +199,7 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:8px 10px;
     border-bottom:1px solid var(--line2);
-    background:linear-gradient(#fbfdff,#fff);
+    background:linear-gradient(var(--topbg2),var(--card));
     gap:12px;
   }
   .week-head .left{
@@ -168,7 +246,7 @@
     display:flex; justify-content:space-between; align-items:center;
     padding:5px 8px;
     border-bottom:1px solid var(--line2);
-    background:linear-gradient(#fbfdff,#fff);
+    background:linear-gradient(var(--topbg2),var(--card));
   }
   .daynum{ font-size:16px; font-weight:1000; line-height:1; }
   .truck{ font-size:12px; font-weight:1000; color:var(--muted); }
@@ -179,12 +257,16 @@
     padding:2px 7px;
     border-radius:999px;
     border:1px solid var(--line);
-    background:#f8fafc;
-    color:#0f172a;
+    background:rgba(248,250,252,.9);
+    color:var(--text);
     font-weight:1000;
     font-size:11px;
     line-height:1;
   }
+  body[data-theme="dark"] .truckpill{
+    background:rgba(17,28,51,.75);
+  }
+
   .iso{ font-size:11px; color:var(--muted2); font-weight:1000; }
 
   .slot{
@@ -235,8 +317,8 @@
   .note strong{ color:var(--text); }
   .note.needs{
     color:var(--red);
-    background:#fff1f2;
-    border:1px solid #fecdd3;
+    background:var(--needsbg);
+    border:1px solid var(--needsborder);
     display:inline-block;
     padding:2px 8px;
     border-radius:999px;
@@ -244,7 +326,7 @@
   .note.needs strong{ color:var(--red); }
 
   .flag{ font-size:12px; font-weight:1000; color:var(--y); margin-left:8px; }
-  .today .tile{ outline:2px solid #0f172a; outline-offset:-2px; }
+  .today .tile{ outline:2px solid var(--text); outline-offset:-2px; }
 
   /* Past days: reduce emphasis but DO NOT grayscale (grayscale kills your status colors) */
   .past{ opacity:.62; }
@@ -298,7 +380,14 @@
       <div>Wallboard <span class="sub" id="buildTag" style="font-weight:1000;margin-left:6px"></span></div>
       <div class="sub" id="rangeLabel" style="display:none;"></div>
     </div>
-    <div class="pill" id="statusPill">Loading…</div>
+
+    <div class="top-right">
+      <button class="btn" id="themeToggle" type="button" title="Toggle Day/Night">
+        <span class="ico" aria-hidden="true" id="themeIco"></span>
+        <span id="themeLabel">Night</span>
+      </button>
+      <div class="pill" id="statusPill">Loading…</div>
+    </div>
   </div>
 </div>
 
@@ -306,6 +395,76 @@
   <div id="root"></div>
   <div class="footer" id="resolverFooter"></div>
 </div>
+
+<script>
+/** ========= THEME (DAY/NIGHT) ========= **/
+const THEME_KEY = "sc_wallboard_theme"; // "light" | "dark"
+
+function prefersDark(){
+  try{ return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  catch(_e){ return false; }
+}
+
+function setTheme(theme){
+  const t = (theme === "dark") ? "dark" : "light";
+  document.body.setAttribute("data-theme", t);
+  try{ localStorage.setItem(THEME_KEY, t); }catch(_e){}
+  updateThemeButton();
+}
+
+function getSavedTheme(){
+  try{ return localStorage.getItem(THEME_KEY); }catch(_e){ return null; }
+}
+
+function themeIconSvg(theme){
+  // inline SVG to avoid external assets
+  if(theme === "dark"){
+    // moon
+    return `
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a7 7 0 1 0 10.2 10.2Z"
+          stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      </svg>`;
+  }
+  // sun
+  return `
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+}
+
+function updateThemeButton(){
+  const t = document.body.getAttribute("data-theme") || "light";
+  const btn = document.getElementById("themeToggle");
+  const lbl = document.getElementById("themeLabel");
+  const ico = document.getElementById("themeIco");
+  if(!btn || !lbl || !ico) return;
+
+  // Button text describes what it will switch TO (action label)
+  const next = (t === "dark") ? "light" : "dark";
+  lbl.textContent = (next === "dark") ? "Night" : "Day";
+  ico.innerHTML = themeIconSvg(t); // show current state icon
+  btn.setAttribute("aria-label", `Switch to ${next === "dark" ? "Night" : "Day"} mode`);
+}
+
+(function initTheme(){
+  const saved = getSavedTheme();
+  if(saved === "light" || saved === "dark"){
+    setTheme(saved);
+  }else{
+    setTheme(prefersDark() ? "dark" : "light");
+  }
+  const btn = document.getElementById("themeToggle");
+  if(btn){
+    btn.addEventListener("click", ()=>{
+      const t = document.body.getAttribute("data-theme") || "light";
+      setTheme(t === "dark" ? "light" : "dark");
+    });
+  }
+})();
+</script>
 
 <script>
 /** ========= CONFIG ========= **/
@@ -778,7 +937,7 @@ async function refreshBoard({initial=false}={}){
 
     const data = await loadData();
 
-    document.getElementById("buildTag").textContent = "v2026-01-26.responsive";
+    document.getElementById("buildTag").textContent = "v2026-01-26.responsive+theme";
 
     window.__sc_lastHash ||= "";
     const h = hashLite({ schedule: data.schedule, roster: data.roster, org: data.org });
