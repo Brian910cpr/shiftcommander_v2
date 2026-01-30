@@ -3699,9 +3699,7 @@ try{
     }catch(e){
       console.error(e);
       setDataStatus("bad", "Resolve failed", String(e.message||e));
-      alert("Resolve failed:
-
-" + (e.message||e));
+      alert("Resolve failed:" + (e.message||e));
     } finally {
       clearOpsWatchdog();
     }
