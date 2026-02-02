@@ -3516,6 +3516,91 @@ const pay_type = ($("#m_pay_type").value || "hourly").trim();
     }catch(_e){}
   }
 
+
+// ===== Health map for Wallboard (display-only) =====
+// Wallboard must NOT guess "health". Supervisor writes schedule.meta.health_v1 on resolve.
+// Health meanings:
+//   ok   = required seats filled + no hard conflicts detected
+//   warn = filled but unknown/soft issue (e.g., missing availability record)
+//   bad  = missing required seat or hard conflict (NO availability / OPEN seat / duplicate seat)
+//   unknown = not computed
+function computeHealthV1({weekStartDate, schedule, org, members, avBy}){
+  const out = {
+    generated_at: nowIso(),
+    week_start: isoDate(weekStartDate),
+    ruleset: "sc.health.v1",
+    days: {}
+  };
+
+  // horizon: controlled + published + planning (default 12 weeks)
+  const wf = (org && org.workflow) ? org.workflow : {};
+  const controlled = Number(wf.controlled_weeks || 2);
+  const published  = Number(wf.published_weeks  || 2);
+  const planning   = Number(wf.planning_weeks   || 8);
+  const weeks = Math.max(3, Math.min(24, controlled + published + planning));
+
+  const mById = {};
+  (Array.isArray(members) ? members : []).forEach(m=>{
+    const id = String(m.member_id||"").trim();
+    if(id) mById[id] = m;
+  });
+
+  const shifts = ["AM","PM"];
+
+  for(let w=0; w<weeks; w++){
+    for(let i=0; i<7; i++){
+      const d = addDays(addDays(weekStartDate, w*7), i);
+      const dateIso = isoDate(d);
+      if(!out.days[dateIso]) out.days[dateIso] = {};
+      for(const sh of shifts){
+        const day = schedule?.[dateIso];
+        const slot = day?.[sh] || day?.[sh.toLowerCase?.()] || null;
+        const arr = Array.isArray(slot) ? slot : (slot && typeof slot==="object"
+          ? [slot.attendant||slot.att||slot[0]||"OPEN", slot.operator||slot.op||slot[1]||"OPEN", slot.third||slot[2]||undefined]
+          : ["OPEN","OPEN"]);
+
+        const ids = arr.filter(x=>x!==undefined).map(x=>String(x||"OPEN"));
+        const a = ids[0] || "OPEN";
+        const o = ids[1] || "OPEN";
+
+        // default grade: unknown until decided
+        let grade = "unknown";
+
+        // Required: 2 seats (attendant + operator)
+        if(isOpenSlot(a) || isOpenSlot(o)){
+          grade = "bad";
+        } else if(String(a) === String(o)) {
+          grade = "bad";
+        } else {
+          // availability check if present
+          let anyUnknown = false;
+          let anyHardBad = false;
+
+          for(const mid of [a,o]){
+            const m = mById[String(mid)] || null;
+            // If availability record is missing, treat as warn (not ok)
+            const av = avBy && avBy[String(mid)] ? availabilityScore(avBy[String(mid)], dateIso, sh) : null;
+            if(!av){
+              anyUnknown = true;
+            } else if(av.score <= -999) {
+              anyHardBad = true;
+            }
+            // Optional hard conflict: same-day other shift unless prefers24
+            if(hasOtherShift && hasOtherShift(String(mid), dateIso, sh) && !(prefers24 && prefers24(m))){
+              anyUnknown = true; // treat as warn, not hard-fail (your policy may change)
+            }
+          }
+
+          grade = anyHardBad ? "bad" : (anyUnknown ? "warn" : "ok");
+        }
+
+        out.days[dateIso][sh] = grade;
+      }
+    }
+  }
+  return out;
+}
+
 async function resolveWeek(weekStartDate, {dryRun=false}={}){
     
     
@@ -3679,6 +3764,19 @@ try{
         range_end: weekEndIso
       };
 
+      // Health map for Wallboard (display-only)
+      try{
+        outSched.meta.health_v1 = computeHealthV1({
+          weekStartDate,
+          schedule: outSched,
+          org,
+          members,
+          avBy
+        });
+      }catch(e){
+        console.warn("health_v1 compute failed", e);
+      }
+
       await storePost({ kind:"schedule", payload: outSched });
 
       // Best-effort: update assignments_history (per-member shift flags + weekly OT rollup)
@@ -3699,8 +3797,7 @@ try{
     }catch(e){
       console.error(e);
       setDataStatus("bad", "Resolve failed", String(e.message||e));
-      alert(`Resolve failed:\n\n${e.message || e}`);
-
+      alert("Resolve failed:\n\n" + (e.message||e));
     } finally {
       clearOpsWatchdog();
     }

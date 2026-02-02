@@ -1,567 +1,739 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ADR-FR Wallboard</title>
-<style>
-  :root{
-    --bg:#0b1020;
-    --panel:#0f1731;
-    --panel2:#0c1329;
-    --text:#e7ecff;
-    --muted:#a9b3d6;
-    --line:rgba(255,255,255,.10);
-    --ok:#2ee59d;
-    --warn:#ffd166;
-    --bad:#ff4d6d;
-    --chip: rgba(255,255,255,.06);
-    --shadow: 0 12px 30px rgba(0,0,0,.35);
-    --radius:16px;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    background: radial-gradient(1200px 700px at 25% -20%, rgba(124,92,255,.35), transparent 55%),
-                radial-gradient(900px 600px at 90% 0%, rgba(88,166,255,.25), transparent 52%),
-                linear-gradient(180deg, #060a18, var(--bg));
-    color:var(--text);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    overflow:hidden; /* STATIC by default */
-  }
-  header{
-    display:flex; align-items:center; justify-content:space-between;
-    gap:12px;
-    padding:10px 12px;
-    border-bottom:1px solid var(--line);
-    background: rgba(8,12,28,.55);
-    backdrop-filter: blur(10px);
-  }
-  .brand{display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.2px;}
-  .dot{width:10px; height:10px; border-radius:50%; background:var(--warn); box-shadow:0 0 0 4px rgba(255,209,102,.14)}
-  .dot.ok{background:var(--ok); box-shadow:0 0 0 4px rgba(46,229,157,.12)}
-  .dot.bad{background:var(--bad); box-shadow:0 0 0 4px rgba(255,77,109,.14)}
-  .meta{color:var(--muted); font-weight:800; font-size:12px}
-  .toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
-  .btn{
-    border:1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.06);
-    color:var(--text);
-    padding:8px 10px;
-    border-radius: 999px;
-    font-weight:900;
-    cursor:pointer;
-  }
-  .btn:active{transform:translateY(1px)}
-  .chip{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:7px 10px;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,.12);
-    background: var(--chip);
-    font-weight:900;
-    color:var(--muted);
-    white-space:nowrap;
-    font-size:12px;
-  }
-  .chip strong{color:var(--text)}
-  main{height: calc(100vh - 54px); padding:10px 12px; overflow:hidden;}
-  .weeks{
-    height:100%;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  .week{
-    flex: 1 1 0;
-    min-height:0;
-    border:1px solid var(--line);
-    border-radius: var(--radius);
-    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-    box-shadow: var(--shadow);
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
-  }
-  .weekHead{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:8px 10px;
-    border-bottom:1px solid rgba(255,255,255,.10);
-    background: rgba(0,0,0,.12);
-    font-weight:950;
-    letter-spacing:.2px;
-  }
-  .weekHead .sub{font-size:12px; color:var(--muted); font-weight:900}
-  .grid{
-    flex:1;
-    min-height:0;
-    display:grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap:8px;
-    padding:8px;
-  }
-  .day{
-    border:1px solid rgba(255,255,255,.10);
-    background: rgba(0,0,0,.12);
-    border-radius: 14px;
-    padding:8px 8px 6px;
-    display:flex;
-    flex-direction:column;
-    min-height:0;
-  }
-  .dayTop{
-    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
-    margin-bottom:6px;
-  }
-  .dow{font-size:11px; color:var(--muted); font-weight:900; letter-spacing:.3px; text-transform:uppercase}
-  .dnum{font-size: clamp(14px, 2.4vh, 22px); font-weight:1000; line-height:1}
-  .crew{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    min-height:0;
-  }
-  .slot{
-    display:flex;
-    justify-content:space-between;
-    gap:8px;
-    align-items:flex-start;
-    border:1px solid rgba(255,255,255,.10);
-    background: rgba(255,255,255,.04);
-    border-radius: 12px;
-    padding:6px 7px;
-    min-height: 0;
-  }
-  .slotLabel{
-    font-size:11px;
-    color:var(--muted);
-    font-weight:950;
-    width:32px;
-    flex:0 0 auto;
-  }
-  .names{
-    flex:1 1 auto;
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-    min-width:0;
-  }
-  .n{
-    font-size: clamp(11px, 1.8vh, 15px);
-    font-weight:950;
-    line-height:1.05;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .n.muted{color:var(--muted); font-weight:900}
-  .flags{
-    flex:0 0 auto;
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-    align-items:flex-end;
-    font-size:10px;
-    font-weight:1000;
-    color: var(--warn);
-    white-space:nowrap;
-  }
-  .flagBad{color: var(--bad)}
-  .flagOk{color: var(--ok)}
-  .day.bad{border-color: rgba(255,77,109,.55); box-shadow: inset 0 0 0 1px rgba(255,77,109,.35)}
-  .day.warn{border-color: rgba(255,209,102,.55); box-shadow: inset 0 0 0 1px rgba(255,209,102,.30)}
-  .tiny{font-size:11px; color:var(--muted); font-weight:850}
-  .hidden{display:none !important;}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ADR-FR Wallboard — Display-only Health</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:rgba(255,255,255,.035);
+      --line:rgba(255,255,255,.12);
+      --text:#e7ecff;
+      --muted:#a9b3d6;
 
-  /* If user opts into scroll mode (?scroll=1) */
-  body.scroll main{overflow:auto}
-  body.scroll{overflow:auto}
-</style>
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --plan:#60a5fa;
+
+      --shadow: 0 10px 26px rgba(0,0,0,.35);
+      --r:14px;
+
+      /* Color-deficiency friendly borders */
+      --b-ok:    0 0 0 3px rgba(34,197,94,.60),  0 0 0 6px rgba(34,197,94,.18);
+      --b-warn:  0 0 0 3px rgba(245,158,11,.65), 0 0 0 6px rgba(245,158,11,.18);
+      --b-bad:   0 0 0 3px rgba(239,68,68,.70),  0 0 0 6px rgba(239,68,68,.22);
+      --b-plan:  0 0 0 3px rgba(96,165,250,.70), 0 0 0 6px rgba(96,165,250,.18);
+      --b-neutral: 0 0 0 2px rgba(148,163,184,.25);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(1100px 700px at 20% -20%, rgba(124,92,255,.30), transparent 55%),
+        radial-gradient(900px 600px at 90% 0%, rgba(88,166,255,.22), transparent 52%),
+        linear-gradient(180deg, #060a18, var(--bg));
+      color:var(--text);
+      overflow:hidden;
+    }
+
+    .top{
+      position:sticky; top:0; z-index:10;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:8px 10px;
+      background: rgba(8,12,28,.70);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand{ display:flex; align-items:baseline; gap:10px; font-weight:950; letter-spacing:.2px; white-space:nowrap; }
+    .brand small{ font-weight:850; color:var(--muted); }
+    .controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 9px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      font-weight:900;
+      color:var(--muted);
+      white-space:nowrap;
+      font-size:12px;
+    }
+    .dot{ width:10px; height:10px; border-radius:50%; background:#94a3b8; box-shadow:0 0 0 4px rgba(148,163,184,.14); }
+    .dot.ok{ background:var(--ok); box-shadow:0 0 0 4px rgba(34,197,94,.14); }
+    .dot.warn{ background:var(--warn); box-shadow:0 0 0 4px rgba(245,158,11,.14); }
+    .dot.bad{ background:var(--bad); box-shadow:0 0 0 4px rgba(239,68,68,.14); }
+
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      font-weight:950;
+      padding:6px 9px;
+      border-radius:999px;
+      cursor:pointer;
+      user-select:none;
+      font-size:12px;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .wrap{
+      height: calc(100vh - 44px);
+      padding:8px 10px 12px;
+      overflow:hidden;
+    }
+    .board{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:hidden;
+    }
+
+    details.section{
+      border:1px solid var(--line);
+      background: var(--panel);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    details.section > summary{
+      list-style:none;
+      cursor:pointer;
+      user-select:none;
+      padding:8px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: rgba(0,0,0,.16);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      font-weight:950;
+      font-size:13px;
+    }
+    details.section > summary::-webkit-details-marker{ display:none; }
+    .sLeft{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .sTitle{ white-space:nowrap; }
+    .sHelp{ color:var(--muted); font-weight:850; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-weight:950;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .weeks{
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .weekRow{
+      display:grid;
+      grid-template-columns: 165px repeat(7, minmax(0, 1fr));
+      gap:6px;
+      padding:8px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      background: rgba(0,0,0,.14);
+    }
+
+    .weekRow.state-controlled{ box-shadow: var(--b-warn); }
+    .weekRow.state-published{  box-shadow: var(--b-ok); }
+    .weekRow.state-planning{   box-shadow: var(--b-plan); }
+    .weekRow.state-archived{   box-shadow: var(--b-neutral); }
+
+    .weekMeta{
+      padding:6px 8px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:6px;
+      min-width:0;
+    }
+    .wkTitle{ font-weight:950; letter-spacing:.2px; line-height:1.05; font-size: 13px; }
+    .wkRange{ font-weight:850; color:var(--muted); font-size: 12px; line-height:1.1; }
+    .wkMini{ font-weight:900; font-size:11px; color:var(--muted); }
+
+    .dayCell{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      background: rgba(0,0,0,.12);
+      padding:6px 8px;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .dayTop{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; white-space:nowrap; }
+    .dow{ font-weight:950; font-size:11px; color:var(--muted); letter-spacing:.4px; }
+    .dayNum{ font-weight:950; font-size:14px; letter-spacing:.2px; }
+    .obs{ font-weight:950; font-size:11px; color:rgba(231,236,255,.85); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+    .obs span{ opacity:.9; }
+
+    .slot{
+      display:grid;
+      grid-template-columns: 26px 1fr;
+      gap:6px;
+      align-items:start;
+      border-top:1px solid rgba(255,255,255,.06);
+      padding-top:4px;
+    }
+    .slot:first-of-type{ border-top:none; padding-top:0; }
+    .slotLabel{ font-weight:950; font-size:11px; color:var(--muted); }
+    .names{
+      display:grid;
+      grid-auto-rows: min-content;
+      gap:2px;
+      min-width:0;
+    }
+    .name{
+      font-weight:950;
+      font-size:12px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      line-height:1.15;
+    }
+    .name.open{ color: rgba(231,236,255,.55); font-weight:900; }
+
+    /* Health strip: display-only */
+    .healthStrip{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:6px;
+      margin-top:6px;
+    }
+    .healthDay{
+      display:grid;
+      grid-template-rows: 10px 10px;
+      gap:3px;
+      border-radius:8px;
+      padding:4px 5px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.10);
+    }
+    .hBox{
+      border-radius:6px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(148,163,184,.18); /* unknown */
+      position:relative;
+      overflow:hidden;
+    }
+    .hBox.ok{ background: rgba(34,197,94,.28); border-color: rgba(34,197,94,.50); }
+    .hBox.warn{ background: rgba(245,158,11,.26); border-color: rgba(245,158,11,.50); }
+    .hBox.bad{ background: rgba(239,68,68,.24); border-color: rgba(239,68,68,.50); }
+
+    /* pattern overlay for accessibility */
+    .hBox.bad::after{
+      content:"";
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(135deg, rgba(255,255,255,.18) 0 4px, rgba(255,255,255,0) 4px 8px);
+      opacity:.55;
+    }
+    .hBox.warn::after{
+      content:"";
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(45deg, rgba(255,255,255,.14) 0 5px, rgba(255,255,255,0) 5px 10px);
+      opacity:.45;
+    }
+
+    .fatal{
+      margin:8px 10px 0;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(239,68,68,.45);
+      background: rgba(239,68,68,.14);
+      color:#ffe4e6;
+      font-weight:900;
+      display:none;
+      font-size:12px;
+    }
+    .fatal code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    /* Debug scroll */
+    body.scroll .wrap{ overflow:auto; }
+    body.scroll{ overflow:auto; }
+    body.scroll .board{ overflow:auto; padding-bottom:40px; }
+
+    @media (max-width: 1200px){
+      .weekRow{ grid-template-columns: 155px repeat(7, minmax(0, 1fr)); }
+      .name{ font-size:11px; }
+    }
+  </style>
 </head>
 <body>
-<header>
-  <div class="brand"><span id="statusDot" class="dot"></span><div>
-    ADR-FR Wallboard
-    <div class="meta" id="statusText">Loading…</div>
-  </div></div>
-  <div class="toolbar">
-    <span class="chip" id="chipWeeks">Weeks: <strong id="weeksCount">—</strong></span>
-    <span class="chip" id="chipMode">Mode: <strong id="modeText">AM+PM</strong></span>
-    <button class="btn" id="btnMode">Toggle AM/PM</button>
-    <button class="btn" id="btnArchived">Archived</button>
-    <button class="btn" id="btnReload">Reload</button>
+  <div class="top">
+    <div class="brand">
+      Wallboard <small>display-only health • build 2026-02-02</small>
+    </div>
+    <div class="controls">
+      <button class="btn" id="btnShift" title="Toggle view: Both → Night → Day">Both</button>
+      <button class="btn" id="btnNames" title="Toggle name style">Name: First</button>
+      <span class="chip" id="chipStatus"><span class="dot warn" id="dot"></span><span id="status">Loading…</span></span>
+      <span class="chip"><span id="updated">—</span></span>
+    </div>
   </div>
-</header>
 
-<main>
-  <div class="weeks" id="weeks"></div>
-</main>
+  <div class="fatal" id="fatal"></div>
+
+  <div class="wrap">
+    <div class="board" id="board"></div>
+  </div>
 
 <script>
-/** ========= CONFIG ========= **/
-const STORE_URL = "https://schedule-cors-910cpr.brian-9ac.workers.dev";
-const KIND_SCHEDULE = "schedule";
-const KIND_MEMBERS  = "members";
-const KIND_ORG      = "org_settings";
-const AUTO_REFRESH_MS = 5 * 60 * 1000;
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const STORE_BASE = "https://store.adr-fr.org";
+  const LS_TOKEN = "sc_token";
 
-const ALS_KEYS = ["PARAMEDIC","MEDIC","AEMT","ALS"];
-const EMT_KEYS = ["EMT","AEMT","PARAMEDIC","MEDIC"];
+  const OPT = {
+    scroll: qs.get("scroll")==="1",
+    refreshSec: clampInt(qs.get("refresh"), 10, 3600, 60),
+    weeks: clampInt(qs.get("weeks"), 3, 24, 12),
+    name: clampInt(qs.get("name"), 1, 6, 1),
+    controlled: clampInt(qs.get("controlled"), 1, 4, 2),
+    published: clampInt(qs.get("published"), 1, 6, 2),
+    planning: clampInt(qs.get("planning"), 2, 12, 6),
+    hol: qs.get("hol")==="1"
+  };
+  if(OPT.scroll) document.body.classList.add("scroll");
 
-const params = new URLSearchParams(location.search);
-const SCROLL_MODE = params.get("scroll")==="1";
-const SHOW_ARCHIVED_DEFAULT = params.get("archived")==="1";
-
-if(SCROLL_MODE) document.body.classList.add("scroll");
-
-/** ========= STATE ========= **/
-let state = {
-  schedule: null,
-  members: null,
-  org: null,
-  nameById: {},
-  qualById: {},
-  availById: {},  // member_id -> availability json
-  showArchived: SHOW_ARCHIVED_DEFAULT,
-  mode: "BOTH" // BOTH | AM | PM
-};
-
-function setStatus(kind, text){
-  const dot = document.getElementById("statusDot");
-  const el = document.getElementById("statusText");
-  el.textContent = text || "";
-  dot.classList.remove("ok","bad");
-  if(kind==="ok") dot.classList.add("ok");
-  if(kind==="bad") dot.classList.add("bad");
-}
-
-function storeUrl(kind){
-  const u = new URL(STORE_URL, location.origin);
-  u.searchParams.set("kind", kind);
-  return u.toString();
-}
-async function fetchJson(url){
-  const r = await fetch(url, { cache:"no-store" });
-  const t = await r.text();
-  try{
-    const j = JSON.parse(t);
-    if(j && j.ok === false) throw new Error(j.error || "Store error");
-    return j;
-  }catch(e){
-    if(t.trim().startsWith("<!DOCTYPE html")) throw new Error("Upstream returned HTML (wrong origin / auth / cors).");
-    throw e;
+  function clampInt(v,min,max,def){
+    const n = Number(v);
+    if(!Number.isFinite(n)) return def;
+    const i = Math.floor(n);
+    return Math.max(min, Math.min(max, i));
   }
-}
-function unwrap(j){
-  if(j && typeof j === "object"){
-    if(j.payload !== undefined) return j.payload;
-    if(j.data !== undefined) return j.data;
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
-  return j;
-}
-
-/** ========= DATE HELPERS ========= **/
-function isoDate(d){
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const da = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${da}`;
-}
-function addDays(d,n){
-  const x = new Date(d);
-  x.setDate(x.getDate()+n);
-  return x;
-}
-function startOfWeek(d){
-  const x = new Date(d);
-  x.setHours(0,0,0,0);
-  const dow = x.getDay(); // 0 Sun
-  x.setDate(x.getDate()-dow);
-  return x;
-}
-function fmtWeekRange(weekStart){
-  const end = addDays(weekStart,6);
-  const opts={month:"short", day:"numeric"};
-  const a = weekStart.toLocaleDateString(undefined, opts);
-  const b = end.toLocaleDateString(undefined, opts);
-  return `${a} — ${b}`;
-}
-function dowName(i){
-  return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][i] || "";
-}
-
-/** ========= MEMBERS / QUALS ========= **/
-function buildMemberMaps(membersPayload){
-  const arr = Array.isArray(membersPayload?.members) ? membersPayload.members : (Array.isArray(membersPayload)?membersPayload:[]);
-  const nameById = {};
-  const qualById = {};
-  for(const m of arr){
-    const id = String(m.member_id||"").trim();
-    if(!id) continue;
-    const nm = (m.first_name && m.last_name) ? `${m.first_name} ${m.last_name}` : (m.name||id);
-    nameById[id] = nm;
-    const q = new Set((m.qualifications||m.quals||[]).map(x=>String(x).toUpperCase().trim()).filter(Boolean));
-    qualById[id] = q;
+  function fatal(msg, err){
+    const el = document.getElementById("fatal");
+    el.style.display = "block";
+    el.innerHTML = "WALLBOARD ERROR: " + escapeHtml(msg) + (err ? " <code>"+escapeHtml(err.message||String(err))+"</code>" : "");
+    setStatus("bad","Error");
   }
-  return {nameById, qualById};
-}
-function isALS(id){
-  const q = state.qualById[id];
-  if(!q) return false;
-  return ALS_KEYS.some(k=>q.has(k));
-}
-function isEMT(id){
-  const q = state.qualById[id];
-  if(!q) return false;
-  return EMT_KEYS.some(k=>q.has(k));
-}
-function displayName(id){
-  if(!id) return "OPEN";
-  const s = String(id);
-  if(s.toUpperCase()==="OPEN") return "OPEN";
-  return state.nameById[s] || s;
-}
-
-/** ========= AVAILABILITY ========= **/
-async function loadAvailabilityFor(memberId){
-  if(state.availById[memberId]) return state.availById[memberId];
-  try{
-    const j = await fetchJson(storeUrl(`member_availability_${memberId}`));
-    state.availById[memberId] = unwrap(j) || {};
-  }catch(e){
-    state.availById[memberId] = null;
+  function setStatus(kind, text){
+    const dot = document.getElementById("dot");
+    dot.className = "dot " + (kind||"warn");
+    document.getElementById("status").textContent = text;
   }
-  return state.availById[memberId];
-}
-function shiftKey(shift){
-  return shift==="AM" ? "am" : "pm";
-}
-function availabilityState(av, dateIso, shift){
-  if(!av || !av.days) return null;
-  const d = av.days[dateIso];
-  if(!d) return null;
-  const key = shiftKey(shift);
-  return d[key] || null;
-}
-// Interpret availability state values used in your JSON
-function isUnavailableState(s){
-  if(!s) return false;
-  const v = String(s).toLowerCase();
-  // Based on your current files: "clear" behaves like a block (unavailable)
-  return (v === "clear" || v === "no" || v === "unavail" || v === "unavailable");
-}
+  function setUpdated(text){ document.getElementById("updated").textContent = text; }
 
-/** ========= SCHEDULE READ ========= **/
-function getSlot(dayObj, shift){
-  if(!dayObj) return ["OPEN","OPEN"];
-  const a = dayObj[shift] || dayObj[shift.toLowerCase()];
-  if(Array.isArray(a)) return [String(a[0]||"OPEN"), String(a[1]||"OPEN")];
-  return ["OPEN","OPEN"];
-}
-
-function computeWeeksToShow(){
-  const vh = Math.max(document.documentElement.clientHeight||0, window.innerHeight||0);
-  // header ~54px, padding ~20px, gap ~10px
-  const usable = vh - 70;
-  // try to show between 4 and 6 weeks depending on height
-  if(usable < 560) return 4;
-  if(usable < 760) return 5;
-  return 6;
-}
-
-/** ========= RENDER ========= **/
-function el(tag, cls, txt){
-  const e = document.createElement(tag);
-  if(cls) e.className = cls;
-  if(txt !== undefined) e.textContent = txt;
-  return e;
-}
-
-async function render(){
-  const schedule = state.schedule;
-  const container = document.getElementById("weeks");
-  container.innerHTML = "";
-
-  const today = new Date();
-  const week0 = startOfWeek(today);
-
-  const weeksWanted = Number(params.get("weeks")||"") || computeWeeksToShow();
-  document.getElementById("weeksCount").textContent = String(weeksWanted);
-
-  // Build list of week starts
-  const starts = [];
-  // optional archived week (week -1)
-  if(state.showArchived){
-    starts.push(addDays(week0,-7));
+  function getToken(){ try{ return localStorage.getItem(LS_TOKEN) || ""; }catch(e){ return ""; } }
+  async function storeGet(kind){
+    const url = new URL(STORE_BASE);
+    url.searchParams.set("kind", kind);
+    const token = getToken();
+    if(token) url.searchParams.set("token", token);
+    const resp = await fetch(url.toString(), { method:"GET", cache:"no-store" });
+    const text = await resp.text();
+    let j = null;
+    try{ j = JSON.parse(text); }catch(e){}
+    if(!resp.ok) throw new Error("Store GET "+kind+" failed ("+resp.status+")");
+    return j ?? text;
   }
-  for(let w=0; w<weeksWanted; w++){
-    starts.push(addDays(week0, w*7));
+  function unwrapStorePayload(resp){
+    if(resp && typeof resp === "object"){
+      if(resp.payload !== undefined) return resp.payload;
+      if(resp.data !== undefined) return resp.data;
+      if(resp.value !== undefined) return resp.value;
+      if(resp.body !== undefined) return resp.body;
+      if(resp.ok && resp.kind && resp.result !== undefined) return resp.result;
+    }
+    return resp;
+  }
+  function normalizeScheduleMap(s){
+    if(!s || typeof s !== "object") return {};
+    if(s.schedule && typeof s.schedule === "object") return s.schedule;
+    return s;
   }
 
-  // Determine which member IDs appear in visible weeks and prefetch avail
-  const visibleIds = new Set();
-  for(const ws of starts){
-    for(let i=0;i<7;i++){
-      const di = isoDate(addDays(ws,i));
-      const dayObj = schedule?.[di];
-      if(!dayObj) continue;
-      for(const sh of ["AM","PM"]){
-        const [a,b] = getSlot(dayObj, sh);
-        if(a && a!=="OPEN") visibleIds.add(a);
-        if(b && b!=="OPEN") visibleIds.add(b);
-      }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function isoDate(d){
+    const dt = new Date(d.getTime());
+    dt.setUTCHours(0,0,0,0);
+    return dt.getUTCFullYear()+"-"+pad2(dt.getUTCMonth()+1)+"-"+pad2(dt.getUTCDate());
+  }
+  function parseIso(s){
+    const [y,m,d] = String(s).split("-").map(Number);
+    if(!y||!m||!d) return null;
+    const dt = new Date(Date.UTC(y,m-1,d));
+    dt.setUTCHours(0,0,0,0);
+    return dt;
+  }
+  function addDays(dateObj, n){
+    const d = new Date(dateObj.getTime());
+    d.setUTCDate(d.getUTCDate()+n);
+    return d;
+  }
+  function startOfWeekSunday(dateObj){
+    const d = new Date(dateObj.getTime());
+    const dow = d.getUTCDay();
+    d.setUTCDate(d.getUTCDate()-dow);
+    d.setUTCHours(0,0,0,0);
+    return d;
+  }
+  function fmtRange(start){
+    const end = addDays(start, 6);
+    const opts = { month:"short", day:"numeric" };
+    const a = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+    const b = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    return a.toLocaleDateString(undefined, opts) + " – " + b.toLocaleDateString(undefined, opts);
+  }
+  const DOW = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+
+  // ===== Name modes =====
+  function splitName(full){
+    const s = String(full||"").trim().replace(/\s+/g," ");
+    if(!s) return { first:"", last:"", parts:[] };
+    const parts = s.split(" ");
+    return { first: parts[0]||"", last: parts.length>1 ? parts[parts.length-1] : "", parts };
+  }
+  function initials(parts){ return parts.filter(Boolean).map(p => (p[0]||"").toUpperCase()).join(""); }
+  function formatName(memberObj, idStr){
+    const base = String(memberObj?.display_name || memberObj?.name || memberObj?.callsign || idStr).trim();
+    const { first, last, parts } = splitName(base);
+    const single = parts.length<=1;
+    switch(OPT.name){
+      case 2: return single ? base.toUpperCase().slice(0,3) : initials(parts);
+      case 3: return single ? base : ((first?first[0].toUpperCase()+".":"") + (last?(" "+last):"")).trim();
+      case 4: return single ? base : ((first||base) + (last?(" "+last[0].toUpperCase()+"."):"")).trim();
+      case 5: return single ? base : ((first||"") + (last?(" "+last):"")).trim();
+      case 6: return String(memberObj?.callsign||"").trim() || (first||base);
+      case 1:
+      default: return first || base;
     }
   }
-  // Prefetch availability (best effort). Don't block rendering forever.
-  const idList = Array.from(visibleIds);
-  await Promise.all(idList.map(id => loadAvailabilityFor(id)));
-
-  for(const ws of starts){
-    const weekCard = el("section","week");
-    const head = el("div","weekHead");
-    head.appendChild(el("div","", `Week of ${ws.getFullYear()}-${String(ws.getMonth()+1).padStart(2,'0')}-${String(ws.getDate()).padStart(2,'0')}`));
-    head.appendChild(el("div","sub", fmtWeekRange(ws)));
-    weekCard.appendChild(head);
-
-    const grid = el("div","grid");
-    let weekHasBad=false, weekHasWarn=false;
-
-    for(let i=0;i<7;i++){
-      const d = addDays(ws,i);
-      const di = isoDate(d);
-      const day = el("div","day");
-      const top = el("div","dayTop");
-      top.appendChild(el("div","dow", dowName(d.getDay())));
-      top.appendChild(el("div","dnum", String(d.getDate())));
-      day.appendChild(top);
-
-      const crew = el("div","crew");
-
-      const dayObj = schedule?.[di] || null;
-
-      const shiftsToShow = (state.mode==="AM") ? ["AM"] : (state.mode==="PM") ? ["PM"] : ["AM","PM"];
-
-      let dayBad=false, dayWarn=false;
-
-      for(const sh of shiftsToShow){
-        const [att, op] = getSlot(dayObj, sh);
-        const slot = el("div","slot");
-        slot.appendChild(el("div","slotLabel", sh));
-
-        const names = el("div","names");
-        const attName = displayName(att);
-        const opName = displayName(op);
-
-        // build flags
-        const flags = el("div","flags");
-        const addFlag = (txt, bad=false)=>{
-          const f = el("div", bad ? "flagBad" : "", txt);
-          flags.appendChild(f);
-        };
-
-        // seat sanity
-        if(att !== "OPEN" && !isALS(att)) { addFlag("ALS?", true); dayBad=true; }
-        if(op !== "OPEN" && !isEMT(op))  { addFlag("EMT?", true); dayBad=true; }
-        if(att !== "OPEN" && op !== "OPEN" && att === op){ addFlag("DUP", true); dayBad=true; }
-
-        // availability sanity (if we have it)
-        if(att !== "OPEN"){
-          const av = state.availById[att];
-          const st = availabilityState(av, di, sh);
-          if(isUnavailableState(st)){ addFlag("AVAIL", true); dayBad=true; }
-        }
-        if(op !== "OPEN"){
-          const av = state.availById[op];
-          const st = availabilityState(av, di, sh);
-          if(isUnavailableState(st)){ addFlag("AVAIL", true); dayBad=true; }
-        }
-
-        const n1 = el("div","n", attName);
-        const n2 = el("div","n", opName);
-        if(att==="OPEN") n1.classList.add("muted");
-        if(op==="OPEN") n2.classList.add("muted");
-
-        names.appendChild(n1);
-        names.appendChild(n2);
-        slot.appendChild(names);
-        if(flags.childNodes.length) slot.appendChild(flags);
-        crew.appendChild(slot);
-
-        if(!dayBad){
-          // warnings (soft): two OPENs
-          if(att==="OPEN" || op==="OPEN") dayWarn=true;
-        }
-      }
-
-      day.appendChild(crew);
-
-      if(dayBad){ day.classList.add("bad"); weekHasBad=true; }
-      else if(dayWarn){ day.classList.add("warn"); weekHasWarn=true; }
-
-      grid.appendChild(day);
-    }
-
-    weekCard.appendChild(grid);
-
-    // update status dot based on worst visible
-    if(weekHasBad) {}
-    container.appendChild(weekCard);
+  function nameModeLabel(){
+    return {1:"First",2:"Initials",3:"F.Last",4:"First L.",5:"First Last",6:"Callsign"}[OPT.name] || "First";
   }
 
-  document.getElementById("modeText").textContent = (state.mode==="BOTH") ? "AM+PM" : state.mode;
-}
+  // ===== Slot parsing (supports optional third rider) =====
+  function getSlot(schedule, dateIso, shift){
+    const day = schedule?.[dateIso];
+    if(!day || typeof day !== "object") return null;
+    return day?.[shift] || day?.[shift.toLowerCase?.()] || null;
+  }
+  function listIds(slot){
+    if(!slot) return ["OPEN","OPEN"];
+    if(Array.isArray(slot)) return slot.map(x=>x||"OPEN");
+    if(slot && typeof slot === "object"){
+      const out = [];
+      if(slot.attendant !== undefined) out.push(slot.attendant);
+      if(slot.operator !== undefined) out.push(slot.operator);
+      if(slot.third !== undefined) out.push(slot.third);
+      if(out.length) return out.map(x=>x||"OPEN");
+    }
+    return ["OPEN","OPEN"];
+  }
+  function isOpen(v){
+    const s = String(v||"").trim().toUpperCase();
+    return !s || s==="OPEN" || s==="-" || s==="—";
+  }
 
-/** ========= LOAD + LOOP ========= **/
-async function loadAll(){
-  setStatus("warn","Loading schedule / members / org…");
-  const [schedJ, memJ, orgJ] = await Promise.all([
-    fetchJson(storeUrl(KIND_SCHEDULE)),
-    fetchJson(storeUrl(KIND_MEMBERS)),
-    fetchJson(storeUrl(KIND_ORG))
-  ]);
-  state.schedule = unwrap(schedJ) || {};
-  state.members  = unwrap(memJ) || {};
-  state.org      = unwrap(orgJ) || {};
-  const maps = buildMemberMaps(state.members);
-  state.nameById = maps.nameById;
-  state.qualById = maps.qualById;
-  setStatus("ok","Loaded.");
-  await render();
-}
+  // ===== Health lookup (display-only) =====
+  function getHealthMeta(schedule){
+    // accept schedule.meta.health_v1 or schedule.health_v1 if older
+    const meta = (schedule && typeof schedule==="object") ? schedule.meta : null;
+    const hv = meta?.health_v1 || schedule?.health_v1 || null;
+    return hv && typeof hv==="object" ? hv : null;
+  }
+  function getHealthFor(hv, dateIso, shift){
+    if(!hv || !hv.days) return "unknown";
+    const day = hv.days[dateIso];
+    if(!day) return "unknown";
+    const v = day[shift] || day[shift.toLowerCase?.()] || "unknown";
+    return ["ok","warn","bad"].includes(v) ? v : "unknown";
+  }
 
-function toggleMode(){
-  state.mode = (state.mode==="BOTH") ? "AM" : (state.mode==="AM") ? "PM" : "BOTH";
-  document.getElementById("modeText").textContent = (state.mode==="BOTH") ? "AM+PM" : state.mode;
-  render();
-}
-function toggleArchived(){
-  state.showArchived = !state.showArchived;
-  document.getElementById("btnArchived").textContent = state.showArchived ? "Archived ✓" : "Archived";
-  render();
-}
+  // ===== Tier 1 observances (optional) =====
+  function getObs(org, dateIso){
+    if(!OPT.hol) return null;
+    const o = org?.observances_v1?.[dateIso];
+    if(!o) return null;
+    const emoji = String(o.emoji||"").trim();
+    const label = String(o.label||"").trim();
+    if(!emoji && !label) return null;
+    return {emoji,label};
+  }
 
-document.getElementById("btnMode").addEventListener("click", toggleMode);
-document.getElementById("btnArchived").addEventListener("click", toggleArchived);
-document.getElementById("btnReload").addEventListener("click", ()=>location.reload());
+  function buildWeekStarts(schedule){
+    const keys = Object.keys(schedule||{}).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+    const dates = keys.map(parseIso).filter(Boolean).sort((a,b)=>a-b);
+    if(!dates.length){
+      const t = new Date();
+      const base = startOfWeekSunday(new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate())));
+      return Array.from({length:12}, (_,i)=>addDays(base, i*7));
+    }
+    const seen = new Set();
+    const starts = [];
+    for(const d of dates){
+      const ws = startOfWeekSunday(d);
+      const key = isoDate(ws);
+      if(seen.has(key)) continue;
+      seen.add(key);
+      starts.push(ws);
+    }
+    return starts;
+  }
 
-(async ()=>{
-  try{
-    document.getElementById("btnArchived").textContent = state.showArchived ? "Archived ✓" : "Archived";
-    await loadAll();
-    setInterval(async ()=>{
-      try{
-        const schedJ = await fetchJson(storeUrl(KIND_SCHEDULE));
-        state.schedule = unwrap(schedJ) || {};
-        await render();
-        setStatus("ok","Updated.");
-      }catch(e){
-        setStatus("bad","Update failed: " + (e.message||e));
+  // ===== Render pieces =====
+  let SHIFT_VIEW = "BOTH"; // BOTH | PM | AM
+
+  function renderWeekRow({label, stateClass, ws, schedule, membersById, hv, showNames=true, showHealth=true, org=null}){
+    const row = document.createElement("div");
+    row.className = "weekRow " + stateClass;
+
+    const meta = document.createElement("div");
+    meta.className = "weekMeta";
+    meta.innerHTML = `
+      <div class="wkTitle">${escapeHtml(fmtRange(ws))}</div>
+      <div class="wkRange">${escapeHtml(isoDate(ws))}</div>
+      <div class="wkMini"><b>${escapeHtml(label)}</b> • health from Supervisor resolve</div>
+    `;
+    if(showHealth){
+      const strip = document.createElement("div");
+      strip.className = "healthStrip";
+      for(let i=0;i<7;i++){
+        const d = addDays(ws, i);
+        const dateIso = isoDate(d);
+        const day = document.createElement("div");
+        day.className = "healthDay";
+
+        const am = document.createElement("div");
+        am.className = "hBox " + getHealthFor(hv, dateIso, "AM");
+
+        const pm = document.createElement("div");
+        pm.className = "hBox " + getHealthFor(hv, dateIso, "PM");
+
+        day.appendChild(am); day.appendChild(pm);
+        strip.appendChild(day);
       }
-    }, AUTO_REFRESH_MS);
+      meta.appendChild(strip);
+    }
+    row.appendChild(meta);
+
+    for(let i=0;i<7;i++){
+      const d = addDays(ws, i);
+      const dateIso = isoDate(d);
+
+      const cell = document.createElement("div");
+      cell.className = "dayCell";
+      const dow = DOW[d.getUTCDay()];
+      const dayNum = String(new Date(dateIso+"T00:00:00").getDate());
+
+      const obs = getObs(org, dateIso);
+      const obsHtml = obs ? `<div class="obs"><span>${escapeHtml(obs.emoji)}</span> ${escapeHtml(obs.label)}</div>` : "";
+
+      cell.innerHTML = `
+        <div class="dayTop">
+          <div class="dow">${dow}</div>
+          <div class="dayNum">${dayNum}</div>
+        </div>
+        ${obsHtml}
+      `;
+
+      if(showNames){
+        const shifts = (SHIFT_VIEW==="BOTH") ? ["AM","PM"] : [SHIFT_VIEW];
+        for(const sh of shifts){
+          const slot = getSlot(schedule, dateIso, sh);
+          const ids = listIds(slot);
+
+          const lines = ids.slice(0,3).map(id=>{
+            const open = isOpen(id);
+            const m = open ? null : (membersById[String(id)] || null);
+            const nm = open ? "OPEN" : formatName(m, String(id));
+            const cls = open ? "name open" : "name";
+            return `<div class="${cls}" title="${escapeHtml(nm)}">${escapeHtml(nm)}</div>`;
+          }).join("");
+
+          const s = document.createElement("div");
+          s.className = "slot";
+          s.innerHTML = `<div class="slotLabel">${sh}</div><div class="names">${lines}</div>`;
+          cell.appendChild(s);
+        }
+      }
+
+      row.appendChild(cell);
+    }
+    return row;
+  }
+
+  function buildSection({title, help, countPill, open, rows}){
+    const det = document.createElement("details");
+    det.className = "section";
+    det.open = !!open;
+
+    const sum = document.createElement("summary");
+    sum.innerHTML = `
+      <div class="sLeft">
+        <div class="sTitle">${escapeHtml(title)}</div>
+        <div class="sHelp">${escapeHtml(help)}</div>
+      </div>
+      <div class="sRight">
+        <span class="pill">${escapeHtml(countPill)}</span>
+      </div>
+    `;
+    det.appendChild(sum);
+
+    const box = document.createElement("div");
+    box.className = "weeks";
+    rows.forEach(r => box.appendChild(r));
+    det.appendChild(box);
+    return det;
+  }
+
+  // ===== Controls =====
+  function syncButtons(){
+    document.getElementById("btnShift").textContent = (SHIFT_VIEW==="BOTH") ? "Both" : (SHIFT_VIEW==="PM" ? "Night" : "Day");
+    document.getElementById("btnNames").textContent = "Name: " + nameModeLabel();
+  }
+  document.getElementById("btnShift").addEventListener("click", ()=>{
+    SHIFT_VIEW = (SHIFT_VIEW==="BOTH") ? "PM" : (SHIFT_VIEW==="PM" ? "AM" : "BOTH");
+    syncButtons(); main();
+  });
+  document.getElementById("btnNames").addEventListener("click", ()=>{
+    OPT.name = (OPT.name % 6) + 1;
+    syncButtons(); main();
+  });
+
+  function membersById(members){
+    const by = {};
+    (Array.isArray(members)?members:[]).forEach(m=>{
+      const id = String(m.member_id||"").trim();
+      if(id) by[id] = m;
+    });
+    return by;
+  }
+
+  function partitionWeeks(starts, org){
+    const wf = org?.workflow || {};
+    const controlled = Number(wf.controlled_weeks || OPT.controlled);
+    const published  = Number(wf.published_weeks  || OPT.published);
+    const planning   = Number(wf.planning_weeks   || OPT.planning);
+
+    return {
+      controlled: starts.slice(0, controlled),
+      published:  starts.slice(controlled, controlled + published),
+      planning:   starts.slice(controlled + published, controlled + published + planning)
+    };
+  }
+
+  async function loadData(){
+    setStatus("warn","Loading…");
+    const [orgResp, membersResp, schedResp] = await Promise.allSettled([
+      storeGet("org_settings"),
+      storeGet("members"),
+      storeGet("schedule")
+    ]);
+
+    const org = (orgResp.status==="fulfilled") ? unwrapStorePayload(orgResp.value) : {};
+    const members = (membersResp.status==="fulfilled") ? unwrapStorePayload(membersResp.value) : [];
+    const scheduleRaw = (schedResp.status==="fulfilled") ? unwrapStorePayload(schedResp.value) : {};
+
+    return { org, members, scheduleRaw };
+  }
+
+  function renderAll({org, members, scheduleRaw}){
+    const board = document.getElementById("board");
+    board.innerHTML = "";
+
+    const schedule = normalizeScheduleMap(scheduleRaw);
+    const hv = getHealthMeta(scheduleRaw) || getHealthMeta(schedule);
+
+    const mBy = membersById(members);
+
+    const startsAll = buildWeekStarts(schedule).slice(0, OPT.weeks);
+    const parts = partitionWeeks(startsAll, org);
+
+    const controlledRows = parts.controlled.map(ws => renderWeekRow({
+      label:"Controlled",
+      stateClass:"state-controlled",
+      ws, schedule, membersById:mBy, hv,
+      showNames:true, showHealth:true,
+      org
+    }));
+
+    const publishedRows = parts.published.map(ws => renderWeekRow({
+      label:"Published",
+      stateClass:"state-published",
+      ws, schedule, membersById:mBy, hv,
+      showNames:true, showHealth:true,
+      org
+    }));
+
+    const planningRows = parts.planning.map(ws => renderWeekRow({
+      label:"Planning",
+      stateClass:"state-planning",
+      ws, schedule, membersById:mBy, hv,
+      showNames:false, showHealth:true,
+      org
+    }));
+
+    board.appendChild(buildSection({
+      title:"Controlled",
+      help:"Firm schedule. Changes require Supervisor review only.",
+      countPill:`${controlledRows.length} week(s)`,
+      open:true,
+      rows: controlledRows
+    }));
+
+    board.appendChild(buildSection({
+      title:"Published",
+      help:"Drop / swap requests encouraged early. Avoid last-minute chaos.",
+      countPill:`${publishedRows.length} week(s)`,
+      open:true,
+      rows: publishedRows
+    }));
+
+    board.appendChild(buildSection({
+      title:"Planning",
+      help:"Names hidden. Health strip is display-only and comes from Supervisor resolve.",
+      countPill:`${planningRows.length} week(s)`,
+      open:false,
+      rows: planningRows
+    }));
+
+    setStatus(hv ? "ok" : "warn", hv ? "Live" : "No health_v1 yet");
+    setUpdated("Updated " + new Date().toLocaleTimeString());
+  }
+
+  async function main(){
+    try{
+      syncButtons();
+      const data = await loadData();
+      renderAll(data);
+    }catch(e){
+      console.error(e);
+      fatal("Load/render failed", e);
+      setUpdated(new Date().toLocaleTimeString());
+    }
+  }
+
+  // Boot
+  try{
+    setStatus("warn","Booting…");
+    syncButtons();
+    main();
+    setInterval(main, OPT.refreshSec * 1000);
   }catch(e){
     console.error(e);
-    setStatus("bad", "Load failed: " + (e.message||e));
+    fatal("Startup failed", e);
   }
 })();
 </script>
