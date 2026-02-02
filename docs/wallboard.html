@@ -30,7 +30,6 @@
       overflow:hidden; /* static board */
     }
 
-    /* Top bar */
     .top{
       position:sticky; top:0; z-index:10;
       display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -39,8 +38,8 @@
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--line);
     }
-    .brand{ display:flex; align-items:baseline; gap:10px; font-weight:900; letter-spacing:.2px; white-space:nowrap; }
-    .brand small{ font-weight:800; color:var(--muted); }
+    .brand{ display:flex; align-items:baseline; gap:10px; font-weight:950; letter-spacing:.2px; white-space:nowrap; }
+    .brand small{ font-weight:850; color:var(--muted); }
     .controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 
     .chip{
@@ -49,7 +48,7 @@
       border-radius:999px;
       border:1px solid var(--line);
       background: var(--chip);
-      font-weight:850;
+      font-weight:900;
       color:var(--muted);
       white-space:nowrap;
     }
@@ -62,7 +61,7 @@
       border:1px solid var(--line);
       background: rgba(255,255,255,.06);
       color:var(--text);
-      font-weight:900;
+      font-weight:950;
       padding:7px 10px;
       border-radius:999px;
       cursor:pointer;
@@ -74,7 +73,6 @@
       background: rgba(34,197,94,.18);
     }
 
-    /* Main */
     .wrap{
       height: calc(100vh - 52px);
       padding:10px 10px 14px;
@@ -88,7 +86,6 @@
       overflow:hidden;
     }
 
-    /* Section label (Controlled/Future etc) */
     .section{
       display:flex;
       align-items:center;
@@ -142,7 +139,7 @@
     }
     .dayTop{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; white-space:nowrap; }
     .dayNum{ font-weight:950; font-size:14px; letter-spacing:.2px; }
-    .dayDate{ font-weight:800; color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; }
+    .dayDate{ font-weight:850; color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; }
 
     .slot{
       display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -150,4 +147,404 @@
       padding-top:4px;
       min-width:0;
     }
-    .slot:first-of-type{ border-top:none
+    .slot:first-of-type{ border-top:none; padding-top:0; }
+    .slotLabel{ font-weight:950; font-size:11px; color:var(--muted); width:26px; flex:0 0 auto; }
+    .slotNames{ flex:1 1 auto; display:flex; gap:8px; min-width:0; align-items:center; }
+    .name{
+      font-weight:950; font-size:13px;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      max-width: 50%;
+    }
+    .name.open{ color: rgba(231,236,255,.55); }
+
+    /* Error banner so we never show "black screen" without explanation */
+    .fatal{
+      margin:8px 10px 0;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(239,68,68,.45);
+      background: rgba(239,68,68,.14);
+      color:#ffe4e6;
+      font-weight:900;
+      display:none;
+    }
+    .fatal code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-weight:900;
+      opacity:.95;
+    }
+
+    /* Debug scroll mode only */
+    body.scroll .wrap{ overflow:auto; }
+    body.scroll{ overflow:auto; }
+    body.scroll .board{ overflow:auto; padding-bottom:40px; }
+
+    @media (max-width: 1200px){
+      .weekRow{ grid-template-columns: 120px repeat(7, minmax(0, 1fr)); }
+      .name{ font-size:12px; }
+    }
+    @media (max-width: 980px){
+      body{ overflow:auto; }
+      .wrap{ overflow:auto; }
+      .weekRow{ grid-template-columns: 110px repeat(7, minmax(140px, 1fr)); }
+      .board{ overflow:auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      Wallboard <small id="buildLabel">week-rows • build 2026-02-02</small>
+    </div>
+    <div class="controls">
+      <button class="btn" id="btnShift" title="Toggle view: Both → Night → Day">Both</button>
+      <span class="chip" id="chipStatus"><span class="dot warn" id="dot"></span><span id="status">Loading…</span></span>
+      <span class="chip" id="chipMode"><span id="modeText">name:1</span></span>
+      <span class="chip"><span id="updated">—</span></span>
+    </div>
+  </div>
+
+  <div class="fatal" id="fatal"></div>
+
+  <div class="wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+<script>
+(() => {
+  // ===== Query param hardening =====
+  const qs = new URLSearchParams(location.search);
+
+  // If you ever get a "black screen", this banner will show the error.
+  function fatal(msg, err){
+    const el = document.getElementById("fatal");
+    el.style.display = "block";
+    const details = err ? ` <code>${escapeHtml(String(err.message || err))}</code>` : "";
+    el.innerHTML = "WALLBOARD ERROR: " + escapeHtml(String(msg)) + details + " (open DevTools Console)";
+    setStatus("bad", "Error");
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  const scroll = qs.get("scroll") === "1";
+  if (scroll) document.body.classList.add("scroll");
+
+  const refreshSec = clampInt(qs.get("refresh"), 10, 3600, 60); // ✅ safe default
+  const weeksToShow = clampInt(qs.get("weeks"), 3, 20, 10);
+
+  // Name mode: 1=first, 2=initials, 3=F.Last, 4=First L., 5=Callsign, 6=First+Last (full)
+  const nameMode = clampInt(qs.get("name"), 1, 6, 1);
+
+  function clampInt(v, min, max, def){
+    const n = Number(v);
+    if (!Number.isFinite(n)) return def;
+    const i = Math.floor(n);
+    return Math.max(min, Math.min(max, i));
+  }
+
+  document.getElementById("modeText").textContent = "name:" + nameMode;
+
+  // ===== Store config =====
+  const STORE_BASE = "https://store.adr-fr.org";
+  const LS_TOKEN = "sc_token";
+
+  let SHIFT_VIEW = "BOTH"; // BOTH | PM | AM
+
+  // ===== UI helpers =====
+  function setStatus(kind, text){
+    const dot = document.getElementById("dot");
+    dot.className = "dot " + (kind||"warn");
+    document.getElementById("status").textContent = text;
+  }
+  function setUpdated(text){ document.getElementById("updated").textContent = text; }
+  function syncShiftBtn(){
+    const b = document.getElementById("btnShift");
+    b.textContent = (SHIFT_VIEW==="BOTH") ? "Both" : (SHIFT_VIEW==="PM" ? "Night" : "Day");
+  }
+  document.getElementById("btnShift").addEventListener("click", ()=>{
+    SHIFT_VIEW = (SHIFT_VIEW==="BOTH") ? "PM" : (SHIFT_VIEW==="PM" ? "AM" : "BOTH");
+    syncShiftBtn();
+    main();
+  });
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function isoDate(d){
+    const dt = new Date(d.getTime());
+    dt.setUTCHours(0,0,0,0);
+    return dt.getUTCFullYear()+"-"+pad2(dt.getUTCMonth()+1)+"-"+pad2(dt.getUTCDate());
+  }
+  function parseIso(s){
+    const [y,m,d] = String(s).split("-").map(Number);
+    if(!y||!m||!d) return null;
+    const dt = new Date(Date.UTC(y,m-1,d));
+    dt.setUTCHours(0,0,0,0);
+    return dt;
+  }
+  function addDays(dateObj, n){
+    const d = new Date(dateObj.getTime());
+    d.setUTCDate(d.getUTCDate()+n);
+    return d;
+  }
+  function startOfWeekSunday(dateObj){
+    const d = new Date(dateObj.getTime());
+    const dow = d.getUTCDay();
+    d.setUTCDate(d.getUTCDate()-dow);
+    d.setUTCHours(0,0,0,0);
+    return d;
+  }
+  function fmtRange(start){
+    const end = addDays(start, 6);
+    const opts = { month:"short", day:"numeric" };
+    const a = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+    const b = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    return a.toLocaleDateString(undefined, opts) + " – " + b.toLocaleDateString(undefined, opts);
+  }
+  function getToken(){ try{ return localStorage.getItem(LS_TOKEN) || ""; }catch(e){ return ""; } }
+
+  async function storeGet(kind){
+    const url = new URL(STORE_BASE);
+    url.searchParams.set("kind", kind);
+    const token = getToken();
+    if(token) url.searchParams.set("token", token);
+    const resp = await fetch(url.toString(), { method:"GET", cache:"no-store" });
+    const text = await resp.text();
+    let j = null;
+    try{ j = JSON.parse(text); }catch(e){}
+    if(!resp.ok) throw new Error("Store GET "+kind+" failed ("+resp.status+")");
+    return j ?? text;
+  }
+  function unwrapStorePayload(resp){
+    if(resp && typeof resp === "object"){
+      if(resp.payload !== undefined) return resp.payload;
+      if(resp.data !== undefined) return resp.data;
+      if(resp.value !== undefined) return resp.value;
+      if(resp.body !== undefined) return resp.body;
+      if(resp.ok && resp.kind && resp.result !== undefined) return resp.result;
+    }
+    return resp;
+  }
+  function normalizeScheduleMap(s){
+    if(!s || typeof s !== "object") return {};
+    if(s.schedule && typeof s.schedule === "object") return s.schedule;
+    return s;
+  }
+  function getPairFor(schedule, dateIso, shift){
+    const day = schedule?.[dateIso];
+    if(!day || typeof day !== "object") return ["OPEN","OPEN"];
+    const slot = day?.[shift] || day?.[shift.toLowerCase()] || null;
+    if(Array.isArray(slot)) return [slot[0]||"OPEN", slot[1]||"OPEN"];
+    if(slot && typeof slot === "object"){
+      const a = slot.attendant || slot.att || slot[0] || "OPEN";
+      const o = slot.operator || slot.op || slot[1] || "OPEN";
+      return [a,o];
+    }
+    return ["OPEN","OPEN"];
+  }
+  function isOpen(v){
+    const s = String(v||"").trim().toUpperCase();
+    return !s || s==="OPEN" || s==="-" || s==="—";
+  }
+
+  // ===== Name formatting modes =====
+  function splitName(full){
+    const s = String(full||"").trim().replace(/\s+/g," ");
+    if(!s) return { first:"", last:"", parts:[] };
+    const parts = s.split(" ");
+    return {
+      first: parts[0] || "",
+      last: parts.length>1 ? parts[parts.length-1] : "",
+      parts
+    };
+  }
+  function initials(parts){
+    return parts.filter(Boolean).map(p => (p[0]||"").toUpperCase()).join("");
+  }
+  function formatName(memberObj, idStr){
+    // prefer callsign if mode=5 and exists
+    const raw = String(
+      memberObj?.callsign ||
+      memberObj?.display_name ||
+      memberObj?.name ||
+      idStr
+    ).trim();
+
+    const { first, last, parts } = splitName(raw);
+
+    // If no spaces, treat it as already short (e.g., "AJ")
+    const isSingle = parts.length <= 1;
+
+    switch(nameMode){
+      case 2: // initials only
+        if(isSingle) return raw.toUpperCase().slice(0,3);
+        return initials(parts);
+      case 3: // first initial + last name  (B. Burr)
+        if(isSingle) return raw;
+        return (first ? first[0].toUpperCase()+"." : "") + (last ? " "+last : "");
+      case 4: // first name + last initial (Brian B.)
+        if(isSingle) return raw;
+        return (first || raw) + (last ? " "+last[0].toUpperCase()+"." : "");
+      case 5: // callsign, fallback to first
+        if(String(memberObj?.callsign||"").trim()) return String(memberObj.callsign).trim();
+        return first || raw;
+      case 6: // full (first + last)
+        if(isSingle) return raw;
+        return (first || "") + (last ? " "+last : "");
+      case 1:
+      default: // first name default
+        return first || raw;
+    }
+  }
+
+  function memberMaps(members){
+    const byId = {};
+    (Array.isArray(members)?members:[]).forEach(m=>{
+      const id = String(m.member_id||"").trim();
+      if(!id) return;
+      byId[id] = m;
+    });
+    return { byId };
+  }
+
+  function buildWeekStarts(schedule){
+    const keys = Object.keys(schedule||{}).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+    const dates = keys.map(parseIso).filter(Boolean).sort((a,b)=>a-b);
+    if(!dates.length){
+      const t = new Date();
+      const base = startOfWeekSunday(new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate())));
+      return Array.from({length:6}, (_,i)=>addDays(base, i*7));
+    }
+    const seen = new Set();
+    const starts = [];
+    for(const d of dates){
+      const ws = startOfWeekSunday(d);
+      const key = isoDate(ws);
+      if(seen.has(key)) continue;
+      seen.add(key);
+      starts.push(ws);
+    }
+    return starts;
+  }
+  function bucketLabel(index){
+    // minimal buckets, no pretending “Published”
+    if(index === 0) return "Archived";
+    if(index === 1 || index === 2) return "Controlled";
+    return "Future";
+  }
+
+  function render(members, schedule){
+    const board = document.getElementById("board");
+    board.innerHTML = "";
+
+    const sched = normalizeScheduleMap(schedule);
+    const { byId } = memberMaps(members);
+
+    const starts = buildWeekStarts(sched).slice(0, weeksToShow);
+
+    let lastLabel = "";
+    starts.forEach((ws, idx)=>{
+      const label = bucketLabel(idx);
+      if(label !== lastLabel){
+        const sec = document.createElement("div");
+        sec.className = "section";
+        sec.innerHTML = `<span>${label}</span><span>${fmtRange(ws)}</span>`;
+        board.appendChild(sec);
+        lastLabel = label;
+      }
+
+      const row = document.createElement("div");
+      row.className = "weekRow";
+
+      const meta = document.createElement("div");
+      meta.className = "weekMeta";
+      meta.innerHTML = `
+        <div class="wkTitle">${fmtRange(ws)}</div>
+        <div class="wkRange">${isoDate(ws)}</div>
+        <div class="wkTag">
+          <span class="dot ${label==='Controlled'?'warn':(label==='Archived'?'bad':'ok')}" style="width:8px;height:8px;box-shadow:none"></span>
+          ${label}
+        </div>`;
+      row.appendChild(meta);
+
+      for(let i=0;i<7;i++){
+        const d = addDays(ws, i);
+        const dateIso = isoDate(d);
+
+        const cell = document.createElement("div");
+        cell.className = "dayCell";
+
+        const dayNum = String(new Date(dateIso+"T00:00:00").getDate());
+        cell.innerHTML = `
+          <div class="dayTop">
+            <div class="dayNum">${dayNum}</div>
+            <div class="dayDate">${dateIso}</div>
+          </div>`;
+
+        const shifts = (SHIFT_VIEW==="BOTH") ? ["AM","PM"] : [SHIFT_VIEW];
+        for(const sh of shifts){
+          const [aId,oId] = getPairFor(sched, dateIso, sh);
+
+          const aOpen = isOpen(aId);
+          const oOpen = isOpen(oId);
+
+          const aObj = aOpen ? null : byId[String(aId)] || null;
+          const oObj = oOpen ? null : byId[String(oId)] || null;
+
+          const aName = aOpen ? "OPEN" : formatName(aObj, String(aId));
+          const oName = oOpen ? "OPEN" : formatName(oObj, String(oId));
+
+          const slot = document.createElement("div");
+          slot.className = "slot";
+          slot.innerHTML = `
+            <div class="slotLabel">${sh}</div>
+            <div class="slotNames">
+              <div class="name ${aOpen?'open':''}" title="${escapeHtml(aName)}">${escapeHtml(aName)}</div>
+              <div class="name ${oOpen?'open':''}" title="${escapeHtml(oName)}">${escapeHtml(oName)}</div>
+            </div>
+          `;
+          cell.appendChild(slot);
+        }
+
+        row.appendChild(cell);
+      }
+
+      board.appendChild(row);
+    });
+
+    setStatus("ok", "Live");
+    setUpdated("Updated " + new Date().toLocaleTimeString());
+  }
+
+  async function loadData(){
+    setStatus("warn","Loading…");
+    const [membersResp, schedResp] = await Promise.allSettled([ storeGet("members"), storeGet("schedule") ]);
+    const members = (membersResp.status==="fulfilled") ? unwrapStorePayload(membersResp.value) : [];
+    const schedule = (schedResp.status==="fulfilled") ? unwrapStorePayload(schedResp.value) : {};
+    return { members, schedule };
+  }
+
+  async function main(){
+    try{
+      syncShiftBtn();
+      const data = await loadData();
+      render(data.members, data.schedule);
+    }catch(e){
+      console.error(e);
+      fatal("Load/render failed", e);
+      setUpdated(new Date().toLocaleTimeString());
+    }
+  }
+
+  // boot
+  try{
+    setStatus("warn","Booting…");
+    main();
+    setInterval(main, refreshSec * 1000);
+  }catch(e){
+    console.error(e);
+    fatal("Startup failed", e);
+  }
+})();
+</script>
+</body>
+</html>
