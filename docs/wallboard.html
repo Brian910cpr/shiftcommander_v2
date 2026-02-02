@@ -6,7 +6,6 @@
 <title>ShiftCommander — Wallboard</title>
 <style>
   :root{
-    /* ===== Light theme (default) ===== */
     --bg:#f4f7fb;
     --card:#ffffff;
     --line:#d9e1ee;
@@ -14,44 +13,41 @@
     --text:#0f172a;
     --muted:#64748b;
     --muted2:#94a3b8;
-    --open:#9aa5b1;
+    --open:#64748b;
     --shadow:0 1px 2px rgba(0,0,0,.06);
     --r:10px;
 
-    /* ===== Color-deficiency friendly ===== */
-    --g:#00ff2a;   /* BRIGHT GREEN */
-    --y:#ffd400;   /* SCHOOL BUS YELLOW */
-    --red:#d40000; /* FIRE ENGINE RED */
+    /* Color-deficiency friendly */
+    --g:#00ff2a;
+    --y:#ffd400;
+    --red:#d40000;
     --gray:#94a3b8;
 
-    /* Layout vars (tuned by orientation classes) */
+    /* Layout vars */
     --gap:6px;
     --pad:8px;
-    --tileMin:132px;
-    --headH:30px;
-    --nameMin:13px;
-    --nameMax:16px;
+    --weekHeadH:24px;
+    --dayHeadH:24px;
+    --nameMin:12px;
+    --nameMax:14px;
 
-    /* Topbar */
     --topbg1:#ffffff;
     --topbg2:#fbfdff;
     --topborder:var(--line);
 
-    /* Pills / buttons */
     --pillbg:#ffffff;
     --pillborder:var(--line);
     --pilltext:var(--muted);
+
     --btnbg:#ffffff;
     --btnborder:var(--line);
     --btntext:var(--text);
     --btnhover:#f8fafc;
 
-    /* Notes */
     --needsbg:#fff1f2;
     --needsborder:#fecdd3;
   }
 
-  /* ===== Dark theme ===== */
   body[data-theme="dark"]{
     --bg:#0b1220;
     --card:#0f172a;
@@ -87,9 +83,9 @@
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     background:var(--bg);
     color:var(--text);
+    overflow:hidden; /* wallboard should not scroll the page */
   }
 
-  /* Top bar stays fixed; board below becomes its own scroll region */
   .top{
     position:sticky; top:0; z-index:10;
     background:linear-gradient(var(--topbg1),var(--topbg2));
@@ -97,10 +93,10 @@
     box-shadow:var(--shadow);
   }
   .top-inner{
-    max-width:1500px; margin:0 auto;
+    max-width:1600px; margin:0 auto;
     display:flex; align-items:center; justify-content:space-between;
     gap:12px;
-    padding:10px 12px;
+    padding:9px 12px;
   }
   .title{
     font-weight:1000;
@@ -110,6 +106,7 @@
     font-size:12px; color:var(--muted);
     font-weight:900;
   }
+
   .pill{
     font-size:12px;
     font-weight:900;
@@ -118,6 +115,7 @@
     background:var(--pillbg);
     border-radius:999px;
     padding:6px 10px;
+    white-space:nowrap;
   }
 
   .top-right{
@@ -140,39 +138,39 @@
     align-items:center;
     gap:8px;
     user-select:none;
+    white-space:nowrap;
   }
   .btn:hover{ background:var(--btnhover); }
   .btn:active{ transform:translateY(1px); }
-  .btn .ico{
-    width:14px; height:14px;
-    display:inline-block;
-  }
+  .btn .ico{ width:14px; height:14px; display:inline-block; }
 
-  /* VIEWPORT-FIT: root becomes a scroll container */
   .wrap{
-    max-width:1500px;
+    max-width:1600px;
     margin:0 auto;
     padding:var(--pad);
-    height: calc(100vh - 56px); /* top bar approx height */
+    height: calc(100vh - 54px);
     box-sizing: border-box;
-    overflow:hidden; /* root controls scrolling */
     display:flex;
     flex-direction:column;
     gap:var(--gap);
   }
 
+  /* The board is a non-scrolling viewport by default (static display).
+     Add ?scroll=1 to enable scrolling. */
   #root{
     flex: 1 1 auto;
-    overflow:auto;                 /* ✅ scroll inside wallboard if needed */
-    -webkit-overflow-scrolling:touch;
-    scroll-behavior:smooth;
+    display:flex;
+    flex-direction:column;
+    gap:var(--gap);
+    overflow:hidden;
+    min-height:0;
     transition: opacity .22s ease;
-    padding-right: 4px;
   }
+  body[data-scroll="1"] #root{ overflow:auto; }
 
   .footer{
     flex: 0 0 auto;
-    padding:6px 4px 2px 4px;
+    padding:4px 2px 0 2px;
     color:var(--muted);
     font-size:12px;
     font-weight:900;
@@ -180,76 +178,66 @@
   }
   .footer strong{ color:var(--text); }
 
-  .week-block{
+  /* ===== Week rows: each week is ONE row in a column stack (no giant cards) ===== */
+  .week{
+    flex:1 1 0;
+    min-height:0;
     border:1px solid var(--line);
     border-radius:var(--r);
     background:var(--card);
     box-shadow:var(--shadow);
     overflow:hidden;
-    margin-bottom:var(--gap);
+    display:flex;
+    flex-direction:column;
   }
-
-  .divider{
-    height:1px;
-    background: repeating-linear-gradient(90deg, var(--line), var(--line) 10px, transparent 10px, transparent 16px);
-    margin: 10px 0 14px 0;
-  }
-
   .week-head{
+    height:var(--weekHeadH);
     display:flex; align-items:center; justify-content:space-between;
-    padding:8px 10px;
+    padding:0 10px;
     border-bottom:1px solid var(--line2);
     background:linear-gradient(var(--topbg2),var(--card));
-    gap:12px;
+    gap:10px;
+    flex:0 0 auto;
   }
-  .week-head .left{
-    display:flex; align-items:baseline; gap:10px;
-  }
-  .week-title{ font-weight:1000; }
+  .week-title{ font-weight:1000; font-size:12px; }
   .week-dates{ font-size:12px; color:var(--muted); font-weight:900; }
 
-  .weekday-row{
-    display:grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap:var(--gap);
-    padding:6px 8px 0 8px;
-    color:var(--muted);
-    font-weight:1000;
-    font-size:11px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-  }
-
   .grid{
+    flex:1 1 auto;
+    min-height:0;
     display:grid;
-    grid-template-columns: repeat(7, minmax(150px, 1fr));
+    grid-template-columns: repeat(7, minmax(130px, 1fr));
     gap:var(--gap);
     padding:6px 8px 8px 8px;
+    align-content:stretch;
   }
 
-  /* Day tile */
+  /* Day tile: designed to compress vertically */
   .day{
     display:grid;
-    grid-template-columns: 10px 1fr; /* health strip + tile */
+    grid-template-columns: 8px 1fr;
     border-radius:var(--r);
     overflow:hidden;
     border:1px solid var(--line);
     background:var(--card);
+    min-height:0;
   }
   .health{ background:var(--gray); }
   .tile{
+    min-height:0;
     display:grid;
-    grid-template-rows: var(--headH) 1fr 1fr;
-    min-height: var(--tileMin);
+    grid-template-rows: var(--dayHeadH) 1fr 1fr;
   }
   .dayhead{
+    height:var(--dayHeadH);
     display:flex; justify-content:space-between; align-items:center;
-    padding:5px 8px;
+    padding:0 8px;
     border-bottom:1px solid var(--line2);
     background:linear-gradient(var(--topbg2),var(--card));
+    gap:8px;
   }
-  .daynum{ font-size:16px; font-weight:1000; line-height:1; }
-  .truck{ font-size:12px; font-weight:1000; color:var(--muted); }
+  .daynum{ font-size:15px; font-weight:1000; line-height:1; display:flex; align-items:center; gap:6px; }
+  .iso{ font-size:11px; color:var(--muted2); font-weight:900; }
   .truckpill{
     display:inline-flex;
     align-items:center;
@@ -262,12 +250,9 @@
     font-weight:1000;
     font-size:11px;
     line-height:1;
+    white-space:nowrap;
   }
-  body[data-theme="dark"] .truckpill{
-    background:rgba(17,28,51,.75);
-  }
-
-  .iso{ font-size:11px; color:var(--muted2); font-weight:1000; }
+  body[data-theme="dark"] .truckpill{ background:rgba(17,28,51,.75); }
 
   .slot{
     display:grid;
@@ -276,9 +261,9 @@
     padding:6px 8px;
     border-top:1px solid var(--line2);
     align-items:start;
+    min-height:0;
   }
   .slot:first-of-type{ border-top:none; }
-
   .tag{
     font-size:10px;
     font-weight:1000;
@@ -288,87 +273,61 @@
     padding-top:2px;
   }
 
-  .lines{ display:flex; flex-direction:column; gap:5px; min-width:0; }
+  .lines{ display:flex; flex-direction:column; gap:4px; min-width:0; }
   .line{
-    font-size:clamp(var(--nameMin), 1.35vw, var(--nameMax));
-    font-weight:900;
-    line-height:1.15;
+    font-size:clamp(var(--nameMin), 1.05vw, var(--nameMax));
+    font-weight:950;
+    line-height:1.12;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
     min-width:0;
   }
-  .open{
-    color:var(--open);
-    font-weight:1000;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-  }
+  .open{ color:var(--open); font-weight:1000; letter-spacing:.06em; text-transform:uppercase; }
 
-  .note{
-    margin-top:4px;
-    font-size:11px;
+  .warn-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:10px;
     font-weight:1000;
-    color:var(--muted);
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .note strong{ color:var(--text); }
-  .note.needs{
     color:var(--red);
     background:var(--needsbg);
     border:1px solid var(--needsborder);
-    display:inline-block;
-    padding:2px 8px;
+    padding:1px 7px;
     border-radius:999px;
+    margin-left:6px;
   }
-  .note.needs strong{ color:var(--red); }
 
-  .flag{ font-size:12px; font-weight:1000; color:var(--y); margin-left:8px; }
   .today .tile{ outline:2px solid var(--text); outline-offset:-2px; }
 
-  /* Past days: reduce emphasis but DO NOT grayscale (grayscale kills your status colors) */
   .past{ opacity:.62; }
   .past .health{ opacity:1; }
 
-  /* ===== Orientation tuning ===== */
-
-  /* LANDSCAPE: fit more weeks vertically */
+  /* Orientation tuning */
   body.landscape{
     --gap:5px;
     --pad:6px;
-    --tileMin:112px;
-    --headH:26px;
-    --nameMin:12px;
-    --nameMax:14px;
+    --weekHeadH:22px;
+    --dayHeadH:22px;
+    --nameMin:11px;
+    --nameMax:13px;
   }
-  body.landscape .weekday-row{ display:none; } /* frees vertical space */
 
-  /* PORTRAIT: narrow screen, taller tiles, bigger names, 2-column days */
   body.portrait{
     --gap:8px;
     --pad:10px;
-    --tileMin:160px;
-    --headH:34px;
-    --nameMin:15px;
-    --nameMax:18px;
+    --weekHeadH:26px;
+    --dayHeadH:26px;
+    --nameMin:14px;
+    --nameMax:16px;
   }
-  body.portrait .grid{
-    grid-template-columns: repeat(2, minmax(160px, 1fr));
-  }
-  body.portrait .dayhead{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:2px;
-  }
-  body.portrait .iso{ align-self:flex-end; }
+  body.portrait .grid{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
 
-  /* Small screens safety */
   @media (max-width: 560px){
-    .wrap{ padding:6px; height: calc(100vh - 56px); }
+    .wrap{ padding:6px; height: calc(100vh - 54px); }
     body.portrait .grid{ grid-template-columns: 1fr; }
-    .line{ font-size: clamp(14px, 4.4vw, 18px); }
+    .line{ font-size: clamp(14px, 4.2vw, 18px); }
   }
 </style>
 </head>
@@ -385,6 +344,10 @@
       <button class="btn" id="themeToggle" type="button" title="Toggle Day/Night">
         <span class="ico" aria-hidden="true" id="themeIco"></span>
         <span id="themeLabel">Night</span>
+      </button>
+      <button class="btn" id="archToggle" type="button" title="Toggle Archived week">
+        <span class="ico" aria-hidden="true">🗃️</span>
+        <span id="archLabel">Archived: Off</span>
       </button>
       <div class="pill" id="statusPill">Loading…</div>
     </div>
@@ -404,29 +367,23 @@ function prefersDark(){
   try{ return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches; }
   catch(_e){ return false; }
 }
-
 function setTheme(theme){
   const t = (theme === "dark") ? "dark" : "light";
   document.body.setAttribute("data-theme", t);
   try{ localStorage.setItem(THEME_KEY, t); }catch(_e){}
   updateThemeButton();
 }
-
 function getSavedTheme(){
   try{ return localStorage.getItem(THEME_KEY); }catch(_e){ return null; }
 }
-
 function themeIconSvg(theme){
-  // inline SVG to avoid external assets
   if(theme === "dark"){
-    // moon
     return `
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a7 7 0 1 0 10.2 10.2Z"
           stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
       </svg>`;
   }
-  // sun
   return `
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="2"/>
@@ -434,19 +391,14 @@ function themeIconSvg(theme){
         stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </svg>`;
 }
-
 function updateThemeButton(){
   const t = document.body.getAttribute("data-theme") || "light";
-  const btn = document.getElementById("themeToggle");
   const lbl = document.getElementById("themeLabel");
   const ico = document.getElementById("themeIco");
-  if(!btn || !lbl || !ico) return;
-
-  // Button text describes what it will switch TO (action label)
+  if(!lbl || !ico) return;
   const next = (t === "dark") ? "light" : "dark";
   lbl.textContent = (next === "dark") ? "Night" : "Day";
-  ico.innerHTML = themeIconSvg(t); // show current state icon
-  btn.setAttribute("aria-label", `Switch to ${next === "dark" ? "Night" : "Day"} mode`);
+  ico.innerHTML = themeIconSvg(t);
 }
 
 (function initTheme(){
@@ -473,18 +425,17 @@ const USE_FIRST_NAME = true;
 const WEEK_START = 0; // Sunday
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
-/* Auto-scroll: if content overflows, slowly scroll it for kiosk displays */
-const AUTO_SCROLL = true;
-const AUTO_SCROLL_PX_PER_TICK = 1;   // gentle
-const AUTO_SCROLL_TICK_MS = 80;
-const AUTO_SCROLL_PAUSE_MS = 1200;   // pause at top/bottom
+const AUTO_SCROLL = false; // default off; this wallboard is meant to be static unless you add ?scroll=1
 
 const KIND_SCHEDULE = "schedule";
 const KIND_MEMBERS  = "members";
 const KIND_ORG      = "org_settings";
+// Optional: if your store has it, this lets wallboard flag impossible assignments
+const KIND_AVAIL_1  = "member_availability";
+const KIND_AVAIL_2  = "availability";
 
-/* Weeks rendered (tuned by orientation) */
-const WEEKS_LANDSCAPE = 6;
+/* Weeks rendered */
+const WEEKS_LANDSCAPE = 4;  // 👈 fits on most TVs without scroll
 const WEEKS_PORTRAIT  = 6;
 
 /** ========= ORIENTATION ========= **/
@@ -495,6 +446,26 @@ function setOrientationClass(){
 }
 setOrientationClass();
 window.addEventListener("resize", setOrientationClass);
+
+/** ========= QUERY FLAGS ========= **/
+const QS = new URLSearchParams(location.search);
+const SCROLL_OK = QS.get("scroll") === "1";
+if(SCROLL_OK) document.body.setAttribute("data-scroll","1");
+
+let SHOW_ARCHIVED = (QS.get("archived") === "1");
+function updateArchivedBtn(){
+  const lbl = document.getElementById("archLabel");
+  if(lbl) lbl.textContent = "Archived: " + (SHOW_ARCHIVED ? "On" : "Off");
+}
+updateArchivedBtn();
+const archBtn = document.getElementById("archToggle");
+if(archBtn){
+  archBtn.addEventListener("click", ()=>{
+    SHOW_ARCHIVED = !SHOW_ARCHIVED;
+    updateArchivedBtn();
+    refreshBoard({initial:false, force:true});
+  });
+}
 
 /** ========= DATE UTILS ========= **/
 function isoDate(d){
@@ -596,18 +567,17 @@ function buildRosterIndex(membersJson){
     const isEMT =
       (!isALS) && (cert.includes("EMT") || (Array.isArray(quals) && quals.some(q => String(q).toUpperCase().includes("EMT"))));
 
-    const has120 =
-      m.qual_120 === true ||
-      m.qual120 === true ||
-      (Array.isArray(quals) && quals.some(q => String(q).includes("120"))) ||
-      (typeof quals === "object" && (quals.qual_120 || quals["120"]));
-
     const first = (m.first_name || m.firstName || "").toString().trim();
     const last  = (m.last_name  || m.lastName  || "").toString().trim();
     const nm =
       (m.name || m.full_name || m.display_name || m.last_first || `${first} ${last}`.trim() || id).toString().trim();
 
-    byId[id] = { name: nm, first: first || nm.split(" ")[0] || nm, tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"), quals: Array.isArray(quals)? quals.map(q=>String(q)) : [], has120: !!has120 };
+    byId[id] = {
+      name: nm,
+      first: first || nm.split(" ")[0] || nm,
+      tier: isALS ? "ALS" : (isEMT ? "EMT" : "UNK"),
+      raw: m
+    };
   }
   return byId;
 }
@@ -639,7 +609,9 @@ function seatsForDateShift(iso, shift, org){
       if(Array.isArray(v)) return v.map(String);
     }
 
-    const def = org && org.ops_defaults && org.ops_defaults.seats ? (org.ops_defaults.seats[sh] || org.ops_defaults.seats[sh.toLowerCase()]) : null;
+    const def = (org && org.ops_defaults && org.ops_defaults.seats)
+      ? (org.ops_defaults.seats[sh] || org.ops_defaults.seats[sh.toLowerCase()])
+      : null;
     if(Array.isArray(def)) return def.map(String);
 
     return null;
@@ -649,27 +621,51 @@ function seatsForDateShift(iso, shift, org){
 }
 function isNoSeating(arr){ return Array.isArray(arr) && arr.length === 0; }
 
+/** ========= OPTIONAL AVAILABILITY (flags impossible assignments) ========= **/
+function buildAvailIndex(availPayload){
+  // Supports a few common shapes:
+  // 1) availability_by_member[memberId][iso] => {AM:true/false, PM:true/false}
+  // 2) [memberId][iso] => {AM:true/false, PM:true/false}
+  // 3) member_availability: [{member_id, date, AM, PM}]
+  const p = (availPayload && typeof availPayload === "object") ? availPayload : {};
+  if(p.availability_by_member && typeof p.availability_by_member === "object") return p.availability_by_member;
+
+  const looksLikeIndex = Object.keys(p).some(k => typeof p[k] === "object" && p[k] && !Array.isArray(p[k]));
+  if(looksLikeIndex) return p;
+
+  const out = {};
+  const list =
+    Array.isArray(p) ? p :
+    Array.isArray(p.member_availability) ? p.member_availability :
+    Array.isArray(p.availability) ? p.availability :
+    [];
+  for(const row of list){
+    const id = String(row.member_id || row.id || row.memberId || "").trim();
+    const iso = String(row.date || row.iso || row.day || "").slice(0,10);
+    if(!id || !iso) continue;
+    out[id] ||= {};
+    out[id][iso] ||= {};
+    if("AM" in row) out[id][iso].AM = !!row.AM;
+    if("PM" in row) out[id][iso].PM = !!row.PM;
+  }
+  return out;
+}
+function isAvailable(avIdx, memberId, iso, shift){
+  try{
+    if(!avIdx) return null; // unknown
+    const m = avIdx[String(memberId||"").trim()];
+    if(!m) return null;
+    const d = m[String(iso||"").trim()];
+    if(!d) return null;
+    const sh = String(shift||"").toUpperCase();
+    if(sh in d) return !!d[sh];
+    return null;
+  }catch(_e){
+    return null;
+  }
+}
+
 /** ========= HEALTH RULES ========= **/
-function hasQual(member, key){
-  try{
-    const k = String(key||"").trim();
-    if(!k) return true;
-    const ks = k.replace(/^qual_/, "");
-    const q = Array.isArray(member?.quals) ? member.quals.map(x=>String(x)) : [];
-    return q.includes(k) || (ks && q.includes(ks)) || q.includes("qual_"+ks);
-  }catch(_e){ return false; }
-}
-function operatorQualForDateShift(iso, shift, org){
-  try{
-    const au = (org && org.active_units_by_date && org.active_units_by_date[iso]) ? org.active_units_by_date[iso] : null;
-    if(!au) return "";
-    const unitId = (shift === "PM") ? (au.PM || "") : (au.AM || "");
-    if(!unitId) return "";
-    const units = (org && Array.isArray(org.units)) ? org.units : [];
-    const u = units.find(x => String(x.unit_id||"") === String(unitId));
-    return (u && u.operator_qual_key) ? String(u.operator_qual_key) : "";
-  }catch(_e){ return ""; }
-}
 function digitsFromUnit(unitId){
   const s = String(unitId || "").trim();
   if(!s) return "";
@@ -697,36 +693,52 @@ function unitPillText(dayObj, org, iso){
   return t ? String(t) : "";
 }
 
-function shiftHealth(attId, drvId, roster, operatorQualKey, seatsArr){
+function healthColor(h){
+  if(h==="GREEN") return "var(--g)";
+  if(h==="YELLOW") return "var(--y)";
+  if(h==="RED") return "var(--red)";
+  return "var(--gray)";
+}
+function shiftHealth(attId, drvId, roster, seatsArr, violation){
   if(isNoSeating(seatsArr)) return "GRAY";
+  if(violation) return "RED";
+
   const att = roster[attId];
   const drv = roster[drvId];
 
   const attTier = (attId === "OPEN") ? "OPEN" : (att?.tier || "UNK");
   const drvTier = (drvId === "OPEN") ? "OPEN" : (drv?.tier || "UNK");
-  const opKey = (operatorQualKey||"").trim();
-  const drvHasOp = (drvId !== "OPEN") && hasQual(drv, opKey);
 
+  // Minimum rules for display health:
+  // - Attendant should be ALS (or OPEN means unfilled)
+  // - Driver should not be OPEN
   if(attId === "OPEN" || attTier !== "ALS") return "RED";
-  if(drvId === "OPEN" || !drvHasOp) return "RED";
+  if(drvId === "OPEN") return "RED";
   if(drvTier === "EMT") return "GREEN";
   if(drvTier === "ALS") return "YELLOW";
   return "YELLOW";
 }
-function dayHealth(dayObj, roster, iso, org){
+
+function dayHealth(dayObj, roster, iso, org, avIdx){
   const [amA, amD] = dayObj.am;
   const [pmA, pmD] = dayObj.pm;
-  const amOpKey = operatorQualForDateShift(iso, "AM", org);
-  const pmOpKey = operatorQualForDateShift(iso, "PM", org);
   const amSeats = seatsForDateShift(iso, "AM", org);
   const pmSeats = seatsForDateShift(iso, "PM", org);
+
+  const amV =
+    (isAvailable(avIdx, amA, iso, "AM") === false) ||
+    (isAvailable(avIdx, amD, iso, "AM") === false);
+  const pmV =
+    (isAvailable(avIdx, pmA, iso, "PM") === false) ||
+    (isAvailable(avIdx, pmD, iso, "PM") === false);
+
   const ranks = { RED:3, YELLOW:2, GREEN:1, GRAY:0 };
-  const amH = shiftHealth(amA, amD, roster, amOpKey, amSeats);
-  const pmH = shiftHealth(pmA, pmD, roster, pmOpKey, pmSeats);
+  const amH = shiftHealth(amA, amD, roster, amSeats, amV);
+  const pmH = shiftHealth(pmA, pmD, roster, pmSeats, pmV);
   return (ranks[amH] >= ranks[pmH]) ? amH : pmH;
 }
 
-function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function nameFor(id, roster){
   if(!id || id === "OPEN") return `<span class="open">OPEN</span>`;
   const r = roster[id];
@@ -734,37 +746,29 @@ function nameFor(id, roster){
   if(USE_FIRST_NAME && r?.first) nm = String(r.first);
   return escapeHtml(nm);
 }
-function healthColor(h){
-  if(h==="GREEN") return "var(--g)";
-  if(h==="YELLOW") return "var(--y)";
-  if(h==="RED") return "var(--red)";
-  return "var(--gray)";
+function lineWithAvail(id, roster, avIdx, iso, shift){
+  const base = nameFor(id, roster);
+  if(!id || id === "OPEN") return base;
+  const ok = isAvailable(avIdx, id, iso, shift);
+  if(ok === false) return `${base} <span class="warn-badge">⚠ AVAIL</span>`;
+  return base;
 }
 
-function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts={}){
+/** ========= RENDER ========= **/
+function renderWeek(root, weekStartDate, schedule, roster, org, avIdx, label){
   const weekEnd = addDays(weekStartDate, 6);
   const range = fmtRange(weekStartDate, weekEnd);
 
-  const block = document.createElement("div");
-  block.className = "week-block";
+  const week = document.createElement("div");
+  week.className = "week";
 
   const head = document.createElement("div");
   head.className = "week-head";
   head.innerHTML = `
-    <div class="left">
-      <div class="week-title">${escapeHtml(title)}</div>
-      <div class="week-dates">${escapeHtml(range)}</div>
-    </div>
-    <div class="sub">${opts.sub || ""}</div>
+    <div class="week-title">${escapeHtml(label || "")}</div>
+    <div class="week-dates">${escapeHtml(range)}</div>
   `;
-  block.appendChild(head);
-
-  if(!document.body.classList.contains("landscape")){
-    const wd = document.createElement("div");
-    wd.className = "weekday-row";
-    wd.innerHTML = `<div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>`;
-    block.appendChild(wd);
-  }
+  week.appendChild(head);
 
   const grid = document.createElement("div");
   grid.className = "grid";
@@ -775,9 +779,17 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
     const d = addDays(weekStartDate, i);
     const iso = isoDate(d);
     const dayObj = getDay(schedule, iso);
-    const h = dayHealth(dayObj, roster, iso, org);
-    const hasCaution = Array.isArray(dayObj.flags) && dayObj.flags.length > 0;
+
+    const h = dayHealth(dayObj, roster, iso, org, avIdx);
     const truck = unitPillText(dayObj, org, iso);
+
+    const [amA, amD] = dayObj.am;
+    const [pmA, pmD] = dayObj.pm;
+
+    const amSeats = seatsForDateShift(iso, "AM", org);
+    const pmSeats = seatsForDateShift(iso, "PM", org);
+    const amNoSeat = isNoSeating(amSeats);
+    const pmNoSeat = isNoSeating(pmSeats);
 
     const day = document.createElement("div");
     day.className = "day" + (iso===todayIso ? " today" : "") + (iso < todayIso ? " past" : "");
@@ -789,18 +801,10 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
     const tile = document.createElement("div");
     tile.className = "tile";
 
-    const [amA, amD] = dayObj.am;
-    const [pmA, pmD] = dayObj.pm;
-
-    const amSeats = seatsForDateShift(iso, "AM", org);
-    const pmSeats = seatsForDateShift(iso, "PM", org);
-    const amNoSeat = isNoSeating(amSeats);
-    const pmNoSeat = isNoSeating(pmSeats);
-
     tile.innerHTML = `
       <div class="dayhead">
-        <div class="daynum">${d.getDate()}${hasCaution ? `<span class="flag">⚠</span>` : ""}</div>
-        <div class="truck">${truck ? `<span class="truckpill">${escapeHtml(truck)}</span>` : ""}</div>
+        <div class="daynum">${d.getDate()}</div>
+        <div>${truck ? `<span class="truckpill">${escapeHtml(truck)}</span>` : ""}</div>
         <div class="iso">${iso}</div>
       </div>
 
@@ -808,8 +812,9 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
         <div class="tag">AM</div>
         <div class="lines">
           ${amNoSeat
-            ? `<div class="line open">N/A</div><div class="note">No seating required</div>`
-            : `<div class="line">${nameFor(amA, roster)}</div><div class="line">${nameFor(amD, roster)}</div>`
+            ? `<div class="line open">N/A</div>`
+            : `<div class="line">${lineWithAvail(amA, roster, avIdx, iso, "AM")}</div>
+               <div class="line">${lineWithAvail(amD, roster, avIdx, iso, "AM")}</div>`
           }
         </div>
       </div>
@@ -818,8 +823,9 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
         <div class="tag">PM</div>
         <div class="lines">
           ${pmNoSeat
-            ? `<div class="line open">N/A</div><div class="note">No seating required</div>`
-            : `<div class="line">${nameFor(pmA, roster)}</div><div class="line">${nameFor(pmD, roster)}</div>`
+            ? `<div class="line open">N/A</div>`
+            : `<div class="line">${lineWithAvail(pmA, roster, avIdx, iso, "PM")}</div>
+               <div class="line">${lineWithAvail(pmD, roster, avIdx, iso, "PM")}</div>`
           }
         </div>
       </div>
@@ -830,8 +836,8 @@ function renderWeekBlock(root, title, weekStartDate, schedule, roster, org, opts
     grid.appendChild(day);
   }
 
-  block.appendChild(grid);
-  root.appendChild(block);
+  week.appendChild(grid);
+  root.appendChild(week);
 }
 
 async function loadData(){
@@ -846,9 +852,25 @@ async function loadData(){
     org = (orgResp && orgResp.payload) ? orgResp.payload : (orgResp || {});
   }catch(_e){ org = {}; }
 
+  // Optional availability
+  let avIdx = null;
+  try{
+    const avResp = await fetchJson(storeUrl(KIND_AVAIL_1));
+    const avPayload = (avResp && avResp.payload) ? avResp.payload : avResp;
+    avIdx = buildAvailIndex(unwrapStorePayload(avPayload));
+  }catch(_e1){
+    try{
+      const avResp2 = await fetchJson(storeUrl(KIND_AVAIL_2));
+      const avPayload2 = (avResp2 && avResp2.payload) ? avResp2.payload : avResp2;
+      avIdx = buildAvailIndex(unwrapStorePayload(avPayload2));
+    }catch(_e2){
+      avIdx = null;
+    }
+  }
+
   const schedule = unwrapStorePayload(scheduleResp);
   const roster   = buildRosterIndex(membersResp);
-  return { schedule, roster, org };
+  return { schedule, roster, org, avIdx };
 }
 
 function hashLite(obj){
@@ -865,88 +887,50 @@ function hashLite(obj){
   }
 }
 
-function renderAll(root, schedule, roster, org){
+function renderAll(root, schedule, roster, org, avIdx){
   root.innerHTML = "";
 
   const now = new Date();
   const thisWeekStart = startOfWeek(now);
-
   const wantWeeks = document.body.classList.contains("portrait") ? WEEKS_PORTRAIT : WEEKS_LANDSCAPE;
 
-  // Always show: Archived, Controlled (x2)
-  const starts = [
-    { start: addDays(thisWeekStart, -7), label:"", sub:"Archived" },
-    { start: thisWeekStart,             label:"", sub:"Controlled" },
-    { start: addDays(thisWeekStart,  7), label:"", sub:"Controlled" }
-  ];
+  // Build list: (optional) archived, then controlled (this + next), then future
+  const starts = [];
 
-  // Add Published blocks up to wantWeeks total
-  let added = starts.length;
+  if(SHOW_ARCHIVED){
+    starts.push({ start: addDays(thisWeekStart, -7), label:"Archived" });
+  }
+  starts.push({ start: thisWeekStart, label:"Controlled" });
+  starts.push({ start: addDays(thisWeekStart,  7), label:"Controlled" });
+
   let off = 14;
-  while(added < wantWeeks){
-    starts.push({ start: addDays(thisWeekStart, off), label:"", sub:"Published" });
+  while(starts.length < wantWeeks){
+    starts.push({ start: addDays(thisWeekStart, off), label:"Future" });
     off += 7;
-    added++;
   }
 
   for(const b of starts){
-    renderWeekBlock(root, b.label, b.start, schedule, roster, org, { sub: b.sub });
-  }
-
-  const div = document.createElement("div");
-  div.className = "divider";
-  root.appendChild(div);
-}
-
-let __autoScrollTimer = null;
-let __autoScrollDir = 1;
-let __autoScrollPause = 0;
-
-function tickAutoScroll(){
-  if(!AUTO_SCROLL) return;
-  const el = document.getElementById("root");
-  if(!el) return;
-
-  const max = el.scrollHeight - el.clientHeight;
-  if(max <= 4) return; // nothing to scroll
-
-  if(__autoScrollPause > 0){
-    __autoScrollPause -= AUTO_SCROLL_TICK_MS;
-    return;
-  }
-
-  el.scrollTop += (__autoScrollDir * AUTO_SCROLL_PX_PER_TICK);
-
-  if(el.scrollTop <= 0){
-    el.scrollTop = 0;
-    __autoScrollDir = 1;
-    __autoScrollPause = AUTO_SCROLL_PAUSE_MS;
-  }else if(el.scrollTop >= max){
-    el.scrollTop = max;
-    __autoScrollDir = -1;
-    __autoScrollPause = AUTO_SCROLL_PAUSE_MS;
+    renderWeek(root, b.start, schedule, roster, org, avIdx, b.label);
   }
 }
 
-async function refreshBoard({initial=false}={}){
+async function refreshBoard({initial=false, force=false}={}){
   const pill = document.getElementById("statusPill");
   const root = document.getElementById("root");
 
   try{
-    pill.textContent = initial ? "Loading schedule + roster…" : "Refreshing…";
-
+    pill.textContent = initial ? "Loading…" : "Refreshing…";
     const data = await loadData();
 
-    document.getElementById("buildTag").textContent = "v2026-01-26.responsive+theme";
+    document.getElementById("buildTag").textContent = "v2026-02-01.static-weeks+avail-flags";
 
     window.__sc_lastHash ||= "";
-    const h = hashLite({ schedule: data.schedule, roster: data.roster, org: data.org });
+    const h = hashLite({ schedule: data.schedule, roster: data.roster, org: data.org, archived: SHOW_ARCHIVED });
 
-    if(!initial && h === window.__sc_lastHash){
+    if(!force && !initial && h === window.__sc_lastHash){
       const ra = data.schedule && data.schedule.meta ? data.schedule.meta.resolved_at : null;
       const t = ra ? fmtLocalTimeFromIso(ra) : "";
       pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
-      pill.title = ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "";
       pill.style.color = "#166534";
       const foot = document.getElementById("resolverFooter");
       if(foot){
@@ -959,14 +943,15 @@ async function refreshBoard({initial=false}={}){
     window.__sc_lastHash = h;
 
     const temp = document.createElement("div");
-    renderAll(temp, data.schedule, data.roster, data.org);
+    temp.style.display = "contents";
+    renderAll(temp, data.schedule, data.roster, data.org, data.avIdx);
 
     if(!initial){
       root.style.opacity = "0.18";
       setTimeout(()=>{
         root.innerHTML = temp.innerHTML;
         root.style.opacity = "1";
-      }, 180);
+      }, 160);
     }else{
       root.innerHTML = temp.innerHTML;
       root.style.opacity = "1";
@@ -995,11 +980,6 @@ async function refreshBoard({initial=false}={}){
 
 refreshBoard({initial:true});
 setInterval(()=> refreshBoard({initial:false}), AUTO_REFRESH_MS);
-
-if(AUTO_SCROLL){
-  clearInterval(__autoScrollTimer);
-  __autoScrollTimer = setInterval(tickAutoScroll, AUTO_SCROLL_TICK_MS);
-}
 </script>
 
 <script>
