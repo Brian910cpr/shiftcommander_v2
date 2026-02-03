@@ -312,10 +312,8 @@
       .name{ font-size:11px; }
     }
   </style>
-  <link rel="stylesheet" href="./css/wallboard.scoped.css" />
 </head>
 <body>
-<div class="sc-wallboard">
   <div class="top">
     <div class="brand">
       Wallboard <small>display-only health • day-pill</small>
@@ -748,7 +746,5 @@
   }
 })();
 </script>
-</div>
 </body>
 </html>
-

@@ -1,0 +1,8 @@
+/* wallboard.scoped.css
+   Purpose: prevent "exploding" layouts from global CSS collisions.
+   Wrap wallboard HTML in <div class="sc-wallboard"> ... </div>
+   Then ONLY style inside .sc-wallboard
+*/
+.sc-wallboard { min-height: 100vh; }
+.sc-wallboard .week { display: grid; gap: 10px; }
+.sc-wallboard .day { border-radius: 12px; padding: 10px; }
