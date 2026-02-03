@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ADR-FR Wallboard — Display-only Health (Day Pill)</title>
+  <title>ADR-FR Wallboard — Display-only Health</title>
   <style>
     :root{
       --bg:#0b1020;
@@ -15,16 +15,17 @@
       --ok:#22c55e;
       --warn:#f59e0b;
       --bad:#ef4444;
-      --info:#60a5fa;
+      --plan:#60a5fa;
 
       --shadow: 0 10px 26px rgba(0,0,0,.35);
       --r:14px;
 
-      /* Phase borders (thicker, color-deficiency friendly) */
-      --b-ok:  0 0 0 5px rgba(34,197,94,.60),  0 0 0 10px rgba(34,197,94,.18);
-      --b-warn:0 0 0 5px rgba(245,158,11,.65), 0 0 0 10px rgba(245,158,11,.18);
-      --b-plan:0 0 0 5px rgba(96,165,250,.68), 0 0 0 10px rgba(96,165,250,.18);
-      --b-neutral:0 0 0 3px rgba(148,163,184,.25);
+      /* Color-deficiency friendly borders */
+      --b-ok:    0 0 0 3px rgba(34,197,94,.60),  0 0 0 6px rgba(34,197,94,.18);
+      --b-warn:  0 0 0 3px rgba(245,158,11,.65), 0 0 0 6px rgba(245,158,11,.18);
+      --b-bad:   0 0 0 3px rgba(239,68,68,.70),  0 0 0 6px rgba(239,68,68,.22);
+      --b-plan:  0 0 0 3px rgba(96,165,250,.70), 0 0 0 6px rgba(96,165,250,.18);
+      --b-neutral: 0 0 0 2px rgba(148,163,184,.25);
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
@@ -39,12 +40,11 @@
       overflow:hidden;
     }
 
-    /* Top bar */
     .top{
       position:sticky; top:0; z-index:10;
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       padding:8px 10px;
-      background: rgba(8,12,28,.72);
+      background: rgba(8,12,28,.70);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--line);
     }
@@ -63,11 +63,7 @@
       white-space:nowrap;
       font-size:12px;
     }
-    .dot{
-      width:10px; height:10px; border-radius:50%;
-      background:#94a3b8;
-      box-shadow:0 0 0 4px rgba(148,163,184,.14);
-    }
+    .dot{ width:10px; height:10px; border-radius:50%; background:#94a3b8; box-shadow:0 0 0 4px rgba(148,163,184,.14); }
     .dot.ok{ background:var(--ok); box-shadow:0 0 0 4px rgba(34,197,94,.14); }
     .dot.warn{ background:var(--warn); box-shadow:0 0 0 4px rgba(245,158,11,.14); }
     .dot.bad{ background:var(--bad); box-shadow:0 0 0 4px rgba(239,68,68,.14); }
@@ -85,7 +81,6 @@
     }
     .btn:active{ transform: translateY(1px); }
 
-    /* Main */
     .wrap{
       height: calc(100vh - 44px);
       padding:8px 10px 12px;
@@ -99,7 +94,6 @@
       overflow:hidden;
     }
 
-    /* Collapsible sections */
     details.section{
       border:1px solid var(--line);
       background: var(--panel);
@@ -125,7 +119,6 @@
     .sLeft{ display:flex; align-items:center; gap:10px; min-width:0; }
     .sTitle{ white-space:nowrap; }
     .sHelp{ color:var(--muted); font-weight:850; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .sRight{ display:flex; align-items:center; gap:8px; }
     .pill{
       display:inline-flex; align-items:center; gap:6px;
       padding:5px 8px;
@@ -145,16 +138,16 @@
       gap:10px;
     }
 
-    /* One row per week */
     .weekRow{
       display:grid;
-      grid-template-columns: 150px repeat(7, minmax(0, 1fr));
+      grid-template-columns: 165px repeat(7, minmax(0, 1fr));
       gap:6px;
       padding:8px;
       border:1px solid rgba(255,255,255,.10);
       border-radius: 14px;
       background: rgba(0,0,0,.14);
     }
+
     .weekRow.state-controlled{ box-shadow: var(--b-warn); }
     .weekRow.state-published{  box-shadow: var(--b-ok); }
     .weekRow.state-planning{   box-shadow: var(--b-plan); }
@@ -173,13 +166,7 @@
     }
     .wkTitle{ font-weight:950; letter-spacing:.2px; line-height:1.05; font-size: 13px; }
     .wkRange{ font-weight:850; color:var(--muted); font-size: 12px; line-height:1.1; }
-    .wkMini{
-      display:flex; align-items:center; gap:6px; flex-wrap:wrap;
-      font-weight:950;
-      font-size:11px;
-      color:var(--muted);
-    }
-    .wkMini b{ color:var(--text); }
+    .wkMini{ font-weight:900; font-size:11px; color:var(--muted); }
 
     .dayCell{
       border:1px solid rgba(255,255,255,.10);
@@ -189,58 +176,14 @@
       min-width:0;
       display:flex;
       flex-direction:column;
-      gap:6px;
+      gap:4px;
     }
+    .dayTop{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; white-space:nowrap; }
+    .dow{ font-weight:950; font-size:11px; color:var(--muted); letter-spacing:.4px; }
+    .dayNum{ font-weight:950; font-size:14px; letter-spacing:.2px; }
+    .obs{ font-weight:950; font-size:11px; color:rgba(231,236,255,.85); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+    .obs span{ opacity:.9; }
 
-    /* ✅ Day header pill carries day health */
-    .dayPill{
-      position:relative;
-      display:flex;
-      align-items:baseline;
-      justify-content:space-between;
-      gap:8px;
-      padding:6px 8px;
-      border-radius: 10px;
-      border:3px solid rgba(148,163,184,.35);
-      background: rgba(148,163,184,.16);
-      overflow:hidden;
-    }
-    .dayPill .dow{ font-weight:950; font-size:11px; color:rgba(231,236,255,.78); letter-spacing:.4px; }
-    .dayPill .dayNum{ font-weight:950; font-size:15px; letter-spacing:.2px; }
-
-    .dayPill.ok{
-      background: rgba(34,197,94,.26);
-      border-color: rgba(34,197,94,.80);
-      box-shadow: 0 0 0 2px rgba(34,197,94,.22);
-    }
-    .dayPill.warn{
-      background: rgba(245,158,11,.24);
-      border-color: rgba(245,158,11,.86);
-      box-shadow: 0 0 0 2px rgba(245,158,11,.20);
-    }
-    .dayPill.bad{
-      background: rgba(239,68,68,.24);
-      border-color: rgba(239,68,68,.90);
-      box-shadow: 0 0 0 2px rgba(239,68,68,.22);
-    }
-
-    /* Patterns for accessibility */
-    .dayPill.warn::after,
-    .dayPill.bad::after{
-      content:"";
-      position:absolute; inset:0;
-      pointer-events:none;
-      opacity:.55;
-    }
-    .dayPill.warn::after{
-      background: repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 5px, rgba(255,255,255,0) 5px 10px);
-    }
-    .dayPill.bad::after{
-      opacity:.62;
-      background: repeating-linear-gradient(135deg, rgba(255,255,255,.22) 0 4px, rgba(255,255,255,0) 4px 8px);
-    }
-
-    /* Compact slot layout: label + stacked names */
     .slot{
       display:grid;
       grid-template-columns: 26px 1fr;
@@ -267,7 +210,7 @@
     }
     .name.open{ color: rgba(231,236,255,.55); font-weight:900; }
 
-    /* Planning health strip */
+    /* Health strip: display-only */
     .healthStrip{
       display:grid;
       grid-template-columns: repeat(7, 1fr);
@@ -286,15 +229,28 @@
     .hBox{
       border-radius:6px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(148,163,184,.20);
+      background: rgba(148,163,184,.18); /* unknown */
       position:relative;
       overflow:hidden;
     }
-    .hBox.ok{ background: rgba(34,197,94,.28); border-color: rgba(34,197,94,.45); }
-    .hBox.warn{ background: rgba(245,158,11,.26); border-color: rgba(245,158,11,.45); }
-    .hBox.bad{ background: rgba(239,68,68,.24); border-color: rgba(239,68,68,.45); }
+    .hBox.ok{ background: rgba(34,197,94,.28); border-color: rgba(34,197,94,.50); }
+    .hBox.warn{ background: rgba(245,158,11,.26); border-color: rgba(245,158,11,.50); }
+    .hBox.bad{ background: rgba(239,68,68,.24); border-color: rgba(239,68,68,.50); }
 
-    /* Error banner */
+    /* pattern overlay for accessibility */
+    .hBox.bad::after{
+      content:"";
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(135deg, rgba(255,255,255,.18) 0 4px, rgba(255,255,255,0) 4px 8px);
+      opacity:.55;
+    }
+    .hBox.warn::after{
+      content:"";
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(45deg, rgba(255,255,255,.14) 0 5px, rgba(255,255,255,0) 5px 10px);
+      opacity:.45;
+    }
+
     .fatal{
       margin:8px 10px 0;
       padding:10px 12px;
@@ -306,9 +262,15 @@
       display:none;
       font-size:12px;
     }
+    .fatal code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    /* Debug scroll */
+    body.scroll .wrap{ overflow:auto; }
+    body.scroll{ overflow:auto; }
+    body.scroll .board{ overflow:auto; padding-bottom:40px; }
 
     @media (max-width: 1200px){
-      .weekRow{ grid-template-columns: 140px repeat(7, minmax(0, 1fr)); }
+      .weekRow{ grid-template-columns: 155px repeat(7, minmax(0, 1fr)); }
       .name{ font-size:11px; }
     }
   </style>
@@ -316,9 +278,10 @@
 <body>
   <div class="top">
     <div class="brand">
-      Wallboard <small>display-only health • day-pill</small>
+      Wallboard <small>display-only health • build 2026-02-02</small>
     </div>
     <div class="controls">
+      <button class="btn" id="btnShift" title="Toggle view: Both → Night → Day">Both</button>
       <button class="btn" id="btnNames" title="Toggle name style">Name: First</button>
       <span class="chip" id="chipStatus"><span class="dot warn" id="dot"></span><span id="status">Loading…</span></span>
       <span class="chip"><span id="updated">—</span></span>
@@ -338,18 +301,20 @@
   const LS_TOKEN = "sc_token";
 
   const OPT = {
+    scroll: qs.get("scroll")==="1",
     refreshSec: clampInt(qs.get("refresh"), 10, 3600, 60),
-    weeks: clampInt(qs.get("weeks"), 3, 24, 10),
-    // name modes: 1=first(default), 2=initials, 3=F.Last, 4=First L., 5=First+Last, 6=Callsign
+    weeks: clampInt(qs.get("weeks"), 3, 24, 12),
     name: clampInt(qs.get("name"), 1, 6, 1),
-    planning: clampInt(qs.get("planning"), 2, 12, 6),
     controlled: clampInt(qs.get("controlled"), 1, 4, 2),
     published: clampInt(qs.get("published"), 1, 6, 2),
+    planning: clampInt(qs.get("planning"), 2, 12, 6),
+    hol: qs.get("hol")==="1"
   };
+  if(OPT.scroll) document.body.classList.add("scroll");
 
-  function clampInt(v, min, max, def){
+  function clampInt(v,min,max,def){
     const n = Number(v);
-    if (!Number.isFinite(n)) return def;
+    if(!Number.isFinite(n)) return def;
     const i = Math.floor(n);
     return Math.max(min, Math.min(max, i));
   }
@@ -368,6 +333,35 @@
     document.getElementById("status").textContent = text;
   }
   function setUpdated(text){ document.getElementById("updated").textContent = text; }
+
+  function getToken(){ try{ return localStorage.getItem(LS_TOKEN) || ""; }catch(e){ return ""; } }
+  async function storeGet(kind){
+    const url = new URL(STORE_BASE);
+    url.searchParams.set("kind", kind);
+    const token = getToken();
+    if(token) url.searchParams.set("token", token);
+    const resp = await fetch(url.toString(), { method:"GET", cache:"no-store" });
+    const text = await resp.text();
+    let j = null;
+    try{ j = JSON.parse(text); }catch(e){}
+    if(!resp.ok) throw new Error("Store GET "+kind+" failed ("+resp.status+")");
+    return j ?? text;
+  }
+  function unwrapStorePayload(resp){
+    if(resp && typeof resp === "object"){
+      if(resp.payload !== undefined) return resp.payload;
+      if(resp.data !== undefined) return resp.data;
+      if(resp.value !== undefined) return resp.value;
+      if(resp.body !== undefined) return resp.body;
+      if(resp.ok && resp.kind && resp.result !== undefined) return resp.result;
+    }
+    return resp;
+  }
+  function normalizeScheduleMap(s){
+    if(!s || typeof s !== "object") return {};
+    if(s.schedule && typeof s.schedule === "object") return s.schedule;
+    return s;
+  }
 
   function pad2(n){ return String(n).padStart(2,"0"); }
   function isoDate(d){
@@ -403,40 +397,39 @@
   }
   const DOW = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
 
-  function getToken(){ try{ return localStorage.getItem(LS_TOKEN) || ""; }catch(e){ return ""; } }
-  async function storeGet(kind){
-    const url = new URL(STORE_BASE);
-    url.searchParams.set("kind", kind);
-    const token = getToken();
-    if(token) url.searchParams.set("token", token);
-    const resp = await fetch(url.toString(), { method:"GET", cache:"no-store" });
-    const text = await resp.text();
-    let j = null;
-    try{ j = JSON.parse(text); }catch(e){}
-    if(!resp.ok) throw new Error("Store GET "+kind+" failed ("+resp.status+")");
-    return j ?? text;
+  // ===== Name modes =====
+  function splitName(full){
+    const s = String(full||"").trim().replace(/\s+/g," ");
+    if(!s) return { first:"", last:"", parts:[] };
+    const parts = s.split(" ");
+    return { first: parts[0]||"", last: parts.length>1 ? parts[parts.length-1] : "", parts };
   }
-  function unwrapStorePayload(resp){
-    if(resp && typeof resp === "object"){
-      if(resp.payload !== undefined) return resp.payload;
-      if(resp.data !== undefined) return resp.data;
-      if(resp.value !== undefined) return resp.value;
-      if(resp.body !== undefined) return resp.body;
-      if(resp.ok && resp.kind && resp.result !== undefined) return resp.result;
+  function initials(parts){ return parts.filter(Boolean).map(p => (p[0]||"").toUpperCase()).join(""); }
+  function formatName(memberObj, idStr){
+    const base = String(memberObj?.display_name || memberObj?.name || memberObj?.callsign || idStr).trim();
+    const { first, last, parts } = splitName(base);
+    const single = parts.length<=1;
+    switch(OPT.name){
+      case 2: return single ? base.toUpperCase().slice(0,3) : initials(parts);
+      case 3: return single ? base : ((first?first[0].toUpperCase()+".":"") + (last?(" "+last):"")).trim();
+      case 4: return single ? base : ((first||base) + (last?(" "+last[0].toUpperCase()+"."):"")).trim();
+      case 5: return single ? base : ((first||"") + (last?(" "+last):"")).trim();
+      case 6: return String(memberObj?.callsign||"").trim() || (first||base);
+      case 1:
+      default: return first || base;
     }
-    return resp;
   }
-  function normalizeScheduleMap(s){
-    if(!s || typeof s !== "object") return {};
-    if(s.schedule && typeof s.schedule === "object") return s.schedule;
-    return s;
+  function nameModeLabel(){
+    return {1:"First",2:"Initials",3:"F.Last",4:"First L.",5:"First Last",6:"Callsign"}[OPT.name] || "First";
   }
+
+  // ===== Slot parsing (supports optional third rider) =====
   function getSlot(schedule, dateIso, shift){
     const day = schedule?.[dateIso];
     if(!day || typeof day !== "object") return null;
-    return day?.[shift] || day?.[shift.toLowerCase()] || null;
+    return day?.[shift] || day?.[shift.toLowerCase?.()] || null;
   }
-  function listNames(slot){
+  function listIds(slot){
     if(!slot) return ["OPEN","OPEN"];
     if(Array.isArray(slot)) return slot.map(x=>x||"OPEN");
     if(slot && typeof slot === "object"){
@@ -453,52 +446,30 @@
     return !s || s==="OPEN" || s==="-" || s==="—";
   }
 
-  /* Name modes */
-  function splitName(full){
-    const s = String(full||"").trim().replace(/\s+/g," ");
-    if(!s) return { first:"", last:"", parts:[] };
-    const parts = s.split(" ");
-    return { first: parts[0]||"", last: parts.length>1 ? parts[parts.length-1] : "", parts };
+  // ===== Health lookup (display-only) =====
+  function getHealthMeta(schedule){
+    // accept schedule.meta.health_v1 or schedule.health_v1 if older
+    const meta = (schedule && typeof schedule==="object") ? schedule.meta : null;
+    const hv = meta?.health_v1 || schedule?.health_v1 || null;
+    return hv && typeof hv==="object" ? hv : null;
   }
-  function initials(parts){ return parts.filter(Boolean).map(p => (p[0]||"").toUpperCase()).join(""); }
-  function formatName(memberObj, idStr){
-    const base = String(
-      memberObj?.display_name ||
-      memberObj?.name ||
-      memberObj?.callsign ||
-      idStr
-    ).trim();
-    const { first, last, parts } = splitName(base);
-    const single = parts.length <= 1;
-
-    switch(OPT.name){
-      case 2: return single ? base.toUpperCase().slice(0,3) : initials(parts);
-      case 3: return single ? base : ((first?first[0].toUpperCase()+".":"") + (last?(" "+last):"")).trim();
-      case 4: return single ? base : ((first||base) + (last?(" "+last[0].toUpperCase()+"."):"")).trim();
-      case 5: return single ? base : ((first||"") + (last?(" "+last):"")).trim();
-      case 6: return String(memberObj?.callsign||"").trim() || (first||base);
-      case 1:
-      default: return first || base;
-    }
-  }
-  function nameModeLabel(){
-    return {1:"First",2:"Initials",3:"F.Last",4:"First L.",5:"First Last",6:"Callsign"}[OPT.name] || "First";
+  function getHealthFor(hv, dateIso, shift){
+    if(!hv || !hv.days) return "unknown";
+    const day = hv.days[dateIso];
+    if(!day) return "unknown";
+    const v = day[shift] || day[shift.toLowerCase?.()] || "unknown";
+    return ["ok","warn","bad"].includes(v) ? v : "unknown";
   }
 
-  /* Health display-only helpers */
-  function normalizeHealthToken(x){
-    const s = String(x||"unknown").toLowerCase();
-    if(s==="ok"||s==="warn"||s==="bad"||s==="unknown"||s==="na") return s;
-    return "unknown";
-  }
-  function dayOverallHealth(hvForDate){
-    const a = normalizeHealthToken(hvForDate?.AM);
-    const p = normalizeHealthToken(hvForDate?.PM);
-    if(a==="bad" || p==="bad") return "bad";
-    if(a==="warn" || p==="warn") return "warn";
-    if(a==="ok" && p==="ok") return "ok";
-    if((a==="ok" && p==="unknown") || (p==="ok" && a==="unknown")) return "warn";
-    return "unknown";
+  // ===== Tier 1 observances (optional) =====
+  function getObs(org, dateIso){
+    if(!OPT.hol) return null;
+    const o = org?.observances_v1?.[dateIso];
+    if(!o) return null;
+    const emoji = String(o.emoji||"").trim();
+    const label = String(o.label||"").trim();
+    if(!emoji && !label) return null;
+    return {emoji,label};
   }
 
   function buildWeekStarts(schedule){
@@ -507,7 +478,7 @@
     if(!dates.length){
       const t = new Date();
       const base = startOfWeekSunday(new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate())));
-      return Array.from({length:8}, (_,i)=>addDays(base, i*7));
+      return Array.from({length:12}, (_,i)=>addDays(base, i*7));
     }
     const seen = new Set();
     const starts = [];
@@ -521,7 +492,10 @@
     return starts;
   }
 
-  function renderWeekRow({label, stateClass, ws, schedule, membersById, healthDays, showNames=true, showHealth=true}){
+  // ===== Render pieces =====
+  let SHIFT_VIEW = "BOTH"; // BOTH | PM | AM
+
+  function renderWeekRow({label, stateClass, ws, schedule, membersById, hv, showNames=true, showHealth=true, org=null}){
     const row = document.createElement("div");
     row.className = "weekRow " + stateClass;
 
@@ -530,48 +504,57 @@
     meta.innerHTML = `
       <div class="wkTitle">${escapeHtml(fmtRange(ws))}</div>
       <div class="wkRange">${escapeHtml(isoDate(ws))}</div>
-      <div class="wkMini"><b>${escapeHtml(label)}</b> • <span>AM/PM health</span></div>
+      <div class="wkMini"><b>${escapeHtml(label)}</b> • health from Supervisor resolve</div>
     `;
     if(showHealth){
-      const hs = document.createElement("div");
-      hs.className = "healthStrip";
+      const strip = document.createElement("div");
+      strip.className = "healthStrip";
       for(let i=0;i<7;i++){
         const d = addDays(ws, i);
         const dateIso = isoDate(d);
-        const hv = healthDays?.[dateIso] || {AM:"unknown", PM:"unknown"};
         const day = document.createElement("div");
         day.className = "healthDay";
+
         const am = document.createElement("div");
-        am.className = "hBox " + normalizeHealthToken(hv.AM);
+        am.className = "hBox " + getHealthFor(hv, dateIso, "AM");
+
         const pm = document.createElement("div");
-        pm.className = "hBox " + normalizeHealthToken(hv.PM);
+        pm.className = "hBox " + getHealthFor(hv, dateIso, "PM");
+
         day.appendChild(am); day.appendChild(pm);
-        hs.appendChild(day);
+        strip.appendChild(day);
       }
-      meta.appendChild(hs);
+      meta.appendChild(strip);
     }
     row.appendChild(meta);
 
     for(let i=0;i<7;i++){
       const d = addDays(ws, i);
       const dateIso = isoDate(d);
+
       const cell = document.createElement("div");
       cell.className = "dayCell";
+      const dow = DOW[d.getUTCDay()];
+      const dayNum = String(new Date(dateIso+"T00:00:00").getDate());
 
-      const hv = healthDays?.[dateIso] || {AM:"unknown", PM:"unknown"};
-      const overall = dayOverallHealth(hv);
+      const obs = getObs(org, dateIso);
+      const obsHtml = obs ? `<div class="obs"><span>${escapeHtml(obs.emoji)}</span> ${escapeHtml(obs.label)}</div>` : "";
 
-      const pill = document.createElement("div");
-      pill.className = "dayPill " + overall;
-      pill.innerHTML = `<div class="dow">${DOW[d.getUTCDay()]}</div><div class="dayNum">${d.getUTCDate()}</div>`;
-      cell.appendChild(pill);
+      cell.innerHTML = `
+        <div class="dayTop">
+          <div class="dow">${dow}</div>
+          <div class="dayNum">${dayNum}</div>
+        </div>
+        ${obsHtml}
+      `;
 
       if(showNames){
-        for(const sh of ["AM","PM"]){
+        const shifts = (SHIFT_VIEW==="BOTH") ? ["AM","PM"] : [SHIFT_VIEW];
+        for(const sh of shifts){
           const slot = getSlot(schedule, dateIso, sh);
-          const ids = listNames(slot);
+          const ids = listIds(slot);
 
-          const lines = ids.slice(0,3).map((id)=>{
+          const lines = ids.slice(0,3).map(id=>{
             const open = isOpen(id);
             const m = open ? null : (membersById[String(id)] || null);
             const nm = open ? "OPEN" : formatName(m, String(id));
@@ -588,7 +571,6 @@
 
       row.appendChild(cell);
     }
-
     return row;
   }
 
@@ -616,81 +598,91 @@
     return det;
   }
 
+  // ===== Controls =====
   function syncButtons(){
+    document.getElementById("btnShift").textContent = (SHIFT_VIEW==="BOTH") ? "Both" : (SHIFT_VIEW==="PM" ? "Night" : "Day");
     document.getElementById("btnNames").textContent = "Name: " + nameModeLabel();
   }
+  document.getElementById("btnShift").addEventListener("click", ()=>{
+    SHIFT_VIEW = (SHIFT_VIEW==="BOTH") ? "PM" : (SHIFT_VIEW==="PM" ? "AM" : "BOTH");
+    syncButtons(); main();
+  });
   document.getElementById("btnNames").addEventListener("click", ()=>{
     OPT.name = (OPT.name % 6) + 1;
-    syncButtons();
-    main();
+    syncButtons(); main();
   });
-
-  async function loadData(){
-    setStatus("warn","Loading…");
-    const [orgResp, membersResp, schedResp] = await Promise.allSettled([
-      storeGet("org_settings"), storeGet("members"), storeGet("schedule")
-    ]);
-    const org = (orgResp.status==="fulfilled") ? unwrapStorePayload(orgResp.value) : {};
-    const members = (membersResp.status==="fulfilled") ? unwrapStorePayload(membersResp.value) : [];
-    const sched = (schedResp.status==="fulfilled") ? unwrapStorePayload(schedResp.value) : {};
-    return { org, members, sched };
-  }
 
   function membersById(members){
     const by = {};
     (Array.isArray(members)?members:[]).forEach(m=>{
       const id = String(m.member_id||"").trim();
-      if(!id) return;
-      by[id] = m;
+      if(id) by[id] = m;
     });
     return by;
   }
 
-  function partitionWeeks(starts, wf){
-    const controlledN = clampInt(wf?.controlled_weeks, 1, 4, OPT.controlled);
-    const publishedN  = clampInt(wf?.published_weeks, 1, 6, OPT.published);
-    const planningN   = clampInt(wf?.planning_weeks,  2, 12, OPT.planning);
+  function partitionWeeks(starts, org){
+    const wf = org?.workflow || {};
+    const controlled = Number(wf.controlled_weeks || OPT.controlled);
+    const published  = Number(wf.published_weeks  || OPT.published);
+    const planning   = Number(wf.planning_weeks   || OPT.planning);
 
-    const controlled = starts.slice(0, controlledN);
-    const published  = starts.slice(controlledN, controlledN + publishedN);
-    const planning   = starts.slice(controlledN + publishedN, controlledN + publishedN + planningN);
-    return { controlled, published, planning };
+    return {
+      controlled: starts.slice(0, controlled),
+      published:  starts.slice(controlled, controlled + published),
+      planning:   starts.slice(controlled + published, controlled + published + planning)
+    };
   }
 
-  function render(org, members, sched){
+  async function loadData(){
+    setStatus("warn","Loading…");
+    const [orgResp, membersResp, schedResp] = await Promise.allSettled([
+      storeGet("org_settings"),
+      storeGet("members"),
+      storeGet("schedule")
+    ]);
+
+    const org = (orgResp.status==="fulfilled") ? unwrapStorePayload(orgResp.value) : {};
+    const members = (membersResp.status==="fulfilled") ? unwrapStorePayload(membersResp.value) : [];
+    const scheduleRaw = (schedResp.status==="fulfilled") ? unwrapStorePayload(schedResp.value) : {};
+
+    return { org, members, scheduleRaw };
+  }
+
+  function renderAll({org, members, scheduleRaw}){
     const board = document.getElementById("board");
     board.innerHTML = "";
 
-    const schedule = normalizeScheduleMap(sched);
-    const hvDays = (sched?.meta?.health_v1?.days && typeof sched.meta.health_v1.days === "object") ? sched.meta.health_v1.days : {};
-
-    const startsAll = buildWeekStarts(schedule).slice(0, OPT.weeks);
-    const parts = partitionWeeks(startsAll, org?.workflow);
+    const schedule = normalizeScheduleMap(scheduleRaw);
+    const hv = getHealthMeta(scheduleRaw) || getHealthMeta(schedule);
 
     const mBy = membersById(members);
+
+    const startsAll = buildWeekStarts(schedule).slice(0, OPT.weeks);
+    const parts = partitionWeeks(startsAll, org);
 
     const controlledRows = parts.controlled.map(ws => renderWeekRow({
       label:"Controlled",
       stateClass:"state-controlled",
-      ws, schedule, membersById:mBy,
-      healthDays: hvDays,
-      showNames:true, showHealth:true
+      ws, schedule, membersById:mBy, hv,
+      showNames:true, showHealth:true,
+      org
     }));
 
     const publishedRows = parts.published.map(ws => renderWeekRow({
       label:"Published",
       stateClass:"state-published",
-      ws, schedule, membersById:mBy,
-      healthDays: hvDays,
-      showNames:true, showHealth:true
+      ws, schedule, membersById:mBy, hv,
+      showNames:true, showHealth:true,
+      org
     }));
 
     const planningRows = parts.planning.map(ws => renderWeekRow({
       label:"Planning",
       stateClass:"state-planning",
-      ws, schedule, membersById:mBy,
-      healthDays: hvDays,
-      showNames:false, showHealth:true
+      ws, schedule, membersById:mBy, hv,
+      showNames:false, showHealth:true,
+      org
     }));
 
     board.appendChild(buildSection({
@@ -703,7 +695,7 @@
 
     board.appendChild(buildSection({
       title:"Published",
-      help:"Drop / swap early — avoid last-minute chaos.",
+      help:"Drop / swap requests encouraged early. Avoid last-minute chaos.",
       countPill:`${publishedRows.length} week(s)`,
       open:true,
       rows: publishedRows
@@ -711,21 +703,21 @@
 
     board.appendChild(buildSection({
       title:"Planning",
-      help:"No names shown. Health is display-only from Supervisor resolver run.",
+      help:"Names hidden. Health strip is display-only and comes from Supervisor resolve.",
       countPill:`${planningRows.length} week(s)`,
       open:false,
       rows: planningRows
     }));
 
-    setStatus("ok","Live");
+    setStatus(hv ? "ok" : "warn", hv ? "Live" : "No health_v1 yet");
     setUpdated("Updated " + new Date().toLocaleTimeString());
   }
 
   async function main(){
     try{
       syncButtons();
-      const { org, members, sched } = await loadData();
-      render(org, members, sched);
+      const data = await loadData();
+      renderAll(data);
     }catch(e){
       console.error(e);
       fatal("Load/render failed", e);
@@ -733,6 +725,7 @@
     }
   }
 
+  // Boot
   try{
     setStatus("warn","Booting…");
     syncButtons();
