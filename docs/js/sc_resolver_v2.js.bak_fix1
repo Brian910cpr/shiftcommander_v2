@@ -1,0 +1,249 @@
+/**
+ * sc_resolver_v2.js
+ * Deterministic, explainable resolver that outputs a wallboard-compatible schedule map:
+ * schedule[YYYY-MM-DD][AM|PM] = { attendant, operator, third } (or array)
+ *
+ * NOTE: This is PURE compute: it does not call network, does not depend on backend IDs.
+ */
+
+export function isoDateUTC(d) {
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const y = x.getUTCFullYear();
+  const m = String(x.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(x.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+export function startOfWeekSundayUTC(date) {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dow = d.getUTCDay(); // 0=Sun
+  d.setUTCDate(d.getUTCDate() - dow);
+  return d;
+}
+
+export function addDaysUTC(date, n) {
+  const d = new Date(date.getTime());
+  d.setUTCDate(d.getUTCDate() + n);
+  return d;
+}
+
+function ensureArr(x){ return Array.isArray(x) ? x : (x == null ? [] : [x]); }
+
+function memberIdStr(m){
+  // Your store members often use member_id (string like "107")
+  // Fallback to id
+  return String(m?.member_id ?? m?.id ?? "").trim();
+}
+
+function hasRequiredQuals(member, required){
+  const req = ensureArr(required).map(String);
+  if (!req.length) return true;
+  const quals = ensureArr(member?.qualifications).map(String);
+  // Some of your older data stored quals as concatenated strings. If so, treat as tokenized.
+  const quals2 = quals.length === 1 && typeof member?.qualifications === "string"
+    ? String(member.qualifications).split(/[\s,]+/).filter(Boolean)
+    : quals;
+  return req.every(q => quals2.includes(q));
+}
+
+function findFullShiftAvailability(availsForMember, shiftStartISO, shiftEndISO){
+  const shiftStart = new Date(shiftStartISO);
+  const shiftEnd   = new Date(shiftEndISO);
+  for (const a of availsForMember){
+    if (String(a.preference||"").toLowerCase() === "unavailable") continue;
+    const s = new Date(a.start_datetime);
+    const e = new Date(a.end_datetime);
+    if (s <= shiftStart && e >= shiftEnd) return a;
+  }
+  return null;
+}
+
+export function buildPlannedSchedule({
+  weekStartISO,            // "YYYY-MM-DD" (Sunday)
+  units,                   // array
+  seatTypes,               // array; must include unit_id + required_qualifications + label
+  members,                 // array; must include member_id + qualifications
+  availability,            // array; must include member_id + start/end + preference + is_partial?
+  seatKeyMode = "basic",   // "basic" uses {attendant,operator,third}
+  watchdogMs = 45000,      // for UI; compute will respect but should be fast
+  maxCandidatesLogged = 5
+}){
+  const t0 = Date.now();
+  const logs = [];
+  const addLog = (type, msg) => logs.push({ t: Date.now()-t0, type, msg });
+
+  const weekStart = new Date(weekStartISO + "T00:00:00Z");
+  const days = Array.from({length:7}, (_,i)=>addDaysUTC(weekStart, i));
+  const shifts = ["AM","PM"];
+
+  // Index availability by member
+  const availBy = new Map();
+  for (const a of (availability||[])){
+    const mid = String(a.member_id ?? a.memberId ?? "").trim();
+    if (!mid) continue;
+    if (!availBy.has(mid)) availBy.set(mid, []);
+    availBy.get(mid).push(a);
+  }
+
+  // Fairness trackers
+  const memberHours = new Map();
+  const memberUndes = new Map();
+  for (const m of (members||[])){
+    const mid = memberIdStr(m);
+    if (!mid) continue;
+    memberHours.set(mid, Number(m.total_hours_assigned||0));
+    memberUndes.set(mid, Number(m.undesirable_count||0));
+  }
+
+  // Pre-build feasibility check (fast, deterministic)
+  addLog("info", "🔍 Pre-build feasibility check");
+  const issues = [];
+  for (const u of (units||[])){
+    const unitSeats = (seatTypes||[]).filter(st => String(st.unit_id) === String(u.id));
+    for (const seat of unitSeats){
+      const req = ensureArr(seat.required_qualifications);
+      const eligible = (members||[]).filter(m => hasRequiredQuals(m, req)).length;
+      if (eligible === 0) issues.push(`ZERO eligible: ${u.name} → ${seat.label} (req: ${req.join(", ")||"none"})`);
+      else if (eligible < 3) issues.push(`Low candidates (${eligible}): ${u.name} → ${seat.label}`);
+    }
+  }
+  if (issues.length){
+    addLog("warn", "❌ Feasibility issues:");
+    for (const x of issues) addLog("warn", " - " + x);
+  } else {
+    addLog("ok", "✓ Feasibility OK");
+  }
+
+  // Output schedule map
+  const schedule = {};
+  // Prevent double-booking within same day/shift across units (optional)
+  const assignedByShift = {}; // key: date|shift => Set(member_id)
+
+  // Deterministic ordering: sort units and seatTypes by stable keys
+  const unitsSorted = [...(units||[])].sort((a,b)=>String(a.name).localeCompare(String(b.name)) || String(a.id).localeCompare(String(b.id)));
+  const seatTypesByUnit = new Map();
+  for (const u of unitsSorted){
+    const sts = (seatTypes||[]).filter(st => String(st.unit_id) === String(u.id))
+      .sort((a,b)=>String(a.label).localeCompare(String(b.label)) || String(a.id).localeCompare(String(b.id)));
+    seatTypesByUnit.set(String(u.id), sts);
+  }
+
+  addLog("info", "🚀 Resolver start (deterministic)");
+
+  for (const day of days){
+    if (Date.now() - t0 > watchdogMs){
+      addLog("warn", "⏱️ Watchdog timeout during compute (partial output returned)");
+      return { schedule, logs, partial:true, reason:"timeout" };
+    }
+    const dateIso = isoDateUTC(day);
+    schedule[dateIso] = schedule[dateIso] || {};
+
+    for (const shift of shifts){
+      const key = `${dateIso}|${shift}`;
+      assignedByShift[key] = assignedByShift[key] || new Set();
+
+      // shift window (UTC)
+      const shiftStartISO = shift === "AM"
+        ? `${dateIso}T06:00:00Z`
+        : `${dateIso}T18:00:00Z`;
+      const shiftEndISO = shift === "AM"
+        ? `${dateIso}T18:00:00Z`
+        : `${isoDateUTC(addDaysUTC(day,1))}T06:00:00Z`;
+
+      // Build per-unit seat assignments and pack into a compact slot object
+      // Wallboard reads either array or {attendant/operator/third}. We'll use that.
+      // We'll treat first seat label sort as attendant, second as operator, third as third.
+      const slotObj = { attendant:"OPEN", operator:"OPEN", third:"OPEN" };
+
+      // We fill seats across units by cycling units then seats. If you want per-unit blocks,
+      // you can extend the schema later. For now, we match your current wallboard 2-3-name display.
+      // (This is intentional: keep compatibility first.)
+      const fillTargets = ["attendant","operator","third"];
+      let fillIdx = 0;
+
+      for (const u of unitsSorted){
+        const seats = seatTypesByUnit.get(String(u.id)) || [];
+        for (const seat of seats){
+          if (fillIdx >= fillTargets.length) break;
+
+          const targetKey = fillTargets[fillIdx];
+
+          const req = ensureArr(seat.required_qualifications);
+
+          // Candidates with scores
+          const candidates = (members||[]).map(m => {
+            const mid = memberIdStr(m);
+            const reasons = [];
+            let eligible = true;
+            let prefScore = 0;
+
+            if (!mid){ eligible=false; reasons.push("missing member_id"); }
+
+            if (!hasRequiredQuals(m, req)){
+              eligible=false;
+              reasons.push("missing quals");
+            }
+
+            const avs = availBy.get(mid) || [];
+            const match = findFullShiftAvailability(avs, shiftStartISO, shiftEndISO);
+            if (!match){
+              eligible=false;
+              reasons.push("not available");
+            } else {
+              if (match.is_partial){ prefScore -= 5; reasons.push("partial"); }
+              if (String(match.preference||"").toLowerCase() === "preferred"){ prefScore += 10; }
+            }
+
+            if (assignedByShift[key].has(mid)){
+              eligible=false;
+              reasons.push("already assigned this shift");
+            }
+
+            const hours = memberHours.get(mid) || 0;
+            const undes = memberUndes.get(mid) || 0;
+            const fairness = -(hours * 1.0) - (undes * 2.0);
+
+            return { mid, name: String(m.name||mid), eligible, fairness, prefScore, hours, undes, reasons: reasons.length?reasons:["eligible"] };
+          });
+
+          // Deterministic stable sort:
+          candidates.sort((a,b)=>{
+            if (a.eligible !== b.eligible) return (b.eligible?1:0) - (a.eligible?1:0);
+            if (a.fairness !== b.fairness) return b.fairness - a.fairness;
+            if (a.prefScore !== b.prefScore) return b.prefScore - a.prefScore;
+            return a.mid.localeCompare(b.mid);
+          });
+
+          addLog("info", `┌─ ${dateIso} ${shift} :: ${u.name} → ${seat.label} (req: ${req.join(", ")||"none"})`);
+          candidates.slice(0, maxCandidatesLogged).forEach((c,i)=>{
+            addLog("info", `│ ${i+1}. ${c.eligible?"✓":"✗"} ${c.name} [F:${c.fairness.toFixed(1)} P:${c.prefScore}] (${c.hours}h/${c.undes}u) ${c.reasons.join(",")}`);
+          });
+
+          const pick = candidates.find(c=>c.eligible) || null;
+          if (pick){
+            slotObj[targetKey] = pick.mid;
+            assignedByShift[key].add(pick.mid);
+
+            // update fairness
+            memberHours.set(pick.mid, (memberHours.get(pick.mid)||0) + 12);
+            if (shift === "PM") memberUndes.set(pick.mid, (memberUndes.get(pick.mid)||0) + 1);
+
+            addLog("ok", `└─ ✅ ${targetKey.toUpperCase()}: ${pick.name}`);
+          } else {
+            addLog("warn", `└─ ⚠️ ${targetKey.toUpperCase()}: OPEN`);
+          }
+
+          fillIdx++;
+        }
+        if (fillIdx >= fillTargets.length) break;
+      }
+
+schedule[dateIso][shift] = seatKeyMode === "array"
+        ? [slotObj.attendant, slotObj.operator, slotObj.third]
+        : slotObj;
+    }
+  }
+
+  addLog("ok", "✅ Resolver complete");
+  return { schedule, logs, partial:false, reason:null };
+}
