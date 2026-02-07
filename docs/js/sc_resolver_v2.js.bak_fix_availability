@@ -28,16 +28,6 @@ export function addDaysUTC(date, n) {
 }
 
 function ensureArr(x){ return Array.isArray(x) ? x : (x == null ? [] : [x]); }
-function asArray(x){
-  if (Array.isArray(x)) return x;
-  if (x == null) return [];
-  if (typeof x === "object") {
-    if (Array.isArray(x.items)) return x.items;
-    if (Array.isArray(x.availability)) return x.availability;
-    if (Array.isArray(x.payload)) return x.payload;
-  }
-  return [];
-}
 
 function memberIdStr(m){
   // Your store members often use member_id (string like "107")
@@ -257,5 +247,4 @@ schedule[dateIso][shift] = seatKeyMode === "array"
   addLog("ok", "✅ Resolver complete");
   return { schedule, logs, partial:false, reason:null };
 }
-
 
