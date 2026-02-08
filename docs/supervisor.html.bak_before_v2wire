@@ -330,6 +330,8 @@
 
 
 </style>
+  <script type="module" src="./js/sc_normalize.js"></script>
+  <script type="module" src="./js/sc_store.js"></script>
 </head>
 
 <body>
@@ -3842,3 +3844,4 @@ try{
 
 </body>
 </html>
+
