@@ -1,14 +1,14 @@
 /**
  * sc_resolver_v2.js
- * Deterministic, explainable resolver that outputs a wallboard-compatible schedule map.
- *
- * NEW (Option A "real" resolver output):
+ * Deterministic, explainable resolver output (Option A):
  * schedule[YYYY-MM-DD][AM|PM][unitId][seatKey] = memberId | "OPEN"
  *
- * Notes:
- * - PURE compute: no network calls.
- * - Deterministic: stable ordering, no random, no Date.now usage for ordering.
- * - No nulls: "OPEN" is used for unfilled seats.
+ * Includes per-seat explain logs embedded at:
+ * schedule[date][shift][unitId]._explain[seatKey] = { picked, candidatesTop, ... }
+ *
+ * PURE compute: no network calls.
+ * Deterministic: stable ordering, no randomness.
+ * No nulls: "OPEN" for unfilled seats.
  */
 
 export function isoDateUTC(d) {
@@ -90,9 +90,7 @@ function hasRequiredQuals(member, required) {
   const req = tokenizeQuals(required);
   if (!req.length) return true;
 
-  const raw = member?.qualifications;
-  const quals = tokenizeQuals(raw);
-
+  const quals = tokenizeQuals(member?.qualifications);
   return req.every(q => quals.includes(String(q)));
 }
 
@@ -109,72 +107,62 @@ function findFullShiftAvailability(availsForMember, shiftStartISO, shiftEndISO) 
   return null;
 }
 
-/**
- * buildPlannedSchedule (Option A)
- * Returns:
- * {
- *   schedule: { [dateIso]: { [AM|PM]: { [unitId]: { [seatKey]: memberId|"OPEN" } } } },
- *   logs: [{t,type,msg}],
- *   partial: boolean,
- *   reason: string|null
- * }
- */
 export function buildPlannedSchedule({
-  weekStartISO,             // "YYYY-MM-DD" (Sunday)
-  units,                    // array
-  seatTypes,                // array; must include unit_id + required_qualifications + label (+ id)
-  members,                  // array; must include member_id + qualifications (+ total_hours_assigned, undesirable_count)
-  availability,             // array or wrapped; must include member_id + start/end + preference + is_partial?
-  seatKeyMode = "unitSeatMap", // kept for compatibility; "unitSeatMap" is Option A
+  weekStartISO,                 // "YYYY-MM-DD" (Sunday)
+  units,                        // array or wrapped
+  seatTypes,                    // array or wrapped
+  members,                      // array or wrapped
+  availability,                 // array or wrapped
   watchdogMs = 45000,
   maxCandidatesLogged = 5,
-  preventDoubleBooking = true
+  preventDoubleBooking = true,
+  embedExplain = true
 }) {
-  // NOTE: We only use time deltas in logs/watchdog; never for ordering.
   const t0 = Date.now();
   const logs = [];
   const addLog = (type, msg) => logs.push({ t: Date.now() - t0, type, msg });
 
-  const U = asArray(units);
-  const ST = asArray(seatTypes);
-  const M = asArray(members);
-  const AV = asArray(availability);
+  // Normalize possibly-wrapped collections
+  units = asArray(units);
+  seatTypes = asArray(seatTypes);
+  members = asArray(members);
+  availability = asArray(availability);
 
   const weekStart = new Date(weekStartISO + "T00:00:00Z");
   const days = Array.from({ length: 7 }, (_, i) => addDaysUTC(weekStart, i));
   const shifts = ["AM", "PM"];
 
   // Index availability by member_id
-  const availBy = new Map(); // mid -> array
-  for (const a of AV) {
+  const availBy = new Map(); // mid -> availability[]
+  for (const a of availability) {
     const mid = String(a?.member_id ?? a?.memberId ?? "").trim();
     if (!mid) continue;
     if (!availBy.has(mid)) availBy.set(mid, []);
     availBy.get(mid).push(a);
   }
 
-  // Fairness trackers (deterministic scoring inputs)
-  const memberHours = new Map(); // mid -> number
-  const memberUndes = new Map(); // mid -> number
-  for (const m of M) {
+  // Fairness trackers
+  const memberHours = new Map(); // mid -> hours
+  const memberUndes = new Map(); // mid -> undesirable count
+  for (const m of members) {
     const mid = memberIdStr(m);
     if (!mid) continue;
     memberHours.set(mid, Number(m?.total_hours_assigned || 0));
     memberUndes.set(mid, Number(m?.undesirable_count || 0));
   }
 
-  // Deterministic ordering: units by name then id
-  const unitsSorted = [...U].sort((a, b) => {
+  // Deterministic unit order
+  const unitsSorted = [...units].sort((a, b) => {
     const an = unitNameStr(a), bn = unitNameStr(b);
     if (an !== bn) return an.localeCompare(bn);
     return unitIdStr(a).localeCompare(unitIdStr(b));
   });
 
-  // SeatTypes grouped per unit, deterministic sort by label then id
+  // Deterministic seat order per unit
   const seatTypesByUnit = new Map(); // unitId -> seatTypes[]
   for (const u of unitsSorted) {
     const uid = unitIdStr(u);
-    const seats = ST
+    const seats = seatTypes
       .filter(st => String(st?.unit_id) === String(uid))
       .sort((a, b) => {
         const al = seatLabelStr(a), bl = seatLabelStr(b);
@@ -184,14 +172,14 @@ export function buildPlannedSchedule({
     seatTypesByUnit.set(uid, seats);
   }
 
-  // Members deterministic order by member_id string (then name)
-  const membersSorted = [...M].sort((a, b) => {
+  // Deterministic member order
+  const membersSorted = [...members].sort((a, b) => {
     const ai = memberIdStr(a), bi = memberIdStr(b);
     if (ai !== bi) return ai.localeCompare(bi);
     return memberNameStr(a).localeCompare(memberNameStr(b));
   });
 
-  // Pre-build feasibility check (quals-only, fast & deterministic)
+  // Feasibility check (quals-only)
   addLog("info", "🔍 Pre-build feasibility check");
   const issues = [];
   for (const u of unitsSorted) {
@@ -211,8 +199,8 @@ export function buildPlannedSchedule({
     addLog("ok", "✓ Feasibility OK");
   }
 
-  // Output schedule map
-  const schedule = {}; // dateIso -> shift -> unitId -> seatKey -> memberId|"OPEN"
+  // Output schedule: date -> shift -> unitId -> seatKey -> memberId|"OPEN"
+  const schedule = {};
   const assignedByShift = {}; // `${dateIso}|${shift}` -> Set(memberId)
 
   addLog("info", "🚀 Resolver start (deterministic)");
@@ -230,7 +218,6 @@ export function buildPlannedSchedule({
       const shiftKey = `${dateIso}|${shift}`;
       if (!assignedByShift[shiftKey]) assignedByShift[shiftKey] = new Set();
 
-      // Shift window (UTC)
       const shiftStartISO = shift === "AM"
         ? `${dateIso}T06:00:00Z`
         : `${dateIso}T18:00:00Z`;
@@ -241,17 +228,21 @@ export function buildPlannedSchedule({
 
       if (!schedule[dateIso][shift]) schedule[dateIso][shift] = {};
 
-      // Assign every unit's seats (real resolver)
       for (const u of unitsSorted) {
         const uid = unitIdStr(u);
         if (!schedule[dateIso][shift][uid]) schedule[dateIso][shift][uid] = {};
 
+        // reserve explain area per unit
+        if (embedExplain) {
+          if (!schedule[dateIso][shift][uid]._explain) schedule[dateIso][shift][uid]._explain = {};
+        }
+
         const seats = seatTypesByUnit.get(uid) || [];
+
         for (const seat of seats) {
           const seatKey = seatKeyStr(seat);
           const req = ensureArr(seat?.required_qualifications);
 
-          // Score candidates deterministically
           const candidates = membersSorted.map(m => {
             const mid = memberIdStr(m);
             const name = memberNameStr(m);
@@ -266,7 +257,6 @@ export function buildPlannedSchedule({
               reasons.push("missing quals");
             }
 
-            // Availability (full-shift match)
             const avs = availBy.get(mid) || [];
             const match = findFullShiftAvailability(avs, shiftStartISO, shiftEndISO);
             if (!match) {
@@ -277,34 +267,18 @@ export function buildPlannedSchedule({
               if (String(match?.preference || "").toLowerCase() === "preferred") prefScore += 10;
             }
 
-            // Double-booking
             if (preventDoubleBooking && assignedByShift[shiftKey].has(mid)) {
               eligible = false;
               reasons.push("already assigned this shift");
             }
 
-            // Fairness: lower hours + fewer undesirable is better (so fairness is negative of those)
             const hours = memberHours.get(mid) || 0;
             const undes = memberUndes.get(mid) || 0;
             const fairness = -(hours * 1.0) - (undes * 2.0);
 
-            return {
-              mid,
-              name,
-              eligible,
-              fairness,
-              prefScore,
-              hours,
-              undes,
-              reasons: reasons.length ? reasons : ["eligible"]
-            };
+            return { mid, name, eligible, fairness, prefScore, hours, undes, reasons: reasons.length ? reasons : ["eligible"] };
           });
 
-          // Stable sort:
-          // 1) eligible true first
-          // 2) higher fairness
-          // 3) higher prefScore
-          // 4) member id lexicographic
           candidates.sort((a, b) => {
             if (a.eligible !== b.eligible) return (b.eligible ? 1 : 0) - (a.eligible ? 1 : 0);
             if (a.fairness !== b.fairness) return b.fairness - a.fairness;
@@ -312,7 +286,6 @@ export function buildPlannedSchedule({
             return a.mid.localeCompare(b.mid);
           });
 
-          // Logging (top N)
           addLog("info", `┌─ ${dateIso} ${shift} :: ${unitNameStr(u)} (${uid}) → ${seatLabelStr(seat)} (${seatKey})`);
           candidates.slice(0, maxCandidatesLogged).forEach((c, i) => {
             addLog("info", `│ ${i + 1}. ${c.eligible ? "✓" : "✗"} ${c.name} [F:${c.fairness.toFixed(1)} P:${c.prefScore}] (${c.hours}h/${c.undes}u) ${c.reasons.join(",")}`);
@@ -324,13 +297,35 @@ export function buildPlannedSchedule({
             schedule[dateIso][shift][uid][seatKey] = pick.mid;
             assignedByShift[shiftKey].add(pick.mid);
 
-            // Update fairness trackers
             memberHours.set(pick.mid, (memberHours.get(pick.mid) || 0) + 12);
-            if (shift === "PM") memberUndes.set(pick.mid, (memberUndes.get(pick.mid) || 0) + 1;
+            if (shift === "PM") {
+              memberUndes.set(pick.mid, (memberUndes.get(pick.mid) || 0) + 1);
+            }
+
+            if (embedExplain) {
+              schedule[dateIso][shift][uid]._explain[seatKey] = {
+                picked: { mid: pick.mid, name: pick.name, fairness: pick.fairness, prefScore: pick.prefScore, reasons: pick.reasons },
+                required_qualifications: tokenizeQuals(req),
+                shiftStartISO,
+                shiftEndISO,
+                top: candidates.slice(0, maxCandidatesLogged)
+              };
+            }
 
             addLog("ok", `└─ ✅ ASSIGNED: ${pick.name} (${pick.mid})`);
           } else {
             schedule[dateIso][shift][uid][seatKey] = "OPEN";
+
+            if (embedExplain) {
+              schedule[dateIso][shift][uid]._explain[seatKey] = {
+                picked: null,
+                required_qualifications: tokenizeQuals(req),
+                shiftStartISO,
+                shiftEndISO,
+                top: candidates.slice(0, maxCandidatesLogged)
+              };
+            }
+
             addLog("warn", `└─ ⚠️ OPEN`);
           }
         }
@@ -343,27 +338,25 @@ export function buildPlannedSchedule({
 }
 
 /**
- * OPTIONAL helper:
- * Convert Option-A schedule into the legacy wallboard shape:
- * schedule2[dateIso][shift] = { attendant, operator, third } OR ["a","b","c"]
- *
- * This is purely for compatibility; not required by builder save.
+ * Optional helper: convert Option-A schedule into legacy wallboard 3-slot shape.
+ * schedule2[date][shift] = { attendant, operator, third } or ["a","b","c"]
  */
 export function toWallboardSlots(scheduleA, { mode = "object" } = {}) {
   const schedule2 = {};
   const dates = Object.keys(scheduleA || {}).sort((a, b) => a.localeCompare(b));
+
   for (const dateIso of dates) {
     schedule2[dateIso] = schedule2[dateIso] || {};
     const shifts = Object.keys(scheduleA[dateIso] || {}).sort((a, b) => a.localeCompare(b));
+
     for (const shift of shifts) {
       const unitMap = scheduleA[dateIso]?.[shift] || {};
-      const unitIds = Object.keys(unitMap).sort((a, b) => a.localeCompare(b));
+      const unitIds = Object.keys(unitMap).filter(k => k !== "_explain").sort((a, b) => a.localeCompare(b));
 
-      // Collect first 3 non-OPEN in deterministic order
       const picks = [];
       for (const uid of unitIds) {
         const seatMap = unitMap[uid] || {};
-        const seatKeys = Object.keys(seatMap).sort((a, b) => a.localeCompare(b));
+        const seatKeys = Object.keys(seatMap).filter(k => k !== "_explain").sort((a, b) => a.localeCompare(b));
         for (const sk of seatKeys) {
           const v = seatMap[sk];
           if (v && v !== "OPEN") picks.push(String(v));
@@ -378,5 +371,6 @@ export function toWallboardSlots(scheduleA, { mode = "object" } = {}) {
         : { attendant: picks[0], operator: picks[1], third: picks[2] };
     }
   }
+
   return schedule2;
 }
