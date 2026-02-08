@@ -208,7 +208,8 @@ export function buildPlannedSchedule({
   for (const day of days) {
     if (Date.now() - t0 > watchdogMs) {
       addLog("warn", "⏱️ Watchdog timeout during compute (partial output returned)");
-      return { schedule, logs, partial: true, reason: "timeout" };
+      const wallboard = toWallboardSlots(schedule, { mode: "object" });
+      return { schedule, wallboard, logs, partial: true, reason: "timeout" };
     }
 
     const dateIso = isoDateUTC(day);
@@ -334,7 +335,8 @@ export function buildPlannedSchedule({
   }
 
   addLog("ok", "✅ Resolver complete");
-  return { schedule, logs, partial: false, reason: null };
+  const wallboard = toWallboardSlots(schedule, { mode: "object" });
+  return { schedule, wallboard, logs, partial: false, reason: null };
 }
 
 /**

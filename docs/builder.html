@@ -162,7 +162,7 @@ $("btnBuild").addEventListener("click", async ()=>{
     setStatus(`<span class="warn">Computing schedule…</span>`);
     const res = buildPlannedSchedule({ weekStartISO: week, units, seatTypes, members, availability, watchdogMs: wd });
 
-    const compatErr = wallboardCompatibilityCheck(res.schedule);
+    const compatErr = wallboardCompatibilityCheck(res.wallboard || res.schedule);
     if (compatErr){
       $("btnSave").disabled = true;
       lastResult = null;
@@ -193,7 +193,7 @@ $("btnTest").addEventListener("click", async ()=>{
     const hashes = [];
     for (let i=0;i<5;i++){
       const res = buildPlannedSchedule({ weekStartISO: week, units, seatTypes, members, availability, watchdogMs: wd });
-      const compatErr = wallboardCompatibilityCheck(res.schedule);
+      const compatErr = wallboardCompatibilityCheck(res.wallboard || res.schedule);
       if (compatErr) throw new Error(`Compat failed on run ${i+1}: ${compatErr}`);
       const h = await sha256(JSON.stringify(res.schedule));
       hashes.push(h);
@@ -213,7 +213,8 @@ $("btnSave").addEventListener("click", async ()=>{
     setStatus(`<span class="warn">Saving schedule…</span>`);
     // Store expects payload wrapper sometimes; we’ll save { schedule, meta } like your wallboard reads
     const payload = {
-      schedule: lastResult.schedule,
+      schedule: (lastResult.wallboard || lastResult.schedule),
+      scheduleA: lastResult.schedule,
       meta: {
         health_v1: { days: {} },
         resolver_v2: { partial:lastResult.partial, reason:lastResult.reason || null, saved_at: new Date().toISOString() }
