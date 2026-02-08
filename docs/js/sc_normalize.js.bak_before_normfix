@@ -1,0 +1,158 @@
+/**
+ * sc_normalize.js
+ * Normalizers for ShiftCommander store payloads.
+ *
+ * Goal: tolerate legacy shapes, keep deterministic keys, and provide exports used by sc_store.js.
+ * This file is an ES module.
+ */
+
+export function asArray(x){
+  if (Array.isArray(x)) return x;
+  if (x == null) return [];
+  if (typeof x === "object"){
+    if (Array.isArray(x.items)) return x.items;
+    if (Array.isArray(x.payload)) return x.payload;
+    if (Array.isArray(x.data)) return x.data;
+    if (Array.isArray(x.members)) return x.members;
+    if (Array.isArray(x.availability)) return x.availability;
+    if (Array.isArray(x.units)) return x.units;
+    if (Array.isArray(x.seatTypes)) return x.seatTypes;
+    if (Array.isArray(x.seat_types)) return x.seat_types;
+  }
+  return [];
+}
+
+function str(x){ return (x == null) ? "" : String(x); }
+
+function pick(obj, keys){
+  for (const k of keys){
+    if (obj && obj[k] != null) return obj[k];
+  }
+  return undefined;
+}
+
+export function normalizeMembers(raw){
+  const arr = asArray(raw);
+  return arr.map(m => {
+    const member_id = str(pick(m, ["member_id","id","memberId","mid"])).trim();
+    const name = str(pick(m, ["name","full_name","display_name"])).trim() || member_id;
+    let qualifications = pick(m, ["qualifications","quals","qual"]);
+    // tolerate string-packed quals
+    if (typeof qualifications === "string"){
+      qualifications = qualifications.split(/[\s,]+/).filter(Boolean);
+    }
+    qualifications = asArray(qualifications).map(q=>str(q).trim()).filter(Boolean);
+    return {
+      ...m,
+      member_id,
+      name,
+      qualifications,
+      // optional fairness fields
+      total_hours_assigned: Number(pick(m, ["total_hours_assigned","hours","total_hours"]) ?? 0),
+      undesirable_count: Number(pick(m, ["undesirable_count","undesirable","undes"]) ?? 0),
+    };
+  }).filter(m => m.member_id);
+}
+
+export function normalizeAvailability(raw){
+  const arr = asArray(raw);
+  return arr.map(a => {
+    const member_id = str(pick(a, ["member_id","memberId","mid","member"])).trim();
+    const start_datetime = str(pick(a, ["start_datetime","start","startDateTime","start_dt"])).trim();
+    const end_datetime   = str(pick(a, ["end_datetime","end","endDateTime","end_dt"])).trim();
+    const preference = str(pick(a, ["preference","pref","status"])).trim() || "available";
+    const is_partial = Boolean(pick(a, ["is_partial","partial","isPartial"]));
+    return {
+      ...a,
+      member_id,
+      start_datetime,
+      end_datetime,
+      preference,
+      is_partial
+    };
+  }).filter(a => a.member_id && a.start_datetime && a.end_datetime);
+}
+
+export function normalizeUnits(raw){
+  const arr = asArray(raw);
+  return arr.map(u => {
+    const id = str(pick(u, ["id","unit_id","uid"])).trim();
+    const name = str(pick(u, ["name","unit_name","label"])).trim() || id;
+    return { ...u, id, name };
+  }).filter(u => u.id);
+}
+
+export function normalizeSeatTypes(raw){
+  const arr = asArray(raw);
+  return arr.map(st => {
+    const id = str(pick(st, ["id","seat_type_id","stid"])).trim();
+    const unit_id = str(pick(st, ["unit_id","unitId","uid"])).trim();
+    const label = str(pick(st, ["label","name","seat_label"])).trim() || id;
+    let required_qualifications = pick(st, ["required_qualifications","requiredQualifications","required_quals","req"]);
+    if (typeof required_qualifications === "string"){
+      required_qualifications = required_qualifications.split(/[\s,]+/).filter(Boolean);
+    }
+    required_qualifications = asArray(required_qualifications).map(q=>str(q).trim()).filter(Boolean);
+    return { ...st, id, unit_id, label, required_qualifications };
+  }).filter(st => st.unit_id && st.label);
+}
+
+/**
+ * Normalize schedule map to the wallboard-compatible shape:
+ * schedule[YYYY-MM-DD][AM|PM] = { attendant, operator, third }
+ */
+export function normalizeScheduleMap(raw){
+  const schedule = (raw && typeof raw === "object") ? raw : {};
+  const out = {};
+  for (const [day, byShift] of Object.entries(schedule)){
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    out[day] = out[day] || {};
+    const shifts = (byShift && typeof byShift === "object") ? byShift : {};
+    for (const shift of ["AM","PM"]){
+      const v = shifts[shift];
+      if (Array.isArray(v)){
+        out[day][shift] = {
+          attendant: v[0] ?? "OPEN",
+          operator:  v[1] ?? "OPEN",
+          third:     v[2] ?? "OPEN",
+        };
+      } else if (v && typeof v === "object"){
+        out[day][shift] = {
+          attendant: v.attendant ?? v.Attendant ?? "OPEN",
+          operator:  v.operator ?? v.Operator ?? "OPEN",
+          third:     v.third ?? v.Third ?? "OPEN",
+        };
+      } else if (typeof v === "string"){
+        // legacy single-string slot -> treat as attendant
+        out[day][shift] = { attendant: v, operator:"OPEN", third:"OPEN" };
+      } else {
+        out[day][shift] = { attendant:"OPEN", operator:"OPEN", third:"OPEN" };
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * normalizeAll: the main entrypoint expected by sc_store.js.
+ * Accepts arbitrary objects (store payloads, combined packs, etc.).
+ */
+export function normalizeAll(input){
+  const obj = (input && typeof input === "object") ? input : {};
+  // Unwrap common store envelopes: {ok:true, payload:{...}} / {kind, payload} / {data:{...}}
+  const unwrapped =
+    (obj.payload && typeof obj.payload === "object") ? obj.payload :
+    (obj.data && typeof obj.data === "object") ? obj.data :
+    obj;
+
+  return {
+    members: normalizeMembers(unwrapped.members ?? unwrapped.member ?? unwrapped.roster),
+    availability: normalizeAvailability(unwrapped.availability ?? unwrapped.avails ?? unwrapped.member_availability),
+    units: normalizeUnits(unwrapped.units ?? unwrapped.unit),
+    seatTypes: normalizeSeatTypes(unwrapped.seatTypes ?? unwrapped.seat_types ?? unwrapped.seats),
+    schedule: normalizeScheduleMap(unwrapped.schedule ?? unwrapped.planned ?? unwrapped.published ?? {}),
+  };
+}
+
+// Some builds referenced normalizeAll1 — keep a compatibility alias.
+export const normalizeAll1 = normalizeAll;
