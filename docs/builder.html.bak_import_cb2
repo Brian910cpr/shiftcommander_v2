@@ -55,7 +55,7 @@ function asArray(x){
   }
   return [];
 }
-import { buildPlannedSchedule, startOfWeekSundayUTC, isoDateUTC } from "./js/sc_resolver_v2.js?cb=1770514542";
+import { buildPlannedSchedule, startOfWeekSundayUTC, isoDateUTC } from "./js/sc_resolver_v2.js";
 
 const LS_TOKEN = "sc_token";
 
@@ -228,9 +228,6 @@ $("btnSave").addEventListener("click", async ()=>{
 </script>
 </body>
 </html>
-
-
-
 
 
 

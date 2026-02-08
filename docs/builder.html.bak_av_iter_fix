@@ -45,17 +45,7 @@
   </div>
 
 <script type="module">
-function asArray(x){
-  if (Array.isArray(x)) return x;
-  if (x == null) return [];
-  if (typeof x === "object"){
-    if (Array.isArray(x.items)) return x.items;
-    if (Array.isArray(x.payload)) return x.payload;
-    if (Array.isArray(x.availability)) return x.availability;
-  }
-  return [];
-}
-import { buildPlannedSchedule, startOfWeekSundayUTC, isoDateUTC } from "./js/sc_resolver_v2.js?cb=1770514542";
+import { buildPlannedSchedule, startOfWeekSundayUTC, isoDateUTC } from "./js/sc_resolver_v2.js";
 
 const LS_TOKEN = "sc_token";
 
@@ -228,10 +218,6 @@ $("btnSave").addEventListener("click", async ()=>{
 </script>
 </body>
 </html>
-
-
-
-
 
 
 
