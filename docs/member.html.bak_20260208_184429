@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ShiftCommander — Member</title>
+  <!-- MEMBER PATCHED • 2026-02-08 22:34:36 -->
+<style>
+  :root {
+    --bg:#071225;
+    --panel:#0c1b36;
+    --line:rgba(255,255,255,.12);
+    --text:#eef3ff;
+    --muted:#a4b3e8;
+    --good:#48d597;
+    --bad:#ff6b6b;
+  }
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#050914,var(--bg));color:var(--text);}
+  header{position:sticky;top:0;z-index:10;background:rgba(5,9,20,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+  .wrap{max-width:1100px;margin:0 auto;padding:14px 16px;}
+  .top{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+  .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:rgba(255,255,255,.06);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input,select{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 10px;font-size:14px;outline:none;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),rgba(12,27,54,.65));border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);padding:14px}
+  table{width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden}
+  th,td{border-bottom:1px solid rgba(255,255,255,.08);padding:8px 10px;text-align:left;font-size:13px}
+  th{color:var(--muted);font-weight:800;background:rgba(255,255,255,.04)}
+  .status{font-size:12px;color:var(--muted);margin-top:10px}
+  a{color:#9dc1ff;text-decoration:none}
+  a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <div style="font-weight:900;letter-spacing:.3px">ShiftCommander — Member</div>
+    <div class="row">
+      <div>
+        <label>Store Base</label>
+        <input id="storeBase" value="https://store.adr-fr.org" />
+      </div>
+      <div>
+        <label>Member</label>
+        <select id="memberSelect"></select>
+      </div>
+      <div>
+        <label>Week (Sunday)</label>
+        <input id="weekStart" type="date" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="btnLoad" class="pill" style="cursor:pointer">Load</button>
+      </div>
+      <a class="pill" href="./wallboard.html" target="_blank">Wallboard</a>
+      <a class="pill" href="./supervisor.html" target="_blank">Supervisor</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="status" id="status">—</div>
+    <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:10px">
+      <table>
+        <thead><tr><th>Date</th><th>AM</th><th>PM</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { isoDateUTC, addDaysUTC } from "./js/sc_resolver_v2.js";
+const $ = (id)=>document.getElementById(id);
+
+function storeBase(){
+  const v = $("storeBase").value.trim().replace(/\/$/,"");
+  localStorage.setItem("sc_store_base", v);
+  return v;
+}
+
+function sundayOf(d){
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dow = x.getUTCDay();
+  x.setUTCDate(x.getUTCDate()-dow);
+  return x;
+}
+function toISODate(d){ return d.toISOString().slice(0,10); }
+function weekStartVal(){ return $("weekStart").value || toISODate(sundayOf(new Date())); }
+
+async function scGet(kind, params={}){
+  const u = new URL(storeBase()+"/sc/get");
+  u.searchParams.set("kind", kind);
+  for (const [k,v] of Object.entries(params||{})) {
+    if (v === undefined || v === null || v === "") continue;
+    u.searchParams.set(k, String(v));
+  }
+  const r = await fetch(u.toString(), {cache:"no-store"});
+  const j = await r.json().catch(()=>null);
+  if (!r.ok) throw new Error((j && j.error) ? j.error : `GET ${kind} ${r.status}`);
+  return j && j.value !== undefined ? j.value : null;
+}
+
+function render(membersById, schedule, memberId){
+  const tbody = $("tbody");
+  tbody.innerHTML = "";
+  const start = new Date(weekStartVal()+"T00:00:00Z");
+  const nameOf = (id) => membersById.get(String(id||"OPEN")) || String(id||"OPEN");
+  for (let i=0;i<7;i++) {
+    const dateIso = isoDateUTC(addDaysUTC(start,i));
+    const d = schedule?.[dateIso] || {};
+    const am = d.AM || {attendant:"OPEN",operator:"OPEN",third:"OPEN"};
+    const pm = d.PM || {attendant:"OPEN",operator:"OPEN",third:"OPEN"};
+    const mark = (shiftObj) => {
+      const me = String(memberId);
+      const hit = [shiftObj.attendant,shiftObj.operator,shiftObj.third].map(x=>String(x||"")).includes(me);
+      const txt = [nameOf(shiftObj.attendant), nameOf(shiftObj.operator), nameOf(shiftObj.third)].join(" / ");
+      return hit ? "✅ " + txt : txt;
+    };
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${dateIso}</td><td>${mark(am)}</td><td>${mark(pm)}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+async function load(){
+  $("status").textContent = "Loading…";
+  const week = weekStartVal();
+  const [members, planned, published] = await Promise.all([
+    scGet("members").catch(()=>[]),
+    scGet("schedule", {week, version:"published"}).catch(()=>null),
+    scGet("schedule", {week, version:"planned"}).catch(()=>null),
+  ]);
+  const membersArr = Array.isArray(members)?members:[];
+  const membersById = new Map(membersArr.map(m=>[String(m.member_id??m.id??""), String(m.name||m.member_id||m.id||"")]));
+  // populate dropdown once
+  if (!$("memberSelect").options.length) {
+    for (const m of membersArr) {
+      const opt = document.createElement("option");
+      opt.value = String(m.member_id??m.id??"");
+      opt.textContent = String(m.name||m.member_id||m.id||"");
+      $("memberSelect").appendChild(opt);
+    }
+    const saved = localStorage.getItem("sc_member_id");
+    if (saved) $("memberSelect").value = saved;
+  }
+  const memberId = $("memberSelect").value || (membersArr[0] ? String(membersArr[0].member_id??membersArr[0].id) : "");
+  localStorage.setItem("sc_member_id", memberId);
+
+  const schedWrap = planned || published;
+  const schedule = schedWrap?.schedule || schedWrap || null;
+
+  if (!schedule) {
+    $("status").textContent = `No schedule found for week ${week} (planned/published).`;
+    $("tbody").innerHTML = "";
+    return;
+  }
+  render(membersById, schedule, memberId);
+  $("status").textContent = `Week ${week} • showing ${planned? "planned" : "published"} • member=${membersById.get(memberId)||memberId}`;
+}
+
+function init(){
+  $("storeBase").value = localStorage.getItem("sc_store_base") || $("storeBase").value;
+  $("weekStart").value = toISODate(sundayOf(new Date()));
+  $("btnLoad").addEventListener("click", ()=>load().catch(e=>{$("status").textContent=e.message;}));
+  $("memberSelect").addEventListener("change", ()=>load().catch(()=>{}));
+  load().catch(()=>{});
+}
+init();
+</script>
+</body>
+</html>

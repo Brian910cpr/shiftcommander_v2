@@ -93,7 +93,6 @@
 
       <div class="actions">
         <button id="btnPing" class="secondary">Ping Store</button>
-        <button id="btnRefresh" class="secondary">Refresh Inputs (Drive→KV)</button>
         <button id="btnLoad" class="secondary">Load Inputs</button>
         <button id="btnResolve">Resolve Week</button>
         <button id="btnSave" class="secondary">Save Planned</button>
@@ -102,8 +101,8 @@
       </div>
 
       <div class="hint">
-        Inputs expected in store (kinds): <code>org_settings</code>, <code>members</code>, <code>availability</code>, <code>units</code>, <code>seats</code>.
-        (Legacy: <code>seat_types</code> also supported.)
+        Inputs expected in store (kinds): <code>org_settings</code>, <code>members</code>, <code>availability</code>, <code>units</code>, <code>seat_types</code>.
+        If <code>units</code>/<code>seat_types</code> are missing, the resolver can't meaningfully fill seats.
       </div>
 
       <div style="margin-top:12px">
@@ -180,27 +179,12 @@ function q(kind, params = {}){
   }
   return u.toString();
 }
-function qRefresh(kind){
-  const u = new URL(storeBase() + "/sc/refresh");
-  u.searchParams.set("kind", kind);
-  return u.toString();
-}
-
-function normalizeKindValue(kind, v){
-  if (v == null) return v;
-  if (Array.isArray(v)) return v;
-  if (kind === "members" && v.members && Array.isArray(v.members)) return v.members;
-  if (kind === "units" && v.units && Array.isArray(v.units)) return v.units;
-  if (kind === "seats" && v.seats && Array.isArray(v.seats)) return v.seats;
-  return v;
-}
 
 async function scGet(kind, params){
   const r = await fetch(q(kind, params), { cache:"no-store" });
   const j = await r.json().catch(()=>null);
   if (!r.ok) throw new Error((j && j.error) ? j.error : `GET ${kind} ${r.status}`);
-  const val = j && j.value !== undefined ? j.value : null;
-  return normalizeKindValue(kind, val);
+  return j && j.value !== undefined ? j.value : null;
 }
 
 async function scPut(body){
@@ -259,43 +243,6 @@ function renderSchedule(schedule, membersById){
   }
 }
 
-function flattenReqs(seat){
-  const reqAll = new Set();
-  const reqAny = new Set();
-  for (const cs of (seat?.credential_sets || [])) {
-    for (const q of (cs.requires_all || [])) reqAll.add(String(q));
-    for (const q of (cs.requires_any || [])) reqAny.add(String(q));
-  }
-  for (const q of (seat?.legacy?.certs_any || [])) reqAny.add(String(q));
-  for (const q of (seat?.legacy?.endorse_all || [])) reqAll.add(String(q));
-  return { requires_all:[...reqAll], requires_any:[...reqAny] };
-}
-
-function buildSeatTypesFromUnitsAndSeats(units, seats, orgSettings){
-  const byId = new Map((seats||[]).map(s=>[String(s.id), s]));
-  const alias = orgSettings?.aliases?.seat_id || {};
-  const seatTypes = [];
-  for (const u of (units||[])) {
-    const unitId = String(u.id || u.unit_id || "");
-    const plan = Array.isArray(u.seat_plan) ? u.seat_plan : [];
-    for (const rawSeatId of plan) {
-      const seatId = String(alias[String(rawSeatId)] || rawSeatId);
-      const s = byId.get(seatId) || byId.get(String(rawSeatId));
-      const label = s?.label || String(rawSeatId);
-      const req = flattenReqs(s);
-      seatTypes.push({
-        unit_id: unitId,
-        id: seatId,
-        label,
-        required_qualifications: [...new Set([...(req.requires_all||[]), ...(req.requires_any||[])])],
-        credential_sets: s?.credential_sets || [],
-        _req: req
-      });
-    }
-  }
-  return seatTypes;
-}
-
 let lastInputs = null;
 let lastResult = null;
 let lastMembersById = new Map();
@@ -312,51 +259,30 @@ async function ping(){
   }
 }
 
-async function refreshInputs(){
-  log("info","Refreshing Drive→KV…");
-  const kinds = ["org_settings","members","units","seats","availability"];
-  for (const k of kinds) {
-    try {
-      const r = await fetch(qRefresh(k), { cache:"no-store" });
-      const j = await r.json().catch(()=>null);
-      if (!r.ok) throw new Error((j && j.error) ? j.error : `refresh ${k} ${r.status}`);
-      log("ok", `Refreshed ${k}: ${j.source || "ok"}`);
-    } catch (e) {
-      log("warn", `Refresh ${k} skipped/failed: ${e.message}`);
-    }
-  }
-  log("ok","Refresh complete.");
-}
-
 async function loadInputs(){
   log("info","Loading inputs from store…");
-  const org = await scGet("org_settings");
-  const membersRaw = await scGet("members");
-  const availabilityRaw = await scGet("availability").catch(()=>null);
-  const unitsRaw = await scGet("units");
+  const [org, members, availability, units, seatTypes] = await Promise.all([
+    scGet("org_settings"),
+    scGet("members"),
+    scGet("availability"),
+    scGet("units"),
+    scGet("seat_types"),
+  ]);
+  lastInputs = {
+    org_settings: org,
+    members: Array.isArray(members)?members:[],
+    availability: Array.isArray(availability)?availability:[],
+    units: Array.isArray(units)?units:[],
+    seatTypes: Array.isArray(seatTypes)?seatTypes:[]
+  };
+  lastMembersById = new Map(lastInputs.members.map(m=>[String(m.member_id??m.id??""), String(m.name||m.member_id||m.id||"")]));
+  log("ok", `Loaded: members=${lastInputs.members.length}, availability=${lastInputs.availability.length}, units=${lastInputs.units.length}, seat_types=${lastInputs.seatTypes.length}`);
+  if (!lastInputs.units.length || !lastInputs.seatTypes.length) {
+    log("warn","Missing units and/or seat_types in store. Resolver can still run, but it can’t fill meaningful seats yet.");
 
-  const seatsRaw = await scGet("seats").catch(()=>null);
-  const seatTypesRaw = await scGet("seat_types").catch(()=>null);
 
-  const members = Array.isArray(membersRaw) ? membersRaw : [];
-  const availability = Array.isArray(availabilityRaw) ? availabilityRaw : (availabilityRaw ? [availabilityRaw] : []);
-  const units = Array.isArray(unitsRaw) ? unitsRaw : [];
-  let seatTypes = Array.isArray(seatTypesRaw) ? seatTypesRaw : [];
 
-  if (!seatTypes.length && Array.isArray(seatsRaw)) {
-    seatTypes = buildSeatTypesFromUnitsAndSeats(units, seatsRaw, org);
-    if (seatTypes.length) log("warn", `seat_types not found; derived seat_types from units+seats (${seatTypes.length}).`);
   }
-
-  lastInputs = { org_settings: org, members, availability, units, seatTypes };
-  lastMembersById = new Map(members.map(m=>{
-    const id = String(m.member_id ?? m.id ?? "");
-    const full = (m.first_name && m.last_name) ? `${m.first_name} ${m.last_name}` : (m.name || m.first_name || id);
-    return [id, String(full)];
-  }));
-
-  log("ok", `Loaded: members=${members.length}, availability=${availability.length}, units=${units.length}, seat_types=${seatTypes.length}`);
-  if (!units.length || !seatTypes.length) log("warn","Missing units and/or seat definitions in store. Resolver can run, but it may show OPEN slots.");
   return lastInputs;
 }
 
@@ -377,6 +303,7 @@ async function resolveWeek(){
   });
   lastResult = result;
 
+  // Stream the compute log in a readable way
   for (const entry of (result.logs||[])) {
     const t = entry.type === "ok" ? "ok" : (entry.type === "warn" ? "warn" : (entry.type === "bad" ? "bad" : "info"));
     log(t, entry.msg);
@@ -397,6 +324,215 @@ async function savePlanned(){
     version:"planned",
     value: {
       schedule: lastResult.schedule,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       meta: {
         schema:"sc.schedule.v1",
         generated_at: new Date().toISOString(),
@@ -405,6 +541,14 @@ async function savePlanned(){
         reason: lastResult.reason || null
       },
       logs: lastResult.logs || []
+
+
+
+
+
+
+
+
     }
   });
   log("ok", "Saved: kind=schedule version=planned week=" + week);
@@ -415,11 +559,17 @@ async function publishPlanned(){
   log("info","Publishing: copy planned → published…");
   const planned = await scGet("schedule", {week, version:"planned"});
   if (!planned) throw new Error("No planned schedule found in store for this week.");
-  await scPut({ kind:"schedule", week, version:"published", value: planned });
+  await scPut({
+    kind:"schedule",
+    week,
+    version:"published",
+    value: planned
+  });
   log("ok","Published week " + week);
 }
 
 function init(){
+  // online/offline pill
   function updateNet(){
     const ok = navigator.onLine;
     setPill(netPill, ok ? "online" : "offline", ok);
@@ -434,7 +584,6 @@ function init(){
   setWeekPill();
 
   $("btnPing").addEventListener("click", ()=>ping());
-  $("btnRefresh").addEventListener("click", ()=>refreshInputs().catch(e=>log("bad", e.message)));
   $("btnLoad").addEventListener("click", ()=>loadInputs().catch(e=>log("bad", e.message)));
   $("btnResolve").addEventListener("click", ()=>resolveWeek().catch(e=>log("bad", e.message)));
   $("btnSave").addEventListener("click", ()=>savePlanned().catch(e=>log("bad", e.message)));
