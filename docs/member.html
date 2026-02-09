@@ -17,11 +17,13 @@ th{background:var(--g);text-align:left}
 </style></head>
 <body>
 <h2>Member</h2>
+
 <div class="row">
-  <label>Store <input id="store" size="80" placeholder="https://script.google.com/macros/s/DEPLOY/exec"></label>
-  <label>Token <input id="token" size="34" placeholder="TOKEN"></label>
+  <label>Store Base <input id="storeBase" size="46" value="https://store.adr-fr.org" placeholder="https://store.adr-fr.org"></label>
+  <label>Write Key <input id="writeKey" size="18" placeholder="SC_TOKEN / write key"></label>
   <label>Me <select id="me"></select></label>
   <button id="saveCfg">Save</button>
+  <span class="small">Reads: <span class="k">/sc/get</span> • Writes: <span class="k">/sc/put</span> (<span class="k">x-adr-write-key</span>)</span>
 </div>
 
 <div class="card">
@@ -50,72 +52,65 @@ th{background:var(--g);text-align:left}
 </div>
 
 <script>
-const LS="sc_cfg_full_v3";
+const LS="sc_cfg_store_v1";
 const $=id=>document.getElementById(id);
 
-function sanitizeStore(u){
-  u = String(u||"").trim();
+function normalizeBase(u){
+  u=String(u||"").trim();
   if(!u) return "";
   try{
-    const x = new URL(u);
-    x.hash = "";
-    // If user pasted a test URL like .../exec?kind=ping, strip query.
-    x.search = "";
-    return x.toString().replace(/\/+$/,'');
+    const x=new URL(u);
+    x.hash=""; x.search="";
+    return x.toString().replace(/\/+$/,"");
   }catch(_){
-    return u.replace(/\/+$/,'');
+    return u.replace(/\/+$/,"");
   }
 }
 function storeBase(){
   const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
-  const raw = ($("store").value.trim()||cfg.store||"");
-  return sanitizeStore(raw);
+  const raw = ($("storeBase").value.trim()||cfg.storeBase||"https://store.adr-fr.org");
+  const v = normalizeBase(raw) || "https://store.adr-fr.org";
+  return v;
 }
-function tok(){
+function writeKey(){
   const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
-  return ($("token").value.trim()||cfg.token||"");
+  const v = ($("writeKey").value.trim()||cfg.writeKey||localStorage.getItem("sc_write_key")||"");
+  return v;
 }
-function isAppsScript(){
-  return /script\.google\.com\/macros/i.test(storeBase());
+function saveCfg(){
+  localStorage.setItem(LS, JSON.stringify({storeBase:normalizeBase($("storeBase").value), writeKey:$("writeKey").value.trim()}));
+  if($("writeKey").value.trim()) localStorage.setItem("sc_write_key",$("writeKey").value.trim());
 }
-function getUrl(kind, params={}){
-  if(isAppsScript()){
-    const u = new URL(storeBase());
-    u.searchParams.set("kind", kind);
-    u.searchParams.set("token", tok());
-    for(const [k,v] of Object.entries(params)) u.searchParams.set(k,v);
-    return u.toString();
-  }
-  // Legacy proxy mode (Cloudflare/Worker): /sc/get
-  const u = new URL(storeBase().replace(/\/+$/,'') + "/sc/get");
-  u.searchParams.set("kind", kind);
-  for(const [k,v] of Object.entries(params)) u.searchParams.set(k,v);
-  return u.toString();
+function loadCfg(){
+  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
+  $("storeBase").value = cfg.storeBase || localStorage.getItem("sc_store_base") || "https://store.adr-fr.org";
+  $("writeKey").value  = cfg.writeKey  || localStorage.getItem("sc_write_key") || "";
 }
-
-
-function loadCfg(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); $("store").value=cfg.store||""; $("token").value=cfg.token||""; }
-function saveCfg(){ localStorage.setItem(LS, JSON.stringify({store:sanitizeStore($("store").value), token:$("token").value.trim()})); }
 $("saveCfg").onclick=saveCfg;
 
-function base(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); return ($("store").value.trim()||cfg.store||"").replace(/\/+$/,''); }
-function tok(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); return ($("token").value.trim()||cfg.token||""); }
-
-async function apiGet(kind, params={}){
-  const r=await fetch(getUrl(kind, params), {cache:"no-store", redirect:"follow"});
+async function scGet(kind, params={}){
+  const u=new URL(storeBase()+"/sc/get");
+  u.searchParams.set("kind", kind);
+  for(const [k,v] of Object.entries(params||{})){
+    if(v===undefined||v===null||v==="") continue;
+    u.searchParams.set(k,String(v));
+  }
+  const r=await fetch(u.toString(), {cache:"no-store"});
   const j=await r.json().catch(()=>null);
-  if(!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
-  return j.payload;
+  if(!r.ok) throw new Error((j&&j.error)?j.error:`GET ${kind} ${r.status}`);
+  return (j && j.value!==undefined) ? j.value : (j && j.payload!==undefined ? j.payload : j);
 }
-async function apiPost(kind, body){
-  body=body||{}; body.kind=kind; body.token=tok();
-  const url = isAppsScript()
-    ? storeBase()
-    : (storeBase().replace(/\/+$/,'') + "/sc/put");
-  const r=await fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), redirect:"follow"});
+async function scPut(body){
+  const k=writeKey();
+  if(!k) throw new Error("Missing Write Key");
+  const r=await fetch(storeBase()+"/sc/put", {
+    method:"POST",
+    headers:{"content-type":"application/json","x-adr-write-key":k},
+    body: JSON.stringify(body||{})
+  });
   const j=await r.json().catch(()=>null);
-  if(!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`POST ${kind} failed`);
-  return j.payload;
+  if(!r.ok) throw new Error((j&&j.error)?j.error:`PUT ${body && body.kind} ${r.status}`);
+  return j;
 }
 
 function iso(d){ return d.toISOString().slice(0,10); }
@@ -127,29 +122,32 @@ function nextSunday(d){
 
 let MEMBERS=[], NAMEBY={};
 async function loadMembers(){
-  const doc=await apiGet("members");
-  MEMBERS = Array.isArray(doc.members)?doc.members:(Array.isArray(doc)?doc:[]);
-  NAMEBY={}; MEMBERS.forEach(m=> NAMEBY[m.member_id]=((m.first_name||"")+" "+(m.last_name||"")).trim()||m.member_id);
-  $("me").innerHTML = MEMBERS.map(m=>`<option value="${m.member_id}">${NAMEBY[m.member_id]} (${m.member_id})</option>`).join("");
+  const doc=await scGet("members");
+  MEMBERS = Array.isArray(doc) ? doc : (Array.isArray(doc?.members)?doc.members:[]);
+  NAMEBY={}; MEMBERS.forEach(m=> NAMEBY[String(m.member_id)]=((m.first_name||"")+" "+(m.last_name||"")).trim()||String(m.member_id));
+  $("me").innerHTML = MEMBERS.map(m=>`<option value="${m.member_id}">${NAMEBY[String(m.member_id)]} (${m.member_id})</option>`).join("");
 }
 
 async function loadUpcoming(){
-  const mid=$("me").value;
+  saveCfg();
+  const mid=String($("me").value||"");
   const weeks=Math.max(1, Math.min(26, Number($("weeks").value||12)));
   const start = nextSunday(new Date());
   const rows=[];
   for(let i=0;i<weeks;i++){
     const wk=new Date(start); wk.setDate(start.getDate()+i*7);
     const w=iso(wk);
-    const locks=await apiGet("locks",{week:w}).catch(()=>({locks:[]}));
+
+    const locks=await scGet("locks",{week:w}).catch(()=>({locks:[]}));
     (locks.locks||[]).forEach(lk=>{
-      if(lk.member_id!==mid) return;
+      if(String(lk.member_id)!==mid) return;
       rows.push({date:lk.date,shift:lk.shift,unit:lk.unit,seat:lk.seat,status:"locked",hrs:lk.hours||12});
     });
-    const weekDoc=await apiGet("week",{week:w}).catch(()=>null);
+
+    const weekDoc=await scGet("week",{week:w}).catch(()=>null);
     if(weekDoc && Array.isArray(weekDoc.assignments)){
       (weekDoc.assignments||[]).forEach(a=>{
-        if(a.member_id!==mid) return;
+        if(String(a.member_id)!==mid) return;
         rows.push({date:a.date,shift:a.shift,unit:a.unit,seat:a.seat,status:weekDoc.status||"resolved",hrs:a.hours||12});
       });
     }
@@ -157,7 +155,7 @@ async function loadUpcoming(){
   rows.sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.shift||"").localeCompare(b.shift||""));
   $("upTbl").querySelector("tbody").innerHTML = rows.map(r=>`<tr>
     <td>${r.date||""}</td><td>${r.shift||""}</td><td>${r.unit||""}</td><td>${r.seat||""}</td>
-    <td>${r.status==="locked"?'<span class="pill lock">locked</span>':(r.status==="published"?'<span class="pill pub">published</span>':r.status||"")}</td>
+    <td>${r.status==="locked"?'<span class="pill lock">locked</span>':(r.status==="published"?'<span class="pill pub">published</span>':(r.status||""))}</td>
     <td>${r.hrs||""}</td>
   </tr>`).join("");
 }
@@ -173,27 +171,30 @@ function parseAvailText(txt){
   return {schema:"sc.availability.v1", member_id:$("me").value, ranges};
 }
 function availToText(doc){
-  const ranges=doc.ranges||[];
+  const ranges=doc?.ranges||[];
   return ranges.map(r=>`${r.from}..${r.to} ${r.slot}`).join("\n");
 }
 
 async function loadAvail(){
+  saveCfg();
   const mid=$("me").value;
-  const doc=await apiGet("member_availability",{member_id:mid}).catch(()=>({ranges:[]}));
+  const doc=await scGet("member_availability",{member_id:mid}).catch(()=>({ranges:[]}));
   $("avail").value = availToText(doc);
 }
 async function saveAvail(){
+  saveCfg();
   const mid=$("me").value;
   const payload=parseAvailText($("avail").value);
-  await apiPost("member_availability",{member_id:mid,payload});
+  await scPut({kind:"member_availability", member_id:mid, value:payload});
 }
 
 async function loadHistory(){
-  const idx=await apiGet("history_index").catch(()=>({months:[]}));
+  saveCfg();
+  const idx=await scGet("history_index").catch(()=>({months:[]}));
   const months=(idx.months||[]).slice(-3);
   const parts=[];
   for(const m of months){
-    const mo=await apiGet("history_month",{month:m}).catch(()=>null);
+    const mo=await scGet("history_month",{month:m}).catch(()=>null);
     if(!mo) continue;
     parts.push({month:m, payload:mo});
   }
