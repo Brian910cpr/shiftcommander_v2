@@ -471,6 +471,20 @@ function memberName(m){
   return (fn||ln) ? (fn + (ln?(" "+ln):"")) : (nm || memberId(m) || "UNKNOWN");
 }
 
+// HTML-safe name for schedule rendering + ADR change badge
+function memberLabelHtml(member_id){
+  const mid = String(member_id||"").trim();
+  const meta = membersMetaById.get(mid);
+  const name = (meta?.name || membersById.get(mid) || mid || "OPEN");
+  const safeName = String(name).replace(/</g,"&lt;");
+  const chg = meta?.adr_changed_on;
+  if (chg && Array.isArray(DATA?.members) && (meta?.adr_no !== null && meta?.adr_no !== undefined)) {
+    // Only show badge if there is actual history (length > 1). We infer this via adr_changed_on existing AND adr_no_history length > 1.
+    return `${safeName} <span class="badge warnBadge" title="ADR # changed on ${chg}">ADR#chg ${chg}</span>`;
+  }
+  return safeName;
+}
+
 let DATA = {
   org_settings: null,
   members: [],
@@ -479,6 +493,9 @@ let DATA = {
   seats: [],
 };
 let membersById = new Map();
+let membersMetaById = new Map(); // member_id -> {name, adr_no, adr_changed_on}
+let adrNoDuplicates = new Map(); // adr_no -> [member_id,...]
+
 
 async function refreshFromDrive(){
   log("info","Refreshing Drive→KV for members, units, seats, org_settings (forced)...");
@@ -512,12 +529,53 @@ async function loadData(){
 
   membersById = new Map(DATA.members.map(m => [memberId(m), memberName(m)]));
 
+// Build meta map + ADR duplicate guard
+membersMetaById = new Map();
+adrNoDuplicates = new Map();
+for (const m of DATA.members){
+  const mid = memberId(m);
+  const meta = { name: memberName(m), adr_no: (m.adr_no ?? null), adr_changed_on: null };
+  const hist = Array.isArray(m.adr_no_history) ? m.adr_no_history : [];
+  if (hist.length > 1){
+    // Determine current ADR entry (effective_to null wins; else latest effective_from)
+    let cur = hist.find(h => h && (h.effective_to === null || h.effective_to === undefined));
+    if (!cur){
+      cur = hist.slice().sort((a,b)=>String(a?.effective_from||"").localeCompare(String(b?.effective_from||""))).pop();
+    }
+    if (cur && cur.effective_from) meta.adr_changed_on = String(cur.effective_from).slice(0,10);
+  }
+  membersMetaById.set(mid, meta);
+
+  // Duplicate guard: only for active members with an adr_no
+  if (m && m.active !== false && meta.adr_no){
+    const key = String(meta.adr_no).trim();
+    if (!adrNoDuplicates.has(key)) adrNoDuplicates.set(key, []);
+    adrNoDuplicates.get(key).push(mid);
+  }
+}
+// Reduce to only duplicates
+for (const [k,v] of Array.from(adrNoDuplicates.entries())){
+  if (!v || v.length < 2) adrNoDuplicates.delete(k);
+}
+if (adrNoDuplicates.size){
+  const details = Array.from(adrNoDuplicates.entries()).map(([adr, ids])=>{
+    const names = ids.map(id => membersMetaById.get(id)?.name || id).join(", ");
+    return `${adr}: ${names}`;
+  }).join(" | ");
+  log("warn", `ADR duplicate numbers detected (${adrNoDuplicates.size}). ${details}`);
+}
+
   const availCount = Array.isArray(DATA.availability) ? DATA.availability.length : (DATA.availability ? Object.keys(DATA.availability).length : 0);
+  const dupCount = adrNoDuplicates ? adrNoDuplicates.size : 0;
+  const dupPill = dupCount
+    ? `<span class="pill" style="border-color:rgba(247,201,72,.55);background:rgba(247,201,72,.10);color:#ffe8a6">ADR dup#: ${dupCount}</span>`
+    : `<span class="pill">ADR dup#: 0</span>`;
   $("kpiRow").innerHTML = `
     <span class="pill">members: ${DATA.members.length}</span>
     <span class="pill">units: ${DATA.units.length}</span>
     <span class="pill">seats: ${DATA.seats.length}</span>
     <span class="pill">availability: ${availCount}</span>
+    ${dupPill}
   `;
   setPill(dataPill, `data: m${DATA.members.length} u${DATA.units.length} s${DATA.seats.length}`, true);
   log("ok", `Loaded members=${DATA.members.length}, units=${DATA.units.length}, seats=${DATA.seats.length}, availability=${availCount}`);
@@ -661,8 +719,8 @@ function renderSchedule(schedule){
         const parts = [];
         for (const [seatId, val] of Object.entries(seats)){
           const v = String(val||"OPEN");
-          const name = membersById.get(v) || v;
-          parts.push(`${seatId}: ${name}`);
+          const nameHtml = membersMetaById.size ? memberLabelHtml(v) : (membersById.get(v) || String(v||"OPEN").replace(/</g,"&lt;"));
+          parts.push(`${seatId}: ${nameHtml}`);
         }
         lines.push(`<div><span class="badge">${unitId}</span> ${parts.join(" • ")}</div>`);
       }
