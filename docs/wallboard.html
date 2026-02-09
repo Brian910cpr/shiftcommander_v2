@@ -1,109 +1,173 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ShiftCommander — Wallboard</title>
 <style>
-:root{--b:#ddd;--g:#f6f6f6;--mut:#666}
-body{font-family:system-ui,Segoe UI,Arial;margin:16px}
+:root{--b:#d9d9d9;--g:#f6f6f6;--mut:#666}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:16px}
+h2{margin:0 0 8px 0}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input,button{font:inherit;padding:6px 8px}
-table{border-collapse:collapse;width:100%;margin-top:10px}
-th,td{border:1px solid var(--b);padding:6px 8px;font-size:12px}
-th{background:var(--g);text-align:left}
+input,button{font:inherit;padding:6px 8px;border:1px solid var(--b);border-radius:10px}
+button{cursor:pointer}
 .small{font-size:12px;color:var(--mut)}
-.pill{border:1px solid var(--b);border-radius:999px;padding:2px 8px;font-size:11px}
-.pill.lock{background:#fff3cd;border-color:#ffe69c}
-.pill.pub{background:#e7f5ff;border-color:#b6dfff}
-</style></head>
+table{border-collapse:separate;border-spacing:0;width:100%;margin-top:10px}
+th,td{border:1px solid var(--b);padding:6px 8px;font-size:12px}
+th{background:var(--g);text-align:left;position:sticky;top:0;z-index:2}
+.pill{display:inline-block;border:1px solid var(--b);border-radius:999px;padding:2px 8px;font-size:11px}
+.pill.lock{background:#fff7ed;border-color:#fdba74}
+.pill.plan{background:#f3f4f6}
+.pill.pub{background:#eff6ff;border-color:#bfdbfe}
+</style>
+</head>
 <body>
+
 <h2>Wallboard</h2>
 
 <div class="row">
-  <label>Store Base <input id="storeBase" size="46" value="https://store.adr-fr.org" placeholder="https://store.adr-fr.org"></label>
-  <label>Week (Sun) <input id="week" type="date"></label>
-  <button id="load">Load</button>
-  <button id="saveCfg">Save</button>
-  <span class="small">locked + published/resolved</span>
+  <label>Store <input id="store" size="46" value="https://store.adr-fr.org" /></label>
+  <label>Week (Sun) <input id="week" type="date" /></label>
+  <button id="btnSaveCfg">Save</button>
+  <button id="btnLoad">Load</button>
+  <span id="msg" class="small"></span>
 </div>
 
 <table id="tbl">
-  <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Member</th><th>Status</th></tr></thead>
+  <thead><tr>
+    <th style="width:120px">Date</th><th style="width:70px">Shift</th><th style="width:120px">Unit</th><th style="width:160px">Seat</th>
+    <th>Member</th><th style="width:120px">Status</th>
+  </tr></thead>
   <tbody></tbody>
 </table>
 
 <script>
-const LS="sc_cfg_store_v1";
-const $=id=>document.getElementById(id);
 
-function normalizeBase(u){
-  u=String(u||"").trim();
+const LS_STORE_BASE = "sc_store_base";
+const LS_WRITE_KEY  = "sc_write_key"; // SC_TOKEN equivalent in-browser
+
+const $ = (id)=>document.getElementById(id);
+
+function normBase(u){
+  u = String(u||"").trim();
   if(!u) return "";
   try{
-    const x=new URL(u);
+    const x = new URL(u);
     x.hash=""; x.search="";
     return x.toString().replace(/\/+$/,"");
-  }catch(_){
+  } catch(e){
     return u.replace(/\/+$/,"");
   }
 }
-function storeBase(){
-  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
-  const raw = ($("storeBase").value.trim()||cfg.storeBase||"https://store.adr-fr.org");
-  return normalizeBase(raw) || "https://store.adr-fr.org";
-}
-function loadCfg(){
-  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
-  $("storeBase").value = cfg.storeBase || localStorage.getItem("sc_store_base") || "https://store.adr-fr.org";
-}
-function saveCfg(){
-  localStorage.setItem(LS, JSON.stringify({storeBase:normalizeBase($("storeBase").value)}));
-  localStorage.setItem("sc_store_base", normalizeBase($("storeBase").value));
-}
-$("saveCfg").onclick=saveCfg;
 
-async function scGet(kind, params={}){
-  const u=new URL(storeBase()+"/sc/get");
-  u.searchParams.set("kind", kind);
+function getStoreBase(){
+  return normBase(localStorage.getItem(LS_STORE_BASE) || "https://store.adr-fr.org") || "https://store.adr-fr.org";
+}
+function setStoreBase(v){
+  localStorage.setItem(LS_STORE_BASE, normBase(v) || "https://store.adr-fr.org");
+}
+function getWriteKey(){
+  return String(localStorage.getItem(LS_WRITE_KEY) || "").trim();
+}
+function setWriteKey(v){
+  localStorage.setItem(LS_WRITE_KEY, String(v||"").trim());
+}
+
+async function scGet(kind, params = {}){
+  const url = new URL(getStoreBase() + "/sc/get");
+  url.searchParams.set("kind", kind);
   for(const [k,v] of Object.entries(params||{})){
-    if(v===undefined||v===null||v==="") continue;
-    u.searchParams.set(k,String(v));
+    if(v===undefined || v===null || v==="") continue;
+    url.searchParams.set(k, String(v));
   }
-  const r=await fetch(u.toString(), {cache:"no-store"});
-  const j=await r.json().catch(()=>null);
-  if(!r.ok) throw new Error((j&&j.error)?j.error:`GET ${kind} ${r.status}`);
-  return (j && j.value!==undefined) ? j.value : (j && j.payload!==undefined ? j.payload : j);
+  const r = await fetch(url.toString(), { cache:"no-store" });
+  const j = await r.json().catch(()=>null);
+  if(!r.ok) throw new Error(j?.error || `GET ${kind} failed (${r.status})`);
+  if(!j || j.ok===false) throw new Error(j?.error || `GET ${kind} failed`);
+  return j.value;
+}
+
+async function scPut(kind, value, params = {}){
+  const key = getWriteKey();
+  if(!key) throw new Error("Missing SC_TOKEN (write key). Enter it then Save.");
+  const body = { kind, value, ...params };
+  const r = await fetch(getStoreBase() + "/sc/put", {
+    method:"POST",
+    headers:{
+      "content-type":"application/json",
+      "x-adr-write-key": key
+    },
+    body: JSON.stringify(body)
+  });
+  const j = await r.json().catch(()=>null);
+  if(!r.ok) throw new Error(j?.error || `PUT ${kind} failed (${r.status})`);
+  if(!j || j.ok===false) throw new Error(j?.error || `PUT ${kind} failed`);
+  return j;
 }
 
 function iso(d){ return d.toISOString().slice(0,10); }
-function nextSundayISO(){
-  const d=new Date(); d.setHours(0,0,0,0);
-  const add=(7-d.getDay())%7; d.setDate(d.getDate()+add);
-  return iso(d);
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function nextSunday(from=new Date()){
+  const d = new Date(from); d.setHours(0,0,0,0);
+  const add = (7 - d.getDay()) % 7;
+  d.setDate(d.getDate()+add);
+  return d;
 }
-$("week").value = nextSundayISO();
 
-$("load").onclick = async ()=>{
-  saveCfg();
-  const w=$("week").value;
-
-  const members=await scGet("members");
-  const list=Array.isArray(members)?members:(Array.isArray(members?.members)?members.members:[]);
-  const nameBy={}; list.forEach(m=> nameBy[String(m.member_id)] = ((m.first_name||"")+" "+(m.last_name||"")).trim()||String(m.member_id));
-
-  const rows=[];
-  const locks=await scGet("locks",{week:w}).catch(()=>({locks:[]}));
-  (locks.locks||[]).forEach(lk=> rows.push({date:lk.date,shift:lk.shift,unit:lk.unit,seat:lk.seat,member:nameBy[String(lk.member_id)]||lk.member_id,status:"locked"}));
-
-  const weekDoc=await scGet("week",{week:w}).catch(()=>null);
-  if(weekDoc && Array.isArray(weekDoc.assignments)){
-    (weekDoc.assignments||[]).forEach(a=> rows.push({date:a.date,shift:a.shift,unit:a.unit,seat:a.seat,member:nameBy[String(a.member_id)]||a.member_id,status:weekDoc.status||"resolved"}));
+async function loadMembersFlat(){
+  const v = await scGet("members");
+  const arr = Array.isArray(v) ? v : (Array.isArray(v?.members) ? v.members : []);
+  const nameBy = {};
+  for(const m of arr){
+    const id = String(m.member_id ?? m.id ?? "");
+    if(!id) continue;
+    nameBy[id] = ((m.first_name||"")+" "+(m.last_name||"")).trim() || id;
   }
+  return {members:arr, nameBy};
+}
 
+
+function loadCfgToInputs(){ $("store").value = getStoreBase(); }
+function saveCfgFromInputs(){ setStoreBase($("store").value); }
+
+function pill(s){
+  if(s==="locked") return '<span class="pill lock">locked</span>';
+  if(s==="planned") return '<span class="pill plan">planned</span>';
+  if(s==="published") return '<span class="pill pub">published</span>';
+  return s;
+}
+
+async function loadBoard(){
+  saveCfgFromInputs();
+  const week = $("week").value;
+  $("msg").textContent = "loading…";
+  const core = await loadMembersFlat();
+  const rows=[];
+  const locks = await scGet("schedule", {week, version:"locks"}).catch(()=>null);
+  if(locks && Array.isArray(locks.locks)) for(const lk of locks.locks) rows.push({...lk,_status:"locked"});
+  const pub = await scGet("schedule", {week, version:"published"}).catch(()=>null);
+  if(pub && Array.isArray(pub.items)){
+    for(const it of pub.items) rows.push({...it,_status:"published"});
+  } else {
+    const plan = await scGet("schedule", {week, version:"planned"}).catch(()=>null);
+    if(plan && Array.isArray(plan.items)) for(const it of plan.items) rows.push({...it,_status:"planned"});
+  }
   rows.sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.shift||"").localeCompare(b.shift||""));
   $("tbl").querySelector("tbody").innerHTML = rows.map(r=>`<tr>
-    <td>${r.date||""}</td><td>${r.shift||""}</td><td>${r.unit||""}</td><td>${r.seat||""}</td><td>${r.member||""}</td>
-    <td>${r.status==="locked"?'<span class="pill lock">locked</span>':(r.status==="published"?'<span class="pill pub">published</span>':(r.status||""))}</td>
+    <td>${r.date||""}</td><td>${r.shift||""}</td><td>${r.unit||""}</td><td>${r.seat||""}</td>
+    <td>${core.nameBy[String(r.member_id)]||r.member_id||""}</td><td>${pill(r._status)}</td>
   </tr>`).join("");
-};
+  $("msg").textContent = `loaded ${rows.length}`;
+}
 
-loadCfg();
-</script></body></html>
+$("btnSaveCfg").onclick = ()=>{ saveCfgFromInputs(); };
+$("btnLoad").onclick = loadBoard;
+
+(function init(){
+  loadCfgToInputs();
+  $("week").value = iso(nextSunday(new Date()));
+})();
+</script>
+
+</body>
+</html>

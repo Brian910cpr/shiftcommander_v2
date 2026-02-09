@@ -1,211 +1,210 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ShiftCommander — Member</title>
 <style>
-:root{--b:#ddd;--g:#f6f6f6;--mut:#666}
-body{font-family:system-ui,Segoe UI,Arial;margin:16px}
+:root{--b:#d9d9d9;--g:#f6f6f6;--mut:#666}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:16px}
+h2{margin:0 0 8px 0}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input,select,button,textarea{font:inherit;padding:6px 8px}
-.card{border:1px solid var(--b);border-radius:12px;padding:12px;margin-top:14px}
+input,select,button{font:inherit;padding:6px 8px;border:1px solid var(--b);border-radius:10px}
+button{cursor:pointer}
+.card{border:1px solid var(--b);border-radius:16px;padding:12px;margin-top:12px}
 .small{font-size:12px;color:var(--mut)}
-table{border-collapse:collapse;width:100%}
+table{border-collapse:separate;border-spacing:0;width:100%;margin-top:8px}
 th,td{border:1px solid var(--b);padding:6px 8px;font-size:12px}
 th{background:var(--g);text-align:left}
-.pill{border:1px solid var(--b);border-radius:999px;padding:2px 8px;font-size:11px}
-.pill.lock{background:#fff3cd;border-color:#ffe69c}
-.pill.pub{background:#e7f5ff;border-color:#b6dfff}
-</style></head>
+.pill{display:inline-block;border:1px solid var(--b);border-radius:999px;padding:2px 8px;font-size:11px}
+.pill.lock{background:#fff7ed;border-color:#fdba74}
+.pill.plan{background:#f3f4f6}
+.pill.pub{background:#eff6ff;border-color:#bfdbfe}
+</style>
+</head>
 <body>
+
 <h2>Member</h2>
 
 <div class="row">
-  <label>Store Base <input id="storeBase" size="46" value="https://store.adr-fr.org" placeholder="https://store.adr-fr.org"></label>
-  <label>Write Key <input id="writeKey" size="18" placeholder="SC_TOKEN / write key"></label>
+  <label>Store <input id="store" size="46" value="https://store.adr-fr.org" /></label>
+  <label>Write Key <input id="writeKey" size="18" placeholder="SC_TOKEN" /></label>
   <label>Me <select id="me"></select></label>
-  <button id="saveCfg">Save</button>
-  <span class="small">Reads: <span class="k">/sc/get</span> • Writes: <span class="k">/sc/put</span> (<span class="k">x-adr-write-key</span>)</span>
+  <label class="small">Weeks <input id="weeks" type="number" min="1" max="26" value="12" style="width:70px" /></label>
+  <button id="btnSaveCfg">Save</button>
+  <button id="btnLoad">My upcoming</button>
+  <span id="msg" class="small"></span>
 </div>
 
 <div class="card">
-  <div class="row">
-    <button id="loadUpcoming">My upcoming assignments</button>
-    <label class="small">Weeks <input id="weeks" type="number" min="1" max="26" value="12" style="width:70px"></label>
-  </div>
-  <table id="upTbl">
-    <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Status</th><th>Hrs</th></tr></thead>
+  <table id="tbl">
+    <thead><tr>
+      <th style="width:120px">Date</th><th style="width:70px">Shift</th><th style="width:120px">Unit</th><th style="width:160px">Seat</th>
+      <th style="width:120px">Status</th><th style="width:70px">Hrs</th>
+    </tr></thead>
     <tbody></tbody>
   </table>
 </div>
 
-<div class="card">
-  <div class="row">
-    <button id="loadAvail">Load availability</button>
-    <button id="saveAvail">Save availability</button>
-  </div>
-  <div class="small">Format: one range per line → YYYY-MM-DD..YYYY-MM-DD AM|PM|DAY|NIGHT (DAY=06-18, NIGHT=18-06)</div>
-  <textarea id="avail" rows="10" style="width:100%"></textarea>
-</div>
-
-<div class="card">
-  <div class="row"><button id="loadHistory">History (3 months)</button></div>
-  <pre id="hist" style="white-space:pre-wrap;margin:0"></pre>
-</div>
-
 <script>
-const LS="sc_cfg_store_v1";
-const $=id=>document.getElementById(id);
 
-function normalizeBase(u){
-  u=String(u||"").trim();
+const LS_STORE_BASE = "sc_store_base";
+const LS_WRITE_KEY  = "sc_write_key"; // SC_TOKEN equivalent in-browser
+
+const $ = (id)=>document.getElementById(id);
+
+function normBase(u){
+  u = String(u||"").trim();
   if(!u) return "";
   try{
-    const x=new URL(u);
+    const x = new URL(u);
     x.hash=""; x.search="";
     return x.toString().replace(/\/+$/,"");
-  }catch(_){
+  } catch(e){
     return u.replace(/\/+$/,"");
   }
 }
-function storeBase(){
-  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
-  const raw = ($("storeBase").value.trim()||cfg.storeBase||"https://store.adr-fr.org");
-  const v = normalizeBase(raw) || "https://store.adr-fr.org";
-  return v;
-}
-function writeKey(){
-  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
-  const v = ($("writeKey").value.trim()||cfg.writeKey||localStorage.getItem("sc_write_key")||"");
-  return v;
-}
-function saveCfg(){
-  localStorage.setItem(LS, JSON.stringify({storeBase:normalizeBase($("storeBase").value), writeKey:$("writeKey").value.trim()}));
-  if($("writeKey").value.trim()) localStorage.setItem("sc_write_key",$("writeKey").value.trim());
-}
-function loadCfg(){
-  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
-  $("storeBase").value = cfg.storeBase || localStorage.getItem("sc_store_base") || "https://store.adr-fr.org";
-  $("writeKey").value  = cfg.writeKey  || localStorage.getItem("sc_write_key") || "";
-}
-$("saveCfg").onclick=saveCfg;
 
-async function scGet(kind, params={}){
-  const u=new URL(storeBase()+"/sc/get");
-  u.searchParams.set("kind", kind);
-  for(const [k,v] of Object.entries(params||{})){
-    if(v===undefined||v===null||v==="") continue;
-    u.searchParams.set(k,String(v));
-  }
-  const r=await fetch(u.toString(), {cache:"no-store"});
-  const j=await r.json().catch(()=>null);
-  if(!r.ok) throw new Error((j&&j.error)?j.error:`GET ${kind} ${r.status}`);
-  return (j && j.value!==undefined) ? j.value : (j && j.payload!==undefined ? j.payload : j);
+function getStoreBase(){
+  return normBase(localStorage.getItem(LS_STORE_BASE) || "https://store.adr-fr.org") || "https://store.adr-fr.org";
 }
-async function scPut(body){
-  const k=writeKey();
-  if(!k) throw new Error("Missing Write Key");
-  const r=await fetch(storeBase()+"/sc/put", {
+function setStoreBase(v){
+  localStorage.setItem(LS_STORE_BASE, normBase(v) || "https://store.adr-fr.org");
+}
+function getWriteKey(){
+  return String(localStorage.getItem(LS_WRITE_KEY) || "").trim();
+}
+function setWriteKey(v){
+  localStorage.setItem(LS_WRITE_KEY, String(v||"").trim());
+}
+
+async function scGet(kind, params = {}){
+  const url = new URL(getStoreBase() + "/sc/get");
+  url.searchParams.set("kind", kind);
+  for(const [k,v] of Object.entries(params||{})){
+    if(v===undefined || v===null || v==="") continue;
+    url.searchParams.set(k, String(v));
+  }
+  const r = await fetch(url.toString(), { cache:"no-store" });
+  const j = await r.json().catch(()=>null);
+  if(!r.ok) throw new Error(j?.error || `GET ${kind} failed (${r.status})`);
+  if(!j || j.ok===false) throw new Error(j?.error || `GET ${kind} failed`);
+  return j.value;
+}
+
+async function scPut(kind, value, params = {}){
+  const key = getWriteKey();
+  if(!key) throw new Error("Missing SC_TOKEN (write key). Enter it then Save.");
+  const body = { kind, value, ...params };
+  const r = await fetch(getStoreBase() + "/sc/put", {
     method:"POST",
-    headers:{"content-type":"application/json","x-adr-write-key":k},
-    body: JSON.stringify(body||{})
+    headers:{
+      "content-type":"application/json",
+      "x-adr-write-key": key
+    },
+    body: JSON.stringify(body)
   });
-  const j=await r.json().catch(()=>null);
-  if(!r.ok) throw new Error((j&&j.error)?j.error:`PUT ${body && body.kind} ${r.status}`);
+  const j = await r.json().catch(()=>null);
+  if(!r.ok) throw new Error(j?.error || `PUT ${kind} failed (${r.status})`);
+  if(!j || j.ok===false) throw new Error(j?.error || `PUT ${kind} failed`);
   return j;
 }
 
 function iso(d){ return d.toISOString().slice(0,10); }
-function nextSunday(d){
-  const x=new Date(d); x.setHours(0,0,0,0);
-  const add=(7-x.getDay())%7; x.setDate(x.getDate()+add);
-  return x;
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function nextSunday(from=new Date()){
+  const d = new Date(from); d.setHours(0,0,0,0);
+  const add = (7 - d.getDay()) % 7;
+  d.setDate(d.getDate()+add);
+  return d;
+}
+
+async function loadMembersFlat(){
+  const v = await scGet("members");
+  const arr = Array.isArray(v) ? v : (Array.isArray(v?.members) ? v.members : []);
+  const nameBy = {};
+  for(const m of arr){
+    const id = String(m.member_id ?? m.id ?? "");
+    if(!id) continue;
+    nameBy[id] = ((m.first_name||"")+" "+(m.last_name||"")).trim() || id;
+  }
+  return {members:arr, nameBy};
+}
+
+
+function setMsg(t){ $("msg").textContent = t || ""; }
+
+function loadCfgToInputs(){
+  $("store").value = getStoreBase();
+  $("writeKey").value = getWriteKey();
+}
+function saveCfgFromInputs(){
+  setStoreBase($("store").value);
+  setWriteKey($("writeKey").value);
+}
+
+function pill(s){
+  if(s==="locked") return '<span class="pill lock">locked</span>';
+  if(s==="planned") return '<span class="pill plan">planned</span>';
+  if(s==="published") return '<span class="pill pub">published</span>';
+  return s;
 }
 
 let MEMBERS=[], NAMEBY={};
-async function loadMembers(){
-  const doc=await scGet("members");
-  MEMBERS = Array.isArray(doc) ? doc : (Array.isArray(doc?.members)?doc.members:[]);
-  NAMEBY={}; MEMBERS.forEach(m=> NAMEBY[String(m.member_id)]=((m.first_name||"")+" "+(m.last_name||"")).trim()||String(m.member_id));
-  $("me").innerHTML = MEMBERS.map(m=>`<option value="${m.member_id}">${NAMEBY[String(m.member_id)]} (${m.member_id})</option>`).join("");
+
+async function populateMe(){
+  saveCfgFromInputs();
+  const core = await loadMembersFlat();
+  MEMBERS = core.members;
+  NAMEBY = core.nameBy;
+  $("me").innerHTML = MEMBERS.map(m => {
+    const id = String(m.member_id);
+    return `<option value="${id}">${NAMEBY[id] || id} (${id})</option>`;
+  }).join("");
 }
 
 async function loadUpcoming(){
-  saveCfg();
-  const mid=String($("me").value||"");
-  const weeks=Math.max(1, Math.min(26, Number($("weeks").value||12)));
+  saveCfgFromInputs();
+  const mid = String($("me").value || "").trim();
+  const weeks = Math.max(1, Math.min(26, Number($("weeks").value || 12)));
   const start = nextSunday(new Date());
+
   const rows=[];
   for(let i=0;i<weeks;i++){
-    const wk=new Date(start); wk.setDate(start.getDate()+i*7);
-    const w=iso(wk);
+    const wk = iso(addDays(start, i*7));
 
-    const locks=await scGet("locks",{week:w}).catch(()=>({locks:[]}));
-    (locks.locks||[]).forEach(lk=>{
-      if(String(lk.member_id)!==mid) return;
-      rows.push({date:lk.date,shift:lk.shift,unit:lk.unit,seat:lk.seat,status:"locked",hrs:lk.hours||12});
-    });
+    const locks = await scGet("schedule", {week:wk, version:"locks"}).catch(()=>null);
+    if(locks && Array.isArray(locks.locks)){
+      for(const lk of locks.locks) if(String(lk.member_id)===mid) rows.push({...lk, _status:"locked"});
+    }
 
-    const weekDoc=await scGet("week",{week:w}).catch(()=>null);
-    if(weekDoc && Array.isArray(weekDoc.assignments)){
-      (weekDoc.assignments||[]).forEach(a=>{
-        if(String(a.member_id)!==mid) return;
-        rows.push({date:a.date,shift:a.shift,unit:a.unit,seat:a.seat,status:weekDoc.status||"resolved",hrs:a.hours||12});
-      });
+    const pub = await scGet("schedule", {week:wk, version:"published"}).catch(()=>null);
+    if(pub && Array.isArray(pub.items)){
+      for(const it of pub.items) if(String(it.member_id)===mid) rows.push({...it, _status:"published"});
+    } else {
+      const plan = await scGet("schedule", {week:wk, version:"planned"}).catch(()=>null);
+      if(plan && Array.isArray(plan.items)){
+        for(const it of plan.items) if(String(it.member_id)===mid) rows.push({...it, _status:"planned"});
+      }
     }
   }
+
   rows.sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.shift||"").localeCompare(b.shift||""));
-  $("upTbl").querySelector("tbody").innerHTML = rows.map(r=>`<tr>
+  $("tbl").querySelector("tbody").innerHTML = rows.map(r=>`<tr>
     <td>${r.date||""}</td><td>${r.shift||""}</td><td>${r.unit||""}</td><td>${r.seat||""}</td>
-    <td>${r.status==="locked"?'<span class="pill lock">locked</span>':(r.status==="published"?'<span class="pill pub">published</span>':(r.status||""))}</td>
-    <td>${r.hrs||""}</td>
+    <td>${pill(r._status)}</td><td>${Number(r.hours||12)}</td>
   </tr>`).join("");
+  setMsg(`loaded ${rows.length} rows`);
 }
 
-function parseAvailText(txt){
-  const lines=txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  const ranges=[];
-  for(const ln of lines){
-    const m=ln.match(/^(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})\s+(AM|PM|DAY|NIGHT)$/i);
-    if(!m) continue;
-    ranges.push({from:m[1], to:m[2], slot:m[3].toUpperCase()});
-  }
-  return {schema:"sc.availability.v1", member_id:$("me").value, ranges};
-}
-function availToText(doc){
-  const ranges=doc?.ranges||[];
-  return ranges.map(r=>`${r.from}..${r.to} ${r.slot}`).join("\n");
-}
+$("btnSaveCfg").onclick = ()=>{ saveCfgFromInputs(); setMsg("saved"); };
+$("btnLoad").onclick = loadUpcoming;
 
-async function loadAvail(){
-  saveCfg();
-  const mid=$("me").value;
-  const doc=await scGet("member_availability",{member_id:mid}).catch(()=>({ranges:[]}));
-  $("avail").value = availToText(doc);
-}
-async function saveAvail(){
-  saveCfg();
-  const mid=$("me").value;
-  const payload=parseAvailText($("avail").value);
-  await scPut({kind:"member_availability", member_id:mid, value:payload});
-}
+(async function init(){
+  loadCfgToInputs();
+  await populateMe();
+})();
+</script>
 
-async function loadHistory(){
-  saveCfg();
-  const idx=await scGet("history_index").catch(()=>({months:[]}));
-  const months=(idx.months||[]).slice(-3);
-  const parts=[];
-  for(const m of months){
-    const mo=await scGet("history_month",{month:m}).catch(()=>null);
-    if(!mo) continue;
-    parts.push({month:m, payload:mo});
-  }
-  $("hist").textContent = JSON.stringify(parts, null, 2);
-}
-
-$("loadUpcoming").onclick=loadUpcoming;
-$("loadAvail").onclick=loadAvail;
-$("saveAvail").onclick=saveAvail;
-$("loadHistory").onclick=loadHistory;
-
-loadCfg();
-loadMembers();
-</script></body></html>
+</body>
+</html>
