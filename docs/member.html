@@ -1,452 +1,132 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ShiftCommander — Member</title>
 <style>
-  :root{
-    --bg:#0b1220; --panel:#0f1a33; --text:#e9eefc; --muted:#aab7e6;
-    --line:rgba(255,255,255,.12); --good:#48d597; --warn:#f7c948; --bad:#ff6b6b; --btn:#2a5bd7;
-  }
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#070b14,var(--bg));color:var(--text);}
-  header{position:sticky;top:0;background:rgba(7,11,20,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:20;}
-  .wrap{max-width:1400px;margin:0 auto;padding:16px 18px;}
-  .title{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
-  h1{font-size:18px;margin:0;letter-spacing:.2px}
-  .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:rgba(255,255,255,.06);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
-  @media (max-width: 1100px){.grid{grid-template-columns:1fr;}}
-  .card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),rgba(15,26,51,.65));border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);}
-  .card h2{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600;}
-  .card .inner{padding:14px;}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
-  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-  input,select{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 10px;font-size:14px;outline:none;}
-  input:focus,select:focus{border-color:rgba(42,91,215,.7);box-shadow:0 0 0 3px rgba(42,91,215,.2)}
-  .field{min-width:220px;flex:1;}
-  .field.small{min-width:160px;flex:0}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
-  button{border:0;border-radius:12px;padding:10px 12px;font-weight:700;color:white;background:var(--btn);cursor:pointer}
-  button.secondary{background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--text)}
-  button:disabled{opacity:.55;cursor:not-allowed}
-  .hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
-  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
-  .k{display:inline-flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .key{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-  .sw{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);display:inline-block}
-  .sw.clear{background:rgba(72,213,151,.18);border-color:rgba(72,213,151,.5)}
-  .sw.pref{background:rgba(247,201,72,.18);border-color:rgba(247,201,72,.5)}
-  .sw.avoid{background:rgba(255,107,107,.18);border-color:rgba(255,107,107,.5)}
-  table{width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden}
-  th,td{border-bottom:1px solid rgba(255,255,255,.08);padding:8px 10px;text-align:left;font-size:13px;vertical-align:top}
-  th{color:var(--muted);font-weight:700;background:rgba(255,255,255,.04)}
-  .cellbtn{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);cursor:pointer;font-weight:700}
-  .cellbtn.clear{background:rgba(72,213,151,.10);border-color:rgba(72,213,151,.35)}
-  .cellbtn.pref{background:rgba(247,201,72,.10);border-color:rgba(247,201,72,.35)}
-  .cellbtn.avoid{background:rgba(255,107,107,.10);border-color:rgba(255,107,107,.35)}
-  .cellbtn.unknown{opacity:.65}
-  .tiny{font-size:12px;color:var(--muted)}
-  .log{height:220px;overflow:auto;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:12px;line-height:1.35;white-space:pre;}
-  .log .ok{color:var(--good)} .log .warn{color:var(--warn)} .log .bad{color:var(--bad)}
-  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-size:12px}
-  .badge.locked{border-color:rgba(247,201,72,.5);background:rgba(247,201,72,.10);color:#ffe8a6}
-</style>
-</head>
+body{font-family:system-ui,Segoe UI,Arial;margin:16px;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,button{font:inherit;padding:6px 8px}
+table{border-collapse:collapse;width:100%;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px 8px;font-size:13px}
+th{background:#f6f6f6;text-align:left}
+.tag{font-size:11px;padding:2px 6px;border:1px solid #ccc;border-radius:999px}
+.lock{background:#fff3cd;border-color:#ffe69c}
+.small{font-size:12px;color:#666}
+</style></head>
 <body>
-<header>
-  <div class="wrap title">
-    <h1>ShiftCommander — Member</h1>
-    <div class="k">
-      <span class="pill" id="netPill">offline</span>
-      <span class="pill" id="storePill">store: —</span>
-      <span class="pill" id="whoPill">member: —</span>
-    </div>
-  </div>
-</header>
+<h2>Member</h2>
 
-<div class="wrap grid">
-  <section class="card">
-    <div class="inner">
-      <h2>My Availability (next 6 weeks)</h2>
-
-      <div class="row">
-        <div class="field">
-          <label>Store Base</label>
-          <input id="storeBase" value="https://store.adr-fr.org"/>
-          <div class="hint">This page edits the shared <code>availability</code> blob so you don’t need separate “member_availability” plumbing right now.</div>
-        </div>
-        <div class="field">
-          <label>Write Key</label>
-          <input id="writeKey" placeholder="required to save availability"/>
-          <div class="hint">Saved as <code>localStorage.sc_write_key</code>.</div>
-        </div>
-        <div class="field small">
-          <label>Member</label>
-          <select id="memberSel"></select>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="btnPing" class="secondary">Ping Store</button>
-        <button id="btnLoad" class="secondary">Load</button>
-        <button id="btnSave">Save Availability</button>
-        <a class="pill" href="./supervisor.html" target="_blank">Open Supervisor</a>
-      </div>
-
-      <div class="hint k">
-        <span class="key"><span class="sw clear"></span> Clear</span>
-        <span class="key"><span class="sw pref"></span> Preferred</span>
-        <span class="key"><span class="sw avoid"></span> Avoid</span>
-        <span class="key"><span class="sw"></span> Unknown</span>
-        <span class="tiny">Click a cell to cycle: Unknown → Clear → Preferred → Avoid → Unknown.</span>
-      </div>
-
-      <div style="margin-top:10px;overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:560px">
-        <table id="availTable">
-          <thead>
-            <tr>
-              <th>Date</th><th>AM</th><th>PM</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <div style="margin-top:10px">
-        <div class="tiny">Log</div>
-        <div class="log" id="log"></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="inner">
-      <h2>My Upcoming Assignments (published)</h2>
-      <div class="tiny" id="schedMeta">Load to view.</div>
-      <div style="margin-top:10px;overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:820px">
-        <table id="schedTable">
-          <thead><tr><th>Week</th><th>Day</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Source</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="hint" style="margin-top:10px">
-        This reads <code>schedule</code> → <code>published</code> plus any <code>locks</code> set by a supervisor for future weeks.
-      </div>
-    </div>
-  </section>
+<div class="row">
+  <label>Store URL <input id="store" size="80" placeholder="https://script.google.com/macros/s/DEPLOY/exec"></label>
+  <label>Token <input id="token" size="30" placeholder="TOKEN"></label>
+  <label>Member <select id="memberSel"></select></label>
+  <button id="saveCfg">Save</button>
 </div>
 
+<div class="row">
+  <button id="loadUpcoming">Load Upcoming</button>
+  <span class="small">Shows locked + published schedule (if available)</span>
+</div>
+
+<table id="upcoming">
+  <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Status</th></tr></thead>
+  <tbody></tbody>
+</table>
+
 <script>
-const $ = (id)=>document.getElementById(id);
-const logEl = $("log");
-const netPill = $("netPill");
-const storePill = $("storePill");
-const whoPill = $("whoPill");
+const LS_CFG="sc_cfg_v2";
+function loadCfg(){
+  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
+  store.value = cfg.store || "";
+  token.value = cfg.token || "";
+}
+function saveCfg(){
+  localStorage.setItem(LS_CFG, JSON.stringify({store:store.value.trim(), token:token.value.trim()}));
+}
+saveCfgBtn.onclick = ()=>saveCfg();
 
-function setPill(el, text, ok=true){
-  el.textContent = text;
-  el.style.borderColor = ok ? "rgba(72,213,151,.5)" : "rgba(255,107,107,.5)";
-  el.style.background = ok ? "rgba(72,213,151,.10)" : "rgba(255,107,107,.10)";
-  el.style.color = ok ? "#b7f7dd" : "#ffd0d0";
+function base(){
+  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
+  return (store.value.trim() || cfg.store || "").replace(/\/+$/,'');
 }
-function fmtLine(type, msg){
-  const cls = type === "ok" ? "ok" : (type === "warn" ? "warn" : (type === "bad" ? "bad" : ""));
-  return `<span class="${cls}">${String(msg).replace(/</g,"&lt;")}</span>`;
+function tok(){
+  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
+  return (token.value.trim() || cfg.token || "");
 }
-function log(type,msg){
-  const ts = new Date().toISOString().slice(11,19);
-  logEl.innerHTML += fmtLine(type, `[${ts}] ${msg}`) + "\n";
-  logEl.scrollTop = logEl.scrollHeight;
-}
-
-function storeBase(){
-  const v = $("storeBase").value.trim().replace(/\/$/, "");
-  localStorage.setItem("sc_store_base", v);
-  return v;
-}
-function writeKey(){
-  const v = $("writeKey").value.trim();
-  if (v) localStorage.setItem("sc_write_key", v);
-  return v || localStorage.getItem("sc_write_key") || "";
-}
-
-async function apiGet(path){
-  const r = await fetch(storeBase()+path, {cache:"no-store"});
-  const j = await r.json().catch(()=>null);
-  if (!r.ok) throw new Error((j && j.error) ? j.error : `GET ${path} ${r.status}`);
-  return j;
-}
-async function scGet(kind, params={}){
-  const u = new URL(storeBase()+"/sc/get");
+async function apiGet(kind, params={}){
+  const u = new URL(base());
   u.searchParams.set("kind", kind);
-  for (const [k,v] of Object.entries(params||{})){
-    if (v === undefined || v === null || v === "") continue;
-    u.searchParams.set(k, String(v));
-  }
+  u.searchParams.set("token", tok());
+  for (const [k,v] of Object.entries(params)) u.searchParams.set(k, v);
   const r = await fetch(u.toString(), {cache:"no-store"});
   const j = await r.json().catch(()=>null);
-  if (!r.ok) throw new Error((j && j.error) ? j.error : `GET kind=${kind} ${r.status}`);
-  return (j && j.value !== undefined) ? j.value : null;
-}
-async function scPut(body){
-  const k = writeKey();
-  if (!k) throw new Error("Missing write key (x-adr-write-key)");
-  const r = await fetch(storeBase()+"/sc/put", {
-    method:"POST",
-    headers:{
-      "content-type":"application/json",
-      "x-adr-write-key": k
-    },
-    body: JSON.stringify(body)
-  });
-  const j = await r.json().catch(()=>null);
-  if (!r.ok) throw new Error((j && j.error) ? j.error : `PUT ${body.kind} ${r.status}`);
-  return j;
+  if (!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
+  return j.payload;
 }
 
-function sundayOf(d){
-  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  x.setUTCDate(x.getUTCDate()-x.getUTCDay());
+const store = document.getElementById("store");
+const token = document.getElementById("token");
+const memberSel = document.getElementById("memberSel");
+const saveCfgBtn = document.getElementById("saveCfg");
+
+let MEMBERS=[];
+async function loadMembers(){
+  const doc = await apiGet("members");
+  MEMBERS = Array.isArray(doc.members) ? doc.members : (Array.isArray(doc)?doc:[]);
+  memberSel.innerHTML = MEMBERS.map(m=>{
+    const id=m.member_id;
+    const n=((m.first_name||"")+" "+(m.last_name||"")).trim();
+    return `<option value="${id}">${n} (${id})</option>`;
+  }).join("");
+}
+
+function nextSunday(d){
+  const x=new Date(d); x.setHours(0,0,0,0);
+  const add=(7-x.getDay())%7; x.setDate(x.getDate()+add);
   return x;
 }
-function isoDate(d){ return d.toISOString().slice(0,10); }
-function addDaysIso(iso, days){
-  const d = new Date(iso+"T00:00:00Z");
-  d.setUTCDate(d.getUTCDate()+days);
-  return d.toISOString().slice(0,10);
-}
-function addWeeksIso(iso, weeks){ return addDaysIso(iso, weeks*7); }
+function iso(d){ return d.toISOString().slice(0,10); }
 
-let MEMBERS = [];
-let AVAIL = {}; // { member_id: { days: { date: {AM,PM}}}}
-let selectedMemberId = null;
+async function loadUpcoming(){
+  const mid = memberSel.value;
+  const start = nextSunday(new Date());
+  const weeks = 8;
+  const rows = [];
 
-function ensureMemberBlob(mid){
-  if (!AVAIL[mid]) AVAIL[mid] = { schema:"sc.availability.member.v1", member_id: mid, days: {} };
-  if (!AVAIL[mid].days) AVAIL[mid].days = {};
-  return AVAIL[mid];
-}
-
-function stateFor(mid, dateIso, shift){
-  const m = ensureMemberBlob(mid);
-  const d = m.days[dateIso] || {};
-  const v = (d[shift] || d[shift.toLowerCase()] || "").toLowerCase();
-  if (!v) return "unknown";
-  if (v === "clear" || v === "ok" || v === "yes") return "clear";
-  if (v === "pref" || v === "preferred") return "pref";
-  if (v === "avoid" || v === "no") return "avoid";
-  return "unknown";
-}
-function setState(mid, dateIso, shift, st){
-  const m = ensureMemberBlob(mid);
-  m.days[dateIso] = m.days[dateIso] || {};
-  if (st === "unknown") delete m.days[dateIso][shift];
-  else m.days[dateIso][shift] = st;
-}
-
-function cycle(st){
-  if (st === "unknown") return "clear";
-  if (st === "clear") return "pref";
-  if (st === "pref") return "avoid";
-  return "unknown";
-}
-
-function renderAvailability(){
-  if (!selectedMemberId) return;
-  whoPill.textContent = "member: " + selectedMemberId;
-  const tbody = $("availTable").querySelector("tbody");
-  tbody.innerHTML = "";
-
-  const start = isoDate(sundayOf(new Date()));
-  const days = 42; // 6 weeks
-  for (let i=0;i<days;i++){
-    const dateIso = addDaysIso(start, i);
-    const tr = document.createElement("tr");
-    const am = stateFor(selectedMemberId, dateIso, "AM");
-    const pm = stateFor(selectedMemberId, dateIso, "PM");
-
-    const mkBtn = (shift, st) => {
-      const b = document.createElement("button");
-      b.className = "cellbtn " + st;
-      b.textContent = st === "unknown" ? "—" : st.toUpperCase();
-      b.addEventListener("click", ()=>{
-        const next = cycle(st);
-        setState(selectedMemberId, dateIso, shift, next);
-        renderAvailability();
-      });
-      return b;
-    };
-
-    tr.innerHTML = `<td class="mono">${dateIso}</td>`;
-    const tdAm = document.createElement("td"); tdAm.appendChild(mkBtn("AM", am));
-    const tdPm = document.createElement("td"); tdPm.appendChild(mkBtn("PM", pm));
-    tr.appendChild(tdAm); tr.appendChild(tdPm);
-    tbody.appendChild(tr);
-  }
-}
-
-async function renderMySchedule(){
-  if (!selectedMemberId) return;
-  const tbody = $("schedTable").querySelector("tbody");
-  tbody.innerHTML = "";
-
-  const startWeek = isoDate(sundayOf(new Date()));
-  const weeks = 6;
-
-  // Collect published + locks
-  let rows = 0;
-  const seen = new Set(); // prevent duplicates: week|date|shift|unit|seat|source
-
-  for (let w=0; w<weeks; w++){
-    const week = addWeeksIso(startWeek, w);
-
-    // 1) Published schedule rows
-    const sched = await scGet("schedule", {week, version:"published"}).catch(()=>null);
-    const value = sched && sched.schedule ? sched.schedule : null;
-    if (value){
-      for (const [dateIso, dayObj] of Object.entries(value)){
-        for (const shift of ["AM","PM"]){
-          const shiftObj = dayObj[shift];
-          if (!shiftObj) continue;
-          for (const [unitId, seats] of Object.entries(shiftObj)){
-            for (const [seatId, val] of Object.entries(seats)){
-              if (String(val) !== String(selectedMemberId)) continue;
-              const key = `${week}|${dateIso}|${shift}|${unitId}|${seatId}|published`;
-              if (seen.has(key)) continue;
-              seen.add(key);
-
-              const tr = document.createElement("tr");
-              const sourceHtml = `<span class="badge">published</span>`;
-              tr.innerHTML = `
-                <td class="mono">${week}</td>
-                <td class="mono">${dateIso}</td>
-                <td><span class="badge">${shift}</span></td>
-                <td class="mono">${unitId}</td>
-                <td class="mono">${seatId}</td>
-                <td>${sourceHtml}</td>
-              `;
-              tbody.appendChild(tr);
-              rows++;
-            }
-          }
-        }
-      }
-    }
-
-    // 2) Locks rows (can exist before publish)
-    const locks = await scGet("locks", {week}).catch(()=>null);
-    const list = locks && Array.isArray(locks.locks) ? locks.locks : [];
-    for (const l of list){
-      if (!l || String(l.member_id) !== String(selectedMemberId)) continue;
-      const dateIso = String(l.date||"").slice(0,10);
-      const shift = String(l.shift||"").toUpperCase();
-      const unitId = String(l.unit||"");
-      const seatId = String(l.seat||"");
-      if (!dateIso || (shift!=="AM" && shift!=="PM") || !unitId || !seatId) continue;
-
-      const key = `${week}|${dateIso}|${shift}|${unitId}|${seatId}|locked`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-
-      const tr = document.createElement("tr");
-      const reason = (l.reason||"").trim();
-      const sourceHtml = `<span class="badge locked" title="${reason ? reason.replace(/"/g,'&quot;') : "Locked by supervisor"}">locked</span>`;
-      tr.innerHTML = `
-        <td class="mono">${week}</td>
-        <td class="mono">${dateIso}</td>
-        <td><span class="badge locked">${shift}</span></td>
-        <td class="mono">${unitId}</td>
-        <td class="mono">${seatId}${reason ? ` <span class="tiny">— ${reason.replace(/</g,"&lt;")}</span>` : ""}</td>
-        <td>${sourceHtml}</td>
-      `;
-      tbody.appendChild(tr);
-      rows++;
+  // locks (always available via API)
+  for (let i=0;i<weeks;i++){
+    const wk = new Date(start); wk.setDate(start.getDate() + i*7);
+    const weekISO = iso(wk);
+    const locksDoc = await apiGet("locks", {week:weekISO}).catch(()=>({locks:[]}));
+    for (const lk of (locksDoc.locks||[])){
+      if (lk.member_id !== mid) continue;
+      rows.push({date:lk.date, shift:lk.shift, unit:lk.unit, seat:lk.seat, status:"locked"});
     }
   }
 
-  $("schedMeta").textContent = rows
-    ? `Found ${rows} assignment(s) (published + locked) in next ${weeks} weeks.`
-    : `No published or locked assignments found in next ${weeks} weeks.`;
-}
-
-async function ping(){
+  // published schedule (optional if you serve it; ignore errors)
   try{
-    await apiGet("/health");
-    setPill(storePill, "store: ok", true);
-  }catch(e){
-    setPill(storePill, "store: error", false);
-    log("bad", e.message);
-  }
+    const sched = await apiGet("schedule");
+    const items = sched.items || sched.assignments || sched.rows || [];
+    for (const a of items){
+      if ((a.member_id||a.memberId) !== mid) continue;
+      rows.push({date:a.date, shift:(a.shift||a.slot||""), unit:a.unit, seat:a.seat, status:"published"});
+    }
+  }catch(_e){}
+
+  rows.sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.shift||"").localeCompare(b.shift||""));
+  const tb = document.querySelector("#upcoming tbody");
+  tb.innerHTML = rows.map(r=>`<tr>
+    <td>${r.date||""}</td>
+    <td>${r.shift||""}</td>
+    <td>${r.unit||""}</td>
+    <td>${r.seat||""}</td>
+    <td>${r.status==="locked" ? '<span class="tag lock">locked</span>' : '<span class="tag">published</span>'}</td>
+  </tr>`).join("");
 }
 
-async function loadAll(){
-  log("info","Loading members + availability…");
-  const members = await scGet("members").catch(()=>[]);
-  MEMBERS = Array.isArray(members) ? members : (members?.members || []);
-  const availability = await scGet("availability").catch(()=>({}));
-  AVAIL = (availability && !Array.isArray(availability)) ? availability : {};
+document.getElementById("loadUpcoming").onclick = loadUpcoming;
 
-  // build member dropdown
-  const sel = $("memberSel");
-  sel.innerHTML = "";
-  const opts = MEMBERS
-    .map(m => ({ id: String(m.member_id ?? m.id ?? "").trim(), name: (m.name||`${m.first_name||""} ${m.last_name||""}`).trim() }))
-    .filter(x=>x.id)
-    .sort((a,b)=>a.name.localeCompare(b.name));
-  for (const o of opts){
-    const op = document.createElement("option");
-    op.value = o.id;
-    op.textContent = `${o.name} (${o.id})`;
-    sel.appendChild(op);
-  }
-
-  // pick last used
-  const saved = localStorage.getItem("sc_member_id");
-  selectedMemberId = saved && opts.some(o=>o.id===saved) ? saved : (opts[0]?.id || null);
-  if (selectedMemberId) sel.value = selectedMemberId;
-
-  whoPill.textContent = "member: " + (selectedMemberId||"—");
-  log("ok", `Loaded members=${opts.length}, availability_keys=${Object.keys(AVAIL||{}).length}`);
-  renderAvailability();
-  await renderMySchedule();
-}
-
-async function saveAvailability(){
-  if (!selectedMemberId) throw new Error("No member selected.");
-  // Persist whole blob (simple, brute-force, but keeps architecture sane until we split by member)
-  log("info","Saving availability…");
-  await scPut({
-    kind:"availability",
-    value: AVAIL
-  });
-  log("ok","Saved availability.");
-}
-
-function init(){
-  function updateNet(){ setPill(netPill, navigator.onLine ? "online" : "offline", navigator.onLine); }
-  window.addEventListener("online", updateNet);
-  window.addEventListener("offline", updateNet);
-  updateNet();
-
-  $("storeBase").value = localStorage.getItem("sc_store_base") || $("storeBase").value;
-  $("writeKey").value = localStorage.getItem("sc_write_key") || localStorage.getItem("sc_token") || "";
-
-  $("btnPing").addEventListener("click", ()=>ping());
-  $("btnLoad").addEventListener("click", ()=>loadAll().catch(e=>log("bad", e.message)));
-  $("btnSave").addEventListener("click", ()=>saveAvailability().catch(e=>log("bad", e.message)));
-
-  $("memberSel").addEventListener("change", async ()=>{
-    selectedMemberId = $("memberSel").value;
-    localStorage.setItem("sc_member_id", selectedMemberId);
-    renderAvailability();
-    await renderMySchedule();
-  });
-
-  ping();
-  loadAll().catch(()=>{});
-}
-init();
+loadCfg();
+loadMembers();
 </script>
-</body>
-</html>
+</body></html>

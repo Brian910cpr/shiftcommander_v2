@@ -1,256 +1,80 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ShiftCommander — Wallboard</title>
 <style>
-  :root{
-    --bg:#071020; --panel:#0f1a33; --text:#e9eefc; --muted:#aab7e6; --line:rgba(255,255,255,.12);
-    --good:#48d597; --warn:#f7c948; --bad:#ff6b6b; --btn:#2a5bd7;
-  }
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#050915,var(--bg));color:var(--text);}
-  header{position:sticky;top:0;background:rgba(5,9,21,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:20;}
-  .wrap{max-width:1600px;margin:0 auto;padding:14px 16px;}
-  .title{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
-  h1{font-size:18px;margin:0}
-  .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:rgba(255,255,255,.06);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
-  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-  input,select{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 10px;font-size:14px;outline:none;}
-  button{border:0;border-radius:12px;padding:10px 12px;font-weight:800;color:white;background:var(--btn);cursor:pointer}
-  button.secondary{background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--text)}
-  .card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),rgba(15,26,51,.65));border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);}
-  .card .inner{padding:14px;}
-  .grid{display:grid;grid-template-columns:repeat(7, 1fr);gap:10px;}
-  .day{border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03)}
-  .dayHeader{padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.10);display:flex;justify-content:space-between;align-items:center}
-  .date{font-weight:900}
-  .dow{color:var(--muted);font-size:12px}
-  .shift{padding:10px}
-  .shiftTitle{font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px;letter-spacing:.3px}
-  .unit{margin-bottom:6px}
-  .unitName{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--muted);font-size:12px;font-weight:900}
-  .seatLine{margin-top:4px;font-size:13px}
-  .open{color:#ffd0d0}
-  .weeks{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .wk{padding:8px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;font-size:12px;font-weight:900}
-  .wk.active{background:rgba(42,91,215,.25);border-color:rgba(42,91,215,.55);color:#d8e4ff}
-  .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:8px}
-</style>
-</head>
+body{font-family:system-ui,Segoe UI,Arial;margin:16px;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,button{font:inherit;padding:6px 8px}
+table{border-collapse:collapse;width:100%;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px 8px;font-size:13px}
+th{background:#f6f6f6;text-align:left}
+.small{font-size:12px;color:#666}
+</style></head>
 <body>
-<header>
-  <div class="wrap title">
-    <h1>ShiftCommander — Wallboard</h1>
-    <div class="row">
-      <span class="pill" id="netPill">offline</span>
-      <span class="pill" id="storePill">store: —</span>
-      <a class="pill" href="./supervisor.html" target="_blank">Supervisor</a>
-      <a class="pill" href="./member.html" target="_blank">Member</a>
-    </div>
-  </div>
-</header>
-
-<div class="wrap">
-  <div class="card">
-    <div class="inner">
-      <div class="row">
-        <div style="min-width:260px;flex:1">
-          <label>Store Base</label>
-          <input id="storeBase" value="https://store.adr-fr.org"/>
-        </div>
-        <div style="min-width:180px">
-          <label>Weeks to show</label>
-          <select id="weeksCount">
-            <option value="2">2</option>
-            <option value="4">4</option>
-            <option value="6" selected>6</option>
-            <option value="8">8</option>
-          </select>
-        </div>
-        <div style="min-width:140px">
-          <label>&nbsp;</label>
-          <button id="btnLoad">Load</button>
-        </div>
-      </div>
-      <div class="weeks" id="weekTabs"></div>
-      <div class="hint">This wallboard intentionally shows <b>weeks</b> (not one week). It reads <code>schedule → published</code>. If a week is missing, it simply isn’t published yet.</div>
-    </div>
-  </div>
-
-  <div style="height:12px"></div>
-
-  <div class="card">
-    <div class="inner">
-      <div class="grid" id="grid"></div>
-    </div>
-  </div>
+<h2>Wallboard</h2>
+<div class="row">
+  <label>Store URL <input id="store" size="80" placeholder="https://script.google.com/macros/s/DEPLOY/exec"></label>
+  <label>Token <input id="token" size="30" placeholder="TOKEN"></label>
+  <label>Week (Sun) <input id="week" type="date"></label>
+  <button id="load">Load</button>
+  <span class="small">Displays locked assignments (future) + published schedule (if available)</span>
 </div>
 
+<table id="tbl">
+  <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Member</th><th>Status</th></tr></thead>
+  <tbody></tbody>
+</table>
+
 <script>
-const $ = (id)=>document.getElementById(id);
-const netPill=$("netPill"), storePill=$("storePill");
-function setPill(el,text,ok=true){
-  el.textContent=text;
-  el.style.borderColor = ok ? "rgba(72,213,151,.5)" : "rgba(255,107,107,.5)";
-  el.style.background = ok ? "rgba(72,213,151,.10)" : "rgba(255,107,107,.10)";
-  el.style.color = ok ? "#b7f7dd" : "#ffd0d0";
+function base(){ return store.value.trim().replace(/\/+$/,''); }
+function tok(){ return token.value.trim(); }
+async function apiGet(kind, params={}){
+  const u = new URL(base());
+  u.searchParams.set("kind", kind);
+  u.searchParams.set("token", tok());
+  for (const [k,v] of Object.entries(params)) u.searchParams.set(k, v);
+  const r = await fetch(u.toString(), {cache:"no-store"});
+  const j = await r.json().catch(()=>null);
+  if (!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
+  return j.payload;
 }
-function storeBase(){
-  const v=$("storeBase").value.trim().replace(/\/$/,"");
-  localStorage.setItem("sc_store_base", v);
-  return v;
+const store=document.getElementById("store");
+const token=document.getElementById("token");
+const week=document.getElementById("week");
+function iso(d){ return d.toISOString().slice(0,10); }
+function nextSundayISO(){
+  const d=new Date(); d.setHours(0,0,0,0);
+  const add=(7-d.getDay())%7; d.setDate(d.getDate()+add);
+  return iso(d);
 }
-async function apiGet(path){
-  const r=await fetch(storeBase()+path,{cache:"no-store"});
-  const j=await r.json().catch(()=>null);
-  if(!r.ok) throw new Error((j&&j.error)?j.error:`GET ${path} ${r.status}`);
-  return j;
-}
-async function scGet(kind, params={}){
-  const u = new URL(storeBase()+"/sc/get");
-  u.searchParams.set("kind",kind);
-  for(const [k,v] of Object.entries(params||{})){
-    if(v===undefined||v===null||v==="") continue;
-    u.searchParams.set(k,String(v));
+week.value = nextSundayISO();
+
+document.getElementById("load").onclick = async ()=>{
+  const w = week.value;
+  const membersDoc = await apiGet("members");
+  const members = Array.isArray(membersDoc.members) ? membersDoc.members : (Array.isArray(membersDoc)?membersDoc:[]);
+  const nameBy = {};
+  for (const m of members) nameBy[m.member_id] = ((m.first_name||"")+" "+(m.last_name||"")).trim();
+
+  const rows=[];
+  const locksDoc = await apiGet("locks", {week:w});
+  for (const lk of (locksDoc.locks||[])){
+    rows.push({date:lk.date, shift:lk.shift, unit:lk.unit, seat:lk.seat, member:nameBy[lk.member_id]||lk.member_id, status:"locked"});
   }
-  const r=await fetch(u.toString(),{cache:"no-store"});
-  const j=await r.json().catch(()=>null);
-  if(!r.ok) throw new Error((j&&j.error)?j.error:`GET kind=${kind} ${r.status}`);
-  return (j && j.value!==undefined) ? j.value : null;
-}
-function sundayOf(d){
-  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  x.setUTCDate(x.getUTCDate()-x.getUTCDay());
-  return x;
-}
-function isoDate(d){return d.toISOString().slice(0,10);}
-function addDaysIso(iso,days){
-  const d=new Date(iso+"T00:00:00Z");
-  d.setUTCDate(d.getUTCDate()+days);
-  return d.toISOString().slice(0,10);
-}
-function addWeeksIso(iso,weeks){return addDaysIso(iso,weeks*7);}
-const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
-let MEMBERS = new Map();
-
-function memberName(id){
-  return MEMBERS.get(String(id)) || String(id);
-}
-
-let weeksList = [];
-let activeWeek = null;
-let schedulesByWeek = new Map();
-
-function renderWeekTabs(){
-  const host=$("weekTabs");
-  host.innerHTML="";
-  for(const w of weeksList){
-    const b=document.createElement("div");
-    b.className="wk"+(w===activeWeek?" active":"");
-    b.textContent=w;
-    b.addEventListener("click",()=>{activeWeek=w;renderWeekTabs();renderWeekGrid();});
-    host.appendChild(b);
-  }
-}
-
-function renderWeekGrid(){
-  const grid=$("grid");
-  grid.innerHTML="";
-  const sched = schedulesByWeek.get(activeWeek);
-  if(!sched){ grid.innerHTML = "<div class='hint'>No schedule data for this week.</div>"; return; }
-
-  for(let i=0;i<7;i++){
-    const dateIso = addDaysIso(activeWeek,i);
-    const d = new Date(dateIso+"T00:00:00Z");
-    const day = sched?.[dateIso] || {AM:{},PM:{}};
-
-    const dayEl=document.createElement("div");
-    dayEl.className="day";
-    dayEl.innerHTML = `
-      <div class="dayHeader">
-        <div>
-          <div class="date">${dateIso}</div>
-          <div class="dow">${DOW[d.getUTCDay()]}</div>
-        </div>
-      </div>
-      <div class="shift">
-        <div class="shiftTitle">AM</div>
-        <div class="am"></div>
-      </div>
-      <div class="shift" style="border-top:1px solid rgba(255,255,255,.08)">
-        <div class="shiftTitle">PM</div>
-        <div class="pm"></div>
-      </div>
-    `;
-    const amHost=dayEl.querySelector(".am");
-    const pmHost=dayEl.querySelector(".pm");
-
-    function renderShift(host, obj){
-      const entries = Object.entries(obj||{});
-      if(!entries.length){
-        host.innerHTML = `<div class="seatLine open">OPEN / OPEN / OPEN</div>`;
-        return;
-      }
-      for(const [unitId, seats] of entries){
-        const u=document.createElement("div");
-        u.className="unit";
-        u.innerHTML = `<span class="unitName">${unitId}</span>`;
-        for(const [seatId, val] of Object.entries(seats||{})){
-          const name = memberName(val);
-          const line=document.createElement("div");
-          line.className="seatLine"+((String(val).toUpperCase()==="OPEN" || String(val).startsWith("__"))?" open":"");
-          line.textContent = `${seatId}: ${name}`;
-          u.appendChild(line);
-        }
-        host.appendChild(u);
-      }
+  try{
+    const sched = await apiGet("schedule");
+    const items = sched.items || sched.assignments || sched.rows || [];
+    for (const a of items){
+      rows.push({date:a.date, shift:(a.shift||a.slot||""), unit:a.unit, seat:a.seat, member:nameBy[a.member_id]||a.member_id, status:"published"});
     }
-    renderShift(amHost, day.AM);
-    renderShift(pmHost, day.PM);
+  }catch(_e){}
 
-    grid.appendChild(dayEl);
-  }
-}
+  rows.sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.shift||"").localeCompare(b.shift||""));
+  const tb=document.querySelector("#tbl tbody");
+  tb.innerHTML = rows.map(r=>`<tr>
+    <td>${r.date||""}</td><td>${r.shift||""}</td><td>${r.unit||""}</td><td>${r.seat||""}</td><td>${r.member||""}</td><td>${r.status||""}</td>
+  </tr>`).join("");
+};
 
-async function ping(){
-  try{ await apiGet("/health"); setPill(storePill,"store: ok",true); }
-  catch(e){ setPill(storePill,"store: error",false); }
-}
-
-async function loadAll(){
-  await ping();
-  // members for display names
-  const members = await scGet("members").catch(()=>[]);
-  const list = Array.isArray(members) ? members : (members?.members||[]);
-  MEMBERS = new Map(list.map(m => [String(m.member_id??m.id??"").trim(), (m.name||`${m.first_name||""} ${m.last_name||""}`).trim()]));
-  // weeks
-  const start = isoDate(sundayOf(new Date()));
-  const count = Number($("weeksCount").value||6);
-  weeksList = [];
-  schedulesByWeek = new Map();
-  for(let w=0; w<count; w++){
-    const week = addWeeksIso(start,w);
-    weeksList.push(week);
-    const sched = await scGet("schedule", {week, version:"published"}).catch(()=>null);
-    const value = (sched && sched.schedule) ? sched.schedule : null;
-    if(value) schedulesByWeek.set(week, value);
-  }
-  activeWeek = weeksList.find(w=>schedulesByWeek.has(w)) || weeksList[0];
-  renderWeekTabs();
-  renderWeekGrid();
-}
-
-function init(){
-  function updateNet(){ setPill(netPill, navigator.onLine ? "online":"offline", navigator.onLine); }
-  window.addEventListener("online", updateNet); window.addEventListener("offline", updateNet); updateNet();
-  $("storeBase").value = localStorage.getItem("sc_store_base") || $("storeBase").value;
-  $("btnLoad").addEventListener("click", ()=>loadAll());
-  loadAll();
-}
-init();
 </script>
-</body>
-</html>
+</body></html>
