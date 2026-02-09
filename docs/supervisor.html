@@ -111,6 +111,7 @@
 
       <div class="tabs">
         <div class="tab active" data-tab="ops">Ops Plan (seats)</div>
+        <div class="tab" data-tab="locks">Locks</div>
         <div class="tab" data-tab="data">Data Inspector</div>
         <div class="tab" data-tab="log">Run Log</div>
       </div>
@@ -146,6 +147,43 @@
         </div>
       </div>
 
+      
+      <div id="tab_locks" style="display:none">
+        <div class="hint">
+          Locks are <b>pre-assignments</b> that can be set weeks ahead of resolution. The resolver will <b>respect</b> locks and fill the remaining seats.
+          Members can see locked assignments even before the week is fully resolved/published.
+        </div>
+
+        <div class="box" style="margin-top:10px">
+          <div class="tiny">Locks for week</div>
+          <div class="row" style="margin-top:8px">
+            <button id="btnLoadLocks" class="secondary">Load Locks</button>
+            <button id="btnSaveLocks" class="secondary">Save Locks</button>
+            <button id="btnAddLock" class="secondary">+ Add Lock</button>
+            <button id="btnClearLocks" class="danger">Clear All Locks</button>
+          </div>
+          <div class="tiny" id="locksStatus" style="margin-top:8px"></div>
+        </div>
+
+        <div class="box" style="margin-top:10px">
+          <div class="tiny">Current locks</div>
+          <div style="margin-top:10px;overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:12px">
+            <table id="locksTable">
+              <thead>
+                <tr>
+                  <th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Member</th><th>Reason</th><th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="hint" style="margin-top:10px">
+            Tip: lock only what you are sure about. Over-locking reduces the resolver's ability to balance fairness/budget.
+          </div>
+        </div>
+      </div>
+
+
       <div id="tab_data" style="display:none">
         <div class="kpi" id="kpiRow"></div>
         <div class="box" style="margin-top:10px">
@@ -159,6 +197,7 @@
                 <option value="units">units</option>
                 <option value="seats">seats</option>
                 <option value="availability">availability</option>
+                <option value="locks">locks (week)</option>
                 <option value="ops_plan">ops_plan (planned)</option>
                 <option value="schedule">schedule (planned)</option>
               </select>
@@ -285,6 +324,7 @@ function setTab(name){
     el.classList.toggle("active", el.dataset.tab === name);
   }
   $("tab_ops").style.display = (name==="ops") ? "" : "none";
+  $("tab_locks").style.display = (name==="locks") ? "" : "none";
   $("tab_data").style.display = (name==="data") ? "" : "none";
   $("tab_log").style.display = (name==="log") ? "" : "none";
 }
@@ -325,6 +365,130 @@ function defaultOpsPlan(){
 }
 
 let opsPlan = null;
+
+let LOCKS = { schema:"sc.locks.v1", week_start: null, locks: [] };
+
+function normalizeLocks(v){
+  if (!v || typeof v !== "object") return { schema:"sc.locks.v1", week_start: weekStartVal(), locks: [] };
+  if (!Array.isArray(v.locks)) v.locks = [];
+  v.schema = v.schema || "sc.locks.v1";
+  v.week_start = v.week_start || weekStartVal();
+  return v;
+}
+function lockKey(l){ return `${l.date}|${l.shift}|${l.unit}|${l.seat}`; }
+
+async function loadLocks(){
+  const week = weekStartVal();
+  try{
+    const v = await scGet("locks", {week});
+    LOCKS = normalizeLocks(v);
+    LOCKS.week_start = week;
+    $("locksStatus").textContent = `Loaded locks: ${LOCKS.locks.length}`;
+    log("ok", `Loaded locks week=${week} count=${LOCKS.locks.length}`);
+  }catch(e){
+    LOCKS = normalizeLocks(null);
+    LOCKS.week_start = week;
+    $("locksStatus").textContent = `No locks found; starting empty.`;
+    log("warn", `No locks found week=${week}; empty.`);
+  }
+  renderLocksTable();
+}
+
+async function saveLocks(){
+  LOCKS = normalizeLocks(LOCKS);
+  LOCKS.week_start = weekStartVal();
+  await scPut({
+    kind:"locks",
+    week: weekStartVal(),
+    value: LOCKS
+  });
+  $("locksStatus").textContent = `Saved locks: ${LOCKS.locks.length}`;
+  log("ok", `Saved locks week=${weekStartVal()} count=${LOCKS.locks.length}`);
+}
+
+function memberOptionsHtml(selected){
+  const opts = DATA.members
+    .filter(m=>m && m.active !== false)
+    .map(m=>({id: memberId(m), name: memberName(m)}))
+    .filter(x=>x.id)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  return opts.map(o=>`<option value="${o.id}" ${String(o.id)===String(selected)?"selected":""}>${o.name} (${o.id})</option>`).join("");
+}
+
+function renderLocksTable(){
+  const tbody = $("locksTable").querySelector("tbody");
+  tbody.innerHTML = "";
+  const week = weekStartVal();
+
+  // Ensure we only show locks for this week (safety)
+  const list = (LOCKS && Array.isArray(LOCKS.locks)) ? LOCKS.locks.slice() : [];
+  list.sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")) || String(a.shift||"").localeCompare(String(b.shift||"")) || String(a.unit||"").localeCompare(String(b.unit||"")) || String(a.seat||"").localeCompare(String(b.seat||"")));
+
+  for (const l of list){
+    const tr = document.createElement("tr");
+    const selHtml = `<select class="mono" data-k="member_id">${memberOptionsHtml(l.member_id)}</select>`;
+    tr.innerHTML = `
+      <td class="mono"><input type="date" data-k="date" value="${l.date||week}" style="width:140px"/></td>
+      <td>
+        <select data-k="shift">
+          <option value="AM" ${(l.shift==="AM")?"selected":""}>AM</option>
+          <option value="PM" ${(l.shift==="PM")?"selected":""}>PM</option>
+        </select>
+      </td>
+      <td class="mono"><input data-k="unit" value="${l.unit||""}" style="width:110px" placeholder="120"/></td>
+      <td class="mono"><input data-k="seat" value="${l.seat||""}" style="width:120px" placeholder="driver"/></td>
+      <td>${selHtml}</td>
+      <td><input data-k="reason" value="${(l.reason||"")}" placeholder="optional" style="width:220px"/></td>
+      <td><button class="secondary" style="padding:8px 10px">Delete</button></td>
+    `;
+    tr.querySelector("button").addEventListener("click", ()=>{
+      const i = LOCKS.locks.indexOf(l);
+      if (i>=0){ LOCKS.locks.splice(i,1); renderLocksTable(); }
+    });
+    for (const el of tr.querySelectorAll("input,select")){
+      el.addEventListener("input", ()=>{
+        const k = el.dataset.k;
+        if (!k) return;
+        l[k] = el.value;
+      });
+      el.addEventListener("change", ()=>{
+        const k = el.dataset.k;
+        if (!k) return;
+        l[k] = el.value;
+      });
+    }
+    tbody.appendChild(tr);
+  }
+  if (!list.length){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="7" class="tiny">No locks for this week.</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function addLockRow(){
+  const week = weekStartVal();
+  LOCKS = normalizeLocks(LOCKS);
+  LOCKS.week_start = week;
+  const firstMember = (DATA.members.find(m=>m && m.active !== false && memberId(m)) );
+  LOCKS.locks.push({
+    date: week,
+    shift: "AM",
+    unit: (opsPlan?.unit_ids?.[0] || "120"),
+    seat: "attendant",
+    member_id: firstMember ? memberId(firstMember) : "",
+    reason: ""
+  });
+  renderLocksTable();
+}
+
+function clearAllLocks(){
+  LOCKS = normalizeLocks(LOCKS);
+  if (!Array.isArray(LOCKS.locks)) LOCKS.locks = [];
+  LOCKS.locks.length = 0;
+  renderLocksTable();
+}
+
 
 function renderSeatTemplates(){
   const host = $("seatTemplates");
@@ -579,6 +743,7 @@ if (adrNoDuplicates.size){
   `;
   setPill(dataPill, `data: m${DATA.members.length} u${DATA.units.length} s${DATA.seats.length}`, true);
   log("ok", `Loaded members=${DATA.members.length}, units=${DATA.units.length}, seats=${DATA.seats.length}, availability=${availCount}`);
+  try{ renderLocksTable(); }catch(e){}
 }
 
 function getAvail(member_id, dateIso, shift){ // shift "AM"/"PM"
@@ -643,12 +808,18 @@ function makeEmptyWeekSchedule(week){
   return out;
 }
 
-function buildScheduleFromOpsPlan({week, ops, members}){
+function buildScheduleFromOpsPlan({week, ops, members, locks}){
   const schedule = makeEmptyWeekSchedule(week);
   const used = new Set(); // date|shift|member
   const weekCount = new Map(); // member->count
 
   const seatTplById = new Map((ops.seat_templates||[]).map(t=>[t.id, t]));
+  const locksList = (locks && Array.isArray(locks.locks)) ? locks.locks : [];
+  const locksByKey = new Map();
+  for (const l of locksList){
+    if (!l || !l.date || !l.shift || !l.unit || !l.seat || !l.member_id) continue;
+    locksByKey.set(`${l.date}|${l.shift}|${l.unit}|${l.seat}`, String(l.member_id));
+  }
 
   function bump(id){ weekCount.set(id, (weekCount.get(id)||0)+1); }
 
@@ -672,6 +843,15 @@ function buildScheduleFromOpsPlan({week, ops, members}){
         for (const sid of seatIds){
           const tpl = seatTplById.get(sid);
           if (!tpl){ schedule[dateIso][shift][unitId][sid] = "OPEN"; continue; }
+
+          // Lock override
+          const lk = locksByKey.get(`${dateIso}|${shift}|${unitId}|${sid}`);
+          if (lk){
+            schedule[dateIso][shift][unitId][sid] = lk;
+            used.add(`${dateIso}|${shift}|${lk}`);
+            bump(lk);
+            continue;
+          }
 
           const candidates = members
             .filter(m => m && m.active !== false)
@@ -755,10 +935,16 @@ async function resolveWeek(){
   const week = weekStartVal();
   log("info", `Resolve start week=${week} units=${(opsPlan.unit_ids||[]).length}`);
 
+  // Load locks for this week (if any) and pass into builder
+  const locksVal = await scGet("locks", {week}).catch(()=>null);
+  LOCKS = normalizeLocks(locksVal);
+  LOCKS.week_start = week;
+
   const sched = buildScheduleFromOpsPlan({
     week,
     ops: opsPlan,
-    members: DATA.members
+    members: DATA.members,
+    locks: LOCKS
   });
 
   lastResult = {
@@ -816,6 +1002,11 @@ async function inspect(){
       $("inspectOut").value = JSON.stringify(v, null, 2);
       return;
     }
+    if (k === "locks"){
+      const v = await scGet("locks", {week: weekStartVal()});
+      $("inspectOut").value = JSON.stringify(v, null, 2);
+      return;
+    }
     if (k === "ops_plan"){
       const v = await scGet("ops_plan", {week: weekStartVal(), version:"planned"});
       $("inspectOut").value = JSON.stringify(v, null, 2);
@@ -847,6 +1038,11 @@ function init(){
   $("btnSave").addEventListener("click", ()=>savePlanned().catch(e=>log("bad", e.message)));
   $("btnPublish").addEventListener("click", ()=>publishPlanned().catch(e=>log("bad", e.message)));
   $("btnInspect").addEventListener("click", ()=>inspect());
+
+  $("btnLoadLocks").addEventListener("click", ()=>loadLocks().catch(e=>log("bad", e.message)));
+  $("btnSaveLocks").addEventListener("click", ()=>saveLocks().catch(e=>log("bad", e.message)));
+  $("btnAddLock").addEventListener("click", ()=>{ if (!DATA.members.length) { log("warn","Load Data first (members)."); return; } addLockRow(); });
+  $("btnClearLocks").addEventListener("click", ()=>{ clearAllLocks(); log("warn","Cleared all locks (not saved yet)."); });
 
   $("btnAddSeat").addEventListener("click", ()=>{
     opsPlan.seat_templates.push({id:"seat_"+Math.random().toString(16).slice(2,6), label:"New Seat", requires_any:""});

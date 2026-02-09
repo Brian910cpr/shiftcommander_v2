@@ -50,6 +50,7 @@
   .log{height:220px;overflow:auto;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:12px;line-height:1.35;white-space:pre;}
   .log .ok{color:var(--good)} .log .warn{color:var(--warn)} .log .bad{color:var(--bad)}
   .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-size:12px}
+  .badge.locked{border-color:rgba(247,201,72,.5);background:rgba(247,201,72,.10);color:#ffe8a6}
 </style>
 </head>
 <body>
@@ -125,12 +126,12 @@
       <div class="tiny" id="schedMeta">Load to view.</div>
       <div style="margin-top:10px;overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:820px">
         <table id="schedTable">
-          <thead><tr><th>Week</th><th>Day</th><th>Shift</th><th>Unit</th><th>Seat</th></tr></thead>
+          <thead><tr><th>Week</th><th>Day</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Source</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
       <div class="hint" style="margin-top:10px">
-        This reads <code>schedule</code> → <code>published</code>. If you only see one week on wallboard, it’s because only one week is currently loaded/rendered there.
+        This reads <code>schedule</code> → <code>published</code> plus any <code>locks</code> set by a supervisor for future weeks.
       </div>
     </div>
   </section>
@@ -293,36 +294,80 @@ async function renderMySchedule(){
   const startWeek = isoDate(sundayOf(new Date()));
   const weeks = 6;
 
+  // Collect published + locks
   let rows = 0;
+  const seen = new Set(); // prevent duplicates: week|date|shift|unit|seat|source
+
   for (let w=0; w<weeks; w++){
     const week = addWeeksIso(startWeek, w);
+
+    // 1) Published schedule rows
     const sched = await scGet("schedule", {week, version:"published"}).catch(()=>null);
     const value = sched && sched.schedule ? sched.schedule : null;
-    if (!value) continue;
+    if (value){
+      for (const [dateIso, dayObj] of Object.entries(value)){
+        for (const shift of ["AM","PM"]){
+          const shiftObj = dayObj[shift];
+          if (!shiftObj) continue;
+          for (const [unitId, seats] of Object.entries(shiftObj)){
+            for (const [seatId, val] of Object.entries(seats)){
+              if (String(val) !== String(selectedMemberId)) continue;
+              const key = `${week}|${dateIso}|${shift}|${unitId}|${seatId}|published`;
+              if (seen.has(key)) continue;
+              seen.add(key);
 
-    for (const [dateIso, dayObj] of Object.entries(value)){
-      for (const shift of ["AM","PM"]){
-        const shiftObj = dayObj[shift];
-        if (!shiftObj) continue;
-        for (const [unitId, seats] of Object.entries(shiftObj)){
-          for (const [seatId, val] of Object.entries(seats)){
-            if (String(val) !== String(selectedMemberId)) continue;
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td class="mono">${week}</td>
-              <td class="mono">${dateIso}</td>
-              <td><span class="badge">${shift}</span></td>
-              <td class="mono">${unitId}</td>
-              <td class="mono">${seatId}</td>
-            `;
-            tbody.appendChild(tr);
-            rows++;
+              const tr = document.createElement("tr");
+              const sourceHtml = `<span class="badge">published</span>`;
+              tr.innerHTML = `
+                <td class="mono">${week}</td>
+                <td class="mono">${dateIso}</td>
+                <td><span class="badge">${shift}</span></td>
+                <td class="mono">${unitId}</td>
+                <td class="mono">${seatId}</td>
+                <td>${sourceHtml}</td>
+              `;
+              tbody.appendChild(tr);
+              rows++;
+            }
           }
         }
       }
     }
+
+    // 2) Locks rows (can exist before publish)
+    const locks = await scGet("locks", {week}).catch(()=>null);
+    const list = locks && Array.isArray(locks.locks) ? locks.locks : [];
+    for (const l of list){
+      if (!l || String(l.member_id) !== String(selectedMemberId)) continue;
+      const dateIso = String(l.date||"").slice(0,10);
+      const shift = String(l.shift||"").toUpperCase();
+      const unitId = String(l.unit||"");
+      const seatId = String(l.seat||"");
+      if (!dateIso || (shift!=="AM" && shift!=="PM") || !unitId || !seatId) continue;
+
+      const key = `${week}|${dateIso}|${shift}|${unitId}|${seatId}|locked`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const tr = document.createElement("tr");
+      const reason = (l.reason||"").trim();
+      const sourceHtml = `<span class="badge locked" title="${reason ? reason.replace(/"/g,'&quot;') : "Locked by supervisor"}">locked</span>`;
+      tr.innerHTML = `
+        <td class="mono">${week}</td>
+        <td class="mono">${dateIso}</td>
+        <td><span class="badge locked">${shift}</span></td>
+        <td class="mono">${unitId}</td>
+        <td class="mono">${seatId}${reason ? ` <span class="tiny">— ${reason.replace(/</g,"&lt;")}</span>` : ""}</td>
+        <td>${sourceHtml}</td>
+      `;
+      tbody.appendChild(tr);
+      rows++;
+    }
   }
-  $("schedMeta").textContent = rows ? `Found ${rows} assignment(s) in next ${weeks} weeks.` : `No published assignments found in next ${weeks} weeks.`;
+
+  $("schedMeta").textContent = rows
+    ? `Found ${rows} assignment(s) (published + locked) in next ${weeks} weeks.`
+    : `No published or locked assignments found in next ${weeks} weeks.`;
 }
 
 async function ping(){
