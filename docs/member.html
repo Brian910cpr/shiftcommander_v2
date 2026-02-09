@@ -2,131 +2,169 @@
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ShiftCommander — Member</title>
 <style>
-body{font-family:system-ui,Segoe UI,Arial;margin:16px;}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-input,select,button{font:inherit;padding:6px 8px}
-table{border-collapse:collapse;width:100%;margin-top:10px}
-th,td{border:1px solid #ddd;padding:6px 8px;font-size:13px}
-th{background:#f6f6f6;text-align:left}
-.tag{font-size:11px;padding:2px 6px;border:1px solid #ccc;border-radius:999px}
-.lock{background:#fff3cd;border-color:#ffe69c}
-.small{font-size:12px;color:#666}
+:root{--b:#ddd;--g:#f6f6f6;--mut:#666}
+body{font-family:system-ui,Segoe UI,Arial;margin:16px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input,select,button,textarea{font:inherit;padding:6px 8px}
+.card{border:1px solid var(--b);border-radius:12px;padding:12px;margin-top:14px}
+.small{font-size:12px;color:var(--mut)}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--b);padding:6px 8px;font-size:12px}
+th{background:var(--g);text-align:left}
+.pill{border:1px solid var(--b);border-radius:999px;padding:2px 8px;font-size:11px}
+.pill.lock{background:#fff3cd;border-color:#ffe69c}
+.pill.pub{background:#e7f5ff;border-color:#b6dfff}
 </style></head>
 <body>
 <h2>Member</h2>
-
 <div class="row">
-  <label>Store URL <input id="store" size="80" placeholder="https://script.google.com/macros/s/DEPLOY/exec"></label>
-  <label>Token <input id="token" size="30" placeholder="TOKEN"></label>
-  <label>Member <select id="memberSel"></select></label>
+  <label>Store <input id="store" size="80" placeholder="https://script.google.com/macros/s/DEPLOY/exec"></label>
+  <label>Token <input id="token" size="34" placeholder="TOKEN"></label>
+  <label>Me <select id="me"></select></label>
   <button id="saveCfg">Save</button>
 </div>
 
-<div class="row">
-  <button id="loadUpcoming">Load Upcoming</button>
-  <span class="small">Shows locked + published schedule (if available)</span>
+<div class="card">
+  <div class="row">
+    <button id="loadUpcoming">My upcoming assignments</button>
+    <label class="small">Weeks <input id="weeks" type="number" min="1" max="26" value="12" style="width:70px"></label>
+  </div>
+  <table id="upTbl">
+    <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Status</th><th>Hrs</th></tr></thead>
+    <tbody></tbody>
+  </table>
 </div>
 
-<table id="upcoming">
-  <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Status</th></tr></thead>
-  <tbody></tbody>
-</table>
+<div class="card">
+  <div class="row">
+    <button id="loadAvail">Load availability</button>
+    <button id="saveAvail">Save availability</button>
+  </div>
+  <div class="small">Format: one range per line → YYYY-MM-DD..YYYY-MM-DD AM|PM|DAY|NIGHT (DAY=06-18, NIGHT=18-06)</div>
+  <textarea id="avail" rows="10" style="width:100%"></textarea>
+</div>
+
+<div class="card">
+  <div class="row"><button id="loadHistory">History (3 months)</button></div>
+  <pre id="hist" style="white-space:pre-wrap;margin:0"></pre>
+</div>
 
 <script>
-const LS_CFG="sc_cfg_v2";
-function loadCfg(){
-  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
-  store.value = cfg.store || "";
-  token.value = cfg.token || "";
-}
-function saveCfg(){
-  localStorage.setItem(LS_CFG, JSON.stringify({store:store.value.trim(), token:token.value.trim()}));
-}
-saveCfgBtn.onclick = ()=>saveCfg();
+const LS="sc_cfg_full_v3";
+const $=id=>document.getElementById(id);
 
-function base(){
-  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
-  return (store.value.trim() || cfg.store || "").replace(/\/+$/,'');
-}
-function tok(){
-  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
-  return (token.value.trim() || cfg.token || "");
-}
+function loadCfg(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); $("store").value=cfg.store||""; $("token").value=cfg.token||""; }
+function saveCfg(){ localStorage.setItem(LS, JSON.stringify({store:$("store").value.trim(), token:$("token").value.trim()})); }
+$("saveCfg").onclick=saveCfg;
+
+function base(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); return ($("store").value.trim()||cfg.store||"").replace(/\/+$/,''); }
+function tok(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); return ($("token").value.trim()||cfg.token||""); }
+
 async function apiGet(kind, params={}){
-  const u = new URL(base());
-  u.searchParams.set("kind", kind);
-  u.searchParams.set("token", tok());
-  for (const [k,v] of Object.entries(params)) u.searchParams.set(k, v);
-  const r = await fetch(u.toString(), {cache:"no-store"});
-  const j = await r.json().catch(()=>null);
-  if (!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
+  const u=new URL(base());
+  u.searchParams.set("kind",kind);
+  u.searchParams.set("token",tok());
+  for(const [k,v] of Object.entries(params)) u.searchParams.set(k,v);
+  const r=await fetch(u.toString(), {cache:"no-store"});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
+  return j.payload;
+}
+async function apiPost(kind, body){
+  body=body||{}; body.kind=kind; body.token=tok();
+  const r=await fetch(base(), {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`POST ${kind} failed`);
   return j.payload;
 }
 
-const store = document.getElementById("store");
-const token = document.getElementById("token");
-const memberSel = document.getElementById("memberSel");
-const saveCfgBtn = document.getElementById("saveCfg");
-
-let MEMBERS=[];
-async function loadMembers(){
-  const doc = await apiGet("members");
-  MEMBERS = Array.isArray(doc.members) ? doc.members : (Array.isArray(doc)?doc:[]);
-  memberSel.innerHTML = MEMBERS.map(m=>{
-    const id=m.member_id;
-    const n=((m.first_name||"")+" "+(m.last_name||"")).trim();
-    return `<option value="${id}">${n} (${id})</option>`;
-  }).join("");
-}
-
+function iso(d){ return d.toISOString().slice(0,10); }
 function nextSunday(d){
   const x=new Date(d); x.setHours(0,0,0,0);
   const add=(7-x.getDay())%7; x.setDate(x.getDate()+add);
   return x;
 }
-function iso(d){ return d.toISOString().slice(0,10); }
+
+let MEMBERS=[], NAMEBY={};
+async function loadMembers(){
+  const doc=await apiGet("members");
+  MEMBERS = Array.isArray(doc.members)?doc.members:(Array.isArray(doc)?doc:[]);
+  NAMEBY={}; MEMBERS.forEach(m=> NAMEBY[m.member_id]=((m.first_name||"")+" "+(m.last_name||"")).trim()||m.member_id);
+  $("me").innerHTML = MEMBERS.map(m=>`<option value="${m.member_id}">${NAMEBY[m.member_id]} (${m.member_id})</option>`).join("");
+}
 
 async function loadUpcoming(){
-  const mid = memberSel.value;
+  const mid=$("me").value;
+  const weeks=Math.max(1, Math.min(26, Number($("weeks").value||12)));
   const start = nextSunday(new Date());
-  const weeks = 8;
-  const rows = [];
-
-  // locks (always available via API)
-  for (let i=0;i<weeks;i++){
-    const wk = new Date(start); wk.setDate(start.getDate() + i*7);
-    const weekISO = iso(wk);
-    const locksDoc = await apiGet("locks", {week:weekISO}).catch(()=>({locks:[]}));
-    for (const lk of (locksDoc.locks||[])){
-      if (lk.member_id !== mid) continue;
-      rows.push({date:lk.date, shift:lk.shift, unit:lk.unit, seat:lk.seat, status:"locked"});
+  const rows=[];
+  for(let i=0;i<weeks;i++){
+    const wk=new Date(start); wk.setDate(start.getDate()+i*7);
+    const w=iso(wk);
+    const locks=await apiGet("locks",{week:w}).catch(()=>({locks:[]}));
+    (locks.locks||[]).forEach(lk=>{
+      if(lk.member_id!==mid) return;
+      rows.push({date:lk.date,shift:lk.shift,unit:lk.unit,seat:lk.seat,status:"locked",hrs:lk.hours||12});
+    });
+    const weekDoc=await apiGet("week",{week:w}).catch(()=>null);
+    if(weekDoc && Array.isArray(weekDoc.assignments)){
+      (weekDoc.assignments||[]).forEach(a=>{
+        if(a.member_id!==mid) return;
+        rows.push({date:a.date,shift:a.shift,unit:a.unit,seat:a.seat,status:weekDoc.status||"resolved",hrs:a.hours||12});
+      });
     }
   }
-
-  // published schedule (optional if you serve it; ignore errors)
-  try{
-    const sched = await apiGet("schedule");
-    const items = sched.items || sched.assignments || sched.rows || [];
-    for (const a of items){
-      if ((a.member_id||a.memberId) !== mid) continue;
-      rows.push({date:a.date, shift:(a.shift||a.slot||""), unit:a.unit, seat:a.seat, status:"published"});
-    }
-  }catch(_e){}
-
   rows.sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.shift||"").localeCompare(b.shift||""));
-  const tb = document.querySelector("#upcoming tbody");
-  tb.innerHTML = rows.map(r=>`<tr>
-    <td>${r.date||""}</td>
-    <td>${r.shift||""}</td>
-    <td>${r.unit||""}</td>
-    <td>${r.seat||""}</td>
-    <td>${r.status==="locked" ? '<span class="tag lock">locked</span>' : '<span class="tag">published</span>'}</td>
+  $("upTbl").querySelector("tbody").innerHTML = rows.map(r=>`<tr>
+    <td>${r.date||""}</td><td>${r.shift||""}</td><td>${r.unit||""}</td><td>${r.seat||""}</td>
+    <td>${r.status==="locked"?'<span class="pill lock">locked</span>':(r.status==="published"?'<span class="pill pub">published</span>':r.status||"")}</td>
+    <td>${r.hrs||""}</td>
   </tr>`).join("");
 }
 
-document.getElementById("loadUpcoming").onclick = loadUpcoming;
+function parseAvailText(txt){
+  const lines=txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const ranges=[];
+  for(const ln of lines){
+    const m=ln.match(/^(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})\s+(AM|PM|DAY|NIGHT)$/i);
+    if(!m) continue;
+    ranges.push({from:m[1], to:m[2], slot:m[3].toUpperCase()});
+  }
+  return {schema:"sc.availability.v1", member_id:$("me").value, ranges};
+}
+function availToText(doc){
+  const ranges=doc.ranges||[];
+  return ranges.map(r=>`${r.from}..${r.to} ${r.slot}`).join("\n");
+}
+
+async function loadAvail(){
+  const mid=$("me").value;
+  const doc=await apiGet("member_availability",{member_id:mid}).catch(()=>({ranges:[]}));
+  $("avail").value = availToText(doc);
+}
+async function saveAvail(){
+  const mid=$("me").value;
+  const payload=parseAvailText($("avail").value);
+  await apiPost("member_availability",{member_id:mid,payload});
+}
+
+async function loadHistory(){
+  const idx=await apiGet("history_index").catch(()=>({months:[]}));
+  const months=(idx.months||[]).slice(-3);
+  const parts=[];
+  for(const m of months){
+    const mo=await apiGet("history_month",{month:m}).catch(()=>null);
+    if(!mo) continue;
+    parts.push({month:m, payload:mo});
+  }
+  $("hist").textContent = JSON.stringify(parts, null, 2);
+}
+
+$("loadUpcoming").onclick=loadUpcoming;
+$("loadAvail").onclick=loadAvail;
+$("saveAvail").onclick=saveAvail;
+$("loadHistory").onclick=loadHistory;
 
 loadCfg();
 loadMembers();
-</script>
-</body></html>
+</script></body></html>

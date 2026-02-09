@@ -2,198 +2,251 @@
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ShiftCommander — Supervisor</title>
 <style>
-body{font-family:system-ui,Segoe UI,Arial;margin:16px;}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+:root{--b:#ddd;--g:#f6f6f6;--fg:#111;--mut:#666;--bad:#b00020;--ok:#0a7a2f}
+body{font-family:system-ui,Segoe UI,Arial;margin:16px;color:var(--fg)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 input,select,button,textarea{font:inherit;padding:6px 8px}
-table{border-collapse:collapse;width:100%;margin-top:10px}
-th,td{border:1px solid #ddd;padding:6px 8px;font-size:13px}
-th{background:#f6f6f6;text-align:left}
-.bad{color:#b00020;font-weight:600}
-.small{font-size:12px;color:#666}
+button{cursor:pointer}
+hr{border:none;border-top:1px solid var(--b);margin:14px 0}
+.grid{display:grid;grid-template-columns: 260px 1fr; gap:14px}
+.card{border:1px solid var(--b);border-radius:12px;padding:12px}
+.card h3{margin:0 0 8px 0;font-size:14px}
+.small{font-size:12px;color:var(--mut)}
+.bad{color:var(--bad);font-weight:600}
+.ok{color:var(--ok);font-weight:600}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--b);padding:6px 8px;font-size:12px}
+th{background:var(--g);text-align:left}
+.pill{border:1px solid var(--b);border-radius:999px;padding:2px 8px;font-size:11px}
+.pill.lock{background:#fff3cd;border-color:#ffe69c}
+.pill.pub{background:#e7f5ff;border-color:#b6dfff}
+.pill.res{background:#e9f7ef;border-color:#bfe5cc}
+.k{font-family:ui-monospace,Consolas,monospace;font-size:11px}
 </style></head>
 <body>
 <h2>Supervisor</h2>
 
 <div class="row">
-  <label>Store URL <input id="store" size="80" placeholder="https://script.google.com/macros/s/DEPLOY/exec"></label>
-  <label>Token <input id="token" size="30" placeholder="TOKEN"></label>
+  <label>Store <input id="store" size="80" placeholder="https://script.google.com/macros/s/DEPLOY/exec"></label>
+  <label>Token <input id="token" size="34" placeholder="TOKEN"></label>
   <button id="saveCfg">Save</button>
-  <span class="small">reads/writes Drive via Apps Script</span>
+  <span class="small">Drive-backed (Apps Script)</span>
 </div>
 
-<hr>
+<div class="grid">
+  <div class="card">
+    <h3>Schedule Browser</h3>
+    <div class="row">
+      <label>Week (Sun) <input id="week" type="date"></label>
+      <button id="prevW">◀</button>
+      <button id="nextW">▶</button>
+      <button id="loadW">Load</button>
+    </div>
+    <div class="row">
+      <button id="resolveFair">Resolve (Fair)</button>
+      <button id="resolveBudget">Resolve (Budget)</button>
+      <button id="commitWeek">Commit</button>
+      <button id="publishWeek">Publish</button>
+    </div>
+    <div class="row">
+      <button id="costBtn">Cost Preview</button>
+      <button id="fairBtn">Fairness (8w)</button>
+      <button id="auditBtn">Audit</button>
+    </div>
+    <div id="msg" class="small"></div>
+  </div>
 
-<div class="row">
-  <label>Week (Sun) <input id="week" type="date"></label>
-  <button id="loadLocks">Load Locks</button>
-  <button id="addLock">+ Add Lock</button>
-  <button id="saveLocks">Save Locks</button>
-  <button id="costPreview">Cost Preview</button>
+  <div class="card">
+    <h3>Locks (pre-resolution)</h3>
+    <div class="row">
+      <button id="loadLocks">Load Locks</button>
+      <button id="addLock">+ Add</button>
+      <button id="saveLocks">Save Locks</button>
+      <label class="small"><input type="checkbox" id="allowOver"> allow over-cap</label>
+    </div>
+    <table id="locksTbl">
+      <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Member</th><th>Hrs</th><th>Reason</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
-<div id="capMsg" class="small"></div>
+<div class="card" style="margin-top:14px">
+  <h3>Week View (locked + resolved/published)</h3>
+  <table id="weekTbl">
+    <thead><tr><th>Date</th><th>Shift</th><th>Unit</th><th>Seat</th><th>Member</th><th>Status</th><th>Hrs</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-<table id="locksTbl">
-  <thead>
-    <tr>
-      <th>Date</th><th>AM/PM</th><th>Unit</th><th>Seat</th><th>Member</th><th>Hours</th><th>Reason</th><th></th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<pre id="preview" style="white-space:pre-wrap;"></pre>
+<div class="card" style="margin-top:14px">
+  <h3>Output</h3>
+  <pre id="out" style="white-space:pre-wrap;margin:0"></pre>
+</div>
 
 <script>
-const qs = new URLSearchParams(location.search);
-const LS_CFG = "sc_cfg_v2";
+const LS="sc_cfg_full_v3";
+const $=id=>document.getElementById(id);
 
 function loadCfg(){
-  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
-  document.getElementById("store").value = cfg.store || "";
-  document.getElementById("token").value = cfg.token || "";
+  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
+  $("store").value = cfg.store||"";
+  $("token").value = cfg.token||"";
 }
 function saveCfg(){
-  localStorage.setItem(LS_CFG, JSON.stringify({
-    store: document.getElementById("store").value.trim(),
-    token: document.getElementById("token").value.trim()
-  }));
+  localStorage.setItem(LS, JSON.stringify({store:$("store").value.trim(), token:$("token").value.trim()}));
 }
-document.getElementById("saveCfg").onclick = () => saveCfg();
+$("saveCfg").onclick=saveCfg;
 
-function store(){ 
-  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
-  return (document.getElementById("store").value.trim() || cfg.store || "").replace(/\/+$/,'');
-}
-function token(){
-  const cfg = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
-  return (document.getElementById("token").value.trim() || cfg.token || "");
-}
+function base(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); return ($("store").value.trim()||cfg.store||"").replace(/\/+$/,''); }
+function tok(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); return ($("token").value.trim()||cfg.token||""); }
+
 async function apiGet(kind, params={}){
-  const u = new URL(store());
+  const u=new URL(base());
   u.searchParams.set("kind", kind);
-  u.searchParams.set("token", token());
-  for (const [k,v] of Object.entries(params)) u.searchParams.set(k, v);
-  const r = await fetch(u.toString(), {cache:"no-store"});
-  const j = await r.json().catch(()=>null);
-  if (!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
+  u.searchParams.set("token", tok());
+  for(const [k,v] of Object.entries(params)) u.searchParams.set(k, v);
+  const r=await fetch(u.toString(), {cache:"no-store"});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
   return j.payload;
 }
 async function apiPost(kind, body){
-  body = body || {};
-  body.kind = kind;
-  body.token = token();
-  const r = await fetch(store(), {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
-  const j = await r.json().catch(()=>null);
-  if (!r.ok || !j || j.ok===false) {
-    const msg = (j&&j.error)?j.error:`POST ${kind} failed`;
-    const e = new Error(msg);
-    e.details = j && (j.details || j._status);
+  body=body||{};
+  body.kind=kind;
+  body.token=tok();
+  const r=await fetch(base(), {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok || !j || j.ok===false){
+    const e=new Error((j&&j.error)?j.error:`POST ${kind} failed`);
+    e.details=j&&j.details;
     throw e;
   }
   return j.payload;
 }
 
-let MEMBERS = [];
-async function loadMembers(){
-  const doc = await apiGet("members");
-  MEMBERS = Array.isArray(doc.members) ? doc.members : (Array.isArray(doc)?doc:[]);
-}
-function memberOptions(selected){
-  return MEMBERS.map(m=>{
-    const id = m.member_id;
-    const n = (m.first_name||"") + " " + (m.last_name||"");
-    return `<option value="${id}" ${id===selected?"selected":""}>${n.trim()} (${id})</option>`;
-  }).join("");
-}
-function rowHtml(lock){
-  return `<tr>
-    <td><input type="date" value="${lock.date||""}"></td>
-    <td>
-      <select>
-        <option value="AM" ${(lock.shift||"")==="AM"?"selected":""}>AM</option>
-        <option value="PM" ${(lock.shift||"")==="PM"?"selected":""}>PM</option>
-      </select>
-    </td>
-    <td><input value="${lock.unit||""}" size="6"></td>
-    <td><input value="${lock.seat||""}" size="10"></td>
-    <td><select>${memberOptions(lock.member_id||"")}</select></td>
-    <td><input type="number" value="${lock.hours||12}" min="0" step="0.5" style="width:80px"></td>
-    <td><input value="${(lock.reason||"")}" size="24"></td>
-    <td><button class="del">X</button></td>
-  </tr>`;
-}
-function tableToLocks(){
-  const rows = [...document.querySelectorAll("#locksTbl tbody tr")];
-  return rows.map(tr=>{
-    const tds = tr.querySelectorAll("td");
-    return {
-      date: tds[0].querySelector("input").value,
-      shift: tds[1].querySelector("select").value,
-      unit: tds[2].querySelector("input").value.trim(),
-      seat: tds[3].querySelector("input").value.trim(),
-      member_id: tds[4].querySelector("select").value,
-      hours: Number(tds[5].querySelector("input").value||0),
-      reason: tds[6].querySelector("input").value.trim()
-    };
-  }).filter(x=>x.date && x.member_id);
-}
-function renderLocks(locks){
-  const tb = document.querySelector("#locksTbl tbody");
-  tb.innerHTML = (locks||[]).map(l=>rowHtml(l)).join("");
-  tb.querySelectorAll("button.del").forEach(btn=>{
-    btn.onclick = (e)=>{ e.preventDefault(); btn.closest("tr").remove(); };
-  });
-}
-
-function todayISO(){ return new Date().toISOString().slice(0,10); }
+function iso(d){ return d.toISOString().slice(0,10); }
 function nextSundayISO(){
   const d=new Date(); d.setHours(0,0,0,0);
   const add=(7-d.getDay())%7; d.setDate(d.getDate()+add);
-  return d.toISOString().slice(0,10);
+  return iso(d);
+}
+function addDaysISO(isoDate, days){
+  const d=new Date(isoDate+"T00:00:00"); d.setDate(d.getDate()+days); return iso(d);
 }
 
-document.getElementById("week").value = qs.get("week") || nextSundayISO();
+let MEMBERS=[];
+let NAMEBY={};
 
-document.getElementById("loadLocks").onclick = async ()=>{
-  document.getElementById("preview").textContent = "";
-  document.getElementById("capMsg").textContent = "";
-  await loadMembers();
-  const week = document.getElementById("week").value;
-  const doc = await apiGet("locks", {week});
-  renderLocks(doc.locks || []);
-};
-
-document.getElementById("addLock").onclick = async ()=>{
-  if (!MEMBERS.length) await loadMembers();
-  const tb = document.querySelector("#locksTbl tbody");
-  const l = {date:document.getElementById("week").value, shift:"AM", unit:"120", seat:"BLS_DRIVER", member_id: MEMBERS[0]?.member_id || "", hours:12, reason:""};
-  tb.insertAdjacentHTML("beforeend", rowHtml(l));
-  tb.querySelectorAll("button.del").forEach(btn=>{
-    btn.onclick = (e)=>{ e.preventDefault(); btn.closest("tr").remove(); };
-  });
-};
-
-document.getElementById("saveLocks").onclick = async ()=>{
-  document.getElementById("preview").textContent = "";
-  document.getElementById("capMsg").textContent = "";
-  const week = document.getElementById("week").value;
-  const payload = { schema:"sc.locks.v1", week_start: week, locks: tableToLocks() };
-  try{
-    await apiPost("locks", {week, payload, allow_over_cap:false});
-    document.getElementById("capMsg").textContent = "Saved.";
-  }catch(e){
-    document.getElementById("capMsg").innerHTML = `<span class="bad">${e.message}</span>` + (e.details?` <span class="small">${JSON.stringify(e.details)}</span>`:"");
+async function loadMembers(){
+  const doc=await apiGet("members");
+  MEMBERS = Array.isArray(doc.members)?doc.members:(Array.isArray(doc)?doc:[]);
+  NAMEBY={};
+  for(const m of MEMBERS){
+    NAMEBY[m.member_id]=((m.first_name||"")+" "+(m.last_name||"")).trim() || m.member_id;
   }
+}
+
+function memberOptions(selected){
+  return MEMBERS.map(m=>{
+    const id=m.member_id;
+    const n=NAMEBY[id]||id;
+    return `<option value="${id}" ${id===selected?"selected":""}>${n} (${id})</option>`;
+  }).join("");
+}
+
+function lockRow(lk){
+  return `<tr>
+    <td><input type="date" value="${lk.date||""}"></td>
+    <td><select><option value="AM" ${(lk.shift||"")==="AM"?"selected":""}>AM</option><option value="PM" ${(lk.shift||"")==="PM"?"selected":""}>PM</option></select></td>
+    <td><input value="${lk.unit||""}" size="6"></td>
+    <td><input value="${lk.seat||""}" size="12"></td>
+    <td><select>${memberOptions(lk.member_id||"")}</select></td>
+    <td><input type="number" value="${lk.hours||12}" min="0" step="0.5" style="width:80px"></td>
+    <td><input value="${lk.reason||""}" size="18"></td>
+    <td><button class="del">X</button></td>
+  </tr>`;
+}
+function renderLocks(locks){
+  const tb=$("locksTbl").querySelector("tbody");
+  tb.innerHTML=(locks||[]).map(lockRow).join("");
+  tb.querySelectorAll("button.del").forEach(b=>b.onclick=(e)=>{e.preventDefault(); b.closest("tr").remove();});
+}
+function locksFromTable(){
+  const rows=[...$("locksTbl").querySelectorAll("tbody tr")];
+  return rows.map(tr=>{
+    const t=tr.querySelectorAll("td");
+    return {
+      date:t[0].querySelector("input").value,
+      shift:t[1].querySelector("select").value,
+      unit:t[2].querySelector("input").value.trim(),
+      seat:t[3].querySelector("input").value.trim(),
+      member_id:t[4].querySelector("select").value,
+      hours:Number(t[5].querySelector("input").value||0),
+      reason:t[6].querySelector("input").value.trim()
+    };
+  }).filter(x=>x.date && x.member_id);
+}
+
+async function loadWeek(){
+  $("msg").textContent="";
+  $("out").textContent="";
+  await loadMembers();
+  const w=$("week").value;
+  const wk=await apiGet("week",{week:w}).catch(()=>({assignments:[],status:"unresolved"}));
+  const locks=await apiGet("locks",{week:w}).catch(()=>({locks:[]}));
+  renderLocks(locks.locks||[]);
+  renderWeekTable(w, wk, locks);
+}
+
+function renderWeekTable(weekStart, wk, locksDoc){
+  const rows=[];
+  const locks=(locksDoc && locksDoc.locks)?locksDoc.locks:[];
+  for(const lk of locks){
+    rows.push({date:lk.date,shift:lk.shift,unit:lk.unit,seat:lk.seat,member:NAMEBY[lk.member_id]||lk.member_id,status:"locked",hrs:lk.hours||12});
+  }
+  const assigns=(wk && wk.assignments)?wk.assignments:[];
+  for(const a of assigns){
+    rows.push({date:a.date,shift:a.shift,unit:a.unit,seat:a.seat,member:NAMEBY[a.member_id]||a.member_id,status:wk.status||"resolved",hrs:a.hours||12});
+  }
+  rows.sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.shift||"").localeCompare(b.shift||""));
+  $("weekTbl").querySelector("tbody").innerHTML = rows.map(r=>`<tr>
+    <td>${r.date||""}</td><td>${r.shift||""}</td><td>${r.unit||""}</td><td>${r.seat||""}</td>
+    <td>${r.member||""}</td>
+    <td>${r.status==="locked" ? '<span class="pill lock">locked</span>' : (r.status==="published" ? '<span class="pill pub">published</span>' : '<span class="pill res">resolved</span>')}</td>
+    <td>${r.hrs||""}</td>
+  </tr>`).join("");
+}
+
+$("loadW").onclick=loadWeek;
+$("prevW").onclick=()=>{$("week").value=addDaysISO($("week").value,-7); loadWeek();};
+$("nextW").onclick=()=>{$("week").value=addDaysISO($("week").value, 7); loadWeek();};
+
+$("loadLocks").onclick=async()=>{ await loadMembers(); const w=$("week").value; const doc=await apiGet("locks",{week:w}); renderLocks(doc.locks||[]); };
+$("addLock").onclick=async()=>{ if(!MEMBERS.length) await loadMembers(); const tb=$("locksTbl").querySelector("tbody"); tb.insertAdjacentHTML("beforeend", lockRow({date:$("week").value,shift:"AM",unit:"120",seat:"BLS_DRIVER",member_id:MEMBERS[0]?.member_id||"",hours:12,reason:""})); tb.querySelectorAll("button.del").forEach(b=>b.onclick=(e)=>{e.preventDefault(); b.closest("tr").remove();}); };
+$("saveLocks").onclick=async()=>{
+  const w=$("week").value;
+  const payload={schema:"sc.locks.v1", week_start:w, locks:locksFromTable()};
+  try{
+    const res=await apiPost("locks",{week:w,payload,allow_over_cap:$("allowOver").checked});
+    $("msg").innerHTML=`<span class="ok">locks saved</span>`;
+  }catch(e){
+    $("msg").innerHTML=`<span class="bad">${e.message}</span> <span class="small">${e.details?JSON.stringify(e.details):""}</span>`;
+  }
+  await loadWeek();
 };
 
-document.getElementById("costPreview").onclick = async ()=>{
-  document.getElementById("capMsg").textContent = "";
-  const week = document.getElementById("week").value;
-  const p = await apiGet("cost_preview", {week});
-  document.getElementById("preview").textContent = JSON.stringify(p, null, 2);
-};
+let lastResolved=null;
+
+$("resolveFair").onclick=async()=>{ const w=$("week").value; $("msg").textContent=""; const res=await apiPost("resolve_week",{week:w,mode:"fair",commit:false}); lastResolved=res; $("out").textContent=JSON.stringify(res.cost,null,2); renderWeekTable(w,res.week, await apiGet("locks",{week:w})); };
+$("resolveBudget").onclick=async()=>{ const w=$("week").value; $("msg").textContent=""; const res=await apiPost("resolve_week",{week:w,mode:"budget",commit:false}); lastResolved=res; $("out").textContent=JSON.stringify(res.cost,null,2); renderWeekTable(w,res.week, await apiGet("locks",{week:w})); };
+$("commitWeek").onclick=async()=>{ const w=$("week").value; if(!lastResolved){ $("msg").innerHTML='<span class="bad">resolve first</span>'; return;} await apiPost("resolve_week",{week:w,mode:lastResolved.week?.meta?.mode||"fair",commit:true}); $("msg").innerHTML='<span class="ok">week committed</span>'; await loadWeek(); };
+$("publishWeek").onclick=async()=>{ const w=$("week").value; await apiPost("publish_week",{week:w}); $("msg").innerHTML='<span class="ok">week published</span>'; await loadWeek(); };
+
+$("costBtn").onclick=async()=>{ const w=$("week").value; const p=await apiGet("cost_preview",{week:w}); $("out").textContent=JSON.stringify(p,null,2); };
+$("fairBtn").onclick=async()=>{ const p=await apiGet("fairness_report",{weeks:8}); $("out").textContent=JSON.stringify(p,null,2); };
+$("auditBtn").onclick=async()=>{ const p=await apiGet("audit_log",{limit:200}); $("out").textContent=JSON.stringify(p,null,2); };
 
 loadCfg();
-</script>
-</body></html>
+$("week").value = nextSundayISO();
+</script></body></html>
