@@ -21,6 +21,7 @@ th{background:var(--g);text-align:left}
   <label>Token <input id="token" size="34" placeholder="TOKEN"></label>
   <label>Week (Sun) <input id="week" type="date"></label>
   <button id="load">Load</button>
+  <button id="saveCfg">Save</button>
   <span class="small">locked + published/resolved</span>
 </div>
 
@@ -30,19 +31,62 @@ th{background:var(--g);text-align:left}
 </table>
 
 <script>
+const LS="sc_cfg_full_v3";
 const $=id=>document.getElementById(id);
-function base(){ return $("store").value.trim().replace(/\/+$/,''); }
-function tok(){ return $("token").value.trim(); }
-async function apiGet(kind, params={}){
-  const u=new URL(base());
+
+function sanitizeStore(u){
+  u=String(u||"").trim();
+  if(!u) return "";
+  try{
+    const x=new URL(u);
+    x.hash=""; x.search=""; // strip pasted ?kind=...
+    return x.toString().replace(/\/+$/,"");
+  }catch(_){
+    return u.replace(/\/+$/,"");
+  }
+}
+function loadCfg(){
+  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
+  if(cfg.store) $("store").value=cfg.store;
+  if(cfg.token) $("token").value=cfg.token;
+}
+function saveCfg(){
+  localStorage.setItem(LS, JSON.stringify({
+    store:sanitizeStore($("store").value),
+    token:$("token").value.trim()
+  }));
+}
+function storeBase(){
+  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
+  return sanitizeStore($("store").value.trim()||cfg.store||"");
+}
+function tok(){
+  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
+  return ($("token").value.trim()||cfg.token||"");
+}
+function isAppsScript(){ return /script\.google\.com\/macros/i.test(storeBase()); }
+
+function getUrl(kind, params={}){
+  if(isAppsScript()){
+    const u=new URL(storeBase());
+    u.searchParams.set("kind",kind);
+    u.searchParams.set("token",tok());
+    for(const [k,v] of Object.entries(params)) u.searchParams.set(k,v);
+    return u.toString();
+  }
+  const u=new URL(storeBase().replace(/\/+$/,"") + "/sc/get");
   u.searchParams.set("kind",kind);
-  u.searchParams.set("token",tok());
   for(const [k,v] of Object.entries(params)) u.searchParams.set(k,v);
-  const r=await fetch(u.toString(), {cache:"no-store"});
+  return u.toString();
+}
+
+async function apiGet(kind, params={}){
+  const r=await fetch(getUrl(kind, params), {cache:"no-store", redirect:"follow"});
   const j=await r.json().catch(()=>null);
   if(!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
   return j.payload;
 }
+
 function iso(d){ return d.toISOString().slice(0,10); }
 function nextSundayISO(){
   const d=new Date(); d.setHours(0,0,0,0);
@@ -51,8 +95,12 @@ function nextSundayISO(){
 }
 $("week").value = nextSundayISO();
 
+$("saveCfg").onclick = saveCfg;
+
 $("load").onclick = async ()=>{
+  saveCfg();
   const w=$("week").value;
+
   const members=await apiGet("members");
   const list=Array.isArray(members.members)?members.members:(Array.isArray(members)?members:[]);
   const nameBy={}; list.forEach(m=> nameBy[m.member_id]=((m.first_name||"")+" "+(m.last_name||"")).trim()||m.member_id);
@@ -60,6 +108,7 @@ $("load").onclick = async ()=>{
   const rows=[];
   const locks=await apiGet("locks",{week:w}).catch(()=>({locks:[]}));
   (locks.locks||[]).forEach(lk=> rows.push({date:lk.date,shift:lk.shift,unit:lk.unit,seat:lk.seat,member:nameBy[lk.member_id]||lk.member_id,status:"locked"}));
+
   const weekDoc=await apiGet("week",{week:w}).catch(()=>null);
   if(weekDoc && Array.isArray(weekDoc.assignments)){
     (weekDoc.assignments||[]).forEach(a=> rows.push({date:a.date,shift:a.shift,unit:a.unit,seat:a.seat,member:nameBy[a.member_id]||a.member_id,status:weekDoc.status||"resolved"}));
@@ -71,4 +120,6 @@ $("load").onclick = async ()=>{
     <td>${r.status==="locked"?'<span class="pill lock">locked</span>':(r.status==="published"?'<span class="pill pub">published</span>':r.status||"")}</td>
   </tr>`).join("");
 };
+
+loadCfg();
 </script></body></html>

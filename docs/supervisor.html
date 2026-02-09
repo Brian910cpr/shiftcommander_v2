@@ -88,13 +88,52 @@ th{background:var(--g);text-align:left}
 const LS="sc_cfg_full_v3";
 const $=id=>document.getElementById(id);
 
+function sanitizeStore(u){
+  u = String(u||"").trim();
+  if(!u) return "";
+  try{
+    const x = new URL(u);
+    x.hash = "";
+    x.search = ""; // strip any pasted ?kind=...
+    return x.toString().replace(/\/+$/,'');
+  }catch(_){
+    return u.replace(/\/+$/,'');
+  }
+}
+function storeBase(){
+  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
+  const raw = ($("store").value.trim()||cfg.store||"");
+  return sanitizeStore(raw);
+}
+function tok(){
+  const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
+  return ($("token").value.trim()||cfg.token||"");
+}
+function isAppsScript(){
+  return /script\.google\.com\/macros/i.test(storeBase());
+}
+function getUrl(kind, params={}){
+  if(isAppsScript()){
+    const u = new URL(storeBase());
+    u.searchParams.set("kind", kind);
+    u.searchParams.set("token", tok());
+    for(const [k,v] of Object.entries(params)) u.searchParams.set(k,v);
+    return u.toString();
+  }
+  const u = new URL(storeBase().replace(/\/+$/,'') + "/sc/get");
+  u.searchParams.set("kind", kind);
+  for(const [k,v] of Object.entries(params)) u.searchParams.set(k,v);
+  return u.toString();
+}
+
+
 function loadCfg(){
   const cfg=JSON.parse(localStorage.getItem(LS)||"{}");
   $("store").value = cfg.store||"";
   $("token").value = cfg.token||"";
 }
 function saveCfg(){
-  localStorage.setItem(LS, JSON.stringify({store:$("store").value.trim(), token:$("token").value.trim()}));
+  localStorage.setItem(LS, JSON.stringify({store:sanitizeStore($("store").value), token:$("token").value.trim()}));
 }
 $("saveCfg").onclick=saveCfg;
 
@@ -102,20 +141,17 @@ function base(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); return ($
 function tok(){ const cfg=JSON.parse(localStorage.getItem(LS)||"{}"); return ($("token").value.trim()||cfg.token||""); }
 
 async function apiGet(kind, params={}){
-  const u=new URL(base());
-  u.searchParams.set("kind", kind);
-  u.searchParams.set("token", tok());
-  for(const [k,v] of Object.entries(params)) u.searchParams.set(k, v);
-  const r=await fetch(u.toString(), {cache:"no-store"});
+  const r=await fetch(getUrl(kind, params), {cache:"no-store", redirect:"follow"});
   const j=await r.json().catch(()=>null);
   if(!r.ok || !j || j.ok===false) throw new Error((j&&j.error)?j.error:`GET ${kind} failed`);
   return j.payload;
 }
 async function apiPost(kind, body){
-  body=body||{};
-  body.kind=kind;
-  body.token=tok();
-  const r=await fetch(base(), {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  body=body||{}; body.kind=kind; body.token=tok();
+  const url = isAppsScript()
+    ? storeBase()
+    : (storeBase().replace(/\/+$/,'') + "/sc/put");
+  const r=await fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), redirect:"follow"});
   const j=await r.json().catch(()=>null);
   if(!r.ok || !j || j.ok===false){
     const e=new Error((j&&j.error)?j.error:`POST ${kind} failed`);
