@@ -5,66 +5,47 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>ShiftCommander — Wallboard</title>
 <style>
-  :root {
-    --bg:#061021;
-    --panel:#0c1b36;
-    --line:rgba(255,255,255,.12);
-    --text:#eef3ff;
-    --muted:#9fb0e6;
-    --good:#48d597;
-    --warn:#f7c948;
-    --bad:#ff6b6b;
+  :root{
+    --bg:#071020; --panel:#0f1a33; --text:#e9eefc; --muted:#aab7e6; --line:rgba(255,255,255,.12);
+    --good:#48d597; --warn:#f7c948; --bad:#ff6b6b; --btn:#2a5bd7;
   }
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#050914,var(--bg));color:var(--text);}
-  header{position:sticky;top:0;z-index:10;background:rgba(5,9,20,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
-  .wrap{max-width:1400px;margin:0 auto;padding:14px 16px;}
-  .top{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#050915,var(--bg));color:var(--text);}
+  header{position:sticky;top:0;background:rgba(5,9,21,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:20;}
+  .wrap{max-width:1600px;margin:0 auto;padding:14px 16px;}
+  .title{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+  h1{font-size:18px;margin:0}
   .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:rgba(255,255,255,.06);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
   label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-  input{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 10px;font-size:14px;outline:none;}
-  .card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),rgba(12,27,54,.65));border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);}
-  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
-  @media (max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:640px){.grid{grid-template-columns:1fr}}
-  .day{padding:12px}
-  .day h3{margin:0 0 10px;font-size:14px;color:var(--muted)}
-  .shift{border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:10px;background:rgba(0,0,0,.18);margin-bottom:10px}
-  .shift .hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-  .shift .name{font-weight:800}
-  .slot{font-size:13px;margin-top:4px;color:var(--text)}
-  .slot .k{color:var(--muted);font-weight:700;margin-right:6px}
-  .status{font-size:12px;color:var(--muted);margin-top:10px}
-  a{color:#9dc1ff;text-decoration:none}
-  a:hover{text-decoration:underline}
+  input,select{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 10px;font-size:14px;outline:none;}
+  button{border:0;border-radius:12px;padding:10px 12px;font-weight:800;color:white;background:var(--btn);cursor:pointer}
+  button.secondary{background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--text)}
+  .card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),rgba(15,26,51,.65));border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);}
+  .card .inner{padding:14px;}
+  .grid{display:grid;grid-template-columns:repeat(7, 1fr);gap:10px;}
+  .day{border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03)}
+  .dayHeader{padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.10);display:flex;justify-content:space-between;align-items:center}
+  .date{font-weight:900}
+  .dow{color:var(--muted);font-size:12px}
+  .shift{padding:10px}
+  .shiftTitle{font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px;letter-spacing:.3px}
+  .unit{margin-bottom:6px}
+  .unitName{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--muted);font-size:12px;font-weight:900}
+  .seatLine{margin-top:4px;font-size:13px}
+  .open{color:#ffd0d0}
+  .weeks{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .wk{padding:8px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;font-size:12px;font-weight:900}
+  .wk.active{background:rgba(42,91,215,.25);border-color:rgba(42,91,215,.55);color:#d8e4ff}
+  .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:8px}
 </style>
 </head>
 <body>
 <header>
-  <div class="wrap top">
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <div style="font-weight:900;letter-spacing:.3px">ShiftCommander — Wallboard</div>
-      <span class="pill" id="pillNet">offline</span>
-      <span class="pill" id="pillStore">store: —</span>
-      <span class="pill" id="pillWeek">week: —</span>
-    </div>
+  <div class="wrap title">
+    <h1>ShiftCommander — Wallboard</h1>
     <div class="row">
-      <div>
-        <label>Store Base</label>
-        <input id="storeBase" value="https://store.adr-fr.org" />
-      </div>
-      <div>
-        <label>Week (Sunday)</label>
-        <input id="weekStart" type="date" />
-      </div>
-      <div>
-        <label>Version</label>
-        <input id="version" value="published" />
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button id="btnLoad" class="pill" style="cursor:pointer">Load</button>
-      </div>
+      <span class="pill" id="netPill">offline</span>
+      <span class="pill" id="storePill">store: —</span>
       <a class="pill" href="./supervisor.html" target="_blank">Supervisor</a>
       <a class="pill" href="./member.html" target="_blank">Member</a>
     </div>
@@ -72,127 +53,202 @@
 </header>
 
 <div class="wrap">
-  <div class="status" id="status">—</div>
-  <div class="grid" id="grid"></div>
+  <div class="card">
+    <div class="inner">
+      <div class="row">
+        <div style="min-width:260px;flex:1">
+          <label>Store Base</label>
+          <input id="storeBase" value="https://store.adr-fr.org"/>
+        </div>
+        <div style="min-width:180px">
+          <label>Weeks to show</label>
+          <select id="weeksCount">
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="6" selected>6</option>
+            <option value="8">8</option>
+          </select>
+        </div>
+        <div style="min-width:140px">
+          <label>&nbsp;</label>
+          <button id="btnLoad">Load</button>
+        </div>
+      </div>
+      <div class="weeks" id="weekTabs"></div>
+      <div class="hint">This wallboard intentionally shows <b>weeks</b> (not one week). It reads <code>schedule → published</code>. If a week is missing, it simply isn’t published yet.</div>
+    </div>
+  </div>
+
+  <div style="height:12px"></div>
+
+  <div class="card">
+    <div class="inner">
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
 </div>
 
-<script type="module">
-import { isoDateUTC, addDaysUTC } from "./js/sc_resolver_v2.js";
-
+<script>
 const $ = (id)=>document.getElementById(id);
-
-function setPill(el, text, ok=true){
+const netPill=$("netPill"), storePill=$("storePill");
+function setPill(el,text,ok=true){
   el.textContent=text;
   el.style.borderColor = ok ? "rgba(72,213,151,.5)" : "rgba(255,107,107,.5)";
   el.style.background = ok ? "rgba(72,213,151,.10)" : "rgba(255,107,107,.10)";
   el.style.color = ok ? "#b7f7dd" : "#ffd0d0";
 }
-
 function storeBase(){
-  const v = $("storeBase").value.trim().replace(/\/$/,"");
+  const v=$("storeBase").value.trim().replace(/\/$/,"");
   localStorage.setItem("sc_store_base", v);
   return v;
 }
-
-function sundayOf(d){
-  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  const dow = x.getUTCDay();
-  x.setUTCDate(x.getUTCDate()-dow);
-  return x;
+async function apiGet(path){
+  const r=await fetch(storeBase()+path,{cache:"no-store"});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok) throw new Error((j&&j.error)?j.error:`GET ${path} ${r.status}`);
+  return j;
 }
-function toISODate(d){ return d.toISOString().slice(0,10); }
-function weekStartVal(){ return $("weekStart").value || toISODate(sundayOf(new Date())); }
-
 async function scGet(kind, params={}){
   const u = new URL(storeBase()+"/sc/get");
-  u.searchParams.set("kind", kind);
-  for (const [k,v] of Object.entries(params||{})) {
-    if (v === undefined || v === null || v === "") continue;
-    u.searchParams.set(k, String(v));
+  u.searchParams.set("kind",kind);
+  for(const [k,v] of Object.entries(params||{})){
+    if(v===undefined||v===null||v==="") continue;
+    u.searchParams.set(k,String(v));
   }
-  const r = await fetch(u.toString(), {cache:"no-store"});
-  const j = await r.json().catch(()=>null);
-  if (!r.ok) throw new Error((j && j.error) ? j.error : `GET ${kind} ${r.status}`);
-  return j && j.value !== undefined ? j.value : null;
+  const r=await fetch(u.toString(),{cache:"no-store"});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok) throw new Error((j&&j.error)?j.error:`GET kind=${kind} ${r.status}`);
+  return (j && j.value!==undefined) ? j.value : null;
+}
+function sundayOf(d){
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  x.setUTCDate(x.getUTCDate()-x.getUTCDay());
+  return x;
+}
+function isoDate(d){return d.toISOString().slice(0,10);}
+function addDaysIso(iso,days){
+  const d=new Date(iso+"T00:00:00Z");
+  d.setUTCDate(d.getUTCDate()+days);
+  return d.toISOString().slice(0,10);
+}
+function addWeeksIso(iso,weeks){return addDaysIso(iso,weeks*7);}
+const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+let MEMBERS = new Map();
+
+function memberName(id){
+  return MEMBERS.get(String(id)) || String(id);
 }
 
-function cardHTML(dateIso, scheduleForDay, membersById){
-  const am = scheduleForDay?.AM || {attendant:"OPEN",operator:"OPEN",third:"OPEN"};
-  const pm = scheduleForDay?.PM || {attendant:"OPEN",operator:"OPEN",third:"OPEN"};
-  const fmt = (id) => membersById.get(String(id||"OPEN")) || String(id||"OPEN");
-  const shiftBlock = (label, obj) => `
-    <div class="shift">
-      <div class="hdr"><div class="name">${label}</div><div class="pill">${label==="AM"?"06–18":"18–06"}</div></div>
-      <div class="slot"><span class="k">Att:</span>${fmt(obj.attendant)}</div>
-      <div class="slot"><span class="k">Drv:</span>${fmt(obj.operator)}</div>
-      <div class="slot"><span class="k">3rd:</span>${fmt(obj.third)}</div>
-    </div>
-  `;
-  return `
-    <div class="card day">
-      <h3>${dateIso}</h3>
-      ${shiftBlock("AM", am)}
-      ${shiftBlock("PM", pm)}
-    </div>
-  `;
+let weeksList = [];
+let activeWeek = null;
+let schedulesByWeek = new Map();
+
+function renderWeekTabs(){
+  const host=$("weekTabs");
+  host.innerHTML="";
+  for(const w of weeksList){
+    const b=document.createElement("div");
+    b.className="wk"+(w===activeWeek?" active":"");
+    b.textContent=w;
+    b.addEventListener("click",()=>{activeWeek=w;renderWeekTabs();renderWeekGrid();});
+    host.appendChild(b);
+  }
+}
+
+function renderWeekGrid(){
+  const grid=$("grid");
+  grid.innerHTML="";
+  const sched = schedulesByWeek.get(activeWeek);
+  if(!sched){ grid.innerHTML = "<div class='hint'>No schedule data for this week.</div>"; return; }
+
+  for(let i=0;i<7;i++){
+    const dateIso = addDaysIso(activeWeek,i);
+    const d = new Date(dateIso+"T00:00:00Z");
+    const day = sched?.[dateIso] || {AM:{},PM:{}};
+
+    const dayEl=document.createElement("div");
+    dayEl.className="day";
+    dayEl.innerHTML = `
+      <div class="dayHeader">
+        <div>
+          <div class="date">${dateIso}</div>
+          <div class="dow">${DOW[d.getUTCDay()]}</div>
+        </div>
+      </div>
+      <div class="shift">
+        <div class="shiftTitle">AM</div>
+        <div class="am"></div>
+      </div>
+      <div class="shift" style="border-top:1px solid rgba(255,255,255,.08)">
+        <div class="shiftTitle">PM</div>
+        <div class="pm"></div>
+      </div>
+    `;
+    const amHost=dayEl.querySelector(".am");
+    const pmHost=dayEl.querySelector(".pm");
+
+    function renderShift(host, obj){
+      const entries = Object.entries(obj||{});
+      if(!entries.length){
+        host.innerHTML = `<div class="seatLine open">OPEN / OPEN / OPEN</div>`;
+        return;
+      }
+      for(const [unitId, seats] of entries){
+        const u=document.createElement("div");
+        u.className="unit";
+        u.innerHTML = `<span class="unitName">${unitId}</span>`;
+        for(const [seatId, val] of Object.entries(seats||{})){
+          const name = memberName(val);
+          const line=document.createElement("div");
+          line.className="seatLine"+((String(val).toUpperCase()==="OPEN" || String(val).startsWith("__"))?" open":"");
+          line.textContent = `${seatId}: ${name}`;
+          u.appendChild(line);
+        }
+        host.appendChild(u);
+      }
+    }
+    renderShift(amHost, day.AM);
+    renderShift(pmHost, day.PM);
+
+    grid.appendChild(dayEl);
+  }
 }
 
 async function ping(){
-  try {
-    const r = await fetch(storeBase()+"/health", {cache:"no-store"});
-    const j = await r.json().catch(()=>null);
-    setPill($("pillStore"), "store: ok", true);
-    $("status").textContent = "Store: " + JSON.stringify(j);
-  } catch(e) {
-    setPill($("pillStore"), "store: error", false);
-    $("status").textContent = "Store ping failed: " + e.message;
-  }
+  try{ await apiGet("/health"); setPill(storePill,"store: ok",true); }
+  catch(e){ setPill(storePill,"store: error",false); }
 }
 
-async function load(){
-  $("pillWeek").textContent = "week: " + weekStartVal();
-  $("status").textContent = "Loading…";
-  const week = weekStartVal();
-  const version = ($("version").value||"published").trim();
-  const [members, planned, published] = await Promise.all([
-    scGet("members").catch(()=>[]),
-    scGet("schedule", {week, version:"planned"}).catch(()=>null),
-    scGet("schedule", {week, version:"published"}).catch(()=>null)
-  ]);
-  const schedWrap = (version==="published" ? published : planned) || published || planned;
-  const schedule = schedWrap?.schedule || schedWrap || null;
-  const membersById = new Map((Array.isArray(members)?members:[]).map(m=>[String(m.member_id??m.id??""), String(m.name||m.member_id||m.id||"")]));
-
-  if (!schedule) {
-    $("status").textContent = `No schedule found for week ${week} (planned or published).`;
-    $("grid").innerHTML = "";
-    return;
+async function loadAll(){
+  await ping();
+  // members for display names
+  const members = await scGet("members").catch(()=>[]);
+  const list = Array.isArray(members) ? members : (members?.members||[]);
+  MEMBERS = new Map(list.map(m => [String(m.member_id??m.id??"").trim(), (m.name||`${m.first_name||""} ${m.last_name||""}`).trim()]));
+  // weeks
+  const start = isoDate(sundayOf(new Date()));
+  const count = Number($("weeksCount").value||6);
+  weeksList = [];
+  schedulesByWeek = new Map();
+  for(let w=0; w<count; w++){
+    const week = addWeeksIso(start,w);
+    weeksList.push(week);
+    const sched = await scGet("schedule", {week, version:"published"}).catch(()=>null);
+    const value = (sched && sched.schedule) ? sched.schedule : null;
+    if(value) schedulesByWeek.set(week, value);
   }
-
-  const start = new Date(week + "T00:00:00Z");
-  let html = "";
-  for (let i=0;i<7;i++) {
-    const dateIso = isoDateUTC(addDaysUTC(start,i));
-    html += cardHTML(dateIso, schedule[dateIso], membersById);
-  }
-  $("grid").innerHTML = html;
-  $("status").textContent = `Showing week ${week} • requested=${version} • using=${(version==="published" && published)? "published" : ((version==="planned" && planned)? "planned" : (published? "published" : "planned"))}`;
+  activeWeek = weeksList.find(w=>schedulesByWeek.has(w)) || weeksList[0];
+  renderWeekTabs();
+  renderWeekGrid();
 }
 
 function init(){
-  function updateNet(){
-    const ok = navigator.onLine;
-    setPill($("pillNet"), ok ? "online" : "offline", ok);
-  }
-  window.addEventListener("online", updateNet);
-  window.addEventListener("offline", updateNet);
-  updateNet();
-
+  function updateNet(){ setPill(netPill, navigator.onLine ? "online":"offline", navigator.onLine); }
+  window.addEventListener("online", updateNet); window.addEventListener("offline", updateNet); updateNet();
   $("storeBase").value = localStorage.getItem("sc_store_base") || $("storeBase").value;
-  $("weekStart").value = toISODate(sundayOf(new Date()));
-  $("btnLoad").addEventListener("click", ()=>load().catch(e=>{$("status").textContent=e.message;}));
-  ping();
-  load().catch(()=>{});
+  $("btnLoad").addEventListener("click", ()=>loadAll());
+  loadAll();
 }
 init();
 </script>

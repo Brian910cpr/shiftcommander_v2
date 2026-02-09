@@ -19,12 +19,12 @@
   }
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#070b14,var(--bg));color:var(--text);}
   header{position:sticky;top:0;background:rgba(7,11,20,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:20;}
-  .wrap{max-width:1200px;margin:0 auto;padding:16px 18px;}
+  .wrap{max-width:1400px;margin:0 auto;padding:16px 18px;}
   .title{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
   h1{font-size:18px;margin:0;letter-spacing:.2px}
   .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:rgba(255,255,255,.06);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
-  .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;}
-  @media (max-width: 980px){.grid{grid-template-columns:1fr;}}
+  .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:start;}
+  @media (max-width: 1100px){.grid{grid-template-columns:1fr;}}
   .card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),rgba(15,26,51,.65));border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);}
   .card h2{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600;}
   .card .inner{padding:14px;}
@@ -34,24 +34,33 @@
   input:focus,textarea:focus,select:focus{border-color:rgba(42,91,215,.7);box-shadow:0 0 0 3px rgba(42,91,215,.2)}
   .field{min-width:220px;flex:1;}
   .field.small{min-width:160px;flex:0}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
   button{border:0;border-radius:12px;padding:10px 12px;font-weight:700;color:white;background:var(--btn);cursor:pointer}
   button.secondary{background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--text)}
   button.danger{background:#b7252a}
   button:disabled{opacity:.55;cursor:not-allowed}
   .hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
-  .log{height:420px;overflow:auto;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:12px;line-height:1.35;white-space:pre;}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+  .tab{padding:8px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;font-size:12px;font-weight:700}
+  .tab.active{background:rgba(42,91,215,.25);border-color:rgba(42,91,215,.55);color:#d8e4ff}
+  .log{height:340px;overflow:auto;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:12px;line-height:1.35;white-space:pre;}
   .log .ok{color:var(--good)}
   .log .warn{color:var(--warn)}
   .log .bad{color:var(--bad)}
   table{width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden}
-  th,td{border-bottom:1px solid rgba(255,255,255,.08);padding:8px 10px;text-align:left;font-size:13px}
+  th,td{border-bottom:1px solid rgba(255,255,255,.08);padding:8px 10px;text-align:left;font-size:13px;vertical-align:top}
   th{color:var(--muted);font-weight:700;background:rgba(255,255,255,.04)}
   .tiny{font-size:12px;color:var(--muted)}
-  .right{text-align:right}
   .statusline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   a{color:#9dc1ff;text-decoration:none}
   a:hover{text-decoration:underline}
+  .kpi{display:flex;gap:10px;flex-wrap:wrap}
+  .kpi .pill{font-weight:700}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+  .box{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);padding:10px}
+  .seatRow{display:grid;grid-template-columns: 130px 1fr 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-size:12px}
+  .warnBadge{border-color:rgba(247,201,72,.5);background:rgba(247,201,72,.10);color:#ffe8a6}
 </style>
 </head>
 <body>
@@ -62,6 +71,7 @@
       <span class="pill" id="netPill">offline</span>
       <span class="pill" id="storePill">store: —</span>
       <span class="pill" id="weekPill">week: —</span>
+      <span class="pill" id="dataPill">data: —</span>
     </div>
   </div>
 </header>
@@ -69,78 +79,131 @@
 <div class="wrap grid">
   <section class="card">
     <div class="inner">
-      <h2>Resolver</h2>
+      <h2>Supervisor Tools</h2>
+
       <div class="row">
         <div class="field">
           <label>Store Base</label>
           <input id="storeBase" value="https://store.adr-fr.org" />
-          <div class="hint">Reads use <code>/sc/get</code>. Writes use <code>/sc/put</code> and require <code>x-adr-write-key</code>.</div>
+          <div class="hint">Reads: <code>/sc/get</code>. Writes: <code>/sc/put</code> (header <code>x-adr-write-key</code>). Refresh: <code>/sc/refresh?kind=…</code>.</div>
         </div>
         <div class="field">
           <label>Write Key</label>
-          <input id="writeKey" placeholder="(optional for reads; required to save)" />
-          <div class="hint">Stored in <code>localStorage.sc_write_key</code>.</div>
+          <input id="writeKey" placeholder="required to save schedule / ops plan" />
+          <div class="hint">Saved as <code>localStorage.sc_write_key</code>.</div>
         </div>
         <div class="field small">
           <label>Week (Sunday)</label>
           <input id="weekStart" type="date" />
         </div>
-        <div class="field small">
-          <label>Watchdog (ms)</label>
-          <input id="watchdog" type="number" value="120000" />
-        </div>
       </div>
 
       <div class="actions">
         <button id="btnPing" class="secondary">Ping Store</button>
-        <button id="btnRefresh" class="secondary">Refresh Inputs (Drive→KV)</button>
-        <button id="btnLoad" class="secondary">Load Inputs</button>
+        <button id="btnRefresh" class="secondary">Refresh from Drive</button>
+        <button id="btnLoad" class="secondary">Load Data</button>
         <button id="btnResolve">Resolve Week</button>
         <button id="btnSave" class="secondary">Save Planned</button>
-        <button id="btnPublish" class="secondary">Publish (copy planned → published)</button>
+        <button id="btnPublish" class="secondary">Publish</button>
         <a class="pill" href="./wallboard.html" target="_blank">Open Wallboard</a>
+        <a class="pill" href="./member.html" target="_blank">Open Member</a>
       </div>
 
-      <div class="hint">
-        Inputs expected in store (kinds): <code>org_settings</code>, <code>members</code>, <code>availability</code>, <code>units</code>, <code>seats</code>.
-        (Legacy: <code>seat_types</code> also supported.)
+      <div class="tabs">
+        <div class="tab active" data-tab="ops">Ops Plan (seats)</div>
+        <div class="tab" data-tab="data">Data Inspector</div>
+        <div class="tab" data-tab="log">Run Log</div>
       </div>
 
-      <div style="margin-top:12px">
-        <div class="tiny">Live log (what it’s doing)</div>
+      <div id="tab_ops">
+        <div class="hint">
+          This brings back the Supervisor “tooling” you were missing: you can actually SEE and CONTROL what seats exist per unit per shift.
+          Nothing is hard-coded. No keyed rules. You decide, then the resolver fills it.
+        </div>
+
+        <div class="box" style="margin-top:10px">
+          <div class="tiny">Active units for this week</div>
+          <input id="unitIds" class="mono" value="120,121,131,QRV1"/>
+          <div class="hint">Operational IDs. Defaults to your current target fleet.</div>
+        </div>
+
+        <div class="box" style="margin-top:10px">
+          <div class="tiny">Seat templates</div>
+          <div class="hint">Each template has: <b>id</b> (saved), <b>label</b> (display), and <b>requires_any</b> (comma list). Examples: <code>ALS</code>, <code>DRIVER</code>, <code>EMT</code>. You can allow placeholders by including them (e.g. <code>__SAL_ALS_BACKFILL__</code>).</div>
+          <div id="seatTemplates"></div>
+          <div class="actions" style="margin-top:8px">
+            <button id="btnAddSeat" class="secondary">+ Add Template</button>
+            <button id="btnSaveOps" class="secondary">Save Ops Plan</button>
+            <button id="btnLoadOps" class="secondary">Reload Ops Plan</button>
+          </div>
+          <div class="tiny" id="opsStatus"></div>
+        </div>
+
+        <div class="box" style="margin-top:10px">
+          <div class="tiny">Per-shift seat selection (what runs)</div>
+          <div class="hint">Check which templates run on each unit for AM vs PM. Default is Attendant + Driver.</div>
+          <div id="opsMatrix"></div>
+        </div>
+      </div>
+
+      <div id="tab_data" style="display:none">
+        <div class="kpi" id="kpiRow"></div>
+        <div class="box" style="margin-top:10px">
+          <div class="tiny">Quick View</div>
+          <div class="row" style="margin-top:8px">
+            <div class="field small">
+              <label>Kind</label>
+              <select id="inspectKind">
+                <option value="org_settings">org_settings</option>
+                <option value="members">members</option>
+                <option value="units">units</option>
+                <option value="seats">seats</option>
+                <option value="availability">availability</option>
+                <option value="ops_plan">ops_plan (planned)</option>
+                <option value="schedule">schedule (planned)</option>
+              </select>
+            </div>
+            <button id="btnInspect" class="secondary">View JSON</button>
+          </div>
+          <textarea id="inspectOut" class="mono" style="width:100%;min-height:280px;margin-top:10px"></textarea>
+        </div>
+      </div>
+
+      <div id="tab_log" style="display:none">
+        <div class="tiny">Live log</div>
         <div class="log" id="log"></div>
       </div>
+
     </div>
   </section>
 
   <section class="card">
     <div class="inner">
-      <h2>Preview Schedule (planned)</h2>
+      <h2>Schedule Preview (planned)</h2>
       <div class="tiny" id="schedMeta">No run yet.</div>
-      <div style="margin-top:10px;overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:12px">
+      <div style="margin-top:10px;overflow:auto;max-height:720px;border:1px solid var(--line);border-radius:12px">
         <table id="schedTable">
-          <thead>
-            <tr><th>Date</th><th>AM</th><th>PM</th></tr>
-          </thead>
+          <thead><tr><th>Date</th><th>AM</th><th>PM</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
       <div class="hint" style="margin-top:10px">
-        Notes: schedule keys are <code>YYYY-MM-DD</code> for the selected week (Sunday → Saturday). Each shift is
-        <code>{attendant, operator, third}</code>. Values are member IDs (your wallboard can map IDs → names).
+        Units are shown inline so you can visually inspect coverage. If you still see “OPEN”, the inspector will show *why* (requirements vs quals vs availability).
       </div>
     </div>
   </section>
 </div>
 
-<script type="module">
-import { buildPlannedSchedule, isoDateUTC, addDaysUTC } from "./js/sc_resolver_v2.js";
-
+<script>
+/* ---------------- Store client ---------------- */
+const STORE_DEFAULT = "https://store.adr-fr.org";
 const $ = (id) => document.getElementById(id);
+
 const logEl = $("log");
 const netPill = $("netPill");
 const storePill = $("storePill");
 const weekPill = $("weekPill");
+const dataPill = $("dataPill");
 
 function setPill(el, text, ok=true){
   el.textContent = text;
@@ -148,12 +211,10 @@ function setPill(el, text, ok=true){
   el.style.background = ok ? "rgba(72,213,151,.10)" : "rgba(255,107,107,.10)";
   el.style.color = ok ? "#b7f7dd" : "#ffd0d0";
 }
-
 function fmtLine(type, msg){
   const cls = type === "ok" ? "ok" : (type === "warn" ? "warn" : (type === "bad" ? "bad" : ""));
-  return `<span class="${cls}">${msg.replace(/</g,"&lt;")}</span>`;
+  return `<span class="${cls}">${String(msg).replace(/</g,"&lt;")}</span>`;
 }
-
 function log(type, msg){
   const ts = new Date().toISOString().slice(11,19);
   logEl.innerHTML += fmtLine(type, `[${ts}] ${msg}`) + "\n";
@@ -171,38 +232,37 @@ function writeKey(){
   return v || localStorage.getItem("sc_write_key") || "";
 }
 
-function q(kind, params = {}){
+function sundayOf(d){
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dow = x.getUTCDay(); // Sun=0
+  x.setUTCDate(x.getUTCDate()-dow);
+  return x;
+}
+function toISODate(d){ return d.toISOString().slice(0,10); }
+function weekStartVal(){
+  const v = $("weekStart").value;
+  return v ? v : toISODate(sundayOf(new Date()));
+}
+function setWeekPill(){ weekPill.textContent = "week: " + weekStartVal(); }
+
+async function apiGet(path){
+  const r = await fetch(storeBase()+path, { cache:"no-store" });
+  const j = await r.json().catch(()=>null);
+  if (!r.ok) throw new Error((j && j.error) ? j.error : `GET ${path} ${r.status}`);
+  return j;
+}
+async function scGet(kind, params={}){
   const u = new URL(storeBase() + "/sc/get");
   u.searchParams.set("kind", kind);
   for (const [k,v] of Object.entries(params||{})) {
     if (v === undefined || v === null || v === "") continue;
     u.searchParams.set(k, String(v));
   }
-  return u.toString();
-}
-function qRefresh(kind){
-  const u = new URL(storeBase() + "/sc/refresh");
-  u.searchParams.set("kind", kind);
-  return u.toString();
-}
-
-function normalizeKindValue(kind, v){
-  if (v == null) return v;
-  if (Array.isArray(v)) return v;
-  if (kind === "members" && v.members && Array.isArray(v.members)) return v.members;
-  if (kind === "units" && v.units && Array.isArray(v.units)) return v.units;
-  if (kind === "seats" && v.seats && Array.isArray(v.seats)) return v.seats;
-  return v;
-}
-
-async function scGet(kind, params){
-  const r = await fetch(q(kind, params), { cache:"no-store" });
+  const r = await fetch(u.toString(), { cache:"no-store" });
   const j = await r.json().catch(()=>null);
-  if (!r.ok) throw new Error((j && j.error) ? j.error : `GET ${kind} ${r.status}`);
-  const val = j && j.value !== undefined ? j.value : null;
-  return normalizeKindValue(kind, val);
+  if (!r.ok) throw new Error((j && j.error) ? j.error : `GET kind=${kind} ${r.status}`);
+  return (j && j.value !== undefined) ? j.value : null;
 }
-
 async function scPut(body){
   const k = writeKey();
   if (!k) throw new Error("Missing write key (x-adr-write-key)");
@@ -219,91 +279,408 @@ async function scPut(body){
   return j;
 }
 
-function sundayOf(d){
-  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  const dow = x.getUTCDay(); // Sun=0
-  x.setUTCDate(x.getUTCDate()-dow);
-  return x;
+/* ---------------- Tabs ---------------- */
+function setTab(name){
+  for (const el of document.querySelectorAll(".tab")) {
+    el.classList.toggle("active", el.dataset.tab === name);
+  }
+  $("tab_ops").style.display = (name==="ops") ? "" : "none";
+  $("tab_data").style.display = (name==="data") ? "" : "none";
+  $("tab_log").style.display = (name==="log") ? "" : "none";
 }
-function toISODate(d){
+document.addEventListener("click",(e)=>{
+  const t = e.target.closest(".tab");
+  if (!t) return;
+  setTab(t.dataset.tab);
+});
+
+/* ---------------- Ops Plan ----------------
+Stored:
+  kind=ops_plan, week=YYYY-MM-DD, version=planned
+*/
+function defaultSeatTemplates(){
+  return [
+    { id:"attendant", label:"Attendant", requires_any:"ALS" },
+    { id:"driver", label:"Driver", requires_any:"DRIVER" },
+    { id:"rider3", label:"3rd Rider", requires_any:"" },
+  ];
+}
+function splitCsv(v){
+  return String(v||"").split(",").map(s=>s.trim()).filter(Boolean);
+}
+function defaultOpsPlan(){
+  const units = splitCsv($("unitIds").value||"120,121,131,QRV1");
+  const templates = defaultSeatTemplates();
+  const per = {};
+  for (const u of units){
+    per[u] = { AM: ["attendant","driver"], PM: ["attendant","driver"] };
+  }
+  return {
+    schema:"sc.ops_plan.v1",
+    week_start: weekStartVal(),
+    unit_ids: units,
+    seat_templates: templates,
+    per_unit_shift: per
+  };
+}
+
+let opsPlan = null;
+
+function renderSeatTemplates(){
+  const host = $("seatTemplates");
+  host.innerHTML = "";
+  const list = opsPlan.seat_templates || [];
+  for (const t of list){
+    const row = document.createElement("div");
+    row.className = "seatRow";
+    row.innerHTML = `
+      <input class="mono" data-k="id" value="${t.id||""}" placeholder="id" />
+      <input data-k="label" value="${t.label||""}" placeholder="Label" />
+      <input class="mono" data-k="requires_any" value="${t.requires_any||""}" placeholder="requires_any (comma list)" />
+      <button class="secondary" style="padding:8px 10px">Delete</button>
+    `;
+    const delBtn = row.querySelector("button");
+    delBtn.addEventListener("click", ()=>{
+      const i = opsPlan.seat_templates.indexOf(t);
+      if (i>=0){ opsPlan.seat_templates.splice(i,1); renderSeatTemplates(); renderOpsMatrix(); }
+    });
+    for (const inp of row.querySelectorAll("input")){
+      inp.addEventListener("input", ()=>{
+        t[inp.dataset.k] = inp.value;
+        renderOpsMatrix();
+      });
+    }
+    host.appendChild(row);
+  }
+}
+
+function renderOpsMatrix(){
+  const host = $("opsMatrix");
+  host.innerHTML = "";
+  const units = opsPlan.unit_ids || [];
+  const tpl = opsPlan.seat_templates || [];
+  const tplIds = tpl.map(x=>x.id).filter(Boolean);
+
+  if (!units.length){
+    host.innerHTML = `<div class="badge warnBadge">No unit IDs configured.</div>`;
+    return;
+  }
+
+  const table = document.createElement("table");
+  table.innerHTML = `<thead><tr><th>Unit</th><th>AM seats</th><th>PM seats</th></tr></thead>`;
+  const tbody = document.createElement("tbody");
+
+  for (const u of units){
+    const row = document.createElement("tr");
+    const am = (opsPlan.per_unit_shift?.[u]?.AM) || [];
+    const pm = (opsPlan.per_unit_shift?.[u]?.PM) || [];
+    const mkSel = (cur, onChange) => {
+      const wrap = document.createElement("div");
+      wrap.style.display="flex";
+      wrap.style.gap="8px";
+      wrap.style.flexWrap="wrap";
+      for (const id of tplIds){
+        const b = document.createElement("label");
+        b.className="badge";
+        const checked = cur.includes(id);
+        b.innerHTML = `<input type="checkbox" ${checked?"checked":""} data-id="${id}" style="margin-right:6px"/> ${id}`;
+        b.querySelector("input").addEventListener("change",(e)=>{
+          const seatId = e.target.dataset.id;
+          const has = cur.includes(seatId);
+          if (e.target.checked && !has) cur.push(seatId);
+          if (!e.target.checked && has) cur.splice(cur.indexOf(seatId),1);
+          onChange();
+        });
+        wrap.appendChild(b);
+      }
+      return wrap;
+    };
+    row.appendChild(Object.assign(document.createElement("td"),{textContent:u}));
+    const amTd = document.createElement("td");
+    const pmTd = document.createElement("td");
+    amTd.appendChild(mkSel(am, ()=>{ opsPlan.per_unit_shift[u].AM = am; }));
+    pmTd.appendChild(mkSel(pm, ()=>{ opsPlan.per_unit_shift[u].PM = pm; }));
+    row.appendChild(amTd);
+    row.appendChild(pmTd);
+    tbody.appendChild(row);
+  }
+  table.appendChild(tbody);
+  host.appendChild(table);
+}
+
+async function loadOpsPlan(){
+  const week = weekStartVal();
+  try{
+    const v = await scGet("ops_plan", { week, version:"planned" });
+    if (v && v.schema === "sc.ops_plan.v1") {
+      opsPlan = v;
+      $("opsStatus").textContent = "Loaded ops_plan from store (planned).";
+      log("ok","Loaded ops_plan planned from store.");
+    } else {
+      opsPlan = defaultOpsPlan();
+      $("opsStatus").textContent = "No ops_plan found; created defaults (not saved yet).";
+      log("warn","No ops_plan in store; using defaults.");
+    }
+  }catch(e){
+    opsPlan = defaultOpsPlan();
+    $("opsStatus").textContent = "Failed to load ops_plan; using defaults: " + e.message;
+    log("warn","ops_plan load failed; using defaults: " + e.message);
+  }
+  opsPlan.unit_ids = opsPlan.unit_ids || splitCsv($("unitIds").value);
+  opsPlan.seat_templates = opsPlan.seat_templates || defaultSeatTemplates();
+  opsPlan.per_unit_shift = opsPlan.per_unit_shift || {};
+  for (const u of (opsPlan.unit_ids||[])){
+    opsPlan.per_unit_shift[u] = opsPlan.per_unit_shift[u] || { AM:["attendant","driver"], PM:["attendant","driver"] };
+  }
+  renderSeatTemplates();
+  renderOpsMatrix();
+}
+
+async function saveOpsPlan(){
+  if (!opsPlan) throw new Error("Ops plan not loaded.");
+  opsPlan.week_start = weekStartVal();
+  opsPlan.unit_ids = splitCsv($("unitIds").value);
+  opsPlan.per_unit_shift = opsPlan.per_unit_shift || {};
+  for (const u of opsPlan.unit_ids){
+    if (!opsPlan.per_unit_shift[u]) opsPlan.per_unit_shift[u] = { AM:["attendant","driver"], PM:["attendant","driver"] };
+  }
+  await scPut({
+    kind:"ops_plan",
+    week: weekStartVal(),
+    version:"planned",
+    value: opsPlan
+  });
+  $("opsStatus").textContent = "Saved ops_plan planned for week " + weekStartVal();
+  log("ok","Saved ops_plan planned.");
+}
+
+/* ---------------- Data loading / normalization ---------------- */
+function normQual(q){
+  const s = String(q||"").trim();
+  if (!s) return "";
+  const up = s.toUpperCase();
+  // your directive: no separate Paramedic/AEMT categories; treat as ALS if they exist in legacy data
+  if (up === "AEMT" || up === "PARAMEDIC" || up === "EMT-P") return "ALS";
+  return up; // comparisons in upper
+}
+function memberId(m){ return String(m.member_id ?? m.id ?? "").trim(); }
+function memberName(m){
+  const fn = (m.first_name||"").trim();
+  const ln = (m.last_name||"").trim();
+  const nm = (m.name||"").trim();
+  return (fn||ln) ? (fn + (ln?(" "+ln):"")) : (nm || memberId(m) || "UNKNOWN");
+}
+
+let DATA = {
+  org_settings: null,
+  members: [],
+  availability: null,
+  units: [],
+  seats: [],
+};
+let membersById = new Map();
+
+async function refreshFromDrive(){
+  log("info","Refreshing Drive→KV for members, units, seats, org_settings (forced)...");
+  const kinds = ["members","units","seats","org_settings"];
+  for (const k of kinds){
+    try{
+      await apiGet(`/sc/refresh?kind=${encodeURIComponent(k)}`);
+      log("ok", `refresh ${k}: ok`);
+    }catch(e){
+      log("warn", `refresh ${k}: ${e.message}`);
+    }
+  }
+  log("ok","Refresh complete.");
+}
+
+async function loadData(){
+  log("info","Loading data from store…");
+  const [org, members, availability, units, seats] = await Promise.all([
+    scGet("org_settings").catch(()=>null),
+    scGet("members").catch(()=>[]),
+    scGet("availability").catch(()=>null),
+    scGet("units").catch(()=>[]),
+    scGet("seats").catch(()=>[]),
+  ]);
+
+  DATA.org_settings = org;
+  DATA.members = Array.isArray(members) ? members : (members?.members || []);
+  DATA.availability = availability;
+  DATA.units = Array.isArray(units) ? units : (units?.units || []);
+  DATA.seats = Array.isArray(seats) ? seats : (seats?.seats || []);
+
+  membersById = new Map(DATA.members.map(m => [memberId(m), memberName(m)]));
+
+  const availCount = Array.isArray(DATA.availability) ? DATA.availability.length : (DATA.availability ? Object.keys(DATA.availability).length : 0);
+  $("kpiRow").innerHTML = `
+    <span class="pill">members: ${DATA.members.length}</span>
+    <span class="pill">units: ${DATA.units.length}</span>
+    <span class="pill">seats: ${DATA.seats.length}</span>
+    <span class="pill">availability: ${availCount}</span>
+  `;
+  setPill(dataPill, `data: m${DATA.members.length} u${DATA.units.length} s${DATA.seats.length}`, true);
+  log("ok", `Loaded members=${DATA.members.length}, units=${DATA.units.length}, seats=${DATA.seats.length}, availability=${availCount}`);
+}
+
+function getAvail(member_id, dateIso, shift){ // shift "AM"/"PM"
+  const a = DATA.availability;
+  if (!a) return {state:"unknown"};
+  const mid = String(member_id);
+  if (!Array.isArray(a)){
+    const per = a[mid] || a[String(Number(mid))] || null;
+    if (per && per.days && per.days[dateIso]){
+      const st = per.days[dateIso][shift] || per.days[dateIso][shift.toLowerCase()] || "";
+      return {state: String(st||"").toLowerCase() || "clear"};
+    }
+    if (per && per[dateIso]){
+      const st = per[dateIso][shift] || per[dateIso][shift.toLowerCase()] || "";
+      return {state: String(st||"").toLowerCase() || "clear"};
+    }
+  }
+  return {state:"unknown"};
+}
+
+function isEligibleForSeat(m, seatTpl){
+  const reqs = splitCsv(seatTpl.requires_any||"");
+  if (!reqs.length) return true;
+  const quals = (m.qualifications || []).map(normQual);
+  for (const r of reqs){
+    if (r.startsWith("__")) continue; // placeholder
+    if (quals.includes(String(r).toUpperCase())) return true;
+  }
+  return false;
+}
+
+function bestPlaceholderForSeat(seatTpl){
+  const reqs = splitCsv(seatTpl.requires_any||"");
+  for (const r of reqs){
+    if (r.startsWith("__")) return r;
+  }
+  const placeholders = (DATA.org_settings && Array.isArray(DATA.org_settings.placeholders)) ? DATA.org_settings.placeholders : [];
+  const id = (seatTpl.id||"").toLowerCase();
+  if (id.includes("att") || id.includes("als")){
+    const x = placeholders.find(p=>p.id==="__SAL_ALS_BACKFILL__") || placeholders.find(p=>p.id==="__DUTY_CREW__");
+    if (x) return x.id;
+  }
+  if (id.includes("driv")){
+    const x = placeholders.find(p=>p.id==="__SAL_BLS_BACKFILL__") || placeholders.find(p=>p.id==="__DUTY_CREW__");
+    if (x) return x.id;
+  }
+  return placeholders[0]?.id || "OPEN";
+}
+
+/* ---------------- Visual resolver ---------------- */
+function isoAddDays(iso, days){
+  const d = new Date(iso+"T00:00:00Z");
+  d.setUTCDate(d.getUTCDate()+days);
   return d.toISOString().slice(0,10);
 }
-
-function weekStartVal(){
-  const v = $("weekStart").value;
-  return v ? v : toISODate(sundayOf(new Date()));
+function makeEmptyWeekSchedule(week){
+  const out = {};
+  for (let i=0;i<7;i++){
+    const dateIso = isoAddDays(week, i);
+    out[dateIso] = { AM: {}, PM: {} };
+  }
+  return out;
 }
 
-function setWeekPill(){
-  weekPill.textContent = "week: " + weekStartVal();
+function buildScheduleFromOpsPlan({week, ops, members}){
+  const schedule = makeEmptyWeekSchedule(week);
+  const used = new Set(); // date|shift|member
+  const weekCount = new Map(); // member->count
+
+  const seatTplById = new Map((ops.seat_templates||[]).map(t=>[t.id, t]));
+
+  function bump(id){ weekCount.set(id, (weekCount.get(id)||0)+1); }
+
+  function score(m, dateIso, shift){
+    const av = getAvail(memberId(m), dateIso, shift).state;
+    if (av === "avoid" || av === "no") return -999;
+    let s = 0;
+    if (av === "pref" || av === "preferred") s += 2;
+    if (av === "clear" || av === "ok" || av === "yes") s += 1;
+    if (av === "unknown") s += 0.5;
+    s += Math.max(0, 2 - (weekCount.get(memberId(m))||0)) * 0.25; // gentle fairness
+    return s;
+  }
+
+  for (let di=0; di<7; di++){
+    const dateIso = isoAddDays(week, di);
+    for (const shift of ["AM","PM"]){
+      for (const unitId of (ops.unit_ids||[])){
+        const seatIds = (ops.per_unit_shift?.[unitId]?.[shift]) || [];
+        schedule[dateIso][shift][unitId] = {};
+        for (const sid of seatIds){
+          const tpl = seatTplById.get(sid);
+          if (!tpl){ schedule[dateIso][shift][unitId][sid] = "OPEN"; continue; }
+
+          const candidates = members
+            .filter(m => m && m.active !== false)
+            .filter(m => isEligibleForSeat(m, tpl))
+            .sort((a,b)=>{
+              const sa = score(a,dateIso,shift);
+              const sb = score(b,dateIso,shift);
+              if (sb !== sa) return sb - sa;
+              return String(memberId(a)).localeCompare(String(memberId(b)));
+            });
+
+          let picked = null;
+          for (const m of candidates){
+            const mid = memberId(m);
+            if (!mid) continue;
+            const k = `${dateIso}|${shift}|${mid}`;
+            if (used.has(k)) continue;
+            const sc = score(m,dateIso,shift);
+            if (sc < -100) continue;
+            picked = mid;
+            used.add(k);
+            bump(mid);
+            break;
+          }
+          schedule[dateIso][shift][unitId][sid] = picked || bestPlaceholderForSeat(tpl);
+        }
+      }
+    }
+  }
+  return schedule;
 }
 
-function renderSchedule(schedule, membersById){
+function renderSchedule(schedule){
   const tbody = $("schedTable").querySelector("tbody");
   tbody.innerHTML = "";
-  const start = new Date(weekStartVal() + "T00:00:00Z");
-  for (let i=0;i<7;i++) {
-    const dateIso = isoDateUTC(addDaysUTC(start,i));
-    const am = schedule?.[dateIso]?.AM || {attendant:"OPEN",operator:"OPEN",third:"OPEN"};
-    const pm = schedule?.[dateIso]?.PM || {attendant:"OPEN",operator:"OPEN",third:"OPEN"};
-    const fmt = (x) => {
-      const id = String(x||"OPEN");
-      const name = membersById.get(id) || id;
-      return name;
+  const week = weekStartVal();
+  for (let i=0;i<7;i++){
+    const dateIso = isoAddDays(week, i);
+    const am = schedule?.[dateIso]?.AM || {};
+    const pm = schedule?.[dateIso]?.PM || {};
+
+    const fmtShift = (shiftObj)=>{
+      const lines = [];
+      for (const [unitId, seats] of Object.entries(shiftObj)){
+        const parts = [];
+        for (const [seatId, val] of Object.entries(seats)){
+          const v = String(val||"OPEN");
+          const name = membersById.get(v) || v;
+          parts.push(`${seatId}: ${name}`);
+        }
+        lines.push(`<div><span class="badge">${unitId}</span> ${parts.join(" • ")}</div>`);
+      }
+      return lines.join("");
     };
-    const amTxt = [fmt(am.attendant), fmt(am.operator), fmt(am.third)].join(" / ");
-    const pmTxt = [fmt(pm.attendant), fmt(pm.operator), fmt(pm.third)].join(" / ");
+
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${dateIso}</td><td>${amTxt}</td><td>${pmTxt}</td>`;
+    tr.innerHTML = `<td class="mono">${dateIso}</td><td>${fmtShift(am)}</td><td>${fmtShift(pm)}</td>`;
     tbody.appendChild(tr);
   }
 }
 
-function flattenReqs(seat){
-  const reqAll = new Set();
-  const reqAny = new Set();
-  for (const cs of (seat?.credential_sets || [])) {
-    for (const q of (cs.requires_all || [])) reqAll.add(String(q));
-    for (const q of (cs.requires_any || [])) reqAny.add(String(q));
-  }
-  for (const q of (seat?.legacy?.certs_any || [])) reqAny.add(String(q));
-  for (const q of (seat?.legacy?.endorse_all || [])) reqAll.add(String(q));
-  return { requires_all:[...reqAll], requires_any:[...reqAny] };
-}
-
-function buildSeatTypesFromUnitsAndSeats(units, seats, orgSettings){
-  const byId = new Map((seats||[]).map(s=>[String(s.id), s]));
-  const alias = orgSettings?.aliases?.seat_id || {};
-  const seatTypes = [];
-  for (const u of (units||[])) {
-    const unitId = String(u.id || u.unit_id || "");
-    const plan = Array.isArray(u.seat_plan) ? u.seat_plan : [];
-    for (const rawSeatId of plan) {
-      const seatId = String(alias[String(rawSeatId)] || rawSeatId);
-      const s = byId.get(seatId) || byId.get(String(rawSeatId));
-      const label = s?.label || String(rawSeatId);
-      const req = flattenReqs(s);
-      seatTypes.push({
-        unit_id: unitId,
-        id: seatId,
-        label,
-        required_qualifications: [...new Set([...(req.requires_all||[]), ...(req.requires_any||[])])],
-        credential_sets: s?.credential_sets || [],
-        _req: req
-      });
-    }
-  }
-  return seatTypes;
-}
-
-let lastInputs = null;
+/* ---------------- Actions ---------------- */
 let lastResult = null;
-let lastMembersById = new Map();
 
 async function ping(){
   try {
-    const r = await fetch(storeBase()+"/health", {cache:"no-store"});
-    const j = await r.json().catch(()=>null);
+    const j = await apiGet("/health");
     setPill(storePill, "store: ok", true);
     log("ok", `Store health: ${JSON.stringify(j)}`);
   } catch(e) {
@@ -312,135 +689,117 @@ async function ping(){
   }
 }
 
-async function refreshInputs(){
-  log("info","Refreshing Drive→KV…");
-  const kinds = ["org_settings","members","units","seats","availability"];
-  for (const k of kinds) {
-    try {
-      const r = await fetch(qRefresh(k), { cache:"no-store" });
-      const j = await r.json().catch(()=>null);
-      if (!r.ok) throw new Error((j && j.error) ? j.error : `refresh ${k} ${r.status}`);
-      log("ok", `Refreshed ${k}: ${j.source || "ok"}`);
-    } catch (e) {
-      log("warn", `Refresh ${k} skipped/failed: ${e.message}`);
-    }
-  }
-  log("ok","Refresh complete.");
-}
-
-async function loadInputs(){
-  log("info","Loading inputs from store…");
-  const org = await scGet("org_settings");
-  const membersRaw = await scGet("members");
-  const availabilityRaw = await scGet("availability").catch(()=>null);
-  const unitsRaw = await scGet("units");
-
-  const seatsRaw = await scGet("seats").catch(()=>null);
-  const seatTypesRaw = await scGet("seat_types").catch(()=>null);
-
-  const members = Array.isArray(membersRaw) ? membersRaw : [];
-  const availability = Array.isArray(availabilityRaw) ? availabilityRaw : (availabilityRaw ? [availabilityRaw] : []);
-  const units = Array.isArray(unitsRaw) ? unitsRaw : [];
-  let seatTypes = Array.isArray(seatTypesRaw) ? seatTypesRaw : [];
-
-  if (!seatTypes.length && Array.isArray(seatsRaw)) {
-    seatTypes = buildSeatTypesFromUnitsAndSeats(units, seatsRaw, org);
-    if (seatTypes.length) log("warn", `seat_types not found; derived seat_types from units+seats (${seatTypes.length}).`);
-  }
-
-  lastInputs = { org_settings: org, members, availability, units, seatTypes };
-  lastMembersById = new Map(members.map(m=>{
-    const id = String(m.member_id ?? m.id ?? "");
-    const full = (m.first_name && m.last_name) ? `${m.first_name} ${m.last_name}` : (m.name || m.first_name || id);
-    return [id, String(full)];
-  }));
-
-  log("ok", `Loaded: members=${members.length}, availability=${availability.length}, units=${units.length}, seat_types=${seatTypes.length}`);
-  if (!units.length || !seatTypes.length) log("warn","Missing units and/or seat definitions in store. Resolver can run, but it may show OPEN slots.");
-  return lastInputs;
-}
-
 async function resolveWeek(){
   setWeekPill();
-  const inputs = lastInputs || await loadInputs();
+  if (!opsPlan) await loadOpsPlan();
+  if (!DATA.members.length) await loadData();
 
-  const watchdogMs = Number($("watchdog").value)||120000;
-  log("info", `Resolver start for week=${weekStartVal()} watchdog=${watchdogMs}ms`);
-  const result = buildPlannedSchedule({
-    weekStartISO: weekStartVal(),
-    units: inputs.units,
-    seatTypes: inputs.seatTypes,
-    members: inputs.members,
-    availability: inputs.availability,
-    seatKeyMode: "basic",
-    watchdogMs
+  const week = weekStartVal();
+  log("info", `Resolve start week=${week} units=${(opsPlan.unit_ids||[]).length}`);
+
+  const sched = buildScheduleFromOpsPlan({
+    week,
+    ops: opsPlan,
+    members: DATA.members
   });
-  lastResult = result;
 
-  for (const entry of (result.logs||[])) {
-    const t = entry.type === "ok" ? "ok" : (entry.type === "warn" ? "warn" : (entry.type === "bad" ? "bad" : "info"));
-    log(t, entry.msg);
-  }
-
-  log(result.partial ? "warn" : "ok", `Resolver complete (partial=${result.partial})`);
-  $("schedMeta").textContent = `computed: ${new Date().toISOString()} • partial=${result.partial} • reason=${result.reason||"—"}`;
-  renderSchedule(result.schedule, lastMembersById);
+  lastResult = {
+    schedule: sched,
+    meta: {
+      schema:"sc.schedule.v2",
+      generated_at: new Date().toISOString(),
+      week_start: week,
+      ops_plan: {
+        schema: opsPlan.schema,
+        unit_ids: opsPlan.unit_ids,
+        seat_templates: (opsPlan.seat_templates||[]).map(t=>({id:t.id,label:t.label,requires_any:t.requires_any}))
+      }
+    },
+    logs: []
+  };
+  $("schedMeta").textContent = `computed: ${new Date().toISOString()} • week=${week}`;
+  renderSchedule(sched);
+  log("ok", "Resolve complete.");
 }
 
 async function savePlanned(){
   if (!lastResult?.schedule) throw new Error("No computed schedule to save. Click Resolve Week first.");
   const week = weekStartVal();
-  log("info", "Saving planned schedule to store…");
+  log("info", "Saving planned schedule…");
   await scPut({
     kind:"schedule",
     week,
     version:"planned",
-    value: {
-      schedule: lastResult.schedule,
-      meta: {
-        schema:"sc.schedule.v1",
-        generated_at: new Date().toISOString(),
-        week_start: week,
-        partial: !!lastResult.partial,
-        reason: lastResult.reason || null
-      },
-      logs: lastResult.logs || []
-    }
+    value: lastResult
   });
-  log("ok", "Saved: kind=schedule version=planned week=" + week);
+  log("ok", "Saved planned schedule for " + week);
 }
 
 async function publishPlanned(){
   const week = weekStartVal();
-  log("info","Publishing: copy planned → published…");
+  log("info","Publishing planned → published…");
   const planned = await scGet("schedule", {week, version:"planned"});
-  if (!planned) throw new Error("No planned schedule found in store for this week.");
-  await scPut({ kind:"schedule", week, version:"published", value: planned });
+  if (!planned) throw new Error("No planned schedule found for this week.");
+  await scPut({
+    kind:"schedule",
+    week,
+    version:"published",
+    value: planned
+  });
   log("ok","Published week " + week);
 }
 
-function init(){
-  function updateNet(){
-    const ok = navigator.onLine;
-    setPill(netPill, ok ? "online" : "offline", ok);
+/* ---------------- Inspector ---------------- */
+async function inspect(){
+  const k = $("inspectKind").value;
+  try{
+    if (k === "schedule"){
+      const v = await scGet("schedule", {week: weekStartVal(), version:"planned"});
+      $("inspectOut").value = JSON.stringify(v, null, 2);
+      return;
+    }
+    if (k === "ops_plan"){
+      const v = await scGet("ops_plan", {week: weekStartVal(), version:"planned"});
+      $("inspectOut").value = JSON.stringify(v, null, 2);
+      return;
+    }
+    const v = await scGet(k);
+    $("inspectOut").value = JSON.stringify(v, null, 2);
+  }catch(e){
+    $("inspectOut").value = "ERROR: " + e.message;
   }
+}
+
+/* ---------------- Init ---------------- */
+function init(){
+  function updateNet(){ setPill(netPill, navigator.onLine ? "online" : "offline", navigator.onLine); }
   window.addEventListener("online", updateNet);
   window.addEventListener("offline", updateNet);
   updateNet();
 
-  $("storeBase").value = localStorage.getItem("sc_store_base") || $("storeBase").value;
+  $("storeBase").value = localStorage.getItem("sc_store_base") || $("storeBase").value || STORE_DEFAULT;
   $("writeKey").value = localStorage.getItem("sc_write_key") || localStorage.getItem("sc_token") || "";
   $("weekStart").value = toISODate(sundayOf(new Date()));
   setWeekPill();
 
   $("btnPing").addEventListener("click", ()=>ping());
-  $("btnRefresh").addEventListener("click", ()=>refreshInputs().catch(e=>log("bad", e.message)));
-  $("btnLoad").addEventListener("click", ()=>loadInputs().catch(e=>log("bad", e.message)));
+  $("btnRefresh").addEventListener("click", ()=>refreshFromDrive().catch(e=>log("bad", e.message)));
+  $("btnLoad").addEventListener("click", ()=>loadData().catch(e=>log("bad", e.message)));
   $("btnResolve").addEventListener("click", ()=>resolveWeek().catch(e=>log("bad", e.message)));
   $("btnSave").addEventListener("click", ()=>savePlanned().catch(e=>log("bad", e.message)));
   $("btnPublish").addEventListener("click", ()=>publishPlanned().catch(e=>log("bad", e.message)));
+  $("btnInspect").addEventListener("click", ()=>inspect());
+
+  $("btnAddSeat").addEventListener("click", ()=>{
+    opsPlan.seat_templates.push({id:"seat_"+Math.random().toString(16).slice(2,6), label:"New Seat", requires_any:""});
+    renderSeatTemplates(); renderOpsMatrix();
+  });
+  $("btnSaveOps").addEventListener("click", ()=>saveOpsPlan().catch(e=>log("bad", e.message)));
+  $("btnLoadOps").addEventListener("click", ()=>loadOpsPlan().catch(e=>log("bad", e.message)));
 
   ping();
+  loadOpsPlan();
+  loadData().catch(()=>{});
 }
 init();
 </script>
