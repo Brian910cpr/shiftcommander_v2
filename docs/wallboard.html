@@ -1,171 +1,828 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>ShiftCommander — Wallboard</title>
 <style>
-:root{--b:#d9d9d9;--g:#f6f6f6;--mut:#666}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:16px}
-h2{margin:0 0 8px 0}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input,button{font:inherit;padding:6px 8px;border:1px solid var(--b);border-radius:10px}
-button{cursor:pointer}
-.small{font-size:12px;color:var(--mut)}
-table{border-collapse:separate;border-spacing:0;width:100%;margin-top:10px}
-th,td{border:1px solid var(--b);padding:6px 8px;font-size:12px}
-th{background:var(--g);text-align:left;position:sticky;top:0;z-index:2}
-.pill{display:inline-block;border:1px solid var(--b);border-radius:999px;padding:2px 8px;font-size:11px}
-.pill.lock{background:#fff7ed;border-color:#fdba74}
-.pill.plan{background:#f3f4f6}
-.pill.pub{background:#eff6ff;border-color:#bfdbfe}
+  :root{
+    --bg:#f4f7fb; --card:#ffffff; --line:#d9e1ee; --line2:#eef2f7;
+    --text:#0f172a; --muted:#64748b; --muted2:#94a3b8; --open:#64748b;
+    --shadow:0 1px 2px rgba(0,0,0,.06); --r:10px;
+
+    /* Color-deficiency friendly */
+    --g:#00ff2a; --y:#ffd400; --red:#d40000; --gray:#94a3b8;
+
+    --gap:6px; --pad:8px; --weekHeadH:24px; --dayHeadH:24px; --nameMin:12px; --nameMax:14px;
+
+    --topbg1:#ffffff; --topbg2:#fbfdff; --topborder:var(--line);
+    --pillbg:#ffffff; --pillborder:var(--line); --pilltext:var(--muted);
+
+    --btnbg:#ffffff; --btnborder:var(--line); --btntext:var(--text); --btnhover:#f8fafc;
+
+    --needsbg:#fff1f2; --needsborder:#fecdd3;
+  }
+
+  body[data-theme="dark"]{
+    --bg:#0b1220; --card:#0f172a; --line:#22304a; --line2:#1a2740;
+    --text:#e5e7eb; --muted:#b6c2d3; --muted2:#93a4bf; --open:#93a4bf;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+    --gray:#6b7ea6;
+
+    --topbg1:#0f172a; --topbg2:#0b1220; --topborder:#22304a;
+    --pillbg:#0b1220; --pillborder:#22304a; --pilltext:#b6c2d3;
+    --btnbg:#0b1220; --btnborder:#22304a; --btntext:#e5e7eb; --btnhover:#111c33;
+
+    --needsbg:rgba(212,0,0,.08); --needsborder:rgba(212,0,0,.28);
+  }
+
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    overflow:hidden;
+  }
+
+  .top{
+    position:sticky; top:0; z-index:10;
+    background:linear-gradient(var(--topbg1),var(--topbg2));
+    border-bottom:1px solid var(--topborder);
+    box-shadow:var(--shadow);
+  }
+  .top-inner{
+    max-width:1600px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+    padding:9px 12px;
+  }
+  .title{ font-weight:1000; display:flex; align-items:baseline; gap:10px; }
+  .sub{ font-size:12px; color:var(--muted); font-weight:900; }
+
+  .pill{
+    font-size:12px; font-weight:900; color:var(--pilltext);
+    border:1px solid var(--pillborder);
+    background:var(--pillbg);
+    border-radius:999px; padding:6px 10px; white-space:nowrap;
+  }
+
+  .top-right{ display:flex; align-items:center; gap:10px; }
+
+  .btn{
+    appearance:none;
+    border:1px solid var(--btnborder);
+    background:var(--btnbg);
+    color:var(--btntext);
+    border-radius:999px;
+    padding:6px 10px;
+    font-weight:1000;
+    font-size:12px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    user-select:none;
+    white-space:nowrap;
+  }
+  .btn:hover{ background:var(--btnhover); }
+  .btn:active{ transform:translateY(1px); }
+  .btn .ico{ width:14px; height:14px; display:inline-block; }
+
+  .wrap{
+    max-width:1600px;
+    margin:0 auto;
+    padding:var(--pad);
+    height: calc(100vh - 54px);
+    box-sizing: border-box;
+    display:flex;
+    flex-direction:column;
+    gap:var(--gap);
+  }
+
+  #root{
+    flex: 1 1 auto;
+    display:flex;
+    flex-direction:column;
+    gap:var(--gap);
+    overflow:hidden;
+    min-height:0;
+    transition: opacity .22s ease;
+  }
+  body[data-scroll="1"] #root{ overflow:auto; }
+
+  .footer{
+    flex:0 0 auto;
+    padding:4px 2px 0 2px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+    text-align:right;
+  }
+  .footer strong{ color:var(--text); }
+
+  .week{
+    flex:1 1 0;
+    min-height:0;
+    border:1px solid var(--line);
+    border-radius:var(--r);
+    background:var(--card);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .week-head{
+    height:var(--weekHeadH);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 10px;
+    border-bottom:1px solid var(--line2);
+    background:linear-gradient(var(--topbg2),var(--card));
+    gap:10px;
+    flex:0 0 auto;
+  }
+  .week-title{ font-weight:1000; font-size:12px; }
+  .week-dates{ font-size:12px; color:var(--muted); font-weight:900; }
+
+  .grid{
+    flex:1 1 auto;
+    min-height:0;
+    display:grid;
+    grid-template-columns: repeat(7, minmax(130px, 1fr));
+    gap:var(--gap);
+    padding:6px 8px 8px 8px;
+    align-content:stretch;
+  }
+
+  .day{
+    display:grid;
+    grid-template-columns: 8px 1fr;
+    border-radius:var(--r);
+    overflow:hidden;
+    border:1px solid var(--line);
+    background:var(--card);
+    min-height:0;
+  }
+  .health{ background:var(--gray); }
+  .tile{
+    min-height:0;
+    display:grid;
+    grid-template-rows: var(--dayHeadH) 1fr 1fr;
+  }
+  .dayhead{
+    height:var(--dayHeadH);
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0 8px;
+    border-bottom:1px solid var(--line2);
+    background:linear-gradient(var(--topbg2),var(--card));
+    gap:8px;
+  }
+  .daynum{ font-size:15px; font-weight:1000; line-height:1; display:flex; align-items:center; gap:6px; }
+  .iso{ font-size:11px; color:var(--muted2); font-weight:900; }
+  .truckpill{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:2px 7px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:rgba(248,250,252,.9);
+    color:var(--text);
+    font-weight:1000;
+    font-size:11px;
+    line-height:1;
+    white-space:nowrap;
+  }
+  body[data-theme="dark"] .truckpill{ background:rgba(17,28,51,.75); }
+
+  .slot{
+    display:grid;
+    grid-template-columns: 22px 1fr;
+    gap:6px;
+    padding:6px 8px;
+    border-top:1px solid var(--line2);
+    align-items:start;
+    min-height:0;
+  }
+  .slot:first-of-type{ border-top:none; }
+  .tag{
+    font-size:10px;
+    font-weight:1000;
+    color:var(--muted);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding-top:2px;
+  }
+
+  .lines{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+  .line{
+    font-size:clamp(var(--nameMin), 1.05vw, var(--nameMax));
+    font-weight:950;
+    line-height:1.12;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    min-width:0;
+  }
+  .open{ color:var(--open); font-weight:1000; letter-spacing:.06em; text-transform:uppercase; }
+
+  .warn-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:10px;
+    font-weight:1000;
+    color:var(--red);
+    background:var(--needsbg);
+    border:1px solid var(--needsborder);
+    padding:1px 7px;
+    border-radius:999px;
+    margin-left:6px;
+  }
+
+  .today .tile{ outline:2px solid var(--text); outline-offset:-2px; }
+  .past{ opacity:.62; }
+
+  body.landscape{ --gap:5px; --pad:6px; --weekHeadH:22px; --dayHeadH:22px; --nameMin:11px; --nameMax:13px; }
+  body.portrait{ --gap:8px; --pad:10px; --weekHeadH:26px; --dayHeadH:26px; --nameMin:14px; --nameMax:16px; }
+  body.portrait .grid{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+  @media (max-width: 560px){
+    .wrap{ padding:6px; height: calc(100vh - 54px); }
+    body.portrait .grid{ grid-template-columns: 1fr; }
+    .line{ font-size: clamp(14px, 4.2vw, 18px); }
+  }
 </style>
 </head>
 <body>
 
-<h2>Wallboard</h2>
+<div class="top">
+  <div class="top-inner">
+    <div class="title">
+      <div>Wallboard <span class="sub" id="buildTag" style="font-weight:1000;margin-left:6px"></span></div>
+      <div class="sub" id="rangeLabel" style="display:none;"></div>
+    </div>
 
-<div class="row">
-  <label>Store <input id="store" size="46" value="https://store.adr-fr.org" /></label>
-  <label>Week (Sun) <input id="week" type="date" /></label>
-  <button id="btnSaveCfg">Save</button>
-  <button id="btnLoad">Load</button>
-  <span id="msg" class="small"></span>
+    <div class="top-right">
+      <button class="btn" id="themeToggle" type="button" title="Toggle Day/Night">
+        <span class="ico" aria-hidden="true" id="themeIco"></span>
+        <span id="themeLabel">Night</span>
+      </button>
+      <button class="btn" id="archToggle" type="button" title="Toggle Archived week">
+        <span class="ico" aria-hidden="true">🗃️</span>
+        <span id="archLabel">Archived: Off</span>
+      </button>
+      <div class="pill" id="statusPill">Loading…</div>
+    </div>
+  </div>
 </div>
 
-<table id="tbl">
-  <thead><tr>
-    <th style="width:120px">Date</th><th style="width:70px">Shift</th><th style="width:120px">Unit</th><th style="width:160px">Seat</th>
-    <th>Member</th><th style="width:120px">Status</th>
-  </tr></thead>
-  <tbody></tbody>
-</table>
+<div class="wrap">
+  <div id="root"></div>
+  <div class="footer" id="resolverFooter"></div>
+</div>
 
 <script>
-
-const LS_STORE_BASE = "sc_store_base";
-const LS_WRITE_KEY  = "sc_write_key"; // SC_TOKEN equivalent in-browser
-
-const $ = (id)=>document.getElementById(id);
-
-function normBase(u){
-  u = String(u||"").trim();
-  if(!u) return "";
-  try{
-    const x = new URL(u);
-    x.hash=""; x.search="";
-    return x.toString().replace(/\/+$/,"");
-  } catch(e){
-    return u.replace(/\/+$/,"");
+/* ========= THEME ========= */
+const THEME_KEY = "sc_wallboard_theme";
+function prefersDark(){ try{ return matchMedia("(prefers-color-scheme: dark)").matches; }catch{ return false; } }
+function themeIconSvg(theme){
+  if(theme==="dark"){
+    return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a7 7 0 1 0 10.2 10.2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </svg>`;
   }
+  return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="2"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
 }
-
-function getStoreBase(){
-  return normBase(localStorage.getItem(LS_STORE_BASE) || "https://store.adr-fr.org") || "https://store.adr-fr.org";
+function updateThemeButton(){
+  const t = document.body.getAttribute("data-theme") || "light";
+  const next = (t==="dark") ? "light" : "dark";
+  document.getElementById("themeLabel").textContent = (next==="dark") ? "Night" : "Day";
+  document.getElementById("themeIco").innerHTML = themeIconSvg(t);
 }
-function setStoreBase(v){
-  localStorage.setItem(LS_STORE_BASE, normBase(v) || "https://store.adr-fr.org");
+function setTheme(t){
+  t = (t==="dark")?"dark":"light";
+  document.body.setAttribute("data-theme", t);
+  try{ localStorage.setItem(THEME_KEY, t); }catch{}
+  updateThemeButton();
 }
-function getWriteKey(){
-  return String(localStorage.getItem(LS_WRITE_KEY) || "").trim();
-}
-function setWriteKey(v){
-  localStorage.setItem(LS_WRITE_KEY, String(v||"").trim());
-}
-
-async function scGet(kind, params = {}){
-  const url = new URL(getStoreBase() + "/sc/get");
-  url.searchParams.set("kind", kind);
-  for(const [k,v] of Object.entries(params||{})){
-    if(v===undefined || v===null || v==="") continue;
-    url.searchParams.set(k, String(v));
-  }
-  const r = await fetch(url.toString(), { cache:"no-store" });
-  const j = await r.json().catch(()=>null);
-  if(!r.ok) throw new Error(j?.error || `GET ${kind} failed (${r.status})`);
-  if(!j || j.ok===false) throw new Error(j?.error || `GET ${kind} failed`);
-  return j.value;
-}
-
-async function scPut(kind, value, params = {}){
-  const key = getWriteKey();
-  if(!key) throw new Error("Missing SC_TOKEN (write key). Enter it then Save.");
-  const body = { kind, value, ...params };
-  const r = await fetch(getStoreBase() + "/sc/put", {
-    method:"POST",
-    headers:{
-      "content-type":"application/json",
-      "x-adr-write-key": key
-    },
-    body: JSON.stringify(body)
+(function initTheme(){
+  const saved = (()=>{ try{ return localStorage.getItem(THEME_KEY); }catch{ return null; } })();
+  setTheme((saved==="light"||saved==="dark") ? saved : (prefersDark()?"dark":"light"));
+  document.getElementById("themeToggle").addEventListener("click", ()=>{
+    const t = document.body.getAttribute("data-theme") || "light";
+    setTheme(t==="dark" ? "light" : "dark");
   });
-  const j = await r.json().catch(()=>null);
-  if(!r.ok) throw new Error(j?.error || `PUT ${kind} failed (${r.status})`);
-  if(!j || j.ok===false) throw new Error(j?.error || `PUT ${kind} failed`);
+})();
+</script>
+
+<script>
+/* ========= CONFIG ========= */
+const STORE_BASE = "https://store.adr-fr.org";          // ✅ use your CF Worker host
+const STORE_GET  = "/sc/get";
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+const USE_FIRST_NAME = true;
+const WEEK_START = 0; // Sunday
+
+const WEEKS_LANDSCAPE = 4;
+const WEEKS_PORTRAIT  = 6;
+
+/* Query flags */
+const QS = new URLSearchParams(location.search);
+const SCROLL_OK = QS.get("scroll")==="1";
+if(SCROLL_OK) document.body.setAttribute("data-scroll","1");
+let SHOW_ARCHIVED = (QS.get("archived")==="1");
+
+/* Orientation */
+function setOrientationClass(){
+  const portrait = matchMedia("(orientation: portrait)").matches;
+  document.body.classList.toggle("portrait", portrait);
+  document.body.classList.toggle("landscape", !portrait);
+}
+setOrientationClass();
+addEventListener("resize", setOrientationClass);
+
+/* Archived toggle */
+function updateArchivedBtn(){
+  document.getElementById("archLabel").textContent = "Archived: " + (SHOW_ARCHIVED ? "On" : "Off");
+}
+updateArchivedBtn();
+document.getElementById("archToggle").addEventListener("click", ()=>{
+  SHOW_ARCHIVED = !SHOW_ARCHIVED;
+  updateArchivedBtn();
+  refreshBoard({initial:false, force:true});
+});
+
+/* ========= UTIL ========= */
+function isoDate(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function startOfWeek(d){
+  const x=new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff=(x.getDay()-WEEK_START+7)%7;
+  x.setDate(x.getDate()-diff); x.setHours(0,0,0,0);
+  return x;
+}
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function fmtRange(a,b){
+  const opt={month:"short",day:"numeric"};
+  return `${a.toLocaleDateString(undefined,opt)} – ${b.toLocaleDateString(undefined,opt)}, ${b.getFullYear()}`;
+}
+function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function hashLite(obj){
+  try{
+    const s=JSON.stringify(obj); let h=0;
+    for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
+    return String(h);
+  }catch{ return String(Date.now()); }
+}
+
+/* ========= API =========
+   Worker returns JSON like:
+   { ok:true, kind, key, value, source }
+*/
+async function apiGet(params){
+  const u = new URL(STORE_BASE + STORE_GET);
+  for(const [k,v] of Object.entries(params||{})){
+    if(v!==undefined && v!==null && String(v)!=="") u.searchParams.set(k, String(v));
+  }
+  const r = await fetch(u.toString(), { cache:"no-store" });
+  const txt = await r.text();
+  let j;
+  try{ j = JSON.parse(txt); }catch(e){
+    throw new Error(`Non-JSON from store (${r.status}). ${txt.slice(0,120)}`);
+  }
+  if(!r.ok) throw new Error((j && j.error) ? j.error : `HTTP ${r.status}`);
+  if(j && j.ok===false) throw new Error(j.error || "Store error");
+  // prefer "value", else accept legacy shapes
+  if(j && "value" in j) return j.value;
+  if(j && "payload" in j) return j.payload;
   return j;
 }
 
-function iso(d){ return d.toISOString().slice(0,10); }
-function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
-function nextSunday(from=new Date()){
-  const d = new Date(from); d.setHours(0,0,0,0);
-  const add = (7 - d.getDay()) % 7;
-  d.setDate(d.getDate()+add);
-  return d;
-}
+/* ========= MEMBERS / ROSTER ========= */
+function buildRosterIndex(membersValue){
+  const list = Array.isArray(membersValue)
+    ? membersValue
+    : (membersValue && Array.isArray(membersValue.members)) ? membersValue.members : [];
 
-async function loadMembersFlat(){
-  const v = await scGet("members");
-  const arr = Array.isArray(v) ? v : (Array.isArray(v?.members) ? v.members : []);
-  const nameBy = {};
-  for(const m of arr){
-    const id = String(m.member_id ?? m.id ?? "");
+  const byId = {};
+  for(const m of list){
+    const id = String(m.member_id ?? m.id ?? m.memberId ?? "").trim();
     if(!id) continue;
-    nameBy[id] = ((m.first_name||"")+" "+(m.last_name||"")).trim() || id;
+
+    const quals = Array.isArray(m.qualifications) ? m.qualifications : (Array.isArray(m.quals) ? m.quals : []);
+    const qset = new Set(quals.map(q => String(q).toUpperCase()));
+
+    const isALS = qset.has("PARAMEDIC") || qset.has("AEMT") || qset.has("ALS");
+    const isEMT = (!isALS) && (qset.has("EMT") || qset.has("EMR"));
+
+    const first = String(m.first_name || m.firstName || "").trim();
+    const last  = String(m.last_name  || m.lastName  || "").trim();
+    const nm = String(m.name || m.display_name || `${first} ${last}`.trim() || id).trim();
+
+    byId[id] = { name:nm, first:(first||nm.split(" ")[0]||nm), tier:isALS?"ALS":(isEMT?"EMT":"UNK"), raw:m };
   }
-  return {members:arr, nameBy};
+  return byId;
+}
+function nameFor(id, roster){
+  if(!id || id==="OPEN") return `<span class="open">OPEN</span>`;
+  const r = roster[id];
+  let nm = String(r?.name || "Assigned");
+  if(USE_FIRST_NAME && r?.first) nm = String(r.first);
+  return escapeHtml(nm);
 }
 
+/* ========= AVAIL (optional) ========= */
+function buildAvailIndex(val){
+  // supports:
+  // - availability_by_member[memberId][iso] => {AM:true/false, PM:true/false}
+  // - direct [memberId][iso] => {AM,PM}
+  if(!val || typeof val!=="object") return null;
+  if(val.availability_by_member && typeof val.availability_by_member==="object") return val.availability_by_member;
 
-function loadCfgToInputs(){ $("store").value = getStoreBase(); }
-function saveCfgFromInputs(){ setStoreBase($("store").value); }
-
-function pill(s){
-  if(s==="locked") return '<span class="pill lock">locked</span>';
-  if(s==="planned") return '<span class="pill plan">planned</span>';
-  if(s==="published") return '<span class="pill pub">published</span>';
-  return s;
+  const keys = Object.keys(val);
+  const looksIdx = keys.length && keys.some(k => val[k] && typeof val[k]==="object" && !Array.isArray(val[k]));
+  return looksIdx ? val : null;
+}
+function isAvailable(avIdx, memberId, iso, shift){
+  try{
+    if(!avIdx) return null;
+    const m = avIdx[String(memberId||"").trim()];
+    const d = m && m[String(iso||"").trim()];
+    if(!d) return null;
+    const sh = String(shift||"").toUpperCase();
+    if(sh in d) return !!d[sh];
+    return null;
+  }catch{ return null; }
+}
+function lineWithAvail(id, roster, avIdx, iso, shift){
+  const base = nameFor(id, roster);
+  if(!id || id==="OPEN") return base;
+  const ok = isAvailable(avIdx, id, iso, shift);
+  if(ok===false) return `${base} <span class="warn-badge">⚠ AVAIL</span>`;
+  return base;
 }
 
-async function loadBoard(){
-  saveCfgFromInputs();
-  const week = $("week").value;
-  $("msg").textContent = "loading…";
-  const core = await loadMembersFlat();
-  const rows=[];
-  const locks = await scGet("schedule", {week, version:"locks"}).catch(()=>null);
-  if(locks && Array.isArray(locks.locks)) for(const lk of locks.locks) rows.push({...lk,_status:"locked"});
-  const pub = await scGet("schedule", {week, version:"published"}).catch(()=>null);
-  if(pub && Array.isArray(pub.items)){
-    for(const it of pub.items) rows.push({...it,_status:"published"});
+/* ========= SCHEDULE BUILDERS ========= */
+
+/**
+ * Preferred: your “legacy schedule” map already contains per-day AM/PM pairs:
+ * schedule[YYYY-MM-DD] = { AM:[att,drv], PM:[att,drv], meta:{resolved_at} }
+ */
+function scheduleLooksLikeDateMap(value){
+  if(!value || typeof value!=="object" || Array.isArray(value)) return false;
+  const ks = Object.keys(value).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+  return ks.length >= 3;
+}
+function normalizePair(pair){
+  const a = (pair && pair[0]) ? String(pair[0]).trim() : "OPEN";
+  const d = (pair && pair[1]) ? String(pair[1]).trim() : "OPEN";
+  return [a || "OPEN", d || "OPEN"];
+}
+function getDayFromDateMap(schedule, iso){
+  const obj = schedule[iso] || {};
+  return {
+    am: normalizePair(obj.AM || obj.am || ["OPEN","OPEN"]),
+    pm: normalizePair(obj.PM || obj.pm || ["OPEN","OPEN"]),
+    meta: schedule.meta || obj.meta || {},
+    _unit: obj._unit || null
+  };
+}
+
+/**
+ * Fallback: build a date-map from week+locks docs.
+ * week_{w}.json: { week_start, assignments:[{date,shift,seat,member_id,...}] }
+ * locks_{w}.json: { week_start, locks:[{date,shift,seat,member_id,...}] }
+ */
+function buildDateMapFromWeekDocs(weekDoc, locksDoc){
+  const m = {};
+  const items = [];
+  if(locksDoc && Array.isArray(locksDoc.locks)) items.push(...locksDoc.locks.map(x=>({...x, _locked:true})));
+  if(weekDoc && Array.isArray(weekDoc.assignments)) items.push(...weekDoc.assignments.map(x=>({...x, _resolved:true})));
+
+  // pick “attendant” vs “driver” by seat name heuristics
+  const seatRole = (seatStr)=>{
+    const s = String(seatStr||"").toUpperCase();
+    if(s.includes("ALS") || s.includes("MEDIC")) return "ATT";
+    if(s.includes("BLS") || s.includes("DRIVER")) return "DRV";
+    return null;
+  };
+
+  for(const it of items){
+    const iso = String(it.date||"").slice(0,10);
+    const sh = String(it.shift||it.slot||"").toUpperCase() || "AM";
+    if(!iso || (sh!=="AM" && sh!=="PM")) continue;
+    m[iso] ||= { AM:["OPEN","OPEN"], PM:["OPEN","OPEN"] };
+
+    const role = seatRole(it.seat);
+    const id = String(it.member_id||"").trim() || "OPEN";
+    if(role==="ATT") m[iso][sh][0] = id;
+    if(role==="DRV") m[iso][sh][1] = id;
+  }
+
+  // preserve resolve stamp if present
+  m.meta = m.meta || {};
+  const ra = (weekDoc && weekDoc.meta && weekDoc.meta.generated_at) ? weekDoc.meta.generated_at : null;
+  if(ra) m.meta.resolved_at = ra;
+  return m;
+}
+
+/* ========= HEALTH ========= */
+function healthColor(h){
+  if(h==="GREEN") return "var(--g)";
+  if(h==="YELLOW") return "var(--y)";
+  if(h==="RED") return "var(--red)";
+  return "var(--gray)";
+}
+function shiftHealth(attId, drvId, roster, violation){
+  if(violation) return "RED";
+
+  const att = roster[attId];
+  const drv = roster[drvId];
+  const attTier = (attId==="OPEN") ? "OPEN" : (att?.tier || "UNK");
+  const drvTier = (drvId==="OPEN") ? "OPEN" : (drv?.tier || "UNK");
+
+  if(attId==="OPEN" || attTier!=="ALS") return "RED";
+  if(drvId==="OPEN") return "RED";
+  if(drvTier==="EMT") return "GREEN";
+  if(drvTier==="ALS") return "YELLOW";
+  return "YELLOW";
+}
+function dayHealthFromDateMap(dayObj, roster, iso, avIdx){
+  const [amA, amD] = dayObj.AM;
+  const [pmA, pmD] = dayObj.PM;
+  const amV = (isAvailable(avIdx, amA, iso, "AM")===false) || (isAvailable(avIdx, amD, iso, "AM")===false);
+  const pmV = (isAvailable(avIdx, pmA, iso, "PM")===false) || (isAvailable(avIdx, pmD, iso, "PM")===false);
+  const ranks = { RED:3, YELLOW:2, GREEN:1, GRAY:0 };
+  const amH = shiftHealth(amA, amD, roster, amV);
+  const pmH = shiftHealth(pmA, pmD, roster, pmV);
+  return (ranks[amH] >= ranks[pmH]) ? amH : pmH;
+}
+
+/* ========= RENDER ========= */
+function renderWeek(root, weekStartDate, dateMap, roster, avIdx, label){
+  const weekEnd = addDays(weekStartDate, 6);
+  const range = fmtRange(weekStartDate, weekEnd);
+
+  const week = document.createElement("div");
+  week.className = "week";
+
+  const head = document.createElement("div");
+  head.className = "week-head";
+  head.innerHTML = `<div class="week-title">${escapeHtml(label||"")}</div><div class="week-dates">${escapeHtml(range)}</div>`;
+  week.appendChild(head);
+
+  const grid = document.createElement("div");
+  grid.className = "grid";
+
+  const todayIso = isoDate(new Date());
+
+  for(let i=0;i<7;i++){
+    const d = addDays(weekStartDate, i);
+    const iso = isoDate(d);
+
+    const obj = (dateMap && dateMap[iso]) ? dateMap[iso] : { AM:["OPEN","OPEN"], PM:["OPEN","OPEN"] };
+    const dayObj = { AM: normalizePair(obj.AM || obj.am || ["OPEN","OPEN"]), PM: normalizePair(obj.PM || obj.pm || ["OPEN","OPEN"]) };
+
+    const h = dayHealthFromDateMap(dayObj, roster, iso, avIdx);
+
+    const day = document.createElement("div");
+    day.className = "day" + (iso===todayIso ? " today" : "") + (iso < todayIso ? " past" : "");
+
+    const health = document.createElement("div");
+    health.className = "health";
+    health.style.background = healthColor(h);
+
+    const tile = document.createElement("div");
+    tile.className = "tile";
+
+    const [amA, amD] = dayObj.AM;
+    const [pmA, pmD] = dayObj.PM;
+
+    tile.innerHTML = `
+      <div class="dayhead">
+        <div class="daynum">${d.getDate()}</div>
+        <div class="iso">${iso}</div>
+      </div>
+      <div class="slot">
+        <div class="tag">AM</div>
+        <div class="lines">
+          <div class="line">${lineWithAvail(amA, roster, avIdx, iso, "AM")}</div>
+          <div class="line">${lineWithAvail(amD, roster, avIdx, iso, "AM")}</div>
+        </div>
+      </div>
+      <div class="slot">
+        <div class="tag">PM</div>
+        <div class="lines">
+          <div class="line">${lineWithAvail(pmA, roster, avIdx, iso, "PM")}</div>
+          <div class="line">${lineWithAvail(pmD, roster, avIdx, iso, "PM")}</div>
+        </div>
+      </div>
+    `;
+
+    day.appendChild(health);
+    day.appendChild(tile);
+    grid.appendChild(day);
+  }
+
+  week.appendChild(grid);
+  root.appendChild(week);
+}
+
+/* ========= DATA LOADING ========= */
+async function loadDataForBoard(weekStarts){
+  // members + org always
+  const [membersVal, orgVal] = await Promise.all([
+    apiGet({ kind:"members" }),
+    apiGet({ kind:"org_settings" }).catch(()=> ({}))
+  ]);
+  const roster = buildRosterIndex(membersVal);
+
+  // availability optional
+  const avIdx = await (async ()=>{
+    try{
+      const v = await apiGet({ kind:"member_availability" });
+      return buildAvailIndex(v);
+    }catch{
+      try{
+        const v2 = await apiGet({ kind:"availability" });
+        return buildAvailIndex(v2);
+      }catch{ return null; }
+    }
+  })();
+
+  // schedule strategy:
+  // 1) try legacy date-map (cached or drive->kv)
+  // 2) else try per-week docs (week + locks) and synthesize date-map
+  let dateMap = null;
+  let resolvedAt = null;
+
+  // Try legacy schedule key patterns (multiple, for robustness)
+  const tryLegacySchedule = async ()=>{
+    // Some deployments store schedule at kind=schedule without week/version.
+    // Your worker code requires week/version for schedule, BUT older ones didn’t.
+    try{
+      const v = await apiGet({ kind:"schedule" });
+      if(scheduleLooksLikeDateMap(v)) return v;
+    }catch{}
+    // try planned weekly schedule KV shape
+    try{
+      // pass “week” but we still expect a full date-map (if you stored it that way)
+      const v2 = await apiGet({ kind:"schedule", week: isoDate(startOfWeek(new Date())), version:"planned" });
+      if(scheduleLooksLikeDateMap(v2)) return v2;
+    }catch{}
+    return null;
+  };
+
+  dateMap = await tryLegacySchedule();
+
+  // If no legacy schedule, synthesize from week/locks for each weekStart
+  if(!dateMap){
+    dateMap = { meta:{} };
+    for(const ws of weekStarts){
+      const [wk, lk] = await Promise.all([
+        apiGet({ kind:"week",  week: ws }).catch(()=>null),
+        apiGet({ kind:"locks", week: ws }).catch(()=>null)
+      ]);
+      if(!wk && !lk) continue;
+      const partial = buildDateMapFromWeekDocs(wk||{}, lk||{});
+      for(const k of Object.keys(partial)){
+        if(k==="meta") continue;
+        dateMap[k] = partial[k];
+      }
+      if(partial.meta && partial.meta.resolved_at) resolvedAt = partial.meta.resolved_at;
+    }
+    if(resolvedAt) dateMap.meta.resolved_at = resolvedAt;
   } else {
-    const plan = await scGet("schedule", {week, version:"planned"}).catch(()=>null);
-    if(plan && Array.isArray(plan.items)) for(const it of plan.items) rows.push({...it,_status:"planned"});
+    resolvedAt = dateMap && dateMap.meta ? dateMap.meta.resolved_at : null;
   }
-  rows.sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.shift||"").localeCompare(b.shift||""));
-  $("tbl").querySelector("tbody").innerHTML = rows.map(r=>`<tr>
-    <td>${r.date||""}</td><td>${r.shift||""}</td><td>${r.unit||""}</td><td>${r.seat||""}</td>
-    <td>${core.nameBy[String(r.member_id)]||r.member_id||""}</td><td>${pill(r._status)}</td>
-  </tr>`).join("");
-  $("msg").textContent = `loaded ${rows.length}`;
+
+  return { roster, org: orgVal||{}, avIdx, dateMap };
 }
 
-$("btnSaveCfg").onclick = ()=>{ saveCfgFromInputs(); };
-$("btnLoad").onclick = loadBoard;
+/* ========= MAIN ========= */
+function computeWeekStarts(){
+  const now = new Date();
+  const thisWeekStart = startOfWeek(now);
+  const wantWeeks = document.body.classList.contains("portrait") ? WEEKS_PORTRAIT : WEEKS_LANDSCAPE;
 
-(function init(){
-  loadCfgToInputs();
-  $("week").value = iso(nextSunday(new Date()));
+  const starts = [];
+  if(SHOW_ARCHIVED) starts.push({ start:addDays(thisWeekStart,-7), label:"Archived" });
+  starts.push({ start:thisWeekStart, label:"Controlled" });
+  starts.push({ start:addDays(thisWeekStart,7), label:"Controlled" });
+
+  let off = 14;
+  while(starts.length < wantWeeks){
+    starts.push({ start:addDays(thisWeekStart,off), label:"Future" });
+    off += 7;
+  }
+  return starts;
+}
+
+function fmtLocalTimeFromIso(isoStr){
+  try{
+    const d = new Date(String(isoStr));
+    if(isNaN(d.getTime())) return "";
+    return new Intl.DateTimeFormat(undefined, { timeZone:"America/New_York", hour:"2-digit", minute:"2-digit" }).format(d);
+  }catch{ return ""; }
+}
+function fmtLocalDateTimeFromIso(isoStr){
+  try{
+    const d = new Date(String(isoStr));
+    if(isNaN(d.getTime())) return "";
+    return new Intl.DateTimeFormat(undefined, { timeZone:"America/New_York", weekday:"short", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit", timeZoneName:"short" }).format(d);
+  }catch{ return ""; }
+}
+
+async function refreshBoard({initial=false, force=false}={}){
+  const pill = document.getElementById("statusPill");
+  const root = document.getElementById("root");
+
+  try{
+    pill.textContent = initial ? "Loading…" : "Refreshing…";
+    document.getElementById("buildTag").textContent = "storeproxy.v3.wallboard";
+
+    const blocks = computeWeekStarts();
+    const weekStarts = blocks.map(b => isoDate(b.start));
+
+    const data = await loadDataForBoard(weekStarts);
+
+    const h = hashLite({ dateMap:data.dateMap, roster:Object.keys(data.roster).length, archived:SHOW_ARCHIVED });
+    window.__sc_lastHash ||= "";
+    if(!force && !initial && h === window.__sc_lastHash){
+      const ra = data.dateMap?.meta?.resolved_at || null;
+      const t = ra ? fmtLocalTimeFromIso(ra) : "";
+      pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
+      pill.style.color = "#166534";
+      const foot = document.getElementById("resolverFooter");
+      foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
+      return;
+    }
+    window.__sc_lastHash = h;
+
+    const temp = document.createElement("div");
+    temp.style.display = "contents";
+
+    for(const b of blocks){
+      renderWeek(temp, b.start, data.dateMap, data.roster, data.avIdx, b.label);
+    }
+
+    if(!initial){
+      root.style.opacity = "0.18";
+      setTimeout(()=>{
+        root.innerHTML = temp.innerHTML;
+        root.style.opacity = "1";
+      }, 160);
+    }else{
+      root.innerHTML = temp.innerHTML;
+      root.style.opacity = "1";
+    }
+
+    const ra = data.dateMap?.meta?.resolved_at || null;
+    const t = ra ? fmtLocalTimeFromIso(ra) : "";
+    pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
+    pill.title = ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet";
+    pill.style.color = "#166534";
+
+    const foot = document.getElementById("resolverFooter");
+    foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
+
+  }catch(err){
+    console.error(err);
+    pill.textContent = "Load failed";
+    pill.style.color = "#b91c1c";
+    root.innerHTML = `<div class="pill" style="border-color:#fecaca;color:#b91c1c">
+      ${escapeHtml(String(err.message || err))}
+    </div>`;
+  }
+}
+
+refreshBoard({initial:true});
+setInterval(()=> refreshBoard({initial:false}), AUTO_REFRESH_MS);
+</script>
+
+<script>
+/* Fatal overlay */
+(function(){
+  function show(msg){
+    try{
+      let d=document.getElementById('scFatal');
+      if(!d){
+        d=document.createElement('div');
+        d.id='scFatal';
+        d.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);color:#fff;padding:14px;font:14px/1.35 ui-monospace,Menlo,Consolas,monospace;overflow:auto;';
+        d.innerHTML='<div style="font-weight:900;font-size:16px;margin-bottom:8px;">ShiftCommander error</div><pre id="scFatalMsg" style="white-space:pre-wrap;margin:0;"></pre>';
+        document.body.appendChild(d);
+      }
+      const pre=document.getElementById('scFatalMsg');
+      if(pre) pre.textContent=String(msg||'Unknown error');
+    }catch{}
+  }
+  addEventListener('error', (e)=> show((e && (e.message||e.error)) ? (e.message||e.error) : e));
+  addEventListener('unhandledrejection', (e)=> show('Unhandled Promise rejection: ' + (e && e.reason ? (e.reason.stack||e.reason.message||String(e.reason)) : 'unknown')));
 })();
 </script>
 
