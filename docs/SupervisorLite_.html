@@ -600,6 +600,7 @@
 
   // ---- LOAD ----
   async function loadAll(){
+    try{
     setDataStatus("idle", "Loading…", "");
     const drive = await checkDrive();
 
@@ -620,11 +621,43 @@
     if(!overrides) overrides = await fetchLocalJson(LOCAL_PATHS.overrides);
     if(!history) history = await fetchLocalJson(LOCAL_PATHS.history);
 
-    // Normalize
-    app.data.members = Array.isArray(members) ? members : (members && members.members) ? members.members : [];
-    app.data.org_settings = org || { qualifications: [], units: [], seat_templates: [] };
-    app.data.overrides = Array.isArray(overrides) ? overrides : (overrides && overrides.overrides) ? overrides.overrides : [];
-    app.data.history = history || null;
+    // Normalize (unwrap store envelopes and tolerate schema drift)
+    const unwrap = (x)=>{
+      if(!x) return x;
+      // Common envelopes: {ok, kind, key, value}, {data:{value}}, {payload:{...}}
+      if(typeof x === "object"){
+        if("value" in x) return x.value;
+        if(x.data && typeof x.data === "object" && ("value" in x.data)) return x.data.value;
+        if(x.payload && typeof x.payload === "object" && ("value" in x.payload)) return x.payload.value;
+      }
+      return x;
+    };
+
+    const mRaw = unwrap(members);
+    const oRaw = unwrap(org);
+    const ovRaw = unwrap(overrides);
+    const hRaw = unwrap(history);
+
+    // Members may be: [] OR {members:[...]} OR {items:[...]} OR {value:[...]}
+    const mList =
+      Array.isArray(mRaw) ? mRaw :
+      (mRaw && Array.isArray(mRaw.members)) ? mRaw.members :
+      (mRaw && Array.isArray(mRaw.items)) ? mRaw.items :
+      [];
+
+    app.data.members = mList;
+
+    // Org settings may be nested or renamed
+    app.data.org_settings = oRaw || { qualifications: [], units: [], seat_templates: [] };
+
+    // Overrides list
+    app.data.overrides =
+      Array.isArray(ovRaw) ? ovRaw :
+      (ovRaw && Array.isArray(ovRaw.overrides)) ? ovRaw.overrides :
+      (ovRaw && Array.isArray(ovRaw.items)) ? ovRaw.items :
+      [];
+
+    app.data.history = hRaw || null;
 
     // Ensure qualifications list exists (grows over time)
     app.data.org_settings.qualifications ||= [];
@@ -650,6 +683,15 @@
 
     setDataStatus("ok", `Members: ${app.data.members.length}`, "Loaded members + org settings.");
     render();
+    }catch(err){
+      console.error('loadAll failed', err);
+      setDataStatus('bad','Load failed', (err && err.message) ? err.message : String(err));
+      // Render an empty shell so the UI is still usable
+      app.data.members ||= [];
+      app.data.org_settings ||= { qualifications: [], units: [], seat_templates: [] };
+      app.data.overrides ||= [];
+      render();
+    }
   }
 
   function normalizeQualList(list){
