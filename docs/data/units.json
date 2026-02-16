@@ -6,14 +6,10 @@
       "label": "Ambulance 1",
       "type": "ambulance",
       "status": "ACTIVE",
-      "min_crew": 2,
-      "max_crew": 3,
-      "seat_plan": [
-        "seat_als_medic",
-        "seat_driver",
-        "seat_3rd_rider"
-      ],
-      "notes": "ALS + Driver required. Driver prefers EMT+Ops-120. 3rd rider optional."
+
+      "seat_plan_id": "Standard Ambulance",
+
+      "notes": "ALS + Driver required. 3rd rider optional."
     }
   ]
 }

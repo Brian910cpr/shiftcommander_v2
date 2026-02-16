@@ -1,0 +1,31 @@
+[
+  {
+    "plan_name": "Standard Ambulance",
+    "seats_config": [
+      {
+        "seat_code": "als",
+        "seat_name": "ALS",
+        "required": true,
+        "priority": 1,
+        "required_cert": "AEMT",
+        "required_tags": []
+      },
+      {
+        "seat_code": "driver",
+        "seat_name": "Driver",
+        "required": true,
+        "priority": 2,
+        "required_cert": "EMT",
+        "required_tags": ["Ops-120"]
+      },
+      {
+        "seat_code": "3rd_rider",
+        "seat_name": "3rd Rider",
+        "required": false,
+        "priority": 3,
+        "required_cert": "",
+        "required_tags": ["3rdRider"]
+      }
+    ]
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "template_date": "2026-02-23",
+    "shift_type": "AM",
+    "template_name": "Standard ALS",
+    "unit_ids": ["unit_ambu_1"]
+  },
+  {
+    "template_date": "2026-02-23",
+    "shift_type": "PM",
+    "template_name": "Standard ALS",
+    "unit_ids": ["unit_ambu_1"]
+  },
+  {
+    "template_date": "2026-02-24",
+    "shift_type": "AM",
+    "template_name": "Standard ALS",
+    "unit_ids": ["unit_ambu_1"]
+  },
+  {
+    "template_date": "2026-02-24",
+    "shift_type": "PM",
+    "template_name": "Standard ALS",
+    "unit_ids": ["unit_ambu_1"]
+  }
+]
