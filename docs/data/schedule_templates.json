@@ -1,0 +1,38 @@
+[
+  {
+    "template_date": "2026-02-23",
+    "shift_type": "AM",
+    "unit_ids": ["unit_ambu_1"],
+    "template_source": "imported"
+  },
+  {
+    "template_date": "2026-02-23",
+    "shift_type": "PM",
+    "unit_ids": ["unit_ambu_1"],
+    "template_source": "imported"
+  },
+  {
+    "template_date": "2026-02-24",
+    "shift_type": "AM",
+    "unit_ids": ["unit_ambu_1"],
+    "template_source": "imported"
+  },
+  {
+    "template_date": "2026-02-24",
+    "shift_type": "PM",
+    "unit_ids": ["unit_ambu_1"],
+    "template_source": "imported"
+  },
+  {
+    "template_date": "2026-02-25",
+    "shift_type": "AM",
+    "unit_ids": ["unit_ambu_1"],
+    "template_source": "imported"
+  },
+  {
+    "template_date": "2026-02-25",
+    "shift_type": "PM",
+    "unit_ids": ["unit_ambu_1"],
+    "template_source": "imported"
+  }
+]
