@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "generated_at": "2026-03-15T13:55:18.045601",
+    "source": "build_draft_schedule.py"
+  },
+  "2026-03-19": {
+    "AM": [
+      "Gordon Grant",
+      "Brian Ennis"
+    ],
+    "PM": [
+      "Anna Squires",
+      "Nikki Meeks"
+    ]
+  },
+  "2026-03-20": {
+    "AM": [
+      "Cassie Grass",
+      "Lisa Nelson"
+    ],
+    "PM": [
+      "Nicholas Tripp",
+      "Lynnsey Benson"
+    ]
+  },
+  "2026-03-21": {
+    "AM": [
+      "Gordon Grant"
+    ],
+    "PM": [
+      "Anna Squires"
+    ]
+  },
+  "2026-03-22": {
+    "AM": [
+      "Cassie Grass"
+    ],
+    "PM": [
+      "Nicholas Tripp",
+      "Shane Polletta"
+    ]
+  },
+  "2026-03-23": {
+    "AM": [
+      "Gordon Grant",
+      "Brett Toney"
+    ],
+    "PM": [
+      "Anna Squires",
+      "Nora Hines"
+    ]
+  },
+  "2026-03-24": {
+    "AM": [
+      "Cassie Grass",
+      "Serenity Joyner"
+    ],
+    "PM": [
+      "Nicholas Tripp",
+      "AJ Smith"
+    ]
+  },
+  "2026-03-25": {
+    "AM": [
+      "Gordon Grant",
+      "Brian Ennis"
+    ],
+    "PM": [
+      "Anna Squires",
+      "Nikki Meeks"
+    ]
+  }
+}
