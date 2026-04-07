@@ -1,0 +1,880 @@
+{
+  "build": {
+    "generated_at": "2026-03-24T03:00:00Z",
+    "source": "google_calendar_public_locked",
+    "calendar_id": "2fbc3612e56a0a2ce28fe826443e20a88c500e1c5b3c56b126cb4afb88fd233e@group.calendar.google.com",
+    "description": "Normalized locked schedule in resolver/wallboard shape, derived from public Google Calendar releases",
+    "seeded_from": "schedule_locked.json",
+    "shift_count": 38,
+    "notes": [
+      "This file is seeded from locked public-released assignments.",
+      "All imported seat assignments are marked locked=true.",
+      "Resolver may build on top of this data for future/open work as long as locked seats are preserved."
+    ]
+  },
+  "shifts": [
+    {
+      "shift_key": "2026-03-23_06:00",
+      "date": "2026-03-23",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Lynnsey",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-23_08:00",
+      "date": "2026-03-23",
+      "start": "08:00",
+      "label": "08:00 Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Nick",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-23_18:00",
+      "date": "2026-03-23",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Nick",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Brett",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-24_06:00",
+      "date": "2026-03-24",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Brian",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-24_08:00",
+      "date": "2026-03-24",
+      "start": "08:00",
+      "label": "08:00 Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Anna",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-24_18:00",
+      "date": "2026-03-24",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Nick",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Shane",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        },
+        {
+          "seat_code": "X",
+          "role": "3RD_RIDER",
+          "assigned_name": "Sidney",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": [
+          "Additional published B-seat entry preserved as 3RD_RIDER because A and B were already occupied."
+        ]
+      }
+    },
+    {
+      "shift_key": "2026-03-25_06:00",
+      "date": "2026-03-25",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Lynnsey",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Sidney",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-25_18:00",
+      "date": "2026-03-25",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Nikki",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "AJ",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-26_06:00",
+      "date": "2026-03-26",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Nikki",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Christian",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-26_18:00",
+      "date": "2026-03-26",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Sophie",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Brian",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-27_06:00",
+      "date": "2026-03-27",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Lynnsey",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Brett",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-27_18:00",
+      "date": "2026-03-27",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Lynnsey",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Shane",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-28_06:00",
+      "date": "2026-03-28",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Gordon",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-28_18:00",
+      "date": "2026-03-28",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "OPEN",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": {
+        "window": "FRIDAY_PM",
+        "code": "C",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-29_06:00",
+      "date": "2026-03-29",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Serenity",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": {
+        "window": "SATURDAY_AM",
+        "code": "C",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-29_18:00",
+      "date": "2026-03-29",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Shane",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B",
+          "derived_from_duplicate_b": true
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Collin",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": [
+          "Duplicate published B interpreted as ATTENDANT because no A-seat entry was present."
+        ]
+      }
+    },
+    {
+      "shift_key": "2026-03-30_06:00",
+      "date": "2026-03-30",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Lynnsey",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Brian",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-30_18:00",
+      "date": "2026-03-30",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Sophie",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Collin",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-31_06:00",
+      "date": "2026-03-31",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Nikki",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-31_08:00",
+      "date": "2026-03-31",
+      "start": "08:00",
+      "label": "08:00 Shift",
+      "seats": [
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "AJ",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-03-31_18:00",
+      "date": "2026-03-31",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Nikki",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Sidney",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-01_06:00",
+      "date": "2026-04-01",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Lynnsey",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-01_18:00",
+      "date": "2026-04-01",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Lynnsey",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Brian",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-02_06:00",
+      "date": "2026-04-02",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Collin",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-02_08:00",
+      "date": "2026-04-02",
+      "start": "08:00",
+      "label": "08:00 Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Anna",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-02_18:00",
+      "date": "2026-04-02",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "OPEN",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Collin",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-03_06:00",
+      "date": "2026-04-03",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "OPEN",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-03_18:00",
+      "date": "2026-04-03",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [
+        {
+          "seat_code": "A",
+          "role": "ATTENDANT",
+          "assigned_name": "Nikki",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "A"
+        },
+        {
+          "seat_code": "B",
+          "role": "DRIVER",
+          "assigned_name": "Sidney",
+          "locked": true,
+          "source": "google_calendar_public_locked",
+          "raw_seat": "B"
+        }
+      ],
+      "volunteer_coverage": null,
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-04_18:00",
+      "date": "2026-04-04",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "FRIDAY_PM",
+        "code": "D",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-05_06:00",
+      "date": "2026-04-05",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "SATURDAY_AM",
+        "code": "D",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-11_18:00",
+      "date": "2026-04-11",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "FRIDAY_PM",
+        "code": "A",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-12_06:00",
+      "date": "2026-04-12",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "SATURDAY_AM",
+        "code": "A",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-18_18:00",
+      "date": "2026-04-18",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "FRIDAY_PM",
+        "code": "B",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-19_06:00",
+      "date": "2026-04-19",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "SATURDAY_AM",
+        "code": "B",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-25_18:00",
+      "date": "2026-04-25",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "FRIDAY_PM",
+        "code": "C",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-04-26_06:00",
+      "date": "2026-04-26",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "SATURDAY_AM",
+        "code": "C",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-05-02_18:00",
+      "date": "2026-05-02",
+      "start": "18:00",
+      "label": "PM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "FRIDAY_PM",
+        "code": "D",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    },
+    {
+      "shift_key": "2026-05-03_06:00",
+      "date": "2026-05-03",
+      "start": "06:00",
+      "label": "AM Shift",
+      "seats": [],
+      "volunteer_coverage": {
+        "window": "SATURDAY_AM",
+        "code": "D",
+        "locked": true,
+        "source": "google_calendar_public_locked"
+      },
+      "resolver": {
+        "notes": []
+      }
+    }
+  ]
+}

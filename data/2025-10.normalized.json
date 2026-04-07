@@ -1,0 +1,880 @@
+{
+  "month": "2025-10",
+  "generated_at": "2026-02-09T02:17:47.100447",
+  "days": {
+    "2025-10-01": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Gordon(24)",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Gordon(24)",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-02": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Nikki(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nikki(24)",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-03": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Gordon(24)",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Gordon(24)",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-05": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-06": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Nick",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Lisa",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-07": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-08": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Nikki(24)",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nikki(24)",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-09": {
+      "AM": {
+        "raw": [
+          "Gracie"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-10": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-11": {
+      "AM": {
+        "raw": [
+          "Anna"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-12": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-13": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Nick(24)",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nick(24)",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-14": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-15": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Nikki(24)",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nikki(24)",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-16": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-17": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Nikki(24)",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nikki(24)",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-18": {
+      "AM": {
+        "raw": [
+          "Gordon(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-19": {
+      "AM": {
+        "raw": [
+          "Anna"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Nikki",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-20": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nick",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-21": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Gordon(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Gordon(24)",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-22": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nikki"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-23": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-24": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Gordon",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nick"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-25": {
+      "AM": {
+        "raw": [
+          "Nick(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Nick(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-26": {
+      "AM": {
+        "raw": [
+          "Nikki(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Nikki(24)",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-27": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Nick(24)",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nick(24)",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-28": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Anna"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Gordon",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-29": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Nikki",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-30": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Lisa(24)",
+          "AJ"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-31": {
+      "AM": {
+        "raw": [
+          "Gracie",
+          "Lisa",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gracie",
+          "Gordon",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-10-04": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    }
+  }
+}

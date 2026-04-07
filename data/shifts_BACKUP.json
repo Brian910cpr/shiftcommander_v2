@@ -1,0 +1,10 @@
+[
+  {
+    "date": "2026-03-25",
+    "seats": [
+      { "role": "DRIVER", "hours": 12 },
+      { "role": "ATTENDANT", "hours": 12 },
+      { "role": "3RD_RIDER", "hours": 12 }
+    ]
+  }
+]

@@ -1,0 +1,79 @@
+{
+  "day_rules": {
+    "Thu": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    },
+    "Fri": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    },
+    "Sat": {
+      "AM": "ALS",
+      "PM": "ALS"
+    },
+    "Sun": {
+      "AM": "ALS",
+      "PM": "ALS+EMT"
+    },
+    "Mon": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    },
+    "Tue": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    },
+    "Wed": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    }
+  },
+  "default_unit": "120",
+  "month": "2026-04",
+  "rotation": {
+    "pairs": {
+      "AC": {
+        "cadence_days": 14,
+        "last_flip": "2026-04-01"
+      },
+      "BD": {
+        "cadence_days": 28,
+        "last_flip": "2026-04-01"
+      }
+    },
+    "type": "2-2-3"
+  },
+  "rotation_223": {
+    "cycle_anchor_date": "2026-04-01",
+    "pairs": {
+      "AC": {
+        "flip_anchor_date": "2026-04-01",
+        "flip_every": 14,
+        "flip_unit": "days"
+      },
+      "BD": {
+        "flip_anchor_date": "2026-04-01",
+        "flip_every": 14,
+        "flip_unit": "days"
+      }
+    },
+    "seed_weeks_default": 26
+  },
+  "rules": {
+    "enforce_cert_pairing": true,
+    "rotation_overrides_ot": true,
+    "strict_pairing": true
+  },
+  "shift_definitions": {
+    "AM": {
+      "hours": 12
+    },
+    "PM": {
+      "hours": 12
+    },
+    "QRV": {
+      "hours": 12
+    }
+  }
+}

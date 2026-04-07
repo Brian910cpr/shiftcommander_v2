@@ -1,0 +1,622 @@
+{
+  "month": "2026-02",
+  "generated_at": "2026-01-04T20:47:43.102688",
+  "days": {
+    "2026-02-01": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-02": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-03": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-04": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-05": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-06": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-07": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-08": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-09": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-10": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-11": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-12": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-13": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-14": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-15": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-16": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-17": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-18": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-19": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-20": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-21": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-22": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-23": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-24": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-25": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-26": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-27": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2026-02-28": {
+      "AM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "rotation_templates": [
+    {
+      "template_id": "rot_223_12h_relief",
+      "name": "2-2-3 12-hour relief rotation",
+      "description": "Paired 12-hour relief rotation with A/C and B/D linked tracks.",
+      "anchor_date": null,
+      "shift_length_hours": 12,
+      "cycle_length_days": 14,
+      "tracks": [
+        {
+          "track_id": "A",
+          "role": "day",
+          "relief_partner_track": "C",
+          "pattern_key": "pattern_1"
+        },
+        {
+          "track_id": "B",
+          "role": "day",
+          "relief_partner_track": "D",
+          "pattern_key": "pattern_2"
+        },
+        {
+          "track_id": "C",
+          "role": "night",
+          "relief_partner_track": "A",
+          "pattern_key": "pattern_1"
+        },
+        {
+          "track_id": "D",
+          "role": "night",
+          "relief_partner_track": "B",
+          "pattern_key": "pattern_2"
+        }
+      ],
+      "patterns": {
+        "pattern_1": [
+          "ON",
+          "ON",
+          "OFF",
+          "OFF",
+          "ON",
+          "ON",
+          "ON",
+          "OFF",
+          "OFF",
+          "ON",
+          "ON",
+          "OFF",
+          "OFF",
+          "OFF"
+        ],
+        "pattern_2": [
+          "OFF",
+          "OFF",
+          "ON",
+          "ON",
+          "OFF",
+          "OFF",
+          "OFF",
+          "ON",
+          "ON",
+          "OFF",
+          "OFF",
+          "ON",
+          "ON",
+          "ON"
+        ]
+      },
+      "notes": [
+        "A relieves C",
+        "C relieves A",
+        "B relieves D",
+        "D relieves B"
+      ]
+    }
+  ]
+}

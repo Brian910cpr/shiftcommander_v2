@@ -1,0 +1,17 @@
+{
+  "swap_requests": [],
+  "notes": {
+    "status_values": [
+      "open",
+      "accepted",
+      "declined",
+      "expired",
+      "covered"
+    ],
+    "suggestion_order": [
+      "preferred",
+      "available",
+      "fallback"
+    ]
+  }
+}

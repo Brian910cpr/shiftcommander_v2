@@ -1,0 +1,1304 @@
+{
+  "month": "2025-12",
+  "generated_at": "2025-12-26T04:25:03.861390",
+  "days": {
+    "2025-12-01": {
+      "AM": {
+        "raw": [
+          "Nikki"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-02": {
+      "AM": {
+        "raw": [
+          "Anna"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "181",
+          "name": "Anna Squires",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Anna",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Open",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-03": {
+      "AM": {
+        "raw": [
+          "Lisa",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "186",
+          "name": "Lynnsey Benson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lynnsey",
+          "works_next_shift": false
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Lisa",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "186",
+          "name": "Lynnsey Benson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lynnsey",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-04": {
+      "AM": {
+        "raw": [
+          "Nikki"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Nikki",
+          "Brett"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "159",
+          "name": "Brett Toney",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brett",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-05": {
+      "AM": {
+        "raw": [
+          "Gordon",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "149",
+          "name": "Shane Polletta",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Shane",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-06": {
+      "AM": {
+        "raw": [
+          "Anna"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "181",
+          "name": "Anna Squires",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Anna",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon",
+          "Brett"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "159",
+          "name": "Brett Toney",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brett",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-07": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Nikki",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-08": {
+      "AM": {
+        "raw": [
+          "Nikki"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Lisa",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "149",
+          "name": "Shane Polletta",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Shane",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-09": {
+      "AM": {
+        "raw": [
+          "Anna"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "181",
+          "name": "Anna Squires",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Anna",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Open",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-10": {
+      "AM": {
+        "raw": [
+          "Lisa",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "186",
+          "name": "Lynnsey Benson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lynnsey",
+          "works_next_shift": false
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Lisa",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "186",
+          "name": "Lynnsey Benson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lynnsey",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-11": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon",
+          "Brett"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "159",
+          "name": "Brett Toney",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brett",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-12": {
+      "AM": {
+        "raw": [
+          "Nikki",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Serenity",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "183",
+          "name": "Serenity Joyner",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Serenity",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "149",
+          "name": "Shane Polletta",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Shane",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-13": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Serenity",
+          "Sherman"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "183",
+          "name": "Serenity Joyner",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Serenity",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "146",
+          "name": "Sherman Huff",
+          "cert_level": "Driver",
+          "notes": [],
+          "from_token": "Sherman",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-14": {
+      "AM": {
+        "raw": [
+          "Open"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Open (Shane?)",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-15": {
+      "AM": {
+        "raw": [
+          "Anna"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "181",
+          "name": "Anna Squires",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Anna",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-16": {
+      "AM": {
+        "raw": [
+          "Nikki"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Nikki",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-17": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon",
+          "Brett"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "159",
+          "name": "Brett Toney",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brett",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-18": {
+      "AM": {
+        "raw": [
+          "Lisa"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Lisa",
+          "Sherman 6-4"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "146",
+          "name": "Sherman Huff",
+          "cert_level": "Driver",
+          "notes": [
+            "time_6-4"
+          ],
+          "from_token": "Sherman 6-4",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-19": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-20": {
+      "AM": {
+        "raw": [
+          "Open"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Open",
+          "Brett"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "159",
+          "name": "Brett Toney",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brett",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-21": {
+      "AM": {
+        "raw": [
+          "Anna"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "181",
+          "name": "Anna Squires",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Anna",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Open (Shane?)",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-22": {
+      "AM": {
+        "raw": [
+          "Lisa"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "149",
+          "name": "Shane Polletta",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Shane",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-23": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Nikki",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-24": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Nikki",
+          "Lynnsey"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "182",
+          "name": "Nikki Meeks",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Nikki",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "186",
+          "name": "Lynnsey Benson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lynnsey",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-25": {
+      "AM": {
+        "raw": [
+          "Open"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Open",
+          "Open"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-26": {
+      "AM": {
+        "raw": [
+          "Open"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Open",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "149",
+          "name": "Shane Polletta",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Shane",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-27": {
+      "AM": {
+        "raw": [
+          "Open"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Open"
+        ],
+        "seat_medical": {
+          "status": "open"
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    },
+    "2025-12-28": {
+      "AM": {
+        "raw": [
+          "Lisa"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Lisa",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-29": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon",
+          "Shane"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "149",
+          "name": "Shane Polletta",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Shane",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-30": {
+      "AM": {
+        "raw": [
+          "Lisa"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Lisa",
+          "Brian"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "184",
+          "name": "Lisa Nelson",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Lisa",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "filled",
+          "member_id": "188",
+          "name": "Brian Ennis",
+          "cert_level": "EMT",
+          "notes": [],
+          "from_token": "Brian",
+          "works_next_shift": false
+        },
+        "extras": []
+      }
+    },
+    "2025-12-31": {
+      "AM": {
+        "raw": [
+          "Gordon"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      },
+      "PM": {
+        "raw": [
+          "Gordon",
+          "Open"
+        ],
+        "seat_medical": {
+          "status": "filled",
+          "member_id": "187",
+          "name": "Gordon Grant",
+          "cert_level": "ALS",
+          "notes": [],
+          "from_token": "Gordon",
+          "works_next_shift": false
+        },
+        "seat_driver_emt": {
+          "status": "open"
+        },
+        "extras": []
+      }
+    }
+  }
+}

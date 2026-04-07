@@ -1,830 +1,873 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>ShiftCommander — Wallboard</title>
-<style>
-  :root{
-    --bg:#f4f7fb; --card:#ffffff; --line:#d9e1ee; --line2:#eef2f7;
-    --text:#0f172a; --muted:#64748b; --muted2:#94a3b8; --open:#64748b;
-    --shadow:0 1px 2px rgba(0,0,0,.06); --r:10px;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShiftCommander Wallboard</title>
+  <style>
+    :root {
+      --bg: #08111f;
+      --panel: #0f1b2d;
+      --panel2: #16243a;
+      --border: #243754;
+      --text: #eef4ff;
+      --muted: #a7b8d8;
 
-    /* Color-deficiency friendly */
-    --g:#00ff2a; --y:#ffd400; --red:#d40000; --gray:#94a3b8;
+      --green-bg: rgba(18, 54, 31, 0.76);
+      --green-bd: #2d8a4b;
 
-    --gap:6px; --pad:8px; --weekHeadH:24px; --dayHeadH:24px; --nameMin:12px; --nameMax:14px;
+      --yellow-bg: rgba(72, 56, 13, 0.78);
+      --yellow-bd: #caa236;
 
-    --topbg1:#ffffff; --topbg2:#fbfdff; --topborder:var(--line);
-    --pillbg:#ffffff; --pillborder:var(--line); --pilltext:var(--muted);
+      --red-bg: rgba(74, 24, 24, 0.82);
+      --red-bd: #d9534f;
 
-    --btnbg:#ffffff; --btnborder:var(--line); --btntext:var(--text); --btnhover:#f8fafc;
+      --gray-bg: rgba(43, 57, 82, 0.82);
+      --gray-bd: #566985;
 
-    --needsbg:#fff1f2; --needsborder:#fecdd3;
-  }
+      --name-green: #52ef7f;
+      --name-blue: #69b8ff;
+      --name-pink: #ff8fcb;
+      --name-red: #ff9c9c;
+      --name-default: #eef4ff;
 
-  body[data-theme="dark"]{
-    --bg:#0b1220; --card:#0f172a; --line:#22304a; --line2:#1a2740;
-    --text:#e5e7eb; --muted:#b6c2d3; --muted2:#93a4bf; --open:#93a4bf;
-    --shadow:0 1px 2px rgba(0,0,0,.35);
-    --gray:#6b7ea6;
+      --today-ring: #8fd3ff;
+      --today-glow: rgba(143, 211, 255, 0.18);
 
-    --topbg1:#0f172a; --topbg2:#0b1220; --topborder:#22304a;
-    --pillbg:#0b1220; --pillborder:#22304a; --pilltext:#b6c2d3;
-    --btnbg:#0b1220; --btnborder:#22304a; --btntext:#e5e7eb; --btnhover:#111c33;
+      --past-dim: 0.76;
+      --future-soft: 0.96;
 
-    --needsbg:rgba(212,0,0,.08); --needsborder:rgba(212,0,0,.28);
-  }
+      --open-seat-border: rgba(255, 118, 118, 0.82);
+      --open-seat-glow: rgba(255, 118, 118, 0.20);
+      --month-line: rgba(143, 211, 255, 0.28);
+      --month-line-strong: rgba(143, 211, 255, 0.42);
+    }
 
-  body{
-    margin:0;
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    overflow:hidden;
-  }
+    * { box-sizing: border-box; }
 
-  .top{
-    position:sticky; top:0; z-index:10;
-    background:linear-gradient(var(--topbg1),var(--topbg2));
-    border-bottom:1px solid var(--topborder);
-    box-shadow:var(--shadow);
-  }
-  .top-inner{
-    max-width:1600px; margin:0 auto;
-    display:flex; align-items:center; justify-content:space-between;
-    gap:12px;
-    padding:9px 12px;
-  }
-  .title{ font-weight:1000; display:flex; align-items:baseline; gap:10px; }
-  .sub{ font-size:12px; color:var(--muted); font-weight:900; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      min-height: 100%;
+    }
 
-  .pill{
-    font-size:12px; font-weight:900; color:var(--pilltext);
-    border:1px solid var(--pillborder);
-    background:var(--pillbg);
-    border-radius:999px; padding:6px 10px; white-space:nowrap;
-  }
+    body { padding: 14px; }
 
-  .top-right{ display:flex; align-items:center; gap:10px; }
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 16px 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
 
-  .btn{
-    appearance:none;
-    border:1px solid var(--btnborder);
-    background:var(--btnbg);
-    color:var(--btntext);
-    border-radius:999px;
-    padding:6px 10px;
-    font-weight:1000;
-    font-size:12px;
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    user-select:none;
-    white-space:nowrap;
-  }
-  .btn:hover{ background:var(--btnhover); }
-  .btn:active{ transform:translateY(1px); }
-  .btn .ico{ width:14px; height:14px; display:inline-block; }
+    .title {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 0.25px;
+      line-height: 1.05;
+    }
 
-  .wrap{
-    max-width:1600px;
-    margin:0 auto;
-    padding:var(--pad);
-    height: calc(100vh - 54px);
-    box-sizing: border-box;
-    display:flex;
-    flex-direction:column;
-    gap:var(--gap);
-  }
+    .subtitle {
+      margin-top: 6px;
+      font-size: 15px;
+      color: var(--muted);
+    }
 
-  #root{
-    flex: 1 1 auto;
-    display:flex;
-    flex-direction:column;
-    gap:var(--gap);
-    overflow:hidden;
-    min-height:0;
-    transition: opacity .22s ease;
-  }
-  body[data-scroll="1"] #root{ overflow:auto; }
+    .meta {
+      display: grid;
+      gap: 8px;
+      justify-items: end;
+    }
 
-  .footer{
-    flex:0 0 auto;
-    padding:4px 2px 0 2px;
-    color:var(--muted);
-    font-size:12px;
-    font-weight:900;
-    text-align:right;
-  }
-  .footer strong{ color:var(--text); }
+    .meta-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
 
-  .week{
-    flex:1 1 0;
-    min-height:0;
-    border:1px solid var(--line);
-    border-radius:var(--r);
-    background:var(--card);
-    box-shadow:var(--shadow);
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
-  }
-  .week-head{
-    height:var(--weekHeadH);
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0 10px;
-    border-bottom:1px solid var(--line2);
-    background:linear-gradient(var(--topbg2),var(--card));
-    gap:10px;
-    flex:0 0 auto;
-  }
-  .week-title{ font-weight:1000; font-size:12px; }
-  .week-dates{ font-size:12px; color:var(--muted); font-weight:900; }
+    .meta-pill,
+    .nav-btn {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 15px;
+      color: var(--text);
+      white-space: nowrap;
+    }
 
-  .grid{
-    flex:1 1 auto;
-    min-height:0;
-    display:grid;
-    grid-template-columns: repeat(7, minmax(130px, 1fr));
-    gap:var(--gap);
-    padding:6px 8px 8px 8px;
-    align-content:stretch;
-  }
+    .nav-btn {
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
 
-  .day{
-    display:grid;
-    grid-template-columns: 8px 1fr;
-    border-radius:var(--r);
-    overflow:hidden;
-    border:1px solid var(--line);
-    background:var(--card);
-    min-height:0;
-  }
-  .health{ background:var(--gray); }
-  .tile{
-    min-height:0;
-    display:grid;
-    grid-template-rows: var(--dayHeadH) 1fr 1fr;
-  }
-  .dayhead{
-    height:var(--dayHeadH);
-    display:flex; justify-content:space-between; align-items:center;
-    padding:0 8px;
-    border-bottom:1px solid var(--line2);
-    background:linear-gradient(var(--topbg2),var(--card));
-    gap:8px;
-  }
-  .daynum{ font-size:15px; font-weight:1000; line-height:1; display:flex; align-items:center; gap:6px; }
-  .iso{ font-size:11px; color:var(--muted2); font-weight:900; }
-  .truckpill{
-    display:inline-flex; align-items:center; justify-content:center;
-    padding:2px 7px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:rgba(248,250,252,.9);
-    color:var(--text);
-    font-weight:1000;
-    font-size:11px;
-    line-height:1;
-    white-space:nowrap;
-  }
-  body[data-theme="dark"] .truckpill{ background:rgba(17,28,51,.75); }
+    .nav-btn:hover {
+      border-color: var(--today-ring);
+      background: rgba(255,255,255,0.05);
+    }
 
-  .slot{
-    display:grid;
-    grid-template-columns: 22px 1fr;
-    gap:6px;
-    padding:6px 8px;
-    border-top:1px solid var(--line2);
-    align-items:start;
-    min-height:0;
-  }
-  .slot:first-of-type{ border-top:none; }
-  .tag{
-    font-size:10px;
-    font-weight:1000;
-    color:var(--muted);
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    padding-top:2px;
-  }
+    .nav-btn:active {
+      transform: translateY(1px);
+    }
 
-  .lines{ display:flex; flex-direction:column; gap:4px; min-width:0; }
-  .line{
-    font-size:clamp(var(--nameMin), 1.05vw, var(--nameMax));
-    font-weight:950;
-    line-height:1.12;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    min-width:0;
-  }
-  .open{ color:var(--open); font-weight:1000; letter-spacing:.06em; text-transform:uppercase; }
+    .weekday-row {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
 
-  .warn-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    font-size:10px;
-    font-weight:1000;
-    color:var(--red);
-    background:var(--needsbg);
-    border:1px solid var(--needsborder);
-    padding:1px 7px;
-    border-radius:999px;
-    margin-left:6px;
-  }
+    .weekday {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+      padding: 10px 6px;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--muted);
+      letter-spacing: 0.4px;
+    }
 
-  .today .tile{ outline:2px solid var(--text); outline-offset:-2px; }
-  .past{ opacity:.62; }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+    }
 
-  body.landscape{ --gap:5px; --pad:6px; --weekHeadH:22px; --dayHeadH:22px; --nameMin:11px; --nameMax:13px; }
-  body.portrait{ --gap:8px; --pad:10px; --weekHeadH:26px; --dayHeadH:26px; --nameMin:14px; --nameMax:16px; }
-  body.portrait .grid{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-  @media (max-width: 560px){
-    .wrap{ padding:6px; height: calc(100vh - 54px); }
-    body.portrait .grid{ grid-template-columns: 1fr; }
-    .line{ font-size: clamp(14px, 4.2vw, 18px); }
-  }
-</style>
+    .day-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 280px;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+      position: relative;
+    }
+
+    .day-card.past { opacity: var(--past-dim); }
+    .day-card.future { opacity: var(--future-soft); }
+
+    .day-card.today {
+      border-color: var(--today-ring);
+      box-shadow: 0 0 0 2px var(--today-ring), 0 0 24px var(--today-glow);
+      opacity: 1;
+    }
+
+    .day-card.month-row-start::before,
+    .day-card.month-row-end::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      pointer-events: none;
+      z-index: 3;
+      background: linear-gradient(90deg, transparent 0%, var(--month-line-strong) 8%, var(--month-line) 50%, var(--month-line-strong) 92%, transparent 100%);
+    }
+
+    .day-card.month-row-start::before { top: 0; }
+    .day-card.month-row-end::after { bottom: 0; }
+
+    .day-card.month-boundary-right::after,
+    .day-card.month-boundary-left::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      pointer-events: none;
+      z-index: 3;
+      background: linear-gradient(180deg, transparent 0%, var(--month-line-strong) 8%, var(--month-line) 50%, var(--month-line-strong) 92%, transparent 100%);
+    }
+
+    .day-card.month-boundary-right::after { right: -1px; }
+    .day-card.month-boundary-left::before { left: -1px; }
+
+    .day-header {
+      padding: 12px 14px 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .day-number {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 0.9;
+      text-align: left;
+      min-width: 34px;
+    }
+
+    .day-meta {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .day-title {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .day-subtitle {
+      margin-top: 2px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--muted);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .day-number {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 0.95;
+      text-align: center;
+      min-width: 34px;
+    }
+
+    .shift-list {
+      padding: 8px 10px 10px 10px;
+      display: grid;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .shift-card {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px 10px 10px 10px;
+      display: grid;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shift-card.green,
+    .shift-card.gray {
+      background: var(--panel2);
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    .shift-card.yellow {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), var(--yellow-bg);
+      border-color: var(--yellow-bd);
+      box-shadow: inset 0 0 0 1px rgba(202, 162, 54, 0.10);
+    }
+
+    .shift-card.red {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), var(--red-bg);
+      border-color: var(--red-bd);
+      box-shadow: inset 0 0 0 1px rgba(217, 83, 79, 0.10);
+    }
+
+    .shift-top {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 14px;
+    }
+
+    .shift-name {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .slots {
+      display: grid;
+      gap: 4px;
+    }
+
+    .slot {
+      padding: 8px 2px;
+      border-radius: 12px;
+      background: transparent;
+      border: 0;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .slot.open-seat {
+      animation: slowPulseRed 2.8s ease-in-out infinite;
+    }
+
+    @keyframes slowPulseRed {
+      0% { box-shadow: 0 0 0 0 rgba(255, 118, 118, 0.02); }
+      50% { box-shadow: 0 0 18px 4px var(--open-seat-glow); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 118, 118, 0.02); }
+    }
+
+    .member {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 0.96;
+      word-break: break-word;
+      letter-spacing: 0.1px;
+      text-align: center !important;
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .member.green { color: var(--name-green); }
+    .member.blue { color: var(--name-blue); }
+    .member.pink { color: var(--name-pink); }
+    .member.red { color: var(--name-red); }
+    .member.default { color: var(--name-default); }
+    .member.empty {
+      color: #ffb8b6;
+      font-style: italic;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    .seat-stamp {
+      margin-top: 4px;
+      font-size: 10px;
+      line-height: 1.15;
+      color: rgba(220, 230, 255, 0.58);
+      text-align: center;
+      letter-spacing: 0.15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+
+    .state {
+      padding: 40px;
+      text-align: center;
+      font-size: 24px;
+      color: var(--muted);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+    }
+
+    .footer {
+      margin-top: 14px;
+      text-align: right;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 1800px) {
+      .member { font-size: 22px; }
+      .day-number { font-size: 30px; }
+    }
+
+    @media (max-width: 1350px) {
+      .weekday-row, .board { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 1000px) {
+      .weekday-row, .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .header { grid-template-columns: 1fr; }
+      .meta { justify-items: start; }
+      .meta-row { justify-content: flex-start; }
+    }
+
+    @media (max-width: 700px) {
+      .weekday-row, .board { grid-template-columns: 1fr; }
+      .title { font-size: 28px; }
+      .member { font-size: 22px; text-align: left; }
+      .slot { justify-content: flex-start; }
+    }
+  </style>
 </head>
 <body>
-
-<div class="top">
-  <div class="top-inner">
-    <div class="title">
-      <div>Wallboard <span class="sub" id="buildTag" style="font-weight:1000;margin-left:6px"></span></div>
-      <div class="sub" id="rangeLabel" style="display:none;"></div>
+  <div class="header">
+    <div>
+      <div class="title">ShiftCommander Wallboard</div>
+      <div class="subtitle" id="subtitle">1 week back • current week • 3 weeks forward</div>
     </div>
-
-    <div class="top-right">
-      <button class="btn" id="themeToggle" type="button" title="Toggle Day/Night">
-        <span class="ico" aria-hidden="true" id="themeIco"></span>
-        <span id="themeLabel">Night</span>
-      </button>
-      <button class="btn" id="archToggle" type="button" title="Toggle Archived week">
-        <span class="ico" aria-hidden="true">🗃️</span>
-        <span id="archLabel">Archived: Off</span>
-      </button>
-      <div class="pill" id="statusPill">Loading…</div>
+    <div class="meta">
+      <div class="meta-row">
+        <button class="nav-btn" id="prevWeekBtn">← Prev Week</button>
+        <button class="nav-btn" id="todayBtn">Today</button>
+        <button class="nav-btn" id="nextWeekBtn">Next Week →</button>
+      </div>
+      <div class="meta-pill" id="metaWindow">Window: --</div>
+      <div class="meta-pill" id="metaUnit">Source: /data/schedule.json + /api/members</div>
+      <div class="meta-pill" id="metaUpdated">Updated: --</div>
     </div>
   </div>
-</div>
 
-<div class="wrap">
-  <div id="root"></div>
-  <div class="footer" id="resolverFooter"></div>
-</div>
+  <div class="weekday-row" id="weekdayRow"></div>
+  <div id="app" class="state">Loading wallboard...</div>
+  <div class="footer">Auto-refresh every 60 seconds • snaps back to Today after 60 seconds of no interaction</div>
 
-<script>
-/* ========= THEME ========= */
-const THEME_KEY = "sc_wallboard_theme";
-function prefersDark(){ try{ return matchMedia("(prefers-color-scheme: dark)").matches; }catch{ return false; } }
-function themeIconSvg(theme){
-  if(theme==="dark"){
-    return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a7 7 0 1 0 10.2 10.2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-    </svg>`;
-  }
-  return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="2"/>
-    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  </svg>`;
-}
-function updateThemeButton(){
-  const t = document.body.getAttribute("data-theme") || "light";
-  const next = (t==="dark") ? "light" : "dark";
-  document.getElementById("themeLabel").textContent = (next==="dark") ? "Night" : "Day";
-  document.getElementById("themeIco").innerHTML = themeIconSvg(t);
-}
-function setTheme(t){
-  t = (t==="dark")?"dark":"light";
-  document.body.setAttribute("data-theme", t);
-  try{ localStorage.setItem(THEME_KEY, t); }catch{}
-  updateThemeButton();
-}
-(function initTheme(){
-  const saved = (()=>{ try{ return localStorage.getItem(THEME_KEY); }catch{ return null; } })();
-  setTheme((saved==="light"||saved==="dark") ? saved : (prefersDark()?"dark":"light"));
-  document.getElementById("themeToggle").addEventListener("click", ()=>{
-    const t = document.body.getAttribute("data-theme") || "light";
-    setTheme(t==="dark" ? "light" : "dark");
-  });
-})();
-</script>
+  <script>
+    const SCHEDULE_URL = "/data/schedule.json";
+    const MEMBERS_URL = "/api/members";
+    const REFRESH_MS = 60000;
+    const IDLE_RESET_MS = 60000;
+    const VISIBLE_WEEKS = 5;
+    const VISIBLE_DAYS = VISIBLE_WEEKS * 7;
+    const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-<script>
-/* ========= CONFIG ========= */
-const STORE_BASE = "https://store.adr-fr.org";          // ✅ use your CF Worker host
-const STORE_GET  = "/sc/get";
-const AUTO_REFRESH_MS = 5 * 60 * 1000;
+    let currentWeekOffset = 0;
+    let lastLoadedData = null;
+    let idleTimer = null;
 
-const USE_FIRST_NAME = true;
-const WEEK_START = 0; // Sunday
-
-const WEEKS_LANDSCAPE = 4;
-const WEEKS_PORTRAIT  = 6;
-
-/* Query flags */
-const QS = new URLSearchParams(location.search);
-const SCROLL_OK = QS.get("scroll")==="1";
-if(SCROLL_OK) document.body.setAttribute("data-scroll","1");
-let SHOW_ARCHIVED = (QS.get("archived")==="1");
-
-/* Orientation */
-function setOrientationClass(){
-  const portrait = matchMedia("(orientation: portrait)").matches;
-  document.body.classList.toggle("portrait", portrait);
-  document.body.classList.toggle("landscape", !portrait);
-}
-setOrientationClass();
-addEventListener("resize", setOrientationClass);
-
-/* Archived toggle */
-function updateArchivedBtn(){
-  document.getElementById("archLabel").textContent = "Archived: " + (SHOW_ARCHIVED ? "On" : "Off");
-}
-updateArchivedBtn();
-document.getElementById("archToggle").addEventListener("click", ()=>{
-  SHOW_ARCHIVED = !SHOW_ARCHIVED;
-  updateArchivedBtn();
-  refreshBoard({initial:false, force:true});
-});
-
-/* ========= UTIL ========= */
-function isoDate(d){
-  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
-}
-function startOfWeek(d){
-  const x=new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diff=(x.getDay()-WEEK_START+7)%7;
-  x.setDate(x.getDate()-diff); x.setHours(0,0,0,0);
-  return x;
-}
-function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
-function fmtRange(a,b){
-  const opt={month:"short",day:"numeric"};
-  return `${a.toLocaleDateString(undefined,opt)} – ${b.toLocaleDateString(undefined,opt)}, ${b.getFullYear()}`;
-}
-function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function hashLite(obj){
-  try{
-    const s=JSON.stringify(obj); let h=0;
-    for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
-    return String(h);
-  }catch{ return String(Date.now()); }
-}
-
-/* ========= API =========
-   Worker returns JSON like:
-   { ok:true, kind, key, value, source }
-*/
-async function apiGet(params){
-  const u = new URL(STORE_BASE + STORE_GET);
-  for(const [k,v] of Object.entries(params||{})){
-    if(v!==undefined && v!==null && String(v)!=="") u.searchParams.set(k, String(v));
-  }
-  const r = await fetch(u.toString(), { cache:"no-store" });
-  const txt = await r.text();
-  let j;
-  try{ j = JSON.parse(txt); }catch(e){
-    throw new Error(`Non-JSON from store (${r.status}). ${txt.slice(0,120)}`);
-  }
-  if(!r.ok) throw new Error((j && j.error) ? j.error : `HTTP ${r.status}`);
-  if(j && j.ok===false) throw new Error(j.error || "Store error");
-  // prefer "value", else accept legacy shapes
-  if(j && "value" in j) return j.value;
-  if(j && "payload" in j) return j.payload;
-  return j;
-}
-
-/* ========= MEMBERS / ROSTER ========= */
-function buildRosterIndex(membersValue){
-  const list = Array.isArray(membersValue)
-    ? membersValue
-    : (membersValue && Array.isArray(membersValue.members)) ? membersValue.members : [];
-
-  const byId = {};
-  for(const m of list){
-    const id = String(m.member_id ?? m.id ?? m.memberId ?? "").trim();
-    if(!id) continue;
-
-    const quals = Array.isArray(m.qualifications) ? m.qualifications : (Array.isArray(m.quals) ? m.quals : []);
-    const qset = new Set(quals.map(q => String(q).toUpperCase()));
-
-    const isALS = qset.has("PARAMEDIC") || qset.has("AEMT") || qset.has("ALS");
-    const isEMT = (!isALS) && (qset.has("EMT") || qset.has("EMR"));
-
-    const first = String(m.first_name || m.firstName || "").trim();
-    const last  = String(m.last_name  || m.lastName  || "").trim();
-    const nm = String(m.name || m.display_name || `${first} ${last}`.trim() || id).trim();
-
-    byId[id] = { name:nm, first:(first||nm.split(" ")[0]||nm), tier:isALS?"ALS":(isEMT?"EMT":"UNK"), raw:m };
-  }
-  return byId;
-}
-function nameFor(id, roster){
-  if(!id || id==="OPEN") return `<span class="open">OPEN</span>`;
-  const r = roster[id];
-  let nm = String(r?.name || "Assigned");
-  if(USE_FIRST_NAME && r?.first) nm = String(r.first);
-  return escapeHtml(nm);
-}
-
-/* ========= AVAIL (optional) ========= */
-function buildAvailIndex(val){
-  // supports:
-  // - availability_by_member[memberId][iso] => {AM:true/false, PM:true/false}
-  // - direct [memberId][iso] => {AM,PM}
-  if(!val || typeof val!=="object") return null;
-  if(val.availability_by_member && typeof val.availability_by_member==="object") return val.availability_by_member;
-
-  const keys = Object.keys(val);
-  const looksIdx = keys.length && keys.some(k => val[k] && typeof val[k]==="object" && !Array.isArray(val[k]));
-  return looksIdx ? val : null;
-}
-function isAvailable(avIdx, memberId, iso, shift){
-  try{
-    if(!avIdx) return null;
-    const m = avIdx[String(memberId||"").trim()];
-    const d = m && m[String(iso||"").trim()];
-    if(!d) return null;
-    const sh = String(shift||"").toUpperCase();
-    if(sh in d) return !!d[sh];
-    return null;
-  }catch{ return null; }
-}
-function lineWithAvail(id, roster, avIdx, iso, shift){
-  const base = nameFor(id, roster);
-  if(!id || id==="OPEN") return base;
-  const ok = isAvailable(avIdx, id, iso, shift);
-  if(ok===false) return `${base} <span class="warn-badge">⚠ AVAIL</span>`;
-  return base;
-}
-
-/* ========= SCHEDULE BUILDERS ========= */
-
-/**
- * Preferred: your “legacy schedule” map already contains per-day AM/PM pairs:
- * schedule[YYYY-MM-DD] = { AM:[att,drv], PM:[att,drv], meta:{resolved_at} }
- */
-function scheduleLooksLikeDateMap(value){
-  if(!value || typeof value!=="object" || Array.isArray(value)) return false;
-  const ks = Object.keys(value).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
-  return ks.length >= 3;
-}
-function normalizePair(pair){
-  const a = (pair && pair[0]) ? String(pair[0]).trim() : "OPEN";
-  const d = (pair && pair[1]) ? String(pair[1]).trim() : "OPEN";
-  return [a || "OPEN", d || "OPEN"];
-}
-function getDayFromDateMap(schedule, iso){
-  const obj = schedule[iso] || {};
-  return {
-    am: normalizePair(obj.AM || obj.am || ["OPEN","OPEN"]),
-    pm: normalizePair(obj.PM || obj.pm || ["OPEN","OPEN"]),
-    meta: schedule.meta || obj.meta || {},
-    _unit: obj._unit || null
-  };
-}
-
-/**
- * Fallback: build a date-map from week+locks docs.
- * week_{w}.json: { week_start, assignments:[{date,shift,seat,member_id,...}] }
- * locks_{w}.json: { week_start, locks:[{date,shift,seat,member_id,...}] }
- */
-function buildDateMapFromWeekDocs(weekDoc, locksDoc){
-  const m = {};
-  const items = [];
-  if(locksDoc && Array.isArray(locksDoc.locks)) items.push(...locksDoc.locks.map(x=>({...x, _locked:true})));
-  if(weekDoc && Array.isArray(weekDoc.assignments)) items.push(...weekDoc.assignments.map(x=>({...x, _resolved:true})));
-
-  // pick “attendant” vs “driver” by seat name heuristics
-  const seatRole = (seatStr)=>{
-    const s = String(seatStr||"").toUpperCase();
-    if(s.includes("ALS") || s.includes("MEDIC")) return "ATT";
-    if(s.includes("BLS") || s.includes("DRIVER")) return "DRV";
-    return null;
-  };
-
-  for(const it of items){
-    const iso = String(it.date||"").slice(0,10);
-    const sh = String(it.shift||it.slot||"").toUpperCase() || "AM";
-    if(!iso || (sh!=="AM" && sh!=="PM")) continue;
-    m[iso] ||= { AM:["OPEN","OPEN"], PM:["OPEN","OPEN"] };
-
-    const role = seatRole(it.seat);
-    const id = String(it.member_id||"").trim() || "OPEN";
-    if(role==="ATT") m[iso][sh][0] = id;
-    if(role==="DRV") m[iso][sh][1] = id;
-  }
-
-  // preserve resolve stamp if present
-  m.meta = m.meta || {};
-  const ra = (weekDoc && weekDoc.meta && weekDoc.meta.generated_at) ? weekDoc.meta.generated_at : null;
-  if(ra) m.meta.resolved_at = ra;
-  return m;
-}
-
-/* ========= HEALTH ========= */
-function healthColor(h){
-  if(h==="GREEN") return "var(--g)";
-  if(h==="YELLOW") return "var(--y)";
-  if(h==="RED") return "var(--red)";
-  return "var(--gray)";
-}
-function shiftHealth(attId, drvId, roster, violation){
-  if(violation) return "RED";
-
-  const att = roster[attId];
-  const drv = roster[drvId];
-  const attTier = (attId==="OPEN") ? "OPEN" : (att?.tier || "UNK");
-  const drvTier = (drvId==="OPEN") ? "OPEN" : (drv?.tier || "UNK");
-
-  if(attId==="OPEN" || attTier!=="ALS") return "RED";
-  if(drvId==="OPEN") return "RED";
-  if(drvTier==="EMT") return "GREEN";
-  if(drvTier==="ALS") return "YELLOW";
-  return "YELLOW";
-}
-function dayHealthFromDateMap(dayObj, roster, iso, avIdx){
-  const [amA, amD] = dayObj.AM;
-  const [pmA, pmD] = dayObj.PM;
-  const amV = (isAvailable(avIdx, amA, iso, "AM")===false) || (isAvailable(avIdx, amD, iso, "AM")===false);
-  const pmV = (isAvailable(avIdx, pmA, iso, "PM")===false) || (isAvailable(avIdx, pmD, iso, "PM")===false);
-  const ranks = { RED:3, YELLOW:2, GREEN:1, GRAY:0 };
-  const amH = shiftHealth(amA, amD, roster, amV);
-  const pmH = shiftHealth(pmA, pmD, roster, pmV);
-  return (ranks[amH] >= ranks[pmH]) ? amH : pmH;
-}
-
-/* ========= RENDER ========= */
-function renderWeek(root, weekStartDate, dateMap, roster, avIdx, label){
-  const weekEnd = addDays(weekStartDate, 6);
-  const range = fmtRange(weekStartDate, weekEnd);
-
-  const week = document.createElement("div");
-  week.className = "week";
-
-  const head = document.createElement("div");
-  head.className = "week-head";
-  head.innerHTML = `<div class="week-title">${escapeHtml(label||"")}</div><div class="week-dates">${escapeHtml(range)}</div>`;
-  week.appendChild(head);
-
-  const grid = document.createElement("div");
-  grid.className = "grid";
-
-  const todayIso = isoDate(new Date());
-
-  for(let i=0;i<7;i++){
-    const d = addDays(weekStartDate, i);
-    const iso = isoDate(d);
-
-    const obj = (dateMap && dateMap[iso]) ? dateMap[iso] : { AM:["OPEN","OPEN"], PM:["OPEN","OPEN"] };
-    const dayObj = { AM: normalizePair(obj.AM || obj.am || ["OPEN","OPEN"]), PM: normalizePair(obj.PM || obj.pm || ["OPEN","OPEN"]) };
-
-    const h = dayHealthFromDateMap(dayObj, roster, iso, avIdx);
-
-    const day = document.createElement("div");
-    day.className = "day" + (iso===todayIso ? " today" : "") + (iso < todayIso ? " past" : "");
-
-    const health = document.createElement("div");
-    health.className = "health";
-    health.style.background = healthColor(h);
-
-    const tile = document.createElement("div");
-    tile.className = "tile";
-
-    const [amA, amD] = dayObj.AM;
-    const [pmA, pmD] = dayObj.PM;
-
-    tile.innerHTML = `
-      <div class="dayhead">
-        <div class="daynum">${d.getDate()}</div>
-        <div class="iso">${iso}</div>
-      </div>
-      <div class="slot">
-        <div class="tag">AM</div>
-        <div class="lines">
-          <div class="line">${lineWithAvail(amA, roster, avIdx, iso, "AM")}</div>
-          <div class="line">${lineWithAvail(amD, roster, avIdx, iso, "AM")}</div>
-        </div>
-      </div>
-      <div class="slot">
-        <div class="tag">PM</div>
-        <div class="lines">
-          <div class="line">${lineWithAvail(pmA, roster, avIdx, iso, "PM")}</div>
-          <div class="line">${lineWithAvail(pmD, roster, avIdx, iso, "PM")}</div>
-        </div>
-      </div>
-    `;
-
-    day.appendChild(health);
-    day.appendChild(tile);
-    grid.appendChild(day);
-  }
-
-  week.appendChild(grid);
-  root.appendChild(week);
-}
-
-/* ========= DATA LOADING ========= */
-async function loadDataForBoard(weekStarts){
-  // members + org always
-  const [membersVal, orgVal] = await Promise.all([
-    apiGet({ kind:"members" }),
-    apiGet({ kind:"org_settings" }).catch(()=> ({}))
-  ]);
-  const roster = buildRosterIndex(membersVal);
-
-  // availability optional
-  const avIdx = await (async ()=>{
-    try{
-      const v = await apiGet({ kind:"member_availability" });
-      return buildAvailIndex(v);
-    }catch{
-      try{
-        const v2 = await apiGet({ kind:"availability" });
-        return buildAvailIndex(v2);
-      }catch{ return null; }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
     }
-  })();
 
-  // schedule strategy:
-  // 1) try legacy date-map (cached or drive->kv)
-  // 2) else try per-week docs (week + locks) and synthesize date-map
-  let dateMap = null;
-  let resolvedAt = null;
+    function renderWeekdayRow() {
+      const row = document.getElementById("weekdayRow");
+      row.innerHTML = WEEKDAY_LABELS.map(label => `<div class="weekday">${label}</div>`).join("");
+    }
 
-  // Try legacy schedule key patterns (multiple, for robustness)
-  const tryLegacySchedule = async ()=>{
-    // Some deployments store schedule at kind=schedule without week/version.
-    // Your worker code requires week/version for schedule, BUT older ones didn’t.
-    try{
-      const v = await apiGet({ kind:"schedule" });
-      if(scheduleLooksLikeDateMap(v)) return v;
-    }catch{}
-    // try planned weekly schedule KV shape
-    try{
-      // pass “week” but we still expect a full date-map (if you stored it that way)
-      const v2 = await apiGet({ kind:"schedule", week: isoDate(startOfWeek(new Date())), version:"planned" });
-      if(scheduleLooksLikeDateMap(v2)) return v2;
-    }catch{}
-    return null;
-  };
+    function parseIsoDate(dateStr) {
+      return new Date(`${dateStr}T00:00:00`);
+    }
 
-  dateMap = await tryLegacySchedule();
+    function toIsoLocal(dateObj) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
 
-  // If no legacy schedule, synthesize from week/locks for each weekStart
-  if(!dateMap){
-    dateMap = { meta:{} };
-    for(const ws of weekStarts){
-      const [wk, lk] = await Promise.all([
-        apiGet({ kind:"week",  week: ws }).catch(()=>null),
-        apiGet({ kind:"locks", week: ws }).catch(()=>null)
-      ]);
-      if(!wk && !lk) continue;
-      const partial = buildDateMapFromWeekDocs(wk||{}, lk||{});
-      for(const k of Object.keys(partial)){
-        if(k==="meta") continue;
-        dateMap[k] = partial[k];
+    function formatGeneratedAt(value) {
+      if (!value) return "--";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value;
+      return d.toLocaleString();
+    }
+
+    function getTodayDate() {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+
+    function getTodayIso() {
+      return toIsoLocal(getTodayDate());
+    }
+
+    function compareIso(a, b) {
+      if (a < b) return -1;
+      if (a > b) return 1;
+      return 0;
+    }
+
+    function addDays(dateObj, days) {
+      const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      d.setDate(d.getDate() + days);
+      return d;
+    }
+
+    function startOfWeekSunday(dateObj) {
+      const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      d.setDate(d.getDate() - d.getDay());
+      return d;
+    }
+
+    function buildVisibleDates(weekOffset = 0) {
+      const today = getTodayDate();
+      const thisWeekStart = startOfWeekSunday(today);
+      const offsetWeekStart = addDays(thisWeekStart, weekOffset * 7);
+      const visibleStart = addDays(offsetWeekStart, -7);
+      const dates = [];
+
+      for (let i = 0; i < VISIBLE_DAYS; i++) {
+        const d = addDays(visibleStart, i);
+        dates.push({ iso: toIsoLocal(d), dateObj: d });
       }
-      if(partial.meta && partial.meta.resolved_at) resolvedAt = partial.meta.resolved_at;
-    }
-    if(resolvedAt) dateMap.meta.resolved_at = resolvedAt;
-  } else {
-    resolvedAt = dateMap && dateMap.meta ? dateMap.meta.resolved_at : null;
-  }
 
-  return { roster, org: orgVal||{}, avIdx, dateMap };
-}
-
-/* ========= MAIN ========= */
-function computeWeekStarts(){
-  const now = new Date();
-  const thisWeekStart = startOfWeek(now);
-  const wantWeeks = document.body.classList.contains("portrait") ? WEEKS_PORTRAIT : WEEKS_LANDSCAPE;
-
-  const starts = [];
-  if(SHOW_ARCHIVED) starts.push({ start:addDays(thisWeekStart,-7), label:"Archived" });
-  starts.push({ start:thisWeekStart, label:"Controlled" });
-  starts.push({ start:addDays(thisWeekStart,7), label:"Controlled" });
-
-  let off = 14;
-  while(starts.length < wantWeeks){
-    starts.push({ start:addDays(thisWeekStart,off), label:"Future" });
-    off += 7;
-  }
-  return starts;
-}
-
-function fmtLocalTimeFromIso(isoStr){
-  try{
-    const d = new Date(String(isoStr));
-    if(isNaN(d.getTime())) return "";
-    return new Intl.DateTimeFormat(undefined, { timeZone:"America/New_York", hour:"2-digit", minute:"2-digit" }).format(d);
-  }catch{ return ""; }
-}
-function fmtLocalDateTimeFromIso(isoStr){
-  try{
-    const d = new Date(String(isoStr));
-    if(isNaN(d.getTime())) return "";
-    return new Intl.DateTimeFormat(undefined, { timeZone:"America/New_York", weekday:"short", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit", timeZoneName:"short" }).format(d);
-  }catch{ return ""; }
-}
-
-async function refreshBoard({initial=false, force=false}={}){
-  const pill = document.getElementById("statusPill");
-  const root = document.getElementById("root");
-
-  try{
-    pill.textContent = initial ? "Loading…" : "Refreshing…";
-    document.getElementById("buildTag").textContent = "storeproxy.v3.wallboard";
-
-    const blocks = computeWeekStarts();
-    const weekStarts = blocks.map(b => isoDate(b.start));
-
-    const data = await loadDataForBoard(weekStarts);
-
-    const h = hashLite({ dateMap:data.dateMap, roster:Object.keys(data.roster).length, archived:SHOW_ARCHIVED });
-    window.__sc_lastHash ||= "";
-    if(!force && !initial && h === window.__sc_lastHash){
-      const ra = data.dateMap?.meta?.resolved_at || null;
-      const t = ra ? fmtLocalTimeFromIso(ra) : "";
-      pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
-      pill.style.color = "#166534";
-      const foot = document.getElementById("resolverFooter");
-      foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
-      return;
-    }
-    window.__sc_lastHash = h;
-
-    const temp = document.createElement("div");
-    temp.style.display = "contents";
-
-    for(const b of blocks){
-      renderWeek(temp, b.start, data.dateMap, data.roster, data.avIdx, b.label);
+      return dates;
     }
 
-    if(!initial){
-      root.style.opacity = "0.18";
-      setTimeout(()=>{
-        root.innerHTML = temp.innerHTML;
-        root.style.opacity = "1";
-      }, 160);
-    }else{
-      root.innerHTML = temp.innerHTML;
-      root.style.opacity = "1";
-    }
-
-    const ra = data.dateMap?.meta?.resolved_at || null;
-    const t = ra ? fmtLocalTimeFromIso(ra) : "";
-    pill.textContent = ra && t ? ("Updated " + t + " • Live") : "Live";
-    pill.title = ra ? ("Resolved: " + fmtLocalDateTimeFromIso(ra)) : "No resolve stamp yet";
-    pill.style.color = "#166534";
-
-    const foot = document.getElementById("resolverFooter");
-    foot.innerHTML = ra ? (`Last resolver run: <strong>${escapeHtml(fmtLocalDateTimeFromIso(ra))}</strong>`) : "Last resolver run: <strong>Unknown</strong>";
-
-  }catch(err){
-    console.error(err);
-    pill.textContent = "Load failed";
-    pill.style.color = "#b91c1c";
-    root.innerHTML = `<div class="pill" style="border-color:#fecaca;color:#b91c1c">
-      ${escapeHtml(String(err.message || err))}
-    </div>`;
-  }
-}
-
-refreshBoard({initial:true});
-setInterval(()=> refreshBoard({initial:false}), AUTO_REFRESH_MS);
-</script>
-
-<script>
-/* Fatal overlay */
-(function(){
-  function show(msg){
-    try{
-      let d=document.getElementById('scFatal');
-      if(!d){
-        d=document.createElement('div');
-        d.id='scFatal';
-        d.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);color:#fff;padding:14px;font:14px/1.35 ui-monospace,Menlo,Consolas,monospace;overflow:auto;';
-        d.innerHTML='<div style="font-weight:900;font-size:16px;margin-bottom:8px;">ShiftCommander error</div><pre id="scFatalMsg" style="white-space:pre-wrap;margin:0;"></pre>';
-        document.body.appendChild(d);
+    function formatDayParts(iso) {
+      const d = parseIsoDate(iso);
+      if (Number.isNaN(d.getTime())) {
+        return { weekday: iso, dayNum: "", monthLabel: "" };
       }
-      const pre=document.getElementById('scFatalMsg');
-      if(pre) pre.textContent=String(msg||'Unknown error');
-    }catch{}
-  }
-  addEventListener('error', (e)=> show((e && (e.message||e.error)) ? (e.message||e.error) : e));
-  addEventListener('unhandledrejection', (e)=> show('Unhandled Promise rejection: ' + (e && e.reason ? (e.reason.stack||e.reason.message||String(e.reason)) : 'unknown')));
-})();
-</script>
 
+      return {
+        weekday: d.toLocaleDateString(undefined, { weekday: "short" }),
+        dayNum: d.toLocaleDateString(undefined, { day: "numeric" }),
+        monthLabel: d.toLocaleDateString(undefined, { month: "short", year: "numeric" }).toUpperCase(),
+        month: d.getMonth(),
+        year: d.getFullYear()
+      };
+    }
+
+    function shortShiftLabel(label) {
+      const raw = String(label || "").trim();
+      return raw.replace(/\s+shift$/i, "");
+    }
+
+    function normalizeCertValue(value) {
+      const raw = String(value || "").trim().toUpperCase();
+      if (!raw) return "";
+      if (raw === "PARAMEDIC" || raw === "AEMT" || raw === "ALS") return "ALS";
+      if (raw === "EMT") return "EMT";
+      if (raw === "NCLD") return "NCLD";
+      return raw;
+    }
+
+    function buildMemberLookup(payload) {
+      const members = Array.isArray(payload?.members) ? payload.members : (Array.isArray(payload) ? payload : []);
+      const byId = new Map();
+      const byName = new Map();
+
+      for (const member of members) {
+        const memberId = String(member?.member_id ?? member?.id ?? "").trim();
+        const name = String(member?.name || [member?.first_name, member?.last_name].filter(Boolean).join(" ")).trim();
+        const cert = normalizeCertValue(member?.ops_cert || member?.cert || member?.raw_cert || "");
+
+        const entry = {
+          id: memberId,
+          name,
+          cert
+        };
+
+        if (memberId) byId.set(memberId, entry);
+        if (name) byName.set(name.toUpperCase(), entry);
+      }
+
+      return { byId, byName };
+    }
+
+    function colorClassFromSeat(seat, memberLookup) {
+      const rawName = String(seat?.assigned_name || "").trim();
+      const rawId = String(seat?.assigned ?? "").trim();
+
+      if (!rawName && !rawId) return "default";
+      if (rawName.toUpperCase() === "OPEN" || rawName.toUpperCase() === "UNFILLED") return "red";
+
+      const fromId = rawId ? memberLookup?.byId?.get(rawId) : null;
+      const fromName = rawName ? memberLookup?.byName?.get(rawName.toUpperCase()) : null;
+      const cert = normalizeCertValue(fromId?.cert || fromName?.cert || "");
+
+      if (cert === "ALS") return "green";
+      if (cert === "EMT") return "blue";
+      if (cert === "NCLD") return "pink";
+      return "default";
+    }
+
+    function isPastDate(isoDate) {
+      const today = getTodayDate();
+      const d = parseIsoDate(isoDate);
+      if (Number.isNaN(d.getTime())) return false;
+      return d < today;
+    }
+
+    function displayAssignedName(shiftDate, assignedName) {
+      const raw = String(assignedName || "").trim();
+      if (raw.toUpperCase() === "OPEN" && isPastDate(shiftDate)) return "—";
+      if (!raw) return isPastDate(shiftDate) ? "—" : "OPEN";
+      return raw;
+    }
+
+
+    function pillClassForShift(shift) {
+      const notes = (shift?.resolver?.notes || []).join(" ").toLowerCase();
+      const seats = Array.isArray(shift?.seats) ? shift.seats : [];
+      const hasOpen = seats.some(seat => !seat?.assigned_name || String(seat.assigned_name).trim().toUpperCase() === "OPEN");
+      if (hasOpen || notes.includes("unfilled")) return "red";
+      if (notes.includes("reserve")) return "yellow";
+      if (!seats.length) return "gray";
+      return "green";
+    }
+
+    function normalizeShiftsToDays(raw) {
+      const inputShifts = Array.isArray(raw?.shifts) ? raw.shifts : [];
+      const days = {};
+
+      for (const shift of inputShifts) {
+        const date = shift?.date || shift?.shift_date || "";
+        if (!date) continue;
+        if (!days[date]) days[date] = [];
+
+        const label = shift?.label || shift?.name || shift?.shift || shift?.unit || "Shift";
+        const seats = Array.isArray(shift?.seats) ? shift.seats : [];
+
+        const visibleSeats = seats.filter(seat => {
+          const showOnBoard = seat?.display_on_board === true;
+          const hasAssigned = !!String(seat?.assigned_name || "").trim();
+          return showOnBoard || hasAssigned;
+        });
+
+        if (!visibleSeats.length) continue;
+
+        days[date].push({
+          date,
+          label: shortShiftLabel(label),
+          pillClass: pillClassForShift({ ...shift, seats: visibleSeats }),
+          seats: visibleSeats,
+          notes: Array.isArray(shift?.resolver?.notes) ? shift.resolver.notes : []
+        });
+      }
+
+      for (const date of Object.keys(days)) {
+        days[date].sort((a, b) => {
+          const aLabel = a.label || "";
+          const bLabel = b.label || "";
+          return aLabel.localeCompare(bLabel, undefined, { numeric: true, sensitivity: "base" });
+        });
+      }
+
+      return days;
+    }
+
+
+    function formatStampTime(value) {
+      if (!value) return "--";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "--";
+      return d.toLocaleString(undefined, {
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function seatStampText(seat) {
+      const stamp = seat?.resolver_stamp || {};
+      const when = formatStampTime(stamp.generated_at);
+      const locked = stamp.locked ? "LOCK" : "LIVE";
+      return `${locked} • ${when}`;
+    }
+
+    function renderSlot(seat, shiftDate, memberLookup) {
+      const rawName = String(seat?.assigned_name || "").trim();
+      const pastDate = isPastDate(shiftDate);
+      const showOpenAlert = seat?.display_open_alert === true;
+
+      if (!rawName && !showOpenAlert) return "";
+
+      const displayName = rawName
+        ? displayAssignedName(shiftDate, rawName)
+        : (pastDate ? "—" : "OPEN");
+
+      const isFutureOpen = !rawName && showOpenAlert && !pastDate;
+      const hasMember = !!rawName && rawName.toUpperCase() !== "OPEN";
+      const memberClass = hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty");
+      const openSeatClass = isFutureOpen ? "open-seat" : "";
+
+      return `
+        <div class="slot ${openSeatClass}">
+          <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
+        </div>
+      `;
+    }
+
+    function renderShiftCard(shift, memberLookup) {
+      const renderedSlots = (shift.seats || [])
+        .map(seat => renderSlot(seat, shift.date, memberLookup))
+        .filter(Boolean);
+
+      const slotsHtml = renderedSlots.length
+        ? renderedSlots.join("")
+        : `
+          <div class="slot">
+            <div class="member default">—</div>
+          </div>
+        `;
+
+      return `
+        <div class="shift-card ${shift.pillClass}">
+          <div class="shift-top">
+            <div class="shift-name">${escapeHtml(shift.label)}</div>
+          </div>
+          <div class="slots">${slotsHtml}</div>
+        </div>
+      `;
+    }
+
+    function monthBoundaryClasses(visibleDates, index) {
+      const current = visibleDates[index]?.dateObj;
+      if (!current) return "";
+      const rowStart = Math.floor(index / 7) * 7;
+      const rowEnd = Math.min(rowStart + 6, visibleDates.length - 1);
+      const rowDates = visibleDates.slice(rowStart, rowEnd + 1).map(item => item.dateObj);
+      const currentMonthKey = `${current.getFullYear()}-${current.getMonth()}`;
+
+      const rowContainsOtherMonth = rowDates.some(d => `${d.getFullYear()}-${d.getMonth()}` !== currentMonthKey);
+      const rowStartsMonth = rowDates.some(d => d.getDate() === 1 && d.getMonth() === current.getMonth() && d.getFullYear() === current.getFullYear());
+      const rowEndsMonth = rowDates.some((d, i) => {
+        const next = rowDates[i + 1];
+        return !next || next.getMonth() !== d.getMonth() || next.getFullYear() !== d.getFullYear();
+      }) && rowContainsOtherMonth;
+
+      const prev = visibleDates[index - 1]?.dateObj || null;
+      const next = visibleDates[index + 1]?.dateObj || null;
+      const prevDifferentMonth = !!prev && (prev.getMonth() !== current.getMonth() || prev.getFullYear() !== current.getFullYear());
+      const nextDifferentMonth = !!next && (next.getMonth() !== current.getMonth() || next.getFullYear() !== current.getFullYear());
+
+      const classes = [];
+      if (rowStartsMonth) classes.push("month-row-start");
+      if (rowEndsMonth) classes.push("month-row-end");
+      if (nextDifferentMonth) classes.push("month-boundary-right");
+      if (prevDifferentMonth) classes.push("month-boundary-left");
+
+      return classes.join(" ");
+    }
+
+    function renderDayCard(iso, dayShifts, todayIso, visibleDates, index, memberLookup) {
+      const dayFmt = formatDayParts(iso);
+      let dayClass = "future";
+      if (compareIso(iso, todayIso) < 0) dayClass = "past";
+      if (iso === todayIso) dayClass = "today";
+
+      const monthClasses = monthBoundaryClasses(visibleDates, index);
+      const shiftsHtml = dayShifts.length ? dayShifts.map(shift => renderShiftCard(shift, memberLookup)).join("") : "";
+
+      return `
+        <section class="day-card ${dayClass} ${monthClasses}">
+          <div class="day-header">
+            <div class="day-number">${escapeHtml(dayFmt.dayNum)}</div>
+            <div class="day-meta">
+              <div class="day-title">${escapeHtml(dayFmt.weekday)}</div>
+              <div class="day-subtitle">${escapeHtml(dayFmt.monthLabel)}</div>
+            </div>
+          </div>
+          <div class="shift-list">${shiftsHtml}</div>
+        </section>
+      `;
+    }
+
+    function renderSchedule(data) {
+      const app = document.getElementById("app");
+      const subtitle = document.getElementById("subtitle");
+      const metaWindow = document.getElementById("metaWindow");
+      const metaUpdated = document.getElementById("metaUpdated");
+
+      const daysMap = normalizeShiftsToDays(data);
+      const todayIso = getTodayIso();
+      const visibleDates = buildVisibleDates(currentWeekOffset);
+      const offsetLabel = currentWeekOffset === 0 ? "Today focus" : `${currentWeekOffset > 0 ? "+" : ""}${currentWeekOffset} week`;
+
+      subtitle.textContent = `1 week back • current week • 3 weeks forward • ${offsetLabel}`;
+      metaUpdated.textContent = `Updated: ${formatGeneratedAt(data?.build?.generated_at)}`;
+      metaWindow.textContent = `Window: ${visibleDates[0].iso} to ${visibleDates[visibleDates.length - 1].iso}`;
+
+      app.className = "board";
+      app.innerHTML = visibleDates.map((day, index) => renderDayCard(day.iso, daysMap[day.iso] || [], todayIso, visibleDates, index, data?.memberLookup)).join("");
+    }
+
+    function rerender() {
+      if (lastLoadedData) renderSchedule(lastLoadedData);
+    }
+
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        if (currentWeekOffset !== 0) {
+          currentWeekOffset = 0;
+          rerender();
+        }
+      }, IDLE_RESET_MS);
+    }
+
+    function registerInteractionHandlers() {
+      ["mousemove", "mousedown", "keydown", "touchstart", "wheel"].forEach(eventName => {
+        window.addEventListener(eventName, resetIdleTimer, { passive: true });
+      });
+
+      document.getElementById("prevWeekBtn").addEventListener("click", () => {
+        currentWeekOffset -= 1;
+        rerender();
+        resetIdleTimer();
+      });
+
+      document.getElementById("todayBtn").addEventListener("click", () => {
+        currentWeekOffset = 0;
+        rerender();
+        resetIdleTimer();
+      });
+
+      document.getElementById("nextWeekBtn").addEventListener("click", () => {
+        currentWeekOffset += 1;
+        rerender();
+        resetIdleTimer();
+      });
+    }
+
+    async function loadSchedule() {
+      const app = document.getElementById("app");
+
+      try {
+        const [scheduleResponse, membersResponse] = await Promise.all([
+          fetch(`${SCHEDULE_URL}?t=${Date.now()}`, { cache: "no-store" }),
+          fetch(`${MEMBERS_URL}?t=${Date.now()}`, { cache: "no-store" })
+        ]);
+
+        if (!scheduleResponse.ok) throw new Error(`Schedule HTTP ${scheduleResponse.status}`);
+        if (!membersResponse.ok) throw new Error(`Members HTTP ${membersResponse.status}`);
+
+        const scheduleData = await scheduleResponse.json();
+        const membersData = await membersResponse.json();
+
+        lastLoadedData = {
+          ...scheduleData,
+          memberLookup: buildMemberLookup(membersData)
+        };
+
+        renderWeekdayRow();
+        renderSchedule(lastLoadedData);
+      } catch (error) {
+        console.error("Failed to load wallboard data:", error);
+        app.className = "state";
+        app.innerHTML = `
+          <div>Failed to load wallboard data.</div>
+          <div style="margin-top:12px; font-size:18px;">Check paths: <code>${escapeHtml(SCHEDULE_URL)}</code> and <code>${escapeHtml(MEMBERS_URL)}</code></div>
+          <div style="margin-top:12px; font-size:18px;">${escapeHtml(error.message || "Unknown error")}</div>
+        `;
+      }
+    }
+
+    renderWeekdayRow();
+    registerInteractionHandlers();
+    resetIdleTimer();
+    loadSchedule();
+    setInterval(loadSchedule, REFRESH_MS);
+  </script>
 </body>
 </html>
