@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,8 +18,6 @@
   a{color:var(--blue)}
   .card{background:linear-gradient(180deg,#0f1b2d,#0e1a2c);border:1px solid var(--line);border-radius:18px;padding:14px}
   .stack{display:grid;gap:14px}
-  .toolbar{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;align-items:end}
-  .toolbar .wide{grid-column:span 2}
   label{display:block;font-size:12px;font-weight:800;color:#c9dbf7;margin-bottom:6px;text-transform:none}
   input,select,button{font:inherit}
   input[type="month"],input[type="number"],input[type="date"],select,.search-input{
@@ -32,24 +29,62 @@
   button.ghost{background:transparent}
   button:disabled{opacity:.45;cursor:not-allowed}
   .hint{font-size:12px;color:var(--muted)}
-  
+
   .banner{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border:1px solid #2b4a72;background:#0b1830;border-radius:16px;padding:12px 14px}
   .banner-title{font-weight:900;font-size:15px}
   .banner-text{color:#d8e7ff;font-size:13px;line-height:1.4;margin-top:4px}
   .mini-links{display:flex;gap:12px;flex-wrap:wrap;font-size:13px}
-  .top-grid{display:grid;grid-template-columns:1.35fr .95fr;gap:14px}
-  .member-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-  .summary-pill{border:1px solid #294766;border-radius:14px;background:#09192f;padding:10px 12px;min-height:72px;display:grid;align-content:start;gap:4px}
-  .summary-pill .k{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.3px;text-transform:uppercase}
-  .summary-pill .v{font-size:16px;font-weight:900;color:#eef4ff;line-height:1.2}
-  .summary-pill .s{font-size:12px;color:#c8d8f2;line-height:1.35}
-  .prefs-controls-grid,.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .field-card{padding:10px;border:1px solid #294766;border-radius:14px;background:#09192f}
-  .toggle-wrap{display:flex;align-items:center;gap:10px;min-height:44px}
-  .toggle-wrap input[type="checkbox"]{width:18px;height:18px;accent-color:#25b9ff}
-  .toggle-wrap .toggle-text{font-weight:900}
-  .quiet-note{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
-  .read-only-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid #294766;background:#09192f;font-size:12px;font-weight:800;color:#d5e5ff}
+
+  .toolbar{display:grid;grid-template-columns:minmax(320px,1fr) auto auto;gap:12px;align-items:end}
+  .status-line{font-size:13px;color:var(--muted);margin-top:8px}
+
+  .top-layout{display:grid;grid-template-columns:1.15fr 1fr;gap:14px}
+  .identity-card{display:grid;gap:12px}
+  .identity-name{font-size:34px;font-weight:900;line-height:1}
+  .identity-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .identity-row{
+    border:1px solid #294766;border-radius:14px;background:#09192f;padding:10px 12px;min-height:60px;
+    display:grid;align-content:start;gap:4px
+  }
+  .identity-row .k{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.3px;text-transform:uppercase}
+  .identity-row .v{font-size:15px;font-weight:900;color:#eef4ff;line-height:1.2}
+  .identity-note{font-size:12px;color:var(--muted);line-height:1.35}
+
+  .compact-card{display:grid;gap:10px}
+  .compact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .compact-field{padding:10px;border:1px solid #294766;border-radius:14px;background:#09192f}
+  .compact-label{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;margin-bottom:8px}
+  .compact-inline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .compact-small{font-size:12px;color:#c8d8f2}
+  .compact-stack{display:grid;gap:8px}
+  .compact-status{font-size:12px;color:var(--muted);font-weight:800}
+  .private-btn{
+    min-height:36px;padding:0 14px;border-radius:999px;border:1px solid #35557b;
+    background:#0b1830;color:#e9f2ff;font-size:13px;font-weight:900;letter-spacing:.2px;
+  }
+  .private-btn:hover{border-color:#4c7fb5}
+
+  .section-title{font-size:20px;font-weight:900;margin-bottom:10px}
+
+  .triple-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .tri-btn{
+    min-width:88px;height:36px;padding:0 12px;border-radius:12px;border:1px solid #2c547d;background:#09192f;color:#dbe9ff;
+    font-size:13px;font-weight:800
+  }
+  .tri-btn.active{background:#0e2d4b;border-color:#1bc4ff;box-shadow:0 0 0 1px rgba(27,196,255,.2) inset}
+
+  .rotation-grid{display:grid;grid-template-columns:1fr;gap:8px;align-items:end}
+  .rotation-summary{padding:10px 12px;border:1px solid #294766;border-radius:14px;background:#09192f;min-height:44px;display:grid;align-content:center}
+  .rotation-summary strong{color:#dbe9ff}
+  .rotation-note{font-size:12px;color:var(--muted);margin-top:6px}
+  .hidden{display:none !important}
+
+  .controls-grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr 1fr .8fr 1fr auto auto;
+    gap:12px;
+    align-items:end
+  }
 
   .legend{display:flex;gap:12px;flex-wrap:wrap;color:#dbe9ff;font-size:12px;font-weight:800}
   .legend-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid #2b4a72;background:#10213a}
@@ -57,24 +92,7 @@
   .swatch.pref{background:var(--green)}
   .swatch.avail{background:var(--yellow)}
   .swatch.dns{background:#ff5d5d}
-  .prefs-grid{display:grid;grid-template-columns:1.45fr .95fr;gap:12px;align-items:start}
-  .prefs-box .section-title{font-size:14px;font-weight:900;margin-bottom:10px}
-  .triple-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-  .tri-btn{
-    min-width:0;height:32px;padding:0 10px;border-radius:999px;border:1px solid #2c547d;background:#09192f;color:#dbe9ff;
-    font-size:12px;font-weight:800;white-space:nowrap
-  }
-  .tri-btn.active{background:#0e2d4b;border-color:#1bc4ff;box-shadow:0 0 0 1px rgba(27,196,255,.2) inset}
-  details.avoid-wrap{margin-top:10px}
-  details.avoid-wrap summary{cursor:pointer;font-weight:900;list-style:none;display:flex;justify-content:space-between;align-items:center}
-  details.avoid-wrap summary::-webkit-details-marker{display:none}
-  .avoid-panel{margin-top:10px;padding:10px;border:1px solid #294766;border-radius:14px;background:#09192f}
-  .avoid-list{max-height:260px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding-right:4px}
-  .avoid-item{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #274565;border-radius:12px;background:#10213a}
-  .avoid-item input{accent-color:#25b9ff}
-  .avoid-name{font-weight:800}
-  .avoid-meta{font-size:11px;color:var(--muted);margin-top:2px}
-  .bulk-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr .8fr 1fr auto auto;gap:12px;align-items:end}
+
   .calendar-shell{display:grid;gap:12px}
   .calendar-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
   .calendar-top .spacer{justify-self:start}
@@ -94,40 +112,14 @@
   .shift-label{font-size:11px;font-weight:900;color:#d7e5ff}
   .shift-btn{
     width:100%;min-height:42px;border-radius:12px;border:1px solid #305270;background:#13243d;color:#f2f6ff;font-weight:900;
-    display:flex;align-items:center;justify-content:center; text-align:center; padding:4px 6px; line-height:1.05;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:4px 6px;line-height:1.05;
   }
   .shift-btn.blank{background:#10213a;border-color:#274766;color:#b7c7df}
   .shift-btn.preferred{background:rgba(19,107,53,.55);border-color:#23ca66}
   .shift-btn.available{background:rgba(120,88,11,.44);border-color:#ffb443}
   .shift-btn.do_not_schedule{background:rgba(98,23,31,.48);border-color:#ff5d5d}
   .nav-row-bottom{display:flex;justify-content:center}
-  .status-line{font-size:13px;color:var(--muted)}
 
-  .rotation-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}
-  .rotation-summary{padding:10px 12px;border:1px solid #294766;border-radius:14px;background:#09192f;min-height:44px;display:grid;align-content:center}
-  .rotation-summary strong{color:#dbe9ff}
-  .rotation-note{font-size:12px;color:var(--muted);margin-top:6px}
-  .hidden{display:none !important}
-
-  .prefs-box{padding-top:12px;padding-bottom:12px}
-  .prefs-compact-left{display:grid;gap:10px}
-  .prefs-compact-groups{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-start}
-  .pref-group{display:grid;gap:5px;align-content:start}
-  .pref-group label{margin-bottom:0;font-size:11px;letter-spacing:.2px;color:#b9cdee}
-  .pref-inline-note{font-size:11px;color:var(--muted);margin-top:2px}
-  .private-card-compact{height:100%;display:grid;align-content:start;gap:8px;padding:10px 12px;border:1px solid #294766;border-radius:14px;background:#09192f}
-  .private-card-compact label{margin-bottom:0;font-size:12px}
-  .private-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .private-status{font-size:11px;color:var(--muted);font-weight:800}
-  .private-btn{min-height:34px;padding:0 12px;border-radius:999px;border:1px solid #35557b;background:#0b1830;color:#e9f2ff;font-size:12px;font-weight:900;letter-spacing:.15px}
-
-  .private-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  .private-status{font-size:12px;color:var(--muted);font-weight:800}
-  .private-btn{
-    min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #35557b;
-    background:#0b1830;color:#e9f2ff;font-size:13px;font-weight:900;letter-spacing:.2px;
-  }
-  .private-btn:hover{border-color:#4c7fb5}
   .modal-backdrop{
     position:fixed;inset:0;background:rgba(3,10,20,.72);display:none;align-items:center;justify-content:center;
     padding:18px;z-index:9999;
@@ -141,27 +133,33 @@
   .modal-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:10px}
   .modal-title{font-size:20px;font-weight:900}
   .modal-sub{font-size:12px;color:var(--muted);line-height:1.4;margin-top:4px;max-width:560px}
+  .avoid-panel{margin-top:10px;padding:10px;border:1px solid #294766;border-radius:14px;background:#09192f}
+  .avoid-list{max-height:260px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding-right:4px}
+  .avoid-item{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #274565;border-radius:12px;background:#10213a}
+  .avoid-item input{accent-color:#25b9ff}
+  .avoid-name{font-weight:800}
+  .avoid-meta{font-size:11px;color:var(--muted);margin-top:2px}
   .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
 
-  @media (max-width:1300px){
-    .toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .top-grid{grid-template-columns:1fr}
-    .member-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .prefs-grid{grid-template-columns:1fr}
-    .bulk-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .bulk-grid .span2{grid-column:span 2}
+  @media (max-width:1400px){
+    .controls-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  }
+  @media (max-width:1100px){
+    .top-layout{grid-template-columns:1fr}
+    .compact-grid{grid-template-columns:1fr}
+    .identity-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media (max-width:900px){
+    .toolbar{grid-template-columns:1fr 1fr}
+    .toolbar > :first-child{grid-column:1 / -1}
     .calendar-head,.calendar{grid-template-columns:repeat(2,minmax(0,1fr))}
     .avoid-list{grid-template-columns:1fr}
-    .toolbar{grid-template-columns:1fr 1fr}
-    .bulk-grid{grid-template-columns:1fr 1fr}
-    .prefs-controls-grid,.form-grid-2{grid-template-columns:1fr}
+    .controls-grid{grid-template-columns:1fr 1fr}
   }
   @media (max-width:600px){
-    .toolbar,.bulk-grid{grid-template-columns:1fr}
+    .toolbar,.controls-grid{grid-template-columns:1fr}
     .calendar-head,.calendar{grid-template-columns:1fr}
-    .triple-row{grid-template-columns:1fr}
+    .identity-meta{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -182,10 +180,11 @@
         <div class="banner-text">Use <strong>Preferred</strong> for the shifts you most want, <strong>Available</strong> for shifts you can work, and <strong>Do Not</strong> for shifts you cannot cover. Blank means undecided or not entered yet.</div>
       </div>
       <div class="mini-links">
-        <span class="read-only-chip">Members control availability here</span>
-        <span class="read-only-chip">Managers still review final staffing</span>
+        <span class="read-only-chip" style="display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid #294766;background:#09192f;font-size:12px;font-weight:800;color:#d5e5ff;">Members control availability here</span>
+        <span class="read-only-chip" style="display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid #294766;background:#09192f;font-size:12px;font-weight:800;color:#d5e5ff;">Managers still review final staffing</span>
       </div>
     </div>
+
     <div class="card">
       <div class="toolbar">
         <div>
@@ -204,91 +203,106 @@
       <div class="status-line" id="statusLine">Loading…</div>
     </div>
 
-    <div class="top-grid">
-      <div class="card">
-        <div class="section-title" style="font-size:20px;font-weight:900;margin-bottom:10px">Member Snapshot</div>
-        <div class="member-summary-grid">
-          <div class="summary-pill"><div class="k">Name</div><div class="v" id="summaryName">—</div><div class="s" id="summaryEmail">—</div></div>
-          <div class="summary-pill"><div class="k">Certification</div><div class="v" id="summaryCert">—</div><div class="s" id="summaryRank">—</div></div>
-          <div class="summary-pill"><div class="k">Employment</div><div class="v" id="summaryEmployment">—</div><div class="s" id="summaryPay">—</div></div>
-          <div class="summary-pill"><div class="k">Rotation</div><div class="v" id="summaryRotation">—</div><div class="s" id="summaryRotationDetail">—</div></div>
+    <div class="top-layout">
+      <div class="card identity-card">
+        <div class="section-title" style="margin-bottom:0">Member Identity</div>
+        <div class="identity-name" id="summaryName">—</div>
+        <div class="identity-meta">
+          <div class="identity-row">
+            <div class="k">Certification</div>
+            <div class="v" id="summaryCert">—</div>
+          </div>
+          <div class="identity-row">
+            <div class="k">Employment</div>
+            <div class="v" id="summaryEmployment">—</div>
+          </div>
+          <div class="identity-row">
+            <div class="k">Rotation</div>
+            <div class="v" id="summaryRotation">—</div>
+          </div>
+          <div class="identity-row">
+            <div class="k">Shift Style</div>
+            <div class="v" id="summaryShiftStyle">—</div>
+          </div>
         </div>
-        <div class="quiet-note">This top section is for quick reference only. Certification, employment type, and rank are shown here so members can see how they are currently set up without editing supervisor-only fields.</div>
+        <div class="identity-note">These fields are display-only here and reflect manager-set identity and scheduling setup.</div>
       </div>
 
-      <div class="card">
-        <div class="section-title" style="font-size:20px;font-weight:900;margin-bottom:10px">Quick Controls</div>
-        <div class="form-grid-2">
-          <div class="field-card">
-            <label>Availability status</label>
-            <div class="toggle-wrap">
-              <input id="activeToggle" type="checkbox" />
+      <div class="card compact-card">
+        <div class="section-title" style="margin-bottom:0">Member Preferences</div>
+
+        <div class="compact-grid">
+          <div class="compact-field">
+            <div class="compact-label">Availability status</div>
+            <div class="compact-inline">
+              <label style="display:flex;align-items:center;gap:10px;margin:0;font-size:14px;font-weight:900;color:#eef4ff;">
+                <input id="activeToggle" type="checkbox" style="width:18px;height:18px;accent-color:#25b9ff" />
+                <span id="activeToggleLabel">Active for scheduling</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="compact-field">
+            <div class="compact-label">Desired hours / week</div>
+            <input id="desiredCapInput" type="number" min="0" step="1" />
+          </div>
+
+          <div class="compact-field">
+            <div class="compact-label">AM / PM preference</div>
+            <div class="triple-row" id="prefAmpmButtons"></div>
+          </div>
+
+          <div class="compact-field">
+            <div class="compact-label">24-hour preference</div>
+            <div class="triple-row" id="pref24Buttons"></div>
+          </div>
+
+          <div class="compact-field">
+            <div class="compact-label">Swap flexibility</div>
+            <div class="triple-row" id="swapButtons"></div>
+          </div>
+
+          <div class="compact-field">
+            <div class="compact-label">Avoid-with handler</div>
+            <div class="compact-stack">
+              <div class="compact-status" id="avoidPrivateStatus">Enabled • 0 selected</div>
               <div>
-                <div class="toggle-text" id="activeToggleLabel">Active for scheduling</div>
-                <div class="hint">Turn this off if you do not want to be considered right now.</div>
+                <button type="button" class="private-btn" id="openAvoidModalBtn">Open private settings</button>
               </div>
             </div>
           </div>
-          <div class="field-card">
-            <label for="desiredCapInput">Desired weekly hours</label>
-            <input id="desiredCapInput" type="number" min="0" step="1" />
-            <div class="hint">This helps show what you are aiming for. It does not guarantee assignment.</div>
-          </div>
-        </div>
-        <div class="quiet-note">You can offer more availability than you expect to be scheduled for. This gives management flexibility without promising a certain number of hours.</div>
-      </div>
-    </div>
-
-    <div class="card prefs-box">
-      <div class="prefs-grid">
-        <div class="prefs-compact-left">
-          <div class="section-title">Routine Preferences</div>
-          <div class="prefs-compact-groups">
-            <div class="pref-group">
-              <label>Shift Style</label>
-              <div class="triple-row" id="shiftStyleButtons"></div>
-            </div>
-
-            <div class="pref-group">
-              <label>24 Hour Shifts</label>
-              <div class="triple-row" id="pref24Buttons"></div>
-            </div>
-
-            <div class="pref-group">
-              <label>AM / PM Preference</label>
-              <div class="triple-row" id="prefAmpmButtons"></div>
-            </div>
-
-            <div class="pref-group">
-              <label>Swap Flexibility</label>
-              <div class="triple-row" id="swapButtons"></div>
-            </div>
-          </div>
-
-          <div id="rotation223Wrap" class="hidden">
-            <select id="rotationTrackSelect" class="hidden"><option value="">Select track</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
-            <div class="rotation-summary" id="rotationSummary"></div>
-          </div>
         </div>
 
-        <div>
-          <div class="private-card-compact">
-            <label>Private pairing preferences</label>
-            <div class="private-row">
-              <div class="private-status" id="avoidPrivateStatus">Not shown on main page</div>
-              <button type="button" class="private-btn" id="openAvoidModalBtn">Open private settings</button>
+        <div class="compact-field">
+          <div class="compact-label">Shift style</div>
+          <div class="triple-row" id="shiftStyleButtons"></div>
+          <div id="rotation223Wrap" class="hidden" style="margin-top:10px">
+            <div class="rotation-grid">
+              <div>
+                <label for="rotationTrackSelect">2-2-3 Rotation Track</label>
+                <select id="rotationTrackSelect">
+                  <option value="">Select track</option>
+                  <option value="A">A · Day, relieved by C</option>
+                  <option value="B">B · Day, relieved by D</option>
+                  <option value="C">C · Night, relieves A</option>
+                  <option value="D">D · Night, relieves B</option>
+                </select>
+              </div>
+              <div class="rotation-summary" id="rotationSummary">
+                <div><strong>Track not selected</strong></div>
+                <div class="rotation-note">Choose A, B, C, or D to save the relief-paired 12-hour track.</div>
+              </div>
             </div>
-            <div class="pref-inline-note">Closed by default so names are not casually exposed around other people.</div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-title" style="font-size:20px;font-weight:900;margin-bottom:10px">Bulk Edit</div>
-      <div class="bulk-grid">
+      <div class="section-title" style="margin-bottom:10px">Scheduling Controls</div>
+      <div class="controls-grid">
         <div>
-          <label for="patternWeekSelect">Use selected week as pattern</label>
+          <label for="patternWeekSelect">Pattern week</label>
           <select id="patternWeekSelect"></select>
         </div>
         <div>
@@ -314,7 +328,7 @@
           <input id="bulkWeeksInput" type="number" min="1" value="8" />
         </div>
         <div>
-          <label for="bulkUntilDate">Or until date</label>
+          <label for="bulkUntilDate">Until date</label>
           <input id="bulkUntilDate" type="date" />
         </div>
         <div>
@@ -355,7 +369,6 @@
     </div>
   </div>
 </div>
-
 
 <div class="modal-backdrop" id="avoidModalBackdrop" aria-hidden="true">
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="avoidModalTitle">
@@ -415,7 +428,7 @@ const SWAP_OPTIONS = [
 
 let membersPayload = { members: [] };
 let availabilityPayload = { months: {}, patterns_by_member:{} };
-let currentAvailability = {}; // explicit overrides keyed by date -> shift -> state (including "blank")
+let currentAvailability = {};
 let currentWeekOffset = 0;
 let selectedMemberId = '';
 let autosaveTimer = null;
@@ -498,7 +511,6 @@ function getRotationRole(track){
   if(track === 'C' || track === 'D') return 'night';
   return null;
 }
-
 function pairForRole(role){
   const r = String(role || '').toUpperCase();
   if(r === 'A' || r === 'C') return 'AC';
@@ -571,6 +583,10 @@ function describeRotationTrack(track){
   if(track === 'C') return 'C · Night · relieves A';
   if(track === 'D') return 'D · Night · relieves B';
   return 'Track not selected';
+}
+function labelForShiftStyle(style){
+  const row = SHIFT_STYLE_OPTIONS.find(x => x.value === style);
+  return row ? row.label : 'Flexible';
 }
 
 function getVisibleStart(){
@@ -646,8 +662,6 @@ function saveAvailabilityBackToPayload(){
   const memberId = String(selectedMemberId || '');
   if(!memberId) return;
   const months = availabilityPayload.months ||= {};
-
-  // remove all existing months for this member, rebuild from currentAvailability
   Object.keys(months).forEach(monthKey => {
     if(months[monthKey] && months[monthKey][memberId]){
       delete months[monthKey][memberId];
@@ -691,7 +705,6 @@ function buildShiftButton(dateIso, shift){
 function renderCalendar(){
   const dates = getVisibleDates();
   const start = dates[0];
-  const end = dates[dates.length - 1];
   calendarTitle.textContent = `${getWeekLabel(start)} • ${getWeekLabel(addDays(start,35))}`;
   patternWeekSelect.innerHTML = Array.from({length:6}).map((_,i) => {
     const wkStart = addDays(start, i*7);
@@ -800,13 +813,10 @@ function renderMemberSnapshot(){
   const emp = getEmployment(m);
   const rotation = m.rotation || null;
   document.getElementById('summaryName').textContent = m.name || 'Unknown';
-  document.getElementById('summaryEmail').textContent = m.email || m.phone || 'No contact shown';
   document.getElementById('summaryCert').textContent = m.raw_cert || m.ops_cert || m.cert || 'Unknown';
-  document.getElementById('summaryRank').textContent = m.rank || 'No rank listed';
   document.getElementById('summaryEmployment').textContent = emp.status || 'Unknown';
-  document.getElementById('summaryPay').textContent = `${String(emp.pay_type || 'unknown').toUpperCase()} • hard cap ${emp.hard_weekly_hour_cap ?? '—'}`;
   document.getElementById('summaryRotation').textContent = rotation?.role ? `Track ${rotation.role}` : 'No rotation set';
-  document.getElementById('summaryRotationDetail').textContent = describeRotationBlock(rotation) || 'Availability-based or PRN scheduling';
+  document.getElementById('summaryShiftStyle').textContent = labelForShiftStyle(getShiftStyle(m));
   activeToggle.checked = Boolean(m.active);
   activeToggleLabel.textContent = m.active ? 'Active for scheduling' : 'Inactive / not currently considered';
   desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
@@ -889,7 +899,7 @@ function closeAvoidModal(){
 }
 function updateAvoidPrivateStatus(count){
   if(!avoidPrivateStatus) return;
-  avoidPrivateStatus.textContent = count > 0 ? 'Private pairing preferences saved' : 'No private pairing preferences saved';
+  avoidPrivateStatus.textContent = `Enabled • ${count} selected`;
 }
 
 function memberSummary(m){
@@ -901,7 +911,11 @@ function memberSummary(m){
 }
 function renderAvoidList(){
   const member = getSelectedMember();
-  if(!member){ avoidList.innerHTML=''; /*avoidCountLabel removed*/.textContent='0 selected ▾'; return; }
+  if(!member){
+    avoidList.innerHTML = '';
+    updateAvoidPrivateStatus(0);
+    return;
+  }
   const scheduler = getScheduler(member);
   const selected = new Set(Array.isArray(scheduler.avoid_with) ? scheduler.avoid_with.map(String) : []);
   const rows = (membersPayload.members || [])
