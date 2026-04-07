@@ -896,7 +896,11 @@ function memberSummary(m){
 }
 function renderAvoidList(){
   const member = getSelectedMember();
-  if(!member){ avoidList.innerHTML=''; /*avoidCountLabel removed*/.textContent='0 selected ▾'; return; }
+if(!member){
+  avoidList.innerHTML = '';
+  if (avoidCountLabel) avoidCountLabel.textContent = '0 selected ▾';
+  return;
+}
   const scheduler = getScheduler(member);
   const selected = new Set(Array.isArray(scheduler.avoid_with) ? scheduler.avoid_with.map(String) : []);
   const rows = (membersPayload.members || [])
