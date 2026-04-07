@@ -11,82 +11,225 @@
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-  .wrap{max-width:1700px;margin:0 auto;padding:14px}
-  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
+  .wrap{max-width:1700px;margin:0 auto;padding:12px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}
   .title{font-size:36px;font-weight:900}
-  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
   a{color:var(--blue)}
-  .card{background:linear-gradient(180deg,#0f1b2d,#0e1a2c);border:1px solid var(--line);border-radius:18px;padding:14px}
-  .stack{display:grid;gap:14px}
-  label{display:block;font-size:12px;font-weight:800;color:#c9dbf7;margin-bottom:6px;text-transform:none}
+  .card{background:linear-gradient(180deg,#0f1b2d,#0e1a2c);border:1px solid var(--line);border-radius:18px;padding:12px}
+  .stack{display:grid;gap:12px}
+  label{display:block;font-size:11px;font-weight:800;color:#c9dbf7;margin-bottom:6px;text-transform:none}
   input,select,button{font:inherit}
   input[type="month"],input[type="number"],input[type="date"],select,.search-input{
-    width:100%;height:44px;border-radius:12px;border:1px solid #29507a;background:#09192f;color:var(--text);padding:0 12px;
+    width:100%;height:40px;border-radius:11px;border:1px solid #29507a;background:#09192f;color:var(--text);padding:0 11px;
   }
-  button{border-radius:12px;border:1px solid #2d567f;background:#10213a;color:var(--text);padding:10px 14px;font-weight:800;cursor:pointer}
-  button.primary{background:linear-gradient(180deg,#25b9ff,#1498dc);border-color:#27aef5;color:#04111e}
+  button{border-radius:11px;border:1px solid #2d567f;background:#10213a;color:var(--text);padding:9px 12px;font-weight:800;cursor:pointer}
   button.secondary{background:#10213a}
-  button.ghost{background:transparent}
   button:disabled{opacity:.45;cursor:not-allowed}
-  .hint{font-size:12px;color:var(--muted)}
+  .hint{font-size:11px;color:var(--muted)}
 
-  .banner{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border:1px solid #2b4a72;background:#0b1830;border-radius:16px;padding:12px 14px}
-  .banner-title{font-weight:900;font-size:15px}
-  .banner-text{color:#d8e7ff;font-size:13px;line-height:1.4;margin-top:4px}
-  .mini-links{display:flex;gap:12px;flex-wrap:wrap;font-size:13px}
+  .banner{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border:1px solid #2b4a72;background:#0b1830;border-radius:16px;padding:10px 12px}
+  .banner-title{font-weight:900;font-size:14px}
+  .banner-text{color:#d8e7ff;font-size:12px;line-height:1.4;margin-top:4px}
+  .mini-links{display:flex;gap:12px;flex-wrap:wrap;font-size:12px}
+  .read-only-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid #294766;background:#09192f;font-size:11px;font-weight:800;color:#d5e5ff}
 
-  .toolbar{display:grid;grid-template-columns:minmax(320px,1fr) auto auto;gap:12px;align-items:end}
-  .status-line{font-size:13px;color:var(--muted);margin-top:8px}
+  .toolbar{display:grid;grid-template-columns:minmax(320px,1fr) auto auto;gap:10px;align-items:end}
+  .status-line{font-size:12px;color:var(--muted);margin-top:8px}
 
-  .top-layout{display:grid;grid-template-columns:1.15fr 1fr;gap:14px}
-  .identity-card{display:grid;gap:12px}
-  .identity-name{font-size:34px;font-weight:900;line-height:1}
-  .identity-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .identity-row{
-    border:1px solid #294766;border-radius:14px;background:#09192f;padding:10px 12px;min-height:60px;
-    display:grid;align-content:start;gap:4px
+  .top-layout{
+    display:grid;
+    grid-template-columns:minmax(320px,1.1fr) minmax(420px,1.4fr);
+    gap:12px;
+    align-items:start;
   }
-  .identity-row .k{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.3px;text-transform:uppercase}
-  .identity-row .v{font-size:15px;font-weight:900;color:#eef4ff;line-height:1.2}
-  .identity-note{font-size:12px;color:var(--muted);line-height:1.35}
 
-  .compact-card{display:grid;gap:10px}
-  .compact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .compact-field{padding:10px;border:1px solid #294766;border-radius:14px;background:#09192f}
-  .compact-label{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;margin-bottom:8px}
-  .compact-inline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .compact-small{font-size:12px;color:#c8d8f2}
-  .compact-stack{display:grid;gap:8px}
-  .compact-status{font-size:12px;color:var(--muted);font-weight:800}
+  .identity-card{
+    padding:10px 12px;
+    display:grid;
+    gap:8px;
+  }
+  .identity-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .identity-title{
+    font-size:13px;
+    font-weight:900;
+    color:#dbe9ff;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+  }
+  .identity-name{
+    font-size:24px;
+    line-height:1;
+    font-weight:900;
+  }
+  .identity-meta{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:8px;
+  }
+  .identity-chip{
+    min-height:52px;
+    border:1px solid #294766;
+    border-radius:12px;
+    background:#09192f;
+    padding:8px 10px;
+    display:grid;
+    align-content:start;
+    gap:3px;
+  }
+  .identity-chip .k{
+    font-size:10px;
+    font-weight:900;
+    color:var(--muted);
+    letter-spacing:.3px;
+    text-transform:uppercase;
+  }
+  .identity-chip .v{
+    font-size:13px;
+    font-weight:900;
+    color:#eef4ff;
+    line-height:1.15;
+  }
+
+  .prefs-card{
+    padding:10px 12px;
+    display:grid;
+    gap:8px;
+  }
+  .prefs-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .prefs-title{
+    font-size:13px;
+    font-weight:900;
+    color:#dbe9ff;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+  }
+
+  .prefs-compact-grid{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:8px;
+  }
+  .pref-cell{
+    border:1px solid #294766;
+    border-radius:12px;
+    background:#09192f;
+    padding:8px;
+    min-height:68px;
+    display:grid;
+    align-content:start;
+    gap:6px;
+  }
+  .pref-cell.wide{
+    grid-column:span 2;
+  }
+  .pref-label{
+    font-size:10px;
+    font-weight:900;
+    color:var(--muted);
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    line-height:1.15;
+  }
+  .pref-value{
+    font-size:12px;
+    color:#dbe9ff;
+    font-weight:800;
+  }
+  .pref-inline{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .cycle-btn{
+    min-width:116px;
+    min-height:34px;
+    padding:0 10px;
+    border-radius:12px;
+    border:1px solid #305270;
+    background:#13243d;
+    color:#f2f6ff;
+    font-size:12px;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    line-height:1.05;
+  }
+  .cycle-btn.blank{background:#10213a;border-color:#274766;color:#b7c7df}
+  .cycle-btn.preferred{background:rgba(19,107,53,.55);border-color:#23ca66}
+  .cycle-btn.available{background:rgba(120,88,11,.44);border-color:#ffb443}
+  .cycle-btn.do_not_schedule{background:rgba(98,23,31,.48);border-color:#ff5d5d}
+  .cycle-btn.mode{background:#0e2d4b;border-color:#1bc4ff;color:#eef8ff}
+  .cycle-btn.mode.off{background:#10213a;border-color:#35557b;color:#dbe9ff}
+  .cycle-btn.small{min-width:92px;min-height:32px;font-size:11px;border-radius:11px}
+
+  .status-toggle{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-height:34px;
+    font-weight:900;
+    font-size:12px;
+  }
+  .status-toggle input[type="checkbox"]{
+    width:16px;
+    height:16px;
+    accent-color:#25b9ff;
+  }
+
   .private-btn{
-    min-height:36px;padding:0 14px;border-radius:999px;border:1px solid #35557b;
-    background:#0b1830;color:#e9f2ff;font-size:13px;font-weight:900;letter-spacing:.2px;
+    min-height:32px;
+    padding:0 12px;
+    border-radius:999px;
+    border:1px solid #35557b;
+    background:#0b1830;
+    color:#e9f2ff;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.2px;
   }
-  .private-btn:hover{border-color:#4c7fb5}
 
-  .section-title{font-size:20px;font-weight:900;margin-bottom:10px}
+  .section-title{font-size:18px;font-weight:900;margin-bottom:8px}
 
-  .triple-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .tri-btn{
-    min-width:88px;height:36px;padding:0 12px;border-radius:12px;border:1px solid #2c547d;background:#09192f;color:#dbe9ff;
-    font-size:13px;font-weight:800
+  .rotation-wrap{
+    margin-top:2px;
+    border:1px solid #294766;
+    border-radius:12px;
+    background:#09192f;
+    padding:8px;
+    display:grid;
+    gap:8px;
   }
-  .tri-btn.active{background:#0e2d4b;border-color:#1bc4ff;box-shadow:0 0 0 1px rgba(27,196,255,.2) inset}
-
-  .rotation-grid{display:grid;grid-template-columns:1fr;gap:8px;align-items:end}
-  .rotation-summary{padding:10px 12px;border:1px solid #294766;border-radius:14px;background:#09192f;min-height:44px;display:grid;align-content:center}
+  .rotation-grid{display:grid;grid-template-columns:210px 1fr;gap:8px;align-items:end}
+  .rotation-summary{padding:9px 10px;border:1px solid #294766;border-radius:11px;background:#0b1830;min-height:40px;display:grid;align-content:center}
   .rotation-summary strong{color:#dbe9ff}
-  .rotation-note{font-size:12px;color:var(--muted);margin-top:6px}
+  .rotation-note{font-size:11px;color:var(--muted);margin-top:4px}
   .hidden{display:none !important}
 
   .controls-grid{
     display:grid;
     grid-template-columns:1.5fr 1fr 1fr .8fr 1fr auto auto;
-    gap:12px;
+    gap:10px;
     align-items:end
   }
 
-  .legend{display:flex;gap:12px;flex-wrap:wrap;color:#dbe9ff;font-size:12px;font-weight:800}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;color:#dbe9ff;font-size:11px;font-weight:800}
   .legend-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid #2b4a72;background:#10213a}
   .swatch{width:9px;height:9px;border-radius:999px;display:inline-block}
   .swatch.pref{background:var(--green)}
@@ -141,13 +284,18 @@
   .avoid-meta{font-size:11px;color:var(--muted);margin-top:2px}
   .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
 
-  @media (max-width:1400px){
+  @media (max-width:1500px){
+    .prefs-compact-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  }
+  @media (max-width:1350px){
     .controls-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   }
   @media (max-width:1100px){
     .top-layout{grid-template-columns:1fr}
-    .compact-grid{grid-template-columns:1fr}
     .identity-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .prefs-compact-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .pref-cell.wide{grid-column:span 1}
+    .rotation-grid{grid-template-columns:1fr}
   }
   @media (max-width:900px){
     .toolbar{grid-template-columns:1fr 1fr}
@@ -157,7 +305,7 @@
     .controls-grid{grid-template-columns:1fr 1fr}
   }
   @media (max-width:600px){
-    .toolbar,.controls-grid{grid-template-columns:1fr}
+    .toolbar,.controls-grid,.prefs-compact-grid{grid-template-columns:1fr}
     .calendar-head,.calendar{grid-template-columns:1fr}
     .identity-meta{grid-template-columns:1fr}
   }
@@ -180,8 +328,8 @@
         <div class="banner-text">Use <strong>Preferred</strong> for the shifts you most want, <strong>Available</strong> for shifts you can work, and <strong>Do Not</strong> for shifts you cannot cover. Blank means undecided or not entered yet.</div>
       </div>
       <div class="mini-links">
-        <span class="read-only-chip" style="display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid #294766;background:#09192f;font-size:12px;font-weight:800;color:#d5e5ff;">Members control availability here</span>
-        <span class="read-only-chip" style="display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid #294766;background:#09192f;font-size:12px;font-weight:800;color:#d5e5ff;">Managers still review final staffing</span>
+        <span class="read-only-chip">Members control availability here</span>
+        <span class="read-only-chip">Managers still review final staffing</span>
       </div>
     </div>
 
@@ -205,101 +353,112 @@
 
     <div class="top-layout">
       <div class="card identity-card">
-        <div class="section-title" style="margin-bottom:0">Member Identity</div>
+        <div class="identity-head">
+          <div class="identity-title">Member</div>
+        </div>
         <div class="identity-name" id="summaryName">—</div>
         <div class="identity-meta">
-          <div class="identity-row">
+          <div class="identity-chip">
             <div class="k">Certification</div>
             <div class="v" id="summaryCert">—</div>
           </div>
-          <div class="identity-row">
+          <div class="identity-chip">
             <div class="k">Employment</div>
             <div class="v" id="summaryEmployment">—</div>
           </div>
-          <div class="identity-row">
+          <div class="identity-chip">
             <div class="k">Rotation</div>
             <div class="v" id="summaryRotation">—</div>
           </div>
-          <div class="identity-row">
+          <div class="identity-chip">
             <div class="k">Shift Style</div>
             <div class="v" id="summaryShiftStyle">—</div>
           </div>
         </div>
-        <div class="identity-note">These fields are display-only here and reflect manager-set identity and scheduling setup.</div>
       </div>
 
-      <div class="card compact-card">
-        <div class="section-title" style="margin-bottom:0">Member Preferences</div>
+      <div class="card prefs-card">
+        <div class="prefs-head">
+          <div class="prefs-title">Preferences</div>
+        </div>
 
-        <div class="compact-grid">
-          <div class="compact-field">
-            <div class="compact-label">Availability status</div>
-            <div class="compact-inline">
-              <label style="display:flex;align-items:center;gap:10px;margin:0;font-size:14px;font-weight:900;color:#eef4ff;">
-                <input id="activeToggle" type="checkbox" style="width:18px;height:18px;accent-color:#25b9ff" />
-                <span id="activeToggleLabel">Active for scheduling</span>
-              </label>
-            </div>
+        <div class="prefs-compact-grid">
+          <div class="pref-cell">
+            <div class="pref-label">Availability status</div>
+            <label class="status-toggle" style="margin:0">
+              <input id="activeToggle" type="checkbox" />
+              <span id="activeToggleLabel">Active for scheduling</span>
+            </label>
           </div>
 
-          <div class="compact-field">
-            <div class="compact-label">Desired hours / week</div>
+          <div class="pref-cell">
+            <div class="pref-label">Desired hours / week</div>
             <input id="desiredCapInput" type="number" min="0" step="1" />
           </div>
 
-          <div class="compact-field">
-            <div class="compact-label">AM / PM preference</div>
-            <div class="triple-row" id="prefAmpmButtons"></div>
+          <div class="pref-cell">
+            <div class="pref-label">AM / PM preference</div>
+            <div class="pref-inline">
+              <button type="button" class="cycle-btn mode small" id="prefAmpmCycleBtn">—</button>
+            </div>
           </div>
 
-          <div class="compact-field">
-            <div class="compact-label">24-hour preference</div>
-            <div class="triple-row" id="pref24Buttons"></div>
+          <div class="pref-cell">
+            <div class="pref-label">24-hour preference</div>
+            <div class="pref-inline">
+              <button type="button" class="cycle-btn mode small" id="pref24CycleBtn">—</button>
+            </div>
           </div>
 
-          <div class="compact-field">
-            <div class="compact-label">Swap flexibility</div>
-            <div class="triple-row" id="swapButtons"></div>
+          <div class="pref-cell">
+            <div class="pref-label">Swap flexibility</div>
+            <div class="pref-inline">
+              <button type="button" class="cycle-btn mode small" id="swapCycleBtn">—</button>
+            </div>
           </div>
 
-          <div class="compact-field">
-            <div class="compact-label">Avoid-with handler</div>
-            <div class="compact-stack">
-              <div class="compact-status" id="avoidPrivateStatus">Enabled • 0 selected</div>
-              <div>
-                <button type="button" class="private-btn" id="openAvoidModalBtn">Open private settings</button>
+          <div class="pref-cell">
+            <div class="pref-label">Avoid-with handler</div>
+            <div class="pref-value" id="avoidPrivateStatus">Enabled • 0 selected</div>
+            <div>
+              <button type="button" class="private-btn" id="openAvoidModalBtn">Open private settings</button>
+            </div>
+          </div>
+
+          <div class="pref-cell wide" style="grid-column:span 2;">
+            <div class="pref-label">Shift style</div>
+            <div class="pref-inline">
+              <button type="button" class="cycle-btn mode" id="shiftStyleCycleBtn">—</button>
+            </div>
+          </div>
+
+          <div class="pref-cell wide" id="rotation223Wrap" style="grid-column:span 2;">
+            <div class="pref-label">2-2-3 rotation track</div>
+            <div class="rotation-wrap">
+              <div class="rotation-grid">
+                <div>
+                  <select id="rotationTrackSelect">
+                    <option value="">Select track</option>
+                    <option value="A">A · Day, relieved by C</option>
+                    <option value="B">B · Day, relieved by D</option>
+                    <option value="C">C · Night, relieves A</option>
+                    <option value="D">D · Night, relieves B</option>
+                  </select>
+                </div>
+                <div class="rotation-summary" id="rotationSummary">
+                  <div><strong>Track not selected</strong></div>
+                  <div class="rotation-note">Choose A, B, C, or D to save the relief-paired 12-hour track.</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="compact-field">
-          <div class="compact-label">Shift style</div>
-          <div class="triple-row" id="shiftStyleButtons"></div>
-          <div id="rotation223Wrap" class="hidden" style="margin-top:10px">
-            <div class="rotation-grid">
-              <div>
-                <label for="rotationTrackSelect">2-2-3 Rotation Track</label>
-                <select id="rotationTrackSelect">
-                  <option value="">Select track</option>
-                  <option value="A">A · Day, relieved by C</option>
-                  <option value="B">B · Day, relieved by D</option>
-                  <option value="C">C · Night, relieves A</option>
-                  <option value="D">D · Night, relieves B</option>
-                </select>
-              </div>
-              <div class="rotation-summary" id="rotationSummary">
-                <div><strong>Track not selected</strong></div>
-                <div class="rotation-note">Choose A, B, C, or D to save the relief-paired 12-hour track.</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-title" style="margin-bottom:10px">Scheduling Controls</div>
+      <div class="section-title">Scheduling Controls</div>
       <div class="controls-grid">
         <div>
           <label for="patternWeekSelect">Pattern week</label>
@@ -448,10 +607,12 @@ const bulkStateSelect = document.getElementById('bulkStateSelect');
 const bulkScopeSelect = document.getElementById('bulkScopeSelect');
 const bulkWeeksInput = document.getElementById('bulkWeeksInput');
 const bulkUntilDate = document.getElementById('bulkUntilDate');
-const pref24Buttons = document.getElementById('pref24Buttons');
-const prefAmpmButtons = document.getElementById('prefAmpmButtons');
-const shiftStyleButtons = document.getElementById('shiftStyleButtons');
-const swapButtons = document.getElementById('swapButtons');
+
+const pref24CycleBtn = document.getElementById('pref24CycleBtn');
+const prefAmpmCycleBtn = document.getElementById('prefAmpmCycleBtn');
+const shiftStyleCycleBtn = document.getElementById('shiftStyleCycleBtn');
+const swapCycleBtn = document.getElementById('swapCycleBtn');
+
 const rotation223Wrap = document.getElementById('rotation223Wrap');
 const rotationTrackSelect = document.getElementById('rotationTrackSelect');
 const rotationSummary = document.getElementById('rotationSummary');
@@ -474,6 +635,7 @@ function monthKeyFromIso(s){ return String(s).slice(0,7); }
 function addDays(dateObj, days){ const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()); d.setDate(d.getDate()+days); return d; }
 function startOfWeekSunday(d){ return addDays(d, -d.getDay()); }
 function getToday(){ const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+
 function normalizeMembers(payload){
   const out = Array.isArray(payload) ? {members: payload} : (Array.isArray(payload?.members) ? payload : {members: []});
   out.members = (out.members || []).map(member => {
@@ -557,12 +719,6 @@ function applyRotationBlock(member, role){
     sp.relief_partner_track = null;
   }
 }
-function describeRotationBlock(rotation){
-  if(!rotation || !rotation.pair || !rotation.role) return null;
-  const slot = rotation.role === 'A' || rotation.role === 'B' ? 'AM' : 'PM';
-  const relief = getReliefPartnerTrack(rotation.role);
-  return `${rotation.pair} block · role ${rotation.role} · expected ${slot} when active · paired with ${relief}`;
-}
 function getReliefPartnerTrack(track){
   if(track === 'A') return 'C';
   if(track === 'B') return 'D';
@@ -587,6 +743,20 @@ function describeRotationTrack(track){
 function labelForShiftStyle(style){
   const row = SHIFT_STYLE_OPTIONS.find(x => x.value === style);
   return row ? row.label : 'Flexible';
+}
+
+function cycleOption(current, options){
+  const idx = options.findIndex(o => o.value === current);
+  const nextIdx = idx < 0 ? 0 : (idx + 1) % options.length;
+  return options[nextIdx].value;
+}
+function getOptionLabel(value, options){
+  const row = options.find(o => o.value === value);
+  return row ? row.label : '—';
+}
+function setModeButton(btn, label){
+  btn.textContent = label || '—';
+  btn.className = 'cycle-btn mode';
 }
 
 function getVisibleStart(){
@@ -798,14 +968,6 @@ function fillVisibleBlanks(){
   statusLine.textContent = `Filled ${count} blank visible shift slots. Auto-save in 3 seconds…`;
   queueAutoSave('availability');
 }
-function buildTripleButtons(targetEl, options, currentValue, onSet){
-  targetEl.innerHTML = options.map(opt => `
-    <button type="button" class="tri-btn ${opt.value===currentValue?'active':''}" data-value="${esc(opt.value)}">${esc(opt.label)}</button>
-  `).join('');
-  targetEl.querySelectorAll('.tri-btn').forEach(btn => {
-    btn.addEventListener('click', () => onSet(btn.dataset.value));
-  });
-}
 
 function renderMemberSnapshot(){
   const m = getSelectedMember();
@@ -822,25 +984,16 @@ function renderMemberSnapshot(){
   desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
 }
 
-function renderPreferences(){
+function renderPreferenceCycles(){
   const member = getSelectedMember();
+  if(!member) return;
   const prefs = getPreferences(member);
-  const shiftPref = ensureShiftPreference(member || {preferences:{}});
-  renderMemberSnapshot();
+  const shiftPref = ensureShiftPreference(member);
 
-  buildTripleButtons(shiftStyleButtons, SHIFT_STYLE_OPTIONS, shiftPref.style || 'availability_based', value => {
-    const m = getSelectedMember(); if(!m) return;
-    const sp = ensureShiftPreference(m);
-    sp.style = value;
-    sp.rotation_template_id = value === 'rotation_223_relief' ? 'rot_223_12h_relief' : null;
-    sp.rotation_track = value === 'rotation_223_relief' ? (sp.rotation_track || '') : null;
-    sp.rotation_role = value === 'rotation_223_relief' ? getRotationRole(sp.rotation_track) : null;
-    sp.relief_partner_track = value === 'rotation_223_relief' ? getReliefPartnerTrack(sp.rotation_track) : null;
-    sp.shift_length_hours = getShiftLengthForStyle(value);
-    if(!sp.swap_strategy) sp.swap_strategy = 'allow';
-    renderPreferences();
-    queueAutoSave('member');
-  });
+  setModeButton(prefAmpmCycleBtn, getOptionLabel(prefs.ampm || 'no_preference', AMPM_OPTIONS));
+  setModeButton(pref24CycleBtn, getOptionLabel(prefs.shift24 || 'no_preference', PREF24_OPTIONS));
+  setModeButton(swapCycleBtn, getOptionLabel(shiftPref.swap_strategy || 'allow', SWAP_OPTIONS));
+  setModeButton(shiftStyleCycleBtn, getOptionLabel(shiftPref.style || 'availability_based', SHIFT_STYLE_OPTIONS));
 
   const showRotation = shiftPref.style === 'rotation_223_relief';
   rotation223Wrap.classList.toggle('hidden', !showRotation);
@@ -863,29 +1016,13 @@ function renderPreferences(){
       <div class="rotation-note">Select the 2-2-3 Relief shift style to assign A/B/C/D.</div>
     `;
   }
-
-  buildTripleButtons(pref24Buttons, PREF24_OPTIONS, prefs.shift24 || 'no_preference', value => {
-    const m = getSelectedMember(); if(!m) return;
-    m.preferences ||= {}; m.preferences.shift24 = value;
-    renderPreferences();
-    queueAutoSave('member');
-  });
-
-  buildTripleButtons(prefAmpmButtons, AMPM_OPTIONS, prefs.ampm || 'no_preference', value => {
-    const m = getSelectedMember(); if(!m) return;
-    m.preferences ||= {}; m.preferences.ampm = value;
-    renderPreferences();
-    queueAutoSave('member');
-  });
-
-  buildTripleButtons(swapButtons, SWAP_OPTIONS, shiftPref.swap_strategy || 'allow', value => {
-    const m = getSelectedMember(); if(!m) return;
-    const sp = ensureShiftPreference(m);
-    sp.swap_strategy = value;
-    renderPreferences();
-    queueAutoSave('member');
-  });
 }
+
+function renderPreferences(){
+  renderMemberSnapshot();
+  renderPreferenceCycles();
+}
+
 function openAvoidModal(){
   avoidModalBackdrop.classList.add('open');
   avoidModalBackdrop.setAttribute('aria-hidden','false');
@@ -1018,18 +1155,6 @@ async function flushAutoSave(){
   }
 }
 
-async function saveAvailability(){
-  saveAvailabilityBackToPayload();
-  await apiPost('/api/availability', availabilityPayload);
-  statusLine.textContent = 'Availability saved.';
-}
-async function saveMemberPreferences(){
-  const member = getSelectedMember();
-  if(!member) return;
-  const payload = { members: membersPayload.members };
-  await apiPost('/api/members', payload);
-  statusLine.textContent = 'Member preferences saved.';
-}
 async function setSelectedMember(id, fromInit=false){
   await flushAutoSave();
   selectedMemberId = String(id || '');
@@ -1052,6 +1177,7 @@ async function init(){
     statusLine.textContent = `Load failed: ${err.message}`;
     return;
   }
+
   memberSelect.innerHTML = (membersPayload.members || []).map(m => `<option value="${esc(m.member_id)}">${esc(m.name || `Member ${m.member_id}`)}</option>`).join('');
   const qp = new URLSearchParams(location.search);
   const preferredId = qp.get('member_id');
@@ -1067,13 +1193,20 @@ async function init(){
   document.getElementById('todayBtn2').addEventListener('click', () => { currentWeekOffset = 0; renderCalendar(); });
   document.getElementById('copyWeekForwardBtn').addEventListener('click', applyBulkCopy);
   document.getElementById('fillVisibleBlanksBtn').addEventListener('click', fillVisibleBlanks);
-  document.getElementById('clearVisibleBtn').addEventListener('click', () => { clearExplicitVisible(); renderCalendar(); statusLine.textContent = 'Visible window cleared. Auto-save in 3 seconds…'; queueAutoSave('availability'); });
+  document.getElementById('clearVisibleBtn').addEventListener('click', () => {
+    clearExplicitVisible();
+    renderCalendar();
+    statusLine.textContent = 'Visible window cleared. Auto-save in 3 seconds…';
+    queueAutoSave('availability');
+  });
+
   avoidSearch.addEventListener('input', () => { avoidSearchTerm = avoidSearch.value || ''; renderAvoidList(); });
   openAvoidModalBtn.addEventListener('click', openAvoidModal);
   closeAvoidModalBtn.addEventListener('click', closeAvoidModal);
   saveAvoidModalBtn.addEventListener('click', closeAvoidModal);
   avoidModalBackdrop.addEventListener('click', (e) => { if(e.target === avoidModalBackdrop) closeAvoidModal(); });
   document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && avoidModalBackdrop.classList.contains('open')) closeAvoidModal(); });
+
   rotationTrackSelect.addEventListener('change', () => {
     const m = getSelectedMember(); if(!m) return;
     applyRotationBlock(m, rotationTrackSelect.value || null);
@@ -1088,12 +1221,61 @@ async function init(){
     renderMemberSnapshot();
     queueAutoSave('member');
   });
+
   desiredCapInput.addEventListener('change', () => {
     const m = getSelectedMember(); if(!m) return;
     m.employment ||= {};
     const raw = desiredCapInput.value;
     m.employment.preferred_weekly_hour_cap = raw === '' ? null : Number(raw);
     renderMemberSnapshot();
+    queueAutoSave('member');
+  });
+
+  prefAmpmCycleBtn.addEventListener('click', () => {
+    const m = getSelectedMember(); if(!m) return;
+    m.preferences ||= {};
+    const current = m.preferences.ampm || 'no_preference';
+    m.preferences.ampm = cycleOption(current, AMPM_OPTIONS);
+    renderPreferences();
+    queueAutoSave('member');
+  });
+
+  pref24CycleBtn.addEventListener('click', () => {
+    const m = getSelectedMember(); if(!m) return;
+    m.preferences ||= {};
+    const current = m.preferences.shift24 || 'no_preference';
+    m.preferences.shift24 = cycleOption(current, PREF24_OPTIONS);
+    renderPreferences();
+    queueAutoSave('member');
+  });
+
+  swapCycleBtn.addEventListener('click', () => {
+    const m = getSelectedMember(); if(!m) return;
+    const sp = ensureShiftPreference(m);
+    const current = sp.swap_strategy || 'allow';
+    sp.swap_strategy = cycleOption(current, SWAP_OPTIONS);
+    renderPreferences();
+    queueAutoSave('member');
+  });
+
+  shiftStyleCycleBtn.addEventListener('click', () => {
+    const m = getSelectedMember(); if(!m) return;
+    const sp = ensureShiftPreference(m);
+    const current = sp.style || 'availability_based';
+    const next = cycleOption(current, SHIFT_STYLE_OPTIONS);
+    sp.style = next;
+    sp.rotation_template_id = next === 'rotation_223_relief' ? 'rot_223_12h_relief' : null;
+    sp.rotation_track = next === 'rotation_223_relief' ? (sp.rotation_track || '') : null;
+    sp.rotation_role = next === 'rotation_223_relief' ? getRotationRole(sp.rotation_track) : null;
+    sp.relief_partner_track = next === 'rotation_223_relief' ? getReliefPartnerTrack(sp.rotation_track) : null;
+    sp.shift_length_hours = getShiftLengthForStyle(next);
+    if(!sp.swap_strategy) sp.swap_strategy = 'allow';
+    if(next !== 'rotation_223_relief'){
+      m.rotation = null;
+    } else if(sp.rotation_track){
+      applyRotationBlock(m, sp.rotation_track);
+    }
+    renderPreferences();
     queueAutoSave('member');
   });
 }
