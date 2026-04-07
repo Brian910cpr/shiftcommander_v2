@@ -1560,7 +1560,7 @@ def main() -> int:
     parser.add_argument("--settings", required=True, help="Path to settings.json")
     parser.add_argument("--shifts", required=True, help="Path to shifts.json")
     parser.add_argument("--availability", required=True, help="Path to availability.json")
-    parser.add_argument("--output", default="schedule.json", help="Path to schedule.json output")
+    parser.add_argument("--output", default="docs/data/schedule.json", help="Path to schedule.json output")
     args = parser.parse_args()
 
     data = {
