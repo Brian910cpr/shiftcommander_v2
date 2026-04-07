@@ -109,6 +109,29 @@
   .rotation-note{font-size:12px;color:var(--muted);margin-top:6px}
   .hidden{display:none !important}
 
+
+  .private-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .private-status{font-size:12px;color:var(--muted);font-weight:800}
+  .private-btn{
+    min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #35557b;
+    background:#0b1830;color:#e9f2ff;font-size:13px;font-weight:900;letter-spacing:.2px;
+  }
+  .private-btn:hover{border-color:#4c7fb5}
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(3,10,20,.72);display:none;align-items:center;justify-content:center;
+    padding:18px;z-index:9999;
+  }
+  .modal-backdrop.open{display:flex}
+  .modal-card{
+    width:min(760px,96vw);max-height:min(88vh,900px);overflow:auto;
+    background:linear-gradient(180deg,#0f1b2d,#0e1a2c);border:1px solid #294766;border-radius:18px;padding:14px;
+    box-shadow:0 24px 64px rgba(0,0,0,.45);
+  }
+  .modal-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .modal-title{font-size:20px;font-weight:900}
+  .modal-sub{font-size:12px;color:var(--muted);line-height:1.4;margin-top:4px;max-width:560px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
+
   @media (max-width:1300px){
     .toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}
     .top-grid{grid-template-columns:1fr}
@@ -244,18 +267,14 @@
         </div>
 
         <div>
-          <details class="avoid-wrap" open>
-            <summary>
-              <span>Avoid With • multiple selection</span>
-              <span id="avoidCountLabel">0 selected ▾</span>
-            </summary>
-            <div class="avoid-panel">
-              <input class="search-input" id="avoidSearch" placeholder="Search other members" />
-              <div style="height:10px"></div>
-              <div class="avoid-list" id="avoidList"></div>
-              <div class="hint" style="margin-top:10px">These names save into the member profile as directional avoid-with preferences.</div>
+          <div class="field-card">
+            <label>Private pairing preferences</label>
+            <div class="private-row">
+              <div class="private-status" id="avoidPrivateStatus">Not shown on main page</div>
+              <button type="button" class="private-btn" id="openAvoidModalBtn">Open private settings</button>
             </div>
-          </details>
+            <div class="quiet-note">This stays closed on purpose so names are not casually exposed around other people.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -332,6 +351,28 @@
   </div>
 </div>
 
+
+<div class="modal-backdrop" id="avoidModalBackdrop" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="avoidModalTitle">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="avoidModalTitle">Private pairing preferences</div>
+        <div class="modal-sub">This section is intentionally tucked away. Use it only when you specifically want to adjust who you prefer not to be paired with. Nothing from this list is shown on the main page.</div>
+      </div>
+      <button type="button" class="secondary" id="closeAvoidModalBtn">Close</button>
+    </div>
+    <div class="avoid-panel">
+      <input class="search-input" id="avoidSearch" placeholder="Search other members" />
+      <div style="height:10px"></div>
+      <div class="avoid-list" id="avoidList"></div>
+      <div class="hint" style="margin-top:10px">These names save into the member profile as directional avoid-with preferences.</div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="secondary" id="saveAvoidModalBtn">Done</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const STATES = ['', 'preferred', 'available', 'do_not_schedule'];
@@ -398,7 +439,11 @@ const rotationTrackSelect = document.getElementById('rotationTrackSelect');
 const rotationSummary = document.getElementById('rotationSummary');
 const avoidList = document.getElementById('avoidList');
 const avoidSearch = document.getElementById('avoidSearch');
-const avoidCountLabel = document.getElementById('avoidCountLabel');
+const avoidPrivateStatus = document.getElementById('avoidPrivateStatus');
+const avoidModalBackdrop = document.getElementById('avoidModalBackdrop');
+const openAvoidModalBtn = document.getElementById('openAvoidModalBtn');
+const closeAvoidModalBtn = document.getElementById('closeAvoidModalBtn');
+const saveAvoidModalBtn = document.getElementById('saveAvoidModalBtn');
 const activeToggle = document.getElementById('activeToggle');
 const activeToggleLabel = document.getElementById('activeToggleLabel');
 const desiredCapInput = document.getElementById('desiredCapInput');
@@ -826,6 +871,22 @@ function renderPreferences(){
     queueAutoSave('member');
   });
 }
+function openAvoidModal(){
+  avoidModalBackdrop.classList.add('open');
+  avoidModalBackdrop.setAttribute('aria-hidden','false');
+  avoidSearch.value = avoidSearchTerm || '';
+  renderAvoidList();
+  setTimeout(() => avoidSearch.focus(), 30);
+}
+function closeAvoidModal(){
+  avoidModalBackdrop.classList.remove('open');
+  avoidModalBackdrop.setAttribute('aria-hidden','true');
+}
+function updateAvoidPrivateStatus(count){
+  if(!avoidPrivateStatus) return;
+  avoidPrivateStatus.textContent = count > 0 ? 'Private pairing preferences saved' : 'No private pairing preferences saved';
+}
+
 function memberSummary(m){
   const emp = getEmployment(m);
   const rank = m.rank || 'No rank';
@@ -835,7 +896,11 @@ function memberSummary(m){
 }
 function renderAvoidList(){
   const member = getSelectedMember();
-  if(!member){ avoidList.innerHTML=''; avoidCountLabel.textContent='0 selected ▾'; return; }
+if(!member){
+  avoidList.innerHTML = '';
+  if (avoidCountLabel) avoidCountLabel.textContent = '0 selected ▾';
+  return;
+}
   const scheduler = getScheduler(member);
   const selected = new Set(Array.isArray(scheduler.avoid_with) ? scheduler.avoid_with.map(String) : []);
   const rows = (membersPayload.members || [])
@@ -863,7 +928,7 @@ function renderAvoidList(){
       queueAutoSave('member');
     });
   });
-  avoidCountLabel.textContent = `${selected.size} selected ▾`;
+  updateAvoidPrivateStatus(selected.size);
 }
 
 const STATIC_ENDPOINTS = {
@@ -989,6 +1054,11 @@ async function init(){
   document.getElementById('fillVisibleBlanksBtn').addEventListener('click', fillVisibleBlanks);
   document.getElementById('clearVisibleBtn').addEventListener('click', () => { clearExplicitVisible(); renderCalendar(); statusLine.textContent = 'Visible window cleared. Auto-save in 3 seconds…'; queueAutoSave('availability'); });
   avoidSearch.addEventListener('input', () => { avoidSearchTerm = avoidSearch.value || ''; renderAvoidList(); });
+  openAvoidModalBtn.addEventListener('click', openAvoidModal);
+  closeAvoidModalBtn.addEventListener('click', closeAvoidModal);
+  saveAvoidModalBtn.addEventListener('click', closeAvoidModal);
+  avoidModalBackdrop.addEventListener('click', (e) => { if(e.target === avoidModalBackdrop) closeAvoidModal(); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && avoidModalBackdrop.classList.contains('open')) closeAvoidModal(); });
   rotationTrackSelect.addEventListener('change', () => {
     const m = getSelectedMember(); if(!m) return;
     applyRotationBlock(m, rotationTrackSelect.value || null);
