@@ -1,0 +1,1922 @@
+{
+  "members": [
+    {
+      "active": false,
+      "birthday": "09/29",
+      "birthday_mmdd": "09/29",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "wrench175@att.net",
+      "employment": {
+        "hard_weekly_hour_cap": 24,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": null,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Stephen",
+      "last_name": "Camlin",
+      "member_id": "102",
+      "name": "Stephen Camlin",
+      "ops_cert": "ALS",
+      "phone": "910-617-2302",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "prn_only",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "rank": "Chief",
+      "raw_cert": "AEMT",
+      "rotation": null,
+      "scheduler": {
+        "avoid_with": []
+      }
+    },
+    {
+      "active": false,
+      "birthday": "09/15",
+      "birthday_mmdd": "09/15",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "wcphelps103@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 24,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Wilbert",
+      "last_name": "Phelps",
+      "member_id": "103",
+      "name": "Wilbert Phelps",
+      "ops_cert": "EMT",
+      "phone": "910-612-3926",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "prn_only",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "Asst. Chief",
+      "raw_cert": "EMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "01/01",
+      "birthday_mmdd": "01/01",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "tbenson106@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": null,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Thomas",
+      "last_name": "Benson",
+      "member_id": "104",
+      "name": "Thomas Benson",
+      "ops_cert": "NCLD",
+      "phone": "910-549-7013",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "prn_only",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "Deputy Chief",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "06/24",
+      "birthday_mmdd": "06/24",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "wayne.taggett@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Hazen",
+      "last_name": "Taggett",
+      "member_id": "106",
+      "name": "Hazen Taggett",
+      "ops_cert": "NCLD",
+      "phone": "910-512-7496",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "prn_only",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "Lieutenant",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "09/14",
+      "birthday_mmdd": "09/14",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "toneygracie10@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 50,
+        "overtime_eligible": false,
+        "pay_rate": 900,
+        "pay_rate_unit": "week",
+        "pay_type": "salaried",
+        "preferred_weekly_hour_cap": 40,
+        "status": "FT"
+      },
+      "first_name": "Destiny",
+      "last_name": "Toney",
+      "member_id": "107",
+      "name": "Gracie Toney",
+      "ops_cert": "ALS",
+      "phone": "910-512-7804",
+      "preferences": {
+        "ampm": "prefer_am",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "rank": "Lieutenant",
+      "raw_cert": "AEMT",
+      "rotation": null,
+      "scheduler": {
+        "reserve_only": true
+      }
+    },
+    {
+      "active": true,
+      "birthday": "04/10",
+      "birthday_mmdd": "04/10",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "ntripp301@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 50,
+        "overtime_eligible": false,
+        "pay_rate": 50000,
+        "pay_rate_unit": "yr",
+        "pay_type": "salaried",
+        "preferred_weekly_hour_cap": 50,
+        "status": "FT"
+      },
+      "first_name": "Nicholas",
+      "last_name": "Tripp",
+      "member_id": "112",
+      "name": "Nicholas Tripp",
+      "ops_cert": "ALS",
+      "phone": "860-471-2062",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "rank": "EMS Supervisor",
+      "raw_cert": "AEMT",
+      "rotation": null,
+      "scheduler": {
+        "reserve_only": true
+      }
+    },
+    {
+      "active": false,
+      "birthday": "01/19",
+      "birthday_mmdd": "01/19",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "adamcoleman0180@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Adam",
+      "last_name": "Coleman",
+      "member_id": "153",
+      "name": "Adam Coleman",
+      "ops_cert": "EMT",
+      "phone": "910-398-3719",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "prn_only",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "12/13",
+      "birthday_mmdd": "12/13",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "seagrass88@outlook.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Cassandra",
+      "last_name": "Grass",
+      "member_id": "168",
+      "name": "Cassandra Grass",
+      "ops_cert": "ALS",
+      "phone": "910-207-8036",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "AEMT",
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "AEMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "11/15",
+      "birthday_mmdd": "11/15",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "sg1969camaro@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "James",
+      "last_name": "Grice",
+      "member_id": "142",
+      "name": "James Grice",
+      "ops_cert": "NCLD",
+      "phone": "910-625-9541",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "01/22",
+      "birthday_mmdd": "01/22",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "hines.james523@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "James",
+      "last_name": "Hines",
+      "member_id": "141",
+      "name": "James Hines",
+      "ops_cert": "NCLD",
+      "phone": "910-663-0065",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "11/28",
+      "birthday_mmdd": "11/28",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "norawilson1128@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 16,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 0,
+        "status": "PRN"
+      },
+      "first_name": "Nora",
+      "last_name": "Hines",
+      "member_id": "151",
+      "name": "Nora Hines",
+      "ops_cert": "EMT",
+      "phone": "910-470-8174",
+      "preferences": {
+        "ampm": "prefer_am",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "11/29",
+      "birthday_mmdd": "11/29",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "shermanhuff789@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 12,
+        "overtime_eligible": true,
+        "pay_rate": 14,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 12,
+        "status": "PT"
+      },
+      "first_name": "Sherman",
+      "last_name": "Huff",
+      "member_id": "146",
+      "name": "Sherman Huff",
+      "ops_cert": "NCLD",
+      "phone": "910-209-6000",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "11/11",
+      "birthday_mmdd": "11/11",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "kxo72182@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Jeffrey",
+      "last_name": "Lennon",
+      "member_id": "147",
+      "name": "Jeffrey Lennon",
+      "ops_cert": "NCLD",
+      "phone": "910-612-4980",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "10/06",
+      "birthday_mmdd": "10/06",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "cynohara16@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "PRN"
+      },
+      "first_name": "Cynthia",
+      "last_name": "O'Hara",
+      "member_id": "148",
+      "name": "Cynthia O'Hara",
+      "ops_cert": "EMT",
+      "phone": "910-398-3397",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null,
+      "scheduler": {
+        "avoid_with": [
+          "102"
+        ]
+      }
+    },
+    {
+      "active": true,
+      "birthday": "01/05",
+      "birthday_mmdd": "01/05",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "polletta.shane@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 36,
+        "overtime_eligible": false,
+        "pay_rate": 15,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "PRN"
+      },
+      "first_name": "Shane",
+      "last_name": "Polletta",
+      "member_id": "149",
+      "name": "Shane Polletta",
+      "ops_cert": "EMT",
+      "phone": "910-515-8448",
+      "preferences": {
+        "ampm": "prefer_pm",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "07/16",
+      "birthday_mmdd": "07/16",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "christopherruss793@yahoo.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Christopher",
+      "last_name": "Russ",
+      "member_id": "150",
+      "name": "Christopher Russ",
+      "ops_cert": "NCLD",
+      "phone": "910-833-0661",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "01/02",
+      "birthday_mmdd": "01/02",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "smallfry1284@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Sandra",
+      "last_name": "Simmons",
+      "member_id": "143",
+      "name": "Sandra Simmons",
+      "ops_cert": "NCLD",
+      "phone": "910-232-1072",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "07/31",
+      "birthday_mmdd": "07/31",
+      "cert": "EMT",
+      "drive": {
+        "120": false,
+        "121": false,
+        "131": false
+      },
+      "email": "agenus05@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 24,
+        "overtime_eligible": false,
+        "pay_rate": 16,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 12,
+        "status": "PRN"
+      },
+      "first_name": "AJ",
+      "last_name": "Smith",
+      "member_id": "163",
+      "name": "AJ Smith",
+      "ops_cert": "EMT",
+      "phone": "910-620-4986",
+      "preferences": {
+        "ampm": "prefer_pm",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "01/13",
+      "birthday_mmdd": "01/13",
+      "cert": "EMR",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "jonathansmith2224@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Jonathan",
+      "last_name": "Smith",
+      "member_id": "144",
+      "name": "Jonathan Smith",
+      "ops_cert": "EMR",
+      "phone": "910-619-2803",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMR"
+      ],
+      "rank": "",
+      "raw_cert": "EMR",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "05/30",
+      "birthday_mmdd": "05/30",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "septdadof3@yahoo.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Roger",
+      "last_name": "Toney",
+      "member_id": "145",
+      "name": "Roger Toney",
+      "ops_cert": "EMT",
+      "phone": "910-512-9235",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "05/15",
+      "birthday_mmdd": "05/15",
+      "cert": "NCLD",
+      "drive": {
+        "120": false,
+        "121": false,
+        "131": false
+      },
+      "email": "cliftonwarner18@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 12,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Clifton",
+      "last_name": "Warner",
+      "member_id": "154",
+      "name": "Clifton Warner",
+      "ops_cert": "NCLD",
+      "phone": "910-363-6231",
+      "preferences": {
+        "ampm": "prefer_am",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "04/19",
+      "birthday_mmdd": "04/19",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "jon@wfhii.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Jonathan",
+      "last_name": "Wright",
+      "member_id": "155",
+      "name": "Jonathan Wright",
+      "ops_cert": "NCLD",
+      "phone": "910-443-0488",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "11/21",
+      "birthday_mmdd": "11/21",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "147.adr@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 12,
+        "overtime_eligible": false,
+        "pay_rate": 16,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 0,
+        "status": "PRN"
+      },
+      "first_name": "Christian",
+      "last_name": "Wright",
+      "member_id": "156",
+      "name": "Christian Wright",
+      "ops_cert": "EMT",
+      "phone": "910-200-1876",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "",
+      "birthday_mmdd": "",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "swainmy11@yahoo.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Myles",
+      "last_name": "Swain",
+      "member_id": "157",
+      "name": "Myles Swain",
+      "ops_cert": "ALS",
+      "phone": "910-617-7781",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "rank": "",
+      "raw_cert": "PARAMEDIC",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "06/20",
+      "birthday_mmdd": "06/20",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "ariclinzey@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Aric",
+      "last_name": "Linzey",
+      "member_id": "158",
+      "name": "Aric Linzey",
+      "ops_cert": "NCLD",
+      "phone": "910-530-0029",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "09/14",
+      "birthday_mmdd": "09/14",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "toneybrett92@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 36,
+        "overtime_eligible": false,
+        "pay_rate": 15,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "PT"
+      },
+      "first_name": "Brett",
+      "last_name": "Toney",
+      "member_id": "159",
+      "name": "Brett Toney",
+      "ops_cert": "EMT",
+      "phone": "910-231-2524",
+      "preferences": {
+        "ampm": "prefer_pm",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "03/09",
+      "birthday_mmdd": "03/09",
+      "cert": "NCLD",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "kaitbug17@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Kaitlynn",
+      "last_name": "Croom",
+      "member_id": "160",
+      "name": "Kaitlynn Croom",
+      "ops_cert": "NCLD",
+      "phone": "910-398-2408",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER"
+      ],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "11/28",
+      "birthday_mmdd": "11/28",
+      "cert": "NCLD",
+      "drive": {
+        "120": false,
+        "121": false,
+        "131": false
+      },
+      "email": "knatalie380@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Natalie",
+      "last_name": "Toney",
+      "member_id": "161",
+      "name": "Natalie Toney",
+      "ops_cert": "NCLD",
+      "phone": "910-470-8083",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "03/30",
+      "birthday_mmdd": "03/30",
+      "cert": "NCLD",
+      "drive": {
+        "120": false,
+        "121": false,
+        "131": false
+      },
+      "email": "rileytimothy529@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 0,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "volunteer",
+        "preferred_weekly_hour_cap": 0,
+        "status": "VOLUNTEER"
+      },
+      "first_name": "Timothy",
+      "last_name": "Riley",
+      "member_id": "162",
+      "name": "Timothy Riley",
+      "ops_cert": "NCLD",
+      "phone": "910-945-2708",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "07/28",
+      "birthday_mmdd": "07/28",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "sophie.williams7284@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 36,
+        "overtime_eligible": false,
+        "pay_rate": 18,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "PT"
+      },
+      "first_name": "Sophia",
+      "last_name": "Williams",
+      "member_id": "180",
+      "name": "Sophia Williams",
+      "ops_cert": "ALS",
+      "phone": "980-213-7083",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": "A",
+          "rotation_role": "night",
+          "rotation_template_id": "rot_223_12h_relief",
+          "rotation_track": "C",
+          "shift_length_hours": 12,
+          "style": "rotation_223_relief",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "rank": "",
+      "raw_cert": "AEMT",
+      "rotation": {
+        "pair": "AC",
+        "role": "C"
+      }
+    },
+    {
+      "active": true,
+      "birthday": "08/26",
+      "birthday_mmdd": "08/26",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "annasquires910@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 24,
+        "overtime_eligible": false,
+        "pay_rate": 19,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 12,
+        "status": "PT"
+      },
+      "first_name": "Anna",
+      "last_name": "Squires",
+      "member_id": "181",
+      "name": "Anna Squires",
+      "ops_cert": "ALS",
+      "phone": "910-874-3120",
+      "preferences": {
+        "ampm": "prefer_am",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "rank": "",
+      "raw_cert": "PARAMEDIC",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "07/27",
+      "birthday_mmdd": "07/27",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "vnmeeks@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 36,
+        "overtime_eligible": false,
+        "pay_rate": 20,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "PT"
+      },
+      "first_name": "Nikki",
+      "last_name": "Meeks",
+      "member_id": "182",
+      "name": "Nikki Meeks",
+      "ops_cert": "ALS",
+      "phone": "910-627-7873",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "rank": "",
+      "raw_cert": "AEMT",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "11/17",
+      "birthday_mmdd": "11/17",
+      "cert": "ALS",
+      "drive": {
+        "120": false,
+        "121": false,
+        "131": false
+      },
+      "email": "sejoy04009@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 12,
+        "overtime_eligible": false,
+        "pay_rate": 18,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 0,
+        "status": "PRN"
+      },
+      "first_name": "Serenity",
+      "last_name": "Joyner",
+      "member_id": "183",
+      "name": "Serenity Joyner",
+      "ops_cert": "ALS",
+      "phone": "910-660-1703",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "AEMT"
+      ],
+      "rank": "",
+      "raw_cert": "AEMT",
+      "rotation": null
+    },
+    {
+      "active": false,
+      "birthday": "",
+      "birthday_mmdd": "",
+      "cert": "NCLD",
+      "drive": {
+        "120": false,
+        "121": false,
+        "131": false
+      },
+      "email": "",
+      "employment": {
+        "hard_weekly_hour_cap": null,
+        "overtime_eligible": false,
+        "pay_rate": 0,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": null,
+        "status": "PT"
+      },
+      "first_name": "Unknown",
+      "last_name": "",
+      "member_id": "184",
+      "name": "Unknown",
+      "ops_cert": "NCLD",
+      "phone": "",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [],
+      "rank": "",
+      "raw_cert": "NCLD",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "02/08",
+      "birthday_mmdd": "02/08",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "sidneydubois18@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 36,
+        "overtime_eligible": false,
+        "pay_rate": 16,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "PT"
+      },
+      "first_name": "Sidney",
+      "last_name": "DuBois",
+      "member_id": "185",
+      "name": "Sidney DuBois",
+      "ops_cert": "EMT",
+      "phone": "910-515-0042",
+      "preferences": {
+        "ampm": "prefer_am",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": "C",
+          "rotation_role": "day",
+          "rotation_template_id": "rot_223_12h_relief",
+          "rotation_track": "A",
+          "shift_length_hours": 12,
+          "style": "rotation_223_relief",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": {
+        "pair": "AC",
+        "role": "A"
+      }
+    },
+    {
+      "active": true,
+      "birthday": "02/20",
+      "birthday_mmdd": "02/20",
+      "cert": "ALS",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "lynnsey@benson.cc",
+      "employment": {
+        "hard_weekly_hour_cap": 40,
+        "overtime_eligible": true,
+        "pay_rate": 18,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "FT"
+      },
+      "first_name": "Lynnsey",
+      "last_name": "Benson",
+      "member_id": "186",
+      "name": "Lynnsey Benson",
+      "ops_cert": "ALS",
+      "phone": "910-512-2859",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "prefer",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": "C",
+          "rotation_role": "day",
+          "rotation_template_id": "rot_223_12h_relief",
+          "rotation_track": "A",
+          "shift_length_hours": 12,
+          "style": "rotation_223_relief",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": true,
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "rank": "",
+      "raw_cert": "AEMT",
+      "rotation": {
+        "pair": "AC",
+        "role": "A"
+      }
+    },
+    {
+      "active": true,
+      "birthday": "10/15",
+      "birthday_mmdd": "10/15",
+      "cert": "ALS",
+      "drive": {
+        "120": false,
+        "121": false,
+        "131": false
+      },
+      "email": "dylan180315@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 40,
+        "overtime_eligible": true,
+        "pay_rate": 21,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "PT"
+      },
+      "first_name": "Gordon",
+      "last_name": "Grant",
+      "member_id": "187",
+      "name": "Gordon Grant",
+      "ops_cert": "ALS",
+      "phone": "910-712-1009",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "prefer",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": 24,
+          "style": "legacy_24h",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "AEMT"
+      ],
+      "rank": "",
+      "raw_cert": "PARAMEDIC",
+      "rotation": null
+    },
+    {
+      "active": true,
+      "birthday": "06/10",
+      "birthday_mmdd": "06/10",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "brian@910cpr.com",
+      "employment": {
+        "hard_weekly_hour_cap": 40,
+        "overtime_eligible": true,
+        "pay_rate": 15,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "FT"
+      },
+      "first_name": "Brian",
+      "last_name": "Ennis",
+      "member_id": "188",
+      "name": "Brian Ennis",
+      "ops_cert": "EMT",
+      "phone": "910-622-1664",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "relief_partner_track": "B",
+          "rotation_role": "night",
+          "rotation_track": "D",
+          "style": "rotation_223_relief",
+          "rotation_template_id": "rot_223_12h_relief",
+          "shift_length_hours": 12,
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": {
+        "pair": "BD",
+        "role": "D"
+      }
+    },
+    {
+      "active": true,
+      "birthday": "02/27",
+      "birthday_mmdd": "02/27",
+      "cert": "EMT",
+      "drive": {
+        "120": true,
+        "121": true,
+        "131": true
+      },
+      "email": "collinharrison10@gmail.com",
+      "employment": {
+        "hard_weekly_hour_cap": 40,
+        "overtime_eligible": true,
+        "pay_rate": 15,
+        "pay_rate_unit": "hr",
+        "pay_type": "hourly",
+        "preferred_weekly_hour_cap": 36,
+        "status": "PT"
+      },
+      "first_name": "Collin",
+      "last_name": "Harrison",
+      "member_id": "189",
+      "name": "Collin Harrison",
+      "ops_cert": "EMT",
+      "phone": "910-520-2046",
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
+          "shift_length_hours": null,
+          "style": "availability_based",
+          "swap_strategy": "allow"
+        }
+      },
+      "qrv_certified": false,
+      "qualifications": [
+        "DRIVER",
+        "EMT"
+      ],
+      "rank": "",
+      "raw_cert": "EMT",
+      "rotation": null
+    }
+  ]
+}
