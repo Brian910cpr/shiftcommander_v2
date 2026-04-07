@@ -425,7 +425,7 @@
         <button class="nav-btn" id="nextWeekBtn">Next Week →</button>
       </div>
       <div class="meta-pill" id="metaWindow">Window: --</div>
-      <div class="meta-pill" id="metaUnit">Source: /data/schedule.json</div>
+      <div class="meta-pill" id="metaUnit">Source: /data/schedule.json + /api/members</div>
       <div class="meta-pill" id="metaUpdated">Updated: --</div>
     </div>
   </div>
@@ -445,8 +445,6 @@
 
     let currentWeekOffset = 0;
     let lastLoadedData = null;
-    let lastMembersData = null;
-    let memberLookup = new Map();
     let idleTimer = null;
 
     function escapeHtml(value) {
@@ -543,48 +541,49 @@
       return raw.replace(/\s+shift$/i, "");
     }
 
-    function normalizeCert(value) {
+    function normalizeCertValue(value) {
       const raw = String(value || "").trim().toUpperCase();
-      if (["PARAMEDIC", "AEMT", "ALS"].includes(raw)) return "ALS";
+      if (!raw) return "";
+      if (raw === "PARAMEDIC" || raw === "AEMT" || raw === "ALS") return "ALS";
       if (raw === "EMT") return "EMT";
       if (raw === "NCLD") return "NCLD";
-      return raw || "UNKNOWN";
+      return raw;
     }
 
     function buildMemberLookup(payload) {
-      const lookup = new Map();
-      const members = Array.isArray(payload?.members) ? payload.members : [];
+      const members = Array.isArray(payload?.members) ? payload.members : (Array.isArray(payload) ? payload : []);
+      const byId = new Map();
+      const byName = new Map();
+
       for (const member of members) {
-        const id = String(member?.member_id || member?.id || "").trim();
-        const name = String(member?.name || [member?.first_name, member?.last_name].filter(Boolean).join(" ") || "").trim();
-        const cert = normalizeCert(member?.ops_cert || member?.cert || member?.raw_cert || "");
+        const memberId = String(member?.member_id ?? member?.id ?? "").trim();
+        const name = String(member?.name || [member?.first_name, member?.last_name].filter(Boolean).join(" ")).trim();
+        const cert = normalizeCertValue(member?.ops_cert || member?.cert || member?.raw_cert || "");
+
         const entry = {
-          member_id: id,
+          id: memberId,
           name,
-          cert,
-          raw_cert: String(member?.raw_cert || "").trim(),
-          ops_cert: String(member?.ops_cert || member?.cert || "").trim(),
-          active: !!member?.active,
+          cert
         };
-        if (id) lookup.set(`id:${id}`, entry);
-        if (name) lookup.set(`name:${name.toLowerCase()}`, entry);
+
+        if (memberId) byId.set(memberId, entry);
+        if (name) byName.set(name.toUpperCase(), entry);
       }
-      return lookup;
+
+      return { byId, byName };
     }
 
-    function lookupMemberForSeat(seat) {
-      const assignedId = String(seat?.assigned || "").trim();
-      const assignedName = String(seat?.assigned_name || "").trim();
-      if (assignedId && memberLookup.has(`id:${assignedId}`)) return memberLookup.get(`id:${assignedId}`);
-      if (assignedName && memberLookup.has(`name:${assignedName.toLowerCase()}`)) return memberLookup.get(`name:${assignedName.toLowerCase()}`);
-      return null;
-    }
+    function colorClassFromSeat(seat, memberLookup) {
+      const rawName = String(seat?.assigned_name || "").trim();
+      const rawId = String(seat?.assigned ?? "").trim();
 
-    function colorClassForSeat(seat, displayName) {
-      const raw = String(displayName || "").trim().toUpperCase();
-      if (raw === "OPEN" || raw === "UNFILLED") return "red";
-      const member = lookupMemberForSeat(seat);
-      const cert = normalizeCert(member?.cert || seat?.assigned_cert || seat?.assigned_ops_cert || "");
+      if (!rawName && !rawId) return "default";
+      if (rawName.toUpperCase() === "OPEN" || rawName.toUpperCase() === "UNFILLED") return "red";
+
+      const fromId = rawId ? memberLookup?.byId?.get(rawId) : null;
+      const fromName = rawName ? memberLookup?.byName?.get(rawName.toUpperCase()) : null;
+      const cert = normalizeCertValue(fromId?.cert || fromName?.cert || "");
+
       if (cert === "ALS") return "green";
       if (cert === "EMT") return "blue";
       if (cert === "NCLD") return "pink";
@@ -676,95 +675,7 @@
       return `${locked} • ${when}`;
     }
 
-    function topBlockedReasons(seat, limit = 5) {
-      const entries = Array.isArray(seat?.candidate_audit) ? seat.candidate_audit : [];
-      const blocked = entries.filter(entry => entry?.eligible === false);
-      const counts = new Map();
-      blocked.forEach(entry => {
-        (Array.isArray(entry?.reasons) ? entry.reasons : []).forEach(reason => {
-          counts.set(reason, (counts.get(reason) || 0) + 1);
-        });
-      });
-      return [...counts.entries()]
-        .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
-        .slice(0, limit)
-        .map(([reason, count]) => `${reason} (${count})`);
-    }
-
-    function findChosenAuditEntry(seat) {
-      const entries = Array.isArray(seat?.candidate_audit) ? seat.candidate_audit : [];
-      const assignedId = String(seat?.assigned || "").trim();
-      const assignedName = String(seat?.assigned_name || "").trim().toLowerCase();
-      const fillPass = String(seat?.fill_pass || "").trim();
-      for (let i = entries.length - 1; i >= 0; i--) {
-        const entry = entries[i];
-        if (!entry || entry.eligible !== true) continue;
-        const entryId = String(entry.member_id || "").trim();
-        const entryName = String(entry.member_name || "").trim().toLowerCase();
-        const passMatch = !fillPass || String(entry.pass || "").trim() === fillPass;
-        const personMatch = (assignedId && entryId === assignedId) || (assignedName && entryName === assignedName);
-        if (passMatch && personMatch) return entry;
-      }
-      for (let i = entries.length - 1; i >= 0; i--) {
-        const entry = entries[i];
-        if (!entry || entry.eligible !== true) continue;
-        const entryId = String(entry.member_id || "").trim();
-        const entryName = String(entry.member_name || "").trim().toLowerCase();
-        if ((assignedId && entryId === assignedId) || (assignedName && entryName === assignedName)) return entry;
-      }
-      return null;
-    }
-
-    function formatScoreBreakdown(breakdown) {
-      if (!breakdown || typeof breakdown !== 'object') return [];
-      return Object.entries(breakdown)
-        .filter(([key, value]) => key !== 'final_score' && value !== null && value !== undefined && value !== '' && value !== 0)
-        .map(([key, value]) => `${key}: ${value}`);
-    }
-
-    function seatDebugTitle(seat, shiftDate) {
-      const member = lookupMemberForSeat(seat);
-      const chosen = findChosenAuditEntry(seat);
-      const lines = [];
-      lines.push(`Seat Role: ${String(seat?.role || 'UNKNOWN')}`);
-      lines.push(`Assigned: ${String(seat?.assigned_name || 'OPEN')}`);
-      lines.push(`Assigned ID: ${String(seat?.assigned || '--')}`);
-      lines.push(`Cert: ${normalizeCert(member?.cert || seat?.assigned_cert || seat?.assigned_ops_cert || '--')}`);
-      lines.push(`Fill Pass: ${String(seat?.fill_pass || '--')}`);
-      lines.push(`Pattern: ${String(seat?.resolved_pattern_key || '--')}`);
-      lines.push(`Reserve Used: ${seat?.reserve_support_used ? 'Yes' : 'No'}`);
-      lines.push(`ALS Required: ${seat?.als_required ? 'Yes' : 'No'}`);
-      lines.push(`Stamp: ${seatStampText(seat)}`);
-      if (chosen) {
-        lines.push('');
-        lines.push('PASSED CHECKS:');
-        const passed = Array.isArray(chosen?.passed_checks) ? chosen.passed_checks : [];
-        if (passed.length) {
-          passed.forEach(item => lines.push(`+ ${item}`));
-        } else {
-          lines.push('+ no explicit passed_checks recorded');
-        }
-        if (typeof chosen?.score !== 'undefined') {
-          lines.push(`Final Score: ${chosen.score}`);
-        }
-        const scoreLines = formatScoreBreakdown(chosen?.score_breakdown);
-        if (scoreLines.length) {
-          lines.push('');
-          lines.push('SCORE BREAKDOWN:');
-          scoreLines.forEach(item => lines.push(`• ${item}`));
-        }
-      }
-      const blocked = topBlockedReasons(seat, 6);
-      if (blocked.length) {
-        lines.push('');
-        lines.push('TOP BLOCKED REASONS:');
-        blocked.forEach(item => lines.push(`- ${item}`));
-      }
-      return lines.join('
-');
-    }
-
-    function renderSlot(seat, shiftDate) {
+    function renderSlot(seat, shiftDate, memberLookup) {
       const rawName = String(seat?.assigned_name || "").trim();
       const pastDate = isPastDate(shiftDate);
       const showOpenAlert = seat?.display_open_alert === true;
@@ -777,20 +688,19 @@
 
       const isFutureOpen = !rawName && showOpenAlert && !pastDate;
       const hasMember = !!rawName && rawName.toUpperCase() !== "OPEN";
-      const memberClass = hasMember ? colorClassForSeat(seat, displayName) : (pastDate ? "default" : "empty");
+      const memberClass = hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty");
       const openSeatClass = isFutureOpen ? "open-seat" : "";
-      const debugTitle = seatDebugTitle(seat, shiftDate);
 
       return `
-        <div class="slot ${openSeatClass}" title="${escapeHtml(debugTitle)}">
+        <div class="slot ${openSeatClass}">
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
         </div>
       `;
     }
 
-    function renderShiftCard(shift) {
+    function renderShiftCard(shift, memberLookup) {
       const renderedSlots = (shift.seats || [])
-        .map(seat => renderSlot(seat, shift.date))
+        .map(seat => renderSlot(seat, shift.date, memberLookup))
         .filter(Boolean);
 
       const slotsHtml = renderedSlots.length
@@ -840,14 +750,14 @@
       return classes.join(" ");
     }
 
-    function renderDayCard(iso, dayShifts, todayIso, visibleDates, index) {
+    function renderDayCard(iso, dayShifts, todayIso, visibleDates, index, memberLookup) {
       const dayFmt = formatDayParts(iso);
       let dayClass = "future";
       if (compareIso(iso, todayIso) < 0) dayClass = "past";
       if (iso === todayIso) dayClass = "today";
 
       const monthClasses = monthBoundaryClasses(visibleDates, index);
-      const shiftsHtml = dayShifts.length ? dayShifts.map(renderShiftCard).join("") : "";
+      const shiftsHtml = dayShifts.length ? dayShifts.map(shift => renderShiftCard(shift, memberLookup)).join("") : "";
 
       return `
         <section class="day-card ${dayClass} ${monthClasses}">
@@ -879,7 +789,7 @@
       metaWindow.textContent = `Window: ${visibleDates[0].iso} to ${visibleDates[visibleDates.length - 1].iso}`;
 
       app.className = "board";
-      app.innerHTML = visibleDates.map((day, index) => renderDayCard(day.iso, daysMap[day.iso] || [], todayIso, visibleDates, index)).join("");
+      app.innerHTML = visibleDates.map((day, index) => renderDayCard(day.iso, daysMap[day.iso] || [], todayIso, visibleDates, index, data?.memberLookup)).join("");
     }
 
     function rerender() {
@@ -928,22 +838,26 @@
           fetch(`${SCHEDULE_URL}?t=${Date.now()}`, { cache: "no-store" }),
           fetch(`${MEMBERS_URL}?t=${Date.now()}`, { cache: "no-store" })
         ]);
-        if (!scheduleResponse.ok) throw new Error(`HTTP ${scheduleResponse.status}`);
-        if (!membersResponse.ok) throw new Error(`HTTP ${membersResponse.status}`);
 
-        const data = await scheduleResponse.json();
+        if (!scheduleResponse.ok) throw new Error(`Schedule HTTP ${scheduleResponse.status}`);
+        if (!membersResponse.ok) throw new Error(`Members HTTP ${membersResponse.status}`);
+
+        const scheduleData = await scheduleResponse.json();
         const membersData = await membersResponse.json();
-        lastLoadedData = data;
-        lastMembersData = membersData;
-        memberLookup = buildMemberLookup(membersData);
+
+        lastLoadedData = {
+          ...scheduleData,
+          memberLookup: buildMemberLookup(membersData)
+        };
+
         renderWeekdayRow();
-        renderSchedule(data);
+        renderSchedule(lastLoadedData);
       } catch (error) {
-        console.error("Failed to load schedule:", error);
+        console.error("Failed to load wallboard data:", error);
         app.className = "state";
         app.innerHTML = `
-          <div>Failed to load schedule.</div>
-          <div style="margin-top:12px; font-size:18px;">Check path: <code>${escapeHtml(SCHEDULE_URL)}</code></div>
+          <div>Failed to load wallboard data.</div>
+          <div style="margin-top:12px; font-size:18px;">Check paths: <code>${escapeHtml(SCHEDULE_URL)}</code> and <code>${escapeHtml(MEMBERS_URL)}</code></div>
           <div style="margin-top:12px; font-size:18px;">${escapeHtml(error.message || "Unknown error")}</div>
         `;
       }
