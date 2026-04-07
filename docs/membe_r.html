@@ -45,12 +45,6 @@
   .summary-pill .s{font-size:12px;color:#c8d8f2;line-height:1.35}
   .prefs-controls-grid,.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .field-card{padding:10px;border:1px solid #294766;border-radius:14px;background:#09192f}
-  .member-controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .inactive-primary{font-size:18px;font-weight:900;margin-bottom:10px}
-  .status-row{display:flex;gap:10px;flex-wrap:wrap}
-  .status-btn{min-width:120px;height:42px;padding:0 16px;border-radius:999px;border:1px solid #2c547d;background:#09192f;color:#dbe9ff;font-size:15px;font-weight:900;cursor:pointer}
-  .status-btn.active{background:#0e2d4b;border-color:#1bc4ff;box-shadow:0 0 0 1px rgba(27,196,255,.2) inset}
-  .control-disabled{opacity:.45;pointer-events:none;filter:grayscale(.15)}
   .toggle-wrap{display:flex;align-items:center;gap:10px;min-height:44px}
   .toggle-wrap input[type="checkbox"]{width:18px;height:18px;accent-color:#25b9ff}
   .toggle-wrap .toggle-text{font-weight:900}
@@ -128,7 +122,7 @@
     .avoid-list{grid-template-columns:1fr}
     .toolbar{grid-template-columns:1fr 1fr}
     .bulk-grid{grid-template-columns:1fr 1fr}
-    .prefs-controls-grid,.form-grid-2,.member-controls-grid{grid-template-columns:1fr}
+    .prefs-controls-grid,.form-grid-2{grid-template-columns:1fr}
   }
   @media (max-width:600px){
     .toolbar,.bulk-grid{grid-template-columns:1fr}
@@ -189,35 +183,17 @@
       </div>
 
       <div class="card">
-        <div class="section-title" style="font-size:20px;font-weight:900;margin-bottom:10px">Member Controls</div>
-
-        <div class="field-card" style="margin-bottom:12px">
-          <div class="inactive-primary">Availability status</div>
-          <div class="status-row" id="availabilityStatusButtons"></div>
-          <div class="quiet-note">Set yourself inactive to stop being considered right now. When inactive, the preference controls below gray out.</div>
-        </div>
-
-        <div id="memberPreferenceGroup" class="member-controls-grid">
+        <div class="section-title" style="font-size:20px;font-weight:900;margin-bottom:10px">Quick Controls</div>
+        <div class="form-grid-2">
           <div class="field-card">
-            <label for="desiredCapInput">Desired weekly hours</label>
-            <input id="desiredCapInput" type="number" min="0" step="1" />
-            <div class="hint">This helps show what you are aiming for. It does not guarantee assignment.</div>
-          </div>
-
-          <div class="field-card">
-            <label>24 Hour Shifts</label>
-            <div class="triple-row" id="pref24Buttons"></div>
-          </div>
-
-          <div class="field-card">
-            <label>AM / PM Preference</label>
-            <div class="triple-row" id="prefAmpmButtons"></div>
-          </div>
-        </div>
-
-        <div class="quiet-note">You can offer more availability than you expect to be scheduled for. This gives management flexibility without promising a certain number of hours.</div>
-      </div>
-    </div>
+            <label>Availability status</label>
+            <div class="toggle-wrap">
+              <input id="activeToggle" type="checkbox" />
+              <div>
+                <div class="toggle-text" id="activeToggleLabel">Active for scheduling</div>
+                <div class="hint">Turn this off if you do not want to be considered right now.</div>
+              </div>
+            </div>
           </div>
           <div class="field-card">
             <label for="desiredCapInput">Desired weekly hours</label>
@@ -232,14 +208,17 @@
     <div class="card prefs-box">
       <div class="prefs-grid">
         <div>
-          <div class="section-title">Rotation</div>
+          <div class="section-title">Shift Preferences</div>
+          <label>Shift Style</label>
+          <div class="triple-row" id="shiftStyleButtons"></div>
+          <div style="height:10px"></div>
 
-          <div id="rotation223Wrap">
+          <div id="rotation223Wrap" class="hidden">
             <div class="rotation-grid">
               <div>
                 <label for="rotationTrackSelect">2-2-3 Rotation Track</label>
-                <select id="rotationTrackSelect" disabled>
-                  <option value="">Manager controlled</option>
+                <select id="rotationTrackSelect">
+                  <option value="">Select track</option>
                   <option value="A">A · Day, relieved by C</option>
                   <option value="B">B · Day, relieved by D</option>
                   <option value="C">C · Night, relieves A</option>
@@ -248,15 +227,24 @@
               </div>
               <div class="rotation-summary" id="rotationSummary">
                 <div><strong>Track not selected</strong></div>
-                <div class="rotation-note">Shown for reference only. Rotation assignment itself remains manager controlled.</div>
+                <div class="rotation-note">Choose A, B, C, or D to save the relief-paired 12-hour track.</div>
               </div>
             </div>
             <div style="height:10px"></div>
           </div>
+
+          <label>24 Hour Shifts</label>
+          <div class="triple-row" id="pref24Buttons"></div>
+          <div style="height:10px"></div>
+          <label>AM / PM Preference</label>
+          <div class="triple-row" id="prefAmpmButtons"></div>
+          <div style="height:10px"></div>
+          <label>Swap Flexibility</label>
+          <div class="triple-row" id="swapButtons"></div>
         </div>
 
         <div>
-          <details class="avoid-wrap">
+          <details class="avoid-wrap" open>
             <summary>
               <span>Avoid With • multiple selection</span>
               <span id="avoidCountLabel">0 selected ▾</span>
@@ -363,6 +351,21 @@ const AMPM_OPTIONS = [
   {value:'prefer_pm', label:'Prefer PM'},
   {value:'no_preference', label:'No preference'}
 ];
+const SHIFT_STYLE_OPTIONS = [
+  {value:'availability_based', label:'Flexible'},
+  {value:'rotation_223_relief', label:'2-2-3 Relief'},
+  {value:'legacy_24h', label:'24 Hour'},
+  {value:'fixed_12h', label:'Fixed 12'},
+  {value:'partial_8h_day', label:'8 Hour Day'},
+  {value:'partial_6h', label:'6 Hour Partial'},
+  {value:'prn_only', label:'PRN'}
+];
+const SWAP_OPTIONS = [
+  {value:'allow', label:'Allow'},
+  {value:'same_style_only', label:'Same Style'},
+  {value:'same_rotation_only', label:'Same 2-2-3'},
+  {value:'supervisor_only', label:'Supervisor'}
+];
 
 let membersPayload = { members: [] };
 let availabilityPayload = { months: {}, patterns_by_member:{} };
@@ -388,8 +391,8 @@ const bulkWeeksInput = document.getElementById('bulkWeeksInput');
 const bulkUntilDate = document.getElementById('bulkUntilDate');
 const pref24Buttons = document.getElementById('pref24Buttons');
 const prefAmpmButtons = document.getElementById('prefAmpmButtons');
-const availabilityStatusButtons = document.getElementById('availabilityStatusButtons');
-const memberPreferenceGroup = document.getElementById('memberPreferenceGroup');
+const shiftStyleButtons = document.getElementById('shiftStyleButtons');
+const swapButtons = document.getElementById('swapButtons');
 const rotation223Wrap = document.getElementById('rotation223Wrap');
 const rotationTrackSelect = document.getElementById('rotationTrackSelect');
 const rotationSummary = document.getElementById('rotationSummary');
@@ -759,50 +762,45 @@ function renderMemberSnapshot(){
   desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
 }
 
-function renderActiveState(){
-  const m = getSelectedMember();
-  const current = m?.active === false ? 'inactive' : 'active';
-  availabilityStatusButtons.innerHTML = `
-    <button type="button" class="status-btn ${current==='active' ? 'active' : ''}" data-value="active">Active</button>
-    <button type="button" class="status-btn ${current==='inactive' ? 'active' : ''}" data-value="inactive">Inactive</button>
-  `;
-  availabilityStatusButtons.querySelectorAll('.status-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const member = getSelectedMember(); if(!member) return;
-      member.active = btn.dataset.value === 'active';
-      renderPreferences();
-      queueAutoSave('member');
-    });
-  });
-  memberPreferenceGroup.classList.toggle('control-disabled', current === 'inactive');
-}
-
 function renderPreferences(){
   const member = getSelectedMember();
   const prefs = getPreferences(member);
   const shiftPref = ensureShiftPreference(member || {preferences:{}});
   renderMemberSnapshot();
-  renderActiveState();
 
-  const showRotation = !!(member && member.rotation && member.rotation.role) || shiftPref.style === 'rotation_223_relief';
+  buildTripleButtons(shiftStyleButtons, SHIFT_STYLE_OPTIONS, shiftPref.style || 'availability_based', value => {
+    const m = getSelectedMember(); if(!m) return;
+    const sp = ensureShiftPreference(m);
+    sp.style = value;
+    sp.rotation_template_id = value === 'rotation_223_relief' ? 'rot_223_12h_relief' : null;
+    sp.rotation_track = value === 'rotation_223_relief' ? (sp.rotation_track || '') : null;
+    sp.rotation_role = value === 'rotation_223_relief' ? getRotationRole(sp.rotation_track) : null;
+    sp.relief_partner_track = value === 'rotation_223_relief' ? getReliefPartnerTrack(sp.rotation_track) : null;
+    sp.shift_length_hours = getShiftLengthForStyle(value);
+    if(!sp.swap_strategy) sp.swap_strategy = 'allow';
+    renderPreferences();
+    queueAutoSave('member');
+  });
+
+  const showRotation = shiftPref.style === 'rotation_223_relief';
   rotation223Wrap.classList.toggle('hidden', !showRotation);
-  rotationTrackSelect.value = showRotation ? ((member?.rotation?.role) || shiftPref.rotation_track || '') : '';
+  rotationTrackSelect.value = showRotation ? (shiftPref.rotation_track || '') : '';
 
   if(showRotation){
-    const track = (member?.rotation?.role) || shiftPref.rotation_track || '';
+    const track = shiftPref.rotation_track || '';
     const role = getRotationRole(track);
     const relief = getReliefPartnerTrack(track);
     rotationSummary.innerHTML = track ? `
       <div><strong>${esc(describeRotationTrack(track))}</strong></div>
-      <div class="rotation-note">12-hour ${esc(role)} track • paired relief partner ${esc(relief)} • shown here for reference only.</div>
+      <div class="rotation-note">12-hour ${esc(role)} track • paired relief partner ${esc(relief)} • shift swaps should prefer same-style / same-track coverage.</div>
     ` : `
       <div><strong>Track not selected</strong></div>
-      <div class="rotation-note">Manager-controlled rotation not yet assigned.</div>
+      <div class="rotation-note">Choose A, B, C, or D to save the relief-paired 12-hour track.</div>
     `;
   } else {
     rotationSummary.innerHTML = `
-      <div><strong>No rotation assigned</strong></div>
-      <div class="rotation-note">This member is currently availability-based or PRN.</div>
+      <div><strong>2-2-3 hidden</strong></div>
+      <div class="rotation-note">Select the 2-2-3 Relief shift style to assign A/B/C/D.</div>
     `;
   }
 
@@ -816,6 +814,14 @@ function renderPreferences(){
   buildTripleButtons(prefAmpmButtons, AMPM_OPTIONS, prefs.ampm || 'no_preference', value => {
     const m = getSelectedMember(); if(!m) return;
     m.preferences ||= {}; m.preferences.ampm = value;
+    renderPreferences();
+    queueAutoSave('member');
+  });
+
+  buildTripleButtons(swapButtons, SWAP_OPTIONS, shiftPref.swap_strategy || 'allow', value => {
+    const m = getSelectedMember(); if(!m) return;
+    const sp = ensureShiftPreference(m);
+    sp.swap_strategy = value;
     renderPreferences();
     queueAutoSave('member');
   });
@@ -950,6 +956,20 @@ async function init(){
   document.getElementById('fillVisibleBlanksBtn').addEventListener('click', fillVisibleBlanks);
   document.getElementById('clearVisibleBtn').addEventListener('click', () => { clearExplicitVisible(); renderCalendar(); statusLine.textContent = 'Visible window cleared. Auto-save in 3 seconds…'; queueAutoSave('availability'); });
   avoidSearch.addEventListener('input', () => { avoidSearchTerm = avoidSearch.value || ''; renderAvoidList(); });
+  rotationTrackSelect.addEventListener('change', () => {
+    const m = getSelectedMember(); if(!m) return;
+    applyRotationBlock(m, rotationTrackSelect.value || null);
+    renderPreferences();
+    queueAutoSave('member');
+  });
+
+  activeToggle.addEventListener('change', () => {
+    const m = getSelectedMember(); if(!m) return;
+    m.active = Boolean(activeToggle.checked);
+    activeToggleLabel.textContent = m.active ? 'Active for scheduling' : 'Inactive / not currently considered';
+    renderMemberSnapshot();
+    queueAutoSave('member');
+  });
   desiredCapInput.addEventListener('change', () => {
     const m = getSelectedMember(); if(!m) return;
     m.employment ||= {};
