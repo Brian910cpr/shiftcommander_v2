@@ -73,49 +73,41 @@
     align-items:start;
   }
 
-  .member-card{
-    min-height:160px;
-  }
+  .member-card{min-height:160px}
   .member-head{
     display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:10px;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
     margin-bottom:8px;
   }
-  .member-title{font-size:11px;font-weight:900;color:#dbe9ff;text-transform:uppercase;letter-spacing:.35px}
+  .member-title{
+    font-size:11px;
+    font-weight:900;
+    color:#dbe9ff;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+    text-align:center;
+  }
   .member-name{
     font-size:48px;
     font-weight:900;
     line-height:1;
     margin-top:2px;
+    text-align:center;
   }
   .cert-aemt{color:var(--green)}
   .cert-emt{color:var(--blue)}
   .cert-emr{color:var(--pink)}
   .cert-third{color:var(--white)}
+
   .member-meta{
     display:grid;
     grid-template-columns:repeat(3,minmax(0,1fr));
     gap:8px;
     text-align:center;
   }
-  .member-head{
-  display:flex;
-  flex-direction:column;      /* 👈 STACK (creates your "line feed") */
-  align-items:center;         /* 👈 CENTER horizontally */
-  justify-content:center;
-  gap:8px;
-}
-
-  .member-name{
-  text-align:center;
-}
-
-  .setting-btn.status{
-  align-self:center;          /* ensures button stays centered */
-}
-
   .member-chip{
     min-height:64px;
     border:1px solid #294766;
@@ -179,6 +171,7 @@
     display:grid;
     gap:8px;
   }
+  .hidden{display:none !important}
 
   .setting-btn{
     width:100%;
@@ -219,6 +212,7 @@
     align-items:center;
     text-align:center;
     padding:0 8px;
+    align-self:center;
   }
   .setting-btn.status .t{display:none}
   .setting-btn.status .v{font-size:11px}
@@ -407,7 +401,6 @@
   @media (max-width:600px){
     .toolbar,.prefs-grid,.controls-grid{grid-template-columns:1fr}
     .calendar-head,.calendar{grid-template-columns:1fr}
-    .member-head{flex-direction:column;align-items:flex-start}
   }
 </style>
 </head>
@@ -509,10 +502,12 @@
               <span class="v">—</span>
             </button>
 
-            <button type="button" class="setting-btn green sm" id="trackPairBtn" disabled>
-              <span class="t">2-2-3 Panama 2-Week 12s</span>
-              <span class="v">A/C</span>
-            </button>
+            <div class="nested-frame hidden" id="rotation223Wrap">
+              <button type="button" class="setting-btn green sm" id="trackPairBtn" disabled>
+                <span class="t">2-2-3 Panama 2-Week 12s</span>
+                <span class="v">A/C</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -570,7 +565,7 @@
       <div class="save-indicator top idle" id="calendarSaveIndicator">Saved.</div>
 
       <div class="calendar-headline">
-        Use <strong>Preferred</strong> for the shifts you most want, <strong>Available</strong> for shifts you can work, and <strong>Do Not</strong> for shifts you cannot cover. Blank means undecided or not entered yet.
+        Use <strong>Preferred</strong> for the shifts you most want, <strong>Available</strong> for the shifts you can work, and <strong>Do Not</strong> for the shifts you cannot cover. Blank means undecided or not entered yet.
       </div>
 
       <div class="legend">
@@ -617,6 +612,7 @@ const STATE_LABEL = {
   available: 'Available',
   do_not_schedule: 'Do Not'
 };
+
 const PREF24_OPTIONS = [
   {value:'prefer', label:'Prefer 24'},
   {value:'avoid', label:'Avoid 24'},
@@ -627,15 +623,22 @@ const AMPM_OPTIONS = [
   {value:'prefer_pm', label:'Prefer PM'},
   {value:'no_preference', label:'No Preference'}
 ];
+
+/* Visible now */
 const SHIFT_STYLE_OPTIONS = [
   {value:'rotation_223_relief', label:'2-2-3'},
   {value:'legacy_24h', label:'24 Hour'},
   {value:'fixed_12h', label:'Fixed 12'},
+  {value:'prn_only', label:'PRN'}
+];
+
+/* Kept in code for later */
+const FUTURE_SHIFT_STYLE_OPTIONS = [
   {value:'partial_8h_day', label:'8 Hour'},
   {value:'partial_6h', label:'6 Hour Partial'},
-  {value:'prn_only', label:'PRN'},
   {value:'availability_based', label:'Flexible'}
 ];
+
 const SWAP_OPTIONS = [
   {value:'allow', label:'Allow'},
   {value:'same_style_only', label:'Same Style'},
@@ -715,7 +718,7 @@ function getPreferences(member){ return member?.preferences && typeof member.pre
 function ensureShiftPreference(member){
   member.preferences ||= {};
   member.preferences.shift_preference ||= {
-    style: 'availability_based',
+    style: 'prn_only',
     rotation_template_id: null,
     rotation_track: null,
     rotation_role: null,
@@ -751,7 +754,7 @@ function normalizeRotationBlock(member){
     sp.relief_partner_track = getReliefPartnerTrack(role);
     if(!sp.rotation_template_id) sp.rotation_template_id = 'rot_223_12h_relief';
     if(!sp.shift_length_hours) sp.shift_length_hours = 12;
-    if(!sp.style || sp.style === 'availability_based') sp.style = 'rotation_223_relief';
+    if(!sp.style || sp.style === 'prn_only') sp.style = 'rotation_223_relief';
     return member.rotation;
   }
   member.rotation = null;
@@ -786,11 +789,8 @@ function getReliefPartnerTrack(track){
 function getShiftLengthForStyle(style){
   if(style === 'rotation_223_relief' || style === 'fixed_12h') return 12;
   if(style === 'legacy_24h') return 24;
-  if(style === 'partial_8h_day') return 8;
-  if(style === 'partial_6h') return 6;
   return null;
 }
-
 function certColorClass(certRaw){
   const cert = String(certRaw || '').toUpperCase();
   if(cert.includes('AEMT') || cert.includes('MEDIC') || cert.includes('PARAMEDIC')) return 'cert-aemt';
@@ -799,7 +799,6 @@ function certColorClass(certRaw){
   if(cert.includes('THIRD')) return 'cert-third';
   return '';
 }
-
 function cycleOption(current, options){
   const idx = options.findIndex(o => o.value === current);
   const nextIdx = idx < 0 ? 0 : (idx + 1) % options.length;
@@ -814,11 +813,10 @@ function setSettingButton(btn, title, value, cls){
   btn.innerHTML = `<span class="t">${esc(title)}</span><span class="v">${esc(value)}</span>`;
 }
 function ampmClass(value){ return value === 'no_preference' ? 'green sm' : 'yellow sm'; }
-function pref24Class(value){ return value === 'no_preference' ? 'green sm' : 'green sm'; }
+function pref24Class(value){ return value === 'no_preference' ? 'green sm' : 'yellow sm'; }
 function swapClass(value){ return value === 'supervisor_only' ? 'yellow sm' : 'green sm'; }
 function shiftStyleClass(value){
   if(value === 'legacy_24h' || value === 'fixed_12h') return 'yellow sm';
-  if(value === 'partial_8h_day' || value === 'partial_6h') return 'red sm';
   return 'green sm';
 }
 function activeStatusClass(isActive){ return isActive ? 'green status' : 'red status'; }
@@ -838,6 +836,67 @@ function toggleTrackPair(member){
 }
 function trackPairLabel(member){
   return getTrackPairValue(member) === 'BD' ? 'B/D' : 'A/C';
+}
+
+/* Strong style dependencies
+   2-2-3: keep AM/PM and 24h free for off-rotation coverage
+   24 Hour: force AM/PM neutral, force 24h prefer, disable both
+   Fixed 12: keep AM/PM free, force 24h avoid, disable 24h only
+   PRN: keep both free
+*/
+function applyShiftStyleDependencies(member){
+  const prefs = getPreferences(member);
+  const sp = ensureShiftPreference(member);
+  const style = sp.style || 'prn_only';
+
+  if(style === 'legacy_24h'){
+    prefs.ampm = 'no_preference';
+    prefs.shift24 = 'prefer';
+  } else if(style === 'fixed_12h'){
+    if(!prefs.ampm) prefs.ampm = 'no_preference';
+    prefs.shift24 = 'avoid';
+  } else if(style === 'rotation_223_relief'){
+    if(!prefs.ampm) prefs.ampm = 'no_preference';
+    if(!prefs.shift24) prefs.shift24 = 'avoid';
+    if(!sp.rotation_track) applyRotationBlock(member, 'A');
+  } else if(style === 'prn_only'){
+    if(!prefs.ampm) prefs.ampm = 'no_preference';
+    if(!prefs.shift24) prefs.shift24 = 'no_preference';
+  }
+}
+
+function updateDependentControlState(member){
+  const prefs = getPreferences(member);
+  const sp = ensureShiftPreference(member);
+  const style = sp.style || 'prn_only';
+
+  prefAmpmCycleBtn.disabled = false;
+  pref24CycleBtn.disabled = false;
+  trackPairBtn.disabled = false;
+
+  if(style === 'legacy_24h'){
+    prefAmpmCycleBtn.disabled = true;
+    pref24CycleBtn.disabled = true;
+  } else if(style === 'fixed_12h'){
+    pref24CycleBtn.disabled = true;
+  } else if(style === 'rotation_223_relief'){
+    /* Keep enabled for off-rotation signaling */
+    prefAmpmCycleBtn.disabled = false;
+    pref24CycleBtn.disabled = false;
+  } else if(style === 'prn_only'){
+    prefAmpmCycleBtn.disabled = false;
+    pref24CycleBtn.disabled = false;
+  }
+
+  const showRotation = style === 'rotation_223_relief';
+  rotation223Wrap.classList.toggle('hidden', !showRotation);
+
+  if(showRotation){
+    setSettingButton(trackPairBtn, '2-2-3 Panama 2-Week 12s', trackPairLabel(member), 'green sm');
+    trackPairBtn.disabled = false;
+  } else {
+    trackPairBtn.disabled = true;
+  }
 }
 
 function getVisibleStart(){
@@ -1077,7 +1136,7 @@ function buildShiftButton(dateIso, shift){
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = `shift-btn ${state || 'blank'}`;
-  btn.title = `${dateIso} ${shift}${signal ? ' • ' + signal.title : ''}`;
+  btn.title = `${dateIso} ${shift}${signal ? ' - ' + signal.title : ''}`;
 
   const label = document.createElement('span');
   label.textContent = STATE_LABEL[state];
@@ -1227,7 +1286,6 @@ function setControlsDisabled(disabled){
     if(el) el.disabled = disabled;
   });
 }
-
 function renderMemberSnapshot(){
   const m = getSelectedMember();
   const nameEl = document.getElementById('summaryName');
@@ -1235,31 +1293,26 @@ function renderMemberSnapshot(){
   if(!m){
     nameEl.textContent = 'Select member';
     nameEl.className = 'member-name';
-
     document.getElementById('summaryCert').textContent = '—';
     document.getElementById('summaryEmployment').textContent = '—';
-    document.getElementById('summaryRotation').textContent = '—';
-
+    document.getElementById('summaryShiftStyle').textContent = '—';
     setSettingButton(activeStateBtn, '', 'Select member', 'blue status');
-
     desiredCapInput.value = '';
     setControlsDisabled(true);
     return;
   }
 
   const emp = getEmployment(m);
-  const rotation = m.rotation || null;
   const cert = m.raw_cert || m.ops_cert || m.cert || 'Unknown';
+  const shiftPref = ensureShiftPreference(m);
 
   nameEl.textContent = m.name || 'Unknown';
   nameEl.className = `member-name ${certColorClass(cert)}`.trim();
 
   document.getElementById('summaryCert').textContent = cert;
   document.getElementById('summaryEmployment').textContent = emp.status || 'Unknown';
-
-  const shiftPref = ensureShiftPreference(m);
-   document.getElementById('summaryShiftStyle').textContent =
-   getOptionLabel(shiftPref.style || 'availability_based', SHIFT_STYLE_OPTIONS);
+  document.getElementById('summaryShiftStyle').textContent =
+    getOptionLabel(shiftPref.style || 'prn_only', SHIFT_STYLE_OPTIONS);
 
   setSettingButton(
     activeStateBtn,
@@ -1271,7 +1324,6 @@ function renderMemberSnapshot(){
   desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
   setControlsDisabled(false);
 }
-
 function renderPreferenceCycles(){
   const member = getSelectedMember();
   if(!member) {
@@ -1287,17 +1339,17 @@ function renderPreferenceCycles(){
 
   const prefs = getPreferences(member);
   const shiftPref = ensureShiftPreference(member);
+
+  updateDependentControlState(member);
+
   setSettingButton(prefAmpmCycleBtn, 'AM / PM preference', getOptionLabel(prefs.ampm || 'no_preference', AMPM_OPTIONS), ampmClass(prefs.ampm || 'no_preference'));
   setSettingButton(pref24CycleBtn, '24-hour preference', getOptionLabel(prefs.shift24 || 'no_preference', PREF24_OPTIONS), pref24Class(prefs.shift24 || 'no_preference'));
   setSettingButton(swapCycleBtn, 'Swap flexibility', getOptionLabel(shiftPref.swap_strategy || 'allow', SWAP_OPTIONS), swapClass(shiftPref.swap_strategy || 'allow'));
-  setSettingButton(shiftStyleCycleBtn, 'Shift Style', getOptionLabel(shiftPref.style || 'availability_based', SHIFT_STYLE_OPTIONS), shiftStyleClass(shiftPref.style || 'availability_based'));
+  setSettingButton(shiftStyleCycleBtn, 'Shift Style', getOptionLabel(shiftPref.style || 'prn_only', SHIFT_STYLE_OPTIONS), shiftStyleClass(shiftPref.style || 'prn_only'));
 
-  const showRotation = shiftPref.style === 'rotation_223_relief';
-  rotation223Wrap.classList.toggle('hidden', !showRotation);
-  if(showRotation){
-    setSettingButton(trackPairBtn, '2-2-3 Panama 2-Week 12s', trackPairLabel(member), 'green sm');
-  }
-}function renderPreferences(){
+  avoidPrivateStatus.textContent = `Enabled • ${(Array.isArray(getScheduler(member).avoid_with) ? getScheduler(member).avoid_with.length : 0)} selected`;
+}
+function renderPreferences(){
   renderMemberSnapshot();
   renderPreferenceCycles();
 }
@@ -1352,9 +1404,9 @@ function renderAvoidList(){
 
   avoidList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', () => {
-      const scheduler = getScheduler(member);
-      scheduler.avoid_with = Array.from(avoidList.querySelectorAll('input[type="checkbox"]:checked')).map(x => String(x.value));
-      member.scheduler ||= scheduler;
+      const schedulerInner = getScheduler(member);
+      schedulerInner.avoid_with = Array.from(avoidList.querySelectorAll('input[type="checkbox"]:checked')).map(x => String(x.value));
+      member.scheduler ||= schedulerInner;
       renderAvoidList();
       queueAutoSave('member');
     });
@@ -1552,6 +1604,7 @@ async function init(){
 
   prefAmpmCycleBtn.addEventListener('click', () => {
     const m = getSelectedMember(); if(!m) return;
+    if(prefAmpmCycleBtn.disabled) return;
     m.preferences ||= {};
     const current = m.preferences.ampm || 'no_preference';
     m.preferences.ampm = cycleOption(current, AMPM_OPTIONS);
@@ -1561,6 +1614,7 @@ async function init(){
 
   pref24CycleBtn.addEventListener('click', () => {
     const m = getSelectedMember(); if(!m) return;
+    if(pref24CycleBtn.disabled) return;
     m.preferences ||= {};
     const current = m.preferences.shift24 || 'no_preference';
     m.preferences.shift24 = cycleOption(current, PREF24_OPTIONS);
@@ -1580,7 +1634,7 @@ async function init(){
   shiftStyleCycleBtn.addEventListener('click', () => {
     const m = getSelectedMember(); if(!m) return;
     const sp = ensureShiftPreference(m);
-    const current = sp.style || 'availability_based';
+    const current = sp.style || 'prn_only';
     const next = cycleOption(current, SHIFT_STYLE_OPTIONS);
     sp.style = next;
     sp.rotation_template_id = next === 'rotation_223_relief' ? 'rot_223_12h_relief' : null;
@@ -1592,14 +1646,16 @@ async function init(){
     if(next !== 'rotation_223_relief'){
       m.rotation = null;
     } else if(!m.rotation){
-      applyRotationBlock(m, 'A');
+      applyRotationBlock(m, sp.rotation_track || 'A');
     }
+    applyShiftStyleDependencies(m);
     renderPreferences();
     queueAutoSave('member');
   });
 
   trackPairBtn.addEventListener('click', () => {
     const m = getSelectedMember(); if(!m) return;
+    if(trackPairBtn.disabled) return;
     toggleTrackPair(m);
     renderPreferences();
     queueAutoSave('member');
