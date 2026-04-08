@@ -1232,14 +1232,29 @@ function renderMemberSnapshot(){
   const rotation = m.rotation || null;
   const cert = m.raw_cert || m.ops_cert || m.cert || 'Unknown';
 
-  nameEl.textContent = m.name || 'Unknown';
-  nameEl.className = `member-name ${certColorClass(cert)}`.trim();
-  document.getElementById('summaryCert').textContent = cert;
-  document.getElementById('summaryEmployment').textContent = emp.status || 'Unknown';
-  document.getElementById('summaryRotation').textContent = rotation?.role ? `Track ${rotation.role}` : 'No rotation set';
-  setSettingButton(activeStateBtn, '', m.active ? 'Active for scheduling' : 'Do not schedule', activeStatusClass(Boolean(m.active)));
-  desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
-  setControlsDisabled(false);
+ nameEl.textContent = m.name || 'Unknown';
+nameEl.className = `member-name ${certColorClass(cert)}`.trim();
+
+document.getElementById('summaryCert').textContent = cert;
+document.getElementById('summaryEmployment').textContent = emp.status || 'Unknown';
+
+/* Rotation — simplified, no extra wording */
+document.getElementById('summaryRotation').textContent =
+  rotation?.role ? rotation.role : 'No rotation';
+
+/* Active / Do Not Schedule toggle */
+setSettingButton(
+  activeStateBtn,
+  '',
+  m.active ? 'Active for scheduling' : 'Do not schedule',
+  activeStatusClass(Boolean(m.active))
+);
+
+/* Desired hours */
+desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
+
+/* Enable controls */
+setControlsDisabled(false);
 }
 function renderPreferenceCycles(){
   const member = getSelectedMember();
