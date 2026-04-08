@@ -50,7 +50,7 @@
     border-radius:11px;
     border:1px solid #2d567f;
     background:#10213a;
-    color:var(--text);
+    color:#f2f6ff;
     padding:8px 12px;
     font-weight:800;
     cursor:pointer;
@@ -624,7 +624,6 @@ const AMPM_OPTIONS = [
   {value:'no_preference', label:'No Preference'}
 ];
 
-/* Visible now */
 const SHIFT_STYLE_OPTIONS = [
   {value:'rotation_223_relief', label:'2-2-3'},
   {value:'legacy_24h', label:'24 Hour'},
@@ -632,7 +631,6 @@ const SHIFT_STYLE_OPTIONS = [
   {value:'prn_only', label:'PRN'}
 ];
 
-/* Kept in code for later */
 const FUTURE_SHIFT_STYLE_OPTIONS = [
   {value:'partial_8h_day', label:'8 Hour'},
   {value:'partial_6h', label:'6 Hour Partial'},
@@ -699,6 +697,7 @@ function monthKeyFromIso(s){ return String(s).slice(0,7); }
 function addDays(dateObj, days){ const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()); d.setDate(d.getDate()+days); return d; }
 function startOfWeekSunday(d){ return addDays(d, -d.getDay()); }
 function getToday(){ const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+function wallboardDateHasPassed(dateIso){ return dateIso <= iso(getToday()); }
 
 function normalizeMembers(payload){
   const out = Array.isArray(payload) ? {members: payload} : (Array.isArray(payload?.members) ? payload : {members: []});
@@ -866,7 +865,6 @@ function applyShiftStyleDependencies(member){
 }
 
 function updateDependentControlState(member){
-  const prefs = getPreferences(member);
   const sp = ensureShiftPreference(member);
   const style = sp.style || 'prn_only';
 
@@ -880,7 +878,6 @@ function updateDependentControlState(member){
   } else if(style === 'fixed_12h'){
     pref24CycleBtn.disabled = true;
   } else if(style === 'rotation_223_relief'){
-    /* Keep enabled for off-rotation signaling */
     prefAmpmCycleBtn.disabled = false;
     pref24CycleBtn.disabled = false;
   } else if(style === 'prn_only'){
@@ -1059,19 +1056,20 @@ function buildResolvedLookup(){
 
     const assignedMembers = [];
     const assignedNames = [];
-    [node.member_id, node.assigned_member_id, node.selected_member_id, node.memberId, node.assignee_id].forEach(v => {
+
+    [node.assigned_member_id, node.selected_member_id, node.assignee_id].forEach(v => {
       if(v != null && v !== '') assignedMembers.push(v);
     });
-    [node.member_name, node.assigned_member_name, node.selected_member_name, node.name].forEach(v => {
+
+    [node.assigned_member_name, node.selected_member_name].forEach(v => {
       if(v) assignedNames.push(v);
     });
 
-    [node.member_ids, node.assigned_member_ids, node.assigned_members, node.members].forEach(src => {
+    [node.assigned_member_ids, node.assigned_members].forEach(src => {
       if(Array.isArray(src)){
         src.forEach(item => {
           if(item && typeof item === 'object'){
             if(item.member_id != null) assignedMembers.push(item.member_id);
-            if(item.id != null) assignedMembers.push(item.id);
             if(item.name) assignedNames.push(item.name);
           } else if(item != null){
             assignedMembers.push(item);
@@ -1096,7 +1094,7 @@ function buildResolvedLookup(){
     }
 
     Object.keys(node).forEach(key => {
-      if(['member_id','assigned_member_id','selected_member_id','memberId','assignee_id','member_name','assigned_member_name','selected_member_name','name','member_ids','assigned_member_ids','assigned_members','members'].includes(key)) return;
+      if(['assigned_member_id','selected_member_id','assignee_id','assigned_member_name','selected_member_name','assigned_member_ids','assigned_members'].includes(key)) return;
       scan(node[key], { dateIso, shift });
     });
   }
@@ -1116,8 +1114,8 @@ function getSignalForShift(dateIso, shift, state){
   const member = getSelectedMember();
   if(!info || !member) return null;
 
-  if(isAssignedToMember(info, member)){
-    return { icon:'✅', cls:'signal-check', title:'Assigned by latest resolver run' };
+  if(isAssignedToMember(info, member) && wallboardDateHasPassed(dateIso)){
+    return { icon:'✅', cls:'signal-check', title:'Assigned on displayed wallboard date' };
   }
   if(info.open){
     if(state === 'preferred' || state === 'available'){
