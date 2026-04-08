@@ -1212,17 +1212,20 @@ function setControlsDisabled(disabled){
   [activeStateBtn, desiredCapInput, prefAmpmCycleBtn, pref24CycleBtn, swapCycleBtn, shiftStyleCycleBtn, openAvoidModalBtn, trackPairBtn].forEach(el => {
     if(el) el.disabled = disabled;
   });
-}
 function renderMemberSnapshot(){
   const m = getSelectedMember();
   const nameEl = document.getElementById('summaryName');
+
   if(!m){
     nameEl.textContent = 'Select member';
     nameEl.className = 'member-name';
+
     document.getElementById('summaryCert').textContent = '—';
     document.getElementById('summaryEmployment').textContent = '—';
     document.getElementById('summaryRotation').textContent = '—';
+
     setSettingButton(activeStateBtn, '', 'Select member', 'blue status');
+
     desiredCapInput.value = '';
     setControlsDisabled(true);
     return;
@@ -1232,29 +1235,31 @@ function renderMemberSnapshot(){
   const rotation = m.rotation || null;
   const cert = m.raw_cert || m.ops_cert || m.cert || 'Unknown';
 
- nameEl.textContent = m.name || 'Unknown' + '<br><br><br><br><br><br><br>';
-nameEl.className = `member-name ${certColorClass(cert)}`.trim();
+  /* Name + color */
+  nameEl.textContent = m.name || 'Unknown';
+  nameEl.className = `member-name ${certColorClass(cert)}`.trim();
 
-document.getElementById('summaryCert').textContent = cert;
-document.getElementById('summaryEmployment').textContent = emp.status || 'Unknown';
+  /* Summary fields */
+  document.getElementById('summaryCert').textContent = cert;
+  document.getElementById('summaryEmployment').textContent = emp.status || 'Unknown';
 
-/* Rotation — simplified, no extra wording */
-document.getElementById('summaryRotation').textContent =
-  rotation?.role ? rotation.role : 'No rotation';
+  /* Rotation */
+  document.getElementById('summaryRotation').textContent =
+    rotation?.role ? rotation.role : 'No rotation';
 
-/* Active / Do Not Schedule toggle */
-setSettingButton(
-  activeStateBtn,
-  '',
-  m.active ? 'Active for scheduling' : 'Do not schedule',
-  activeStatusClass(Boolean(m.active))
-);
+  /* Active / Do Not Schedule toggle */
+  setSettingButton(
+    activeStateBtn,
+    '',
+    m.active ? 'Active for scheduling' : 'Do not schedule',
+    activeStatusClass(Boolean(m.active))
+  );
 
-/* Desired hours */
-desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
+  /* Desired hours */
+  desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
 
-/* Enable controls */
-setControlsDisabled(false);
+  /* Enable controls */
+  setControlsDisabled(false);
 }
 function renderPreferenceCycles(){
   const member = getSelectedMember();
