@@ -152,8 +152,16 @@
   .prefs-cell.input-cell{
     padding:8px 10px;
   }
-  .prefs-cell.track-cell{
-    grid-column:span 1;
+  .prefs-cell.stack-2{
+    gap:8px;
+  }
+  .nested-frame{
+    border:1px solid #294766;
+    border-radius:12px;
+    background:#0b1830;
+    padding:8px;
+    display:grid;
+    gap:8px;
   }
 
   .setting-btn{
@@ -189,15 +197,15 @@
   .setting-btn.blue{background:#0e2d4b;border-color:#1bc4ff}
   .setting-btn.white{background:#17314d;border-color:#7ea9d6}
   .setting-btn.status{
-    min-width:90px;
+    min-width:120px;
+    min-height:28px;
     border-radius:999px;
-    min-height:38px;
     align-items:center;
     text-align:center;
-    padding:0 14px;
+    padding:0 8px;
   }
   .setting-btn.status .t{display:none}
-  .setting-btn.status .v{font-size:13px}
+  .setting-btn.status .v{font-size:11px}
   .setting-btn.sm .v{font-size:14px}
 
   .avoid-wrap{
@@ -479,18 +487,18 @@
             </div>
           </div>
 
-          <div class="prefs-cell">
+          <div class="prefs-cell stack-2">
             <button type="button" class="setting-btn blue sm" id="shiftStyleCycleBtn" disabled>
               <span class="t">Shift Style</span>
               <span class="v">—</span>
             </button>
-          </div>
 
-          <div class="prefs-cell track-cell hidden" id="rotation223Wrap">
-            <button type="button" class="setting-btn green sm" id="trackPairBtn" disabled>
-              <span class="t">2-2-3 Panama 2-Week 12s</span>
-              <span class="v">A/C</span>
-            </button>
+            <div class="nested-frame hidden" id="rotation223Wrap">
+              <button type="button" class="setting-btn green sm" id="trackPairBtn" disabled>
+                <span class="t">2-2-3 Panama 2-Week 12s</span>
+                <span class="v">A/C</span>
+              </button>
+            </div>
           </div>
         </div>
 
