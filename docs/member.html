@@ -298,9 +298,20 @@
     display:grid;
     grid-template-rows:auto 1fr 1fr;
     gap:8px;
+    transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
   }
   .day.dim{opacity:.78}
   .day.today{border-color:#8fd3ff;box-shadow:0 0 0 1px rgba(143,211,255,.35) inset,0 0 16px rgba(143,211,255,.08)}
+  .day.schedule-conflict{
+    border-color:rgba(255,180,67,.72);
+    box-shadow:
+      0 0 0 1px rgba(255,180,67,.18) inset,
+      0 0 18px rgba(255,180,67,.10),
+      0 0 34px rgba(255,93,93,.08);
+    background:
+      radial-gradient(circle at 50% 20%, rgba(255,180,67,.08), transparent 58%),
+      #0b1830;
+  }
   .day-top{display:flex;justify-content:space-between;align-items:flex-start}
   .day-num{font-size:34px;font-weight:900;line-height:.9}
   .day-dow{font-size:11px;color:var(--muted);font-weight:900}
@@ -321,8 +332,9 @@
     align-items:center;
     justify-content:center;
     text-align:center;
-    padding:4px 26px 4px 8px;
+    padding:4px 64px 4px 8px;
     line-height:1.05;
+    overflow:hidden;
   }
   .shift-btn.blank{background:#10213a;border-color:#274766;color:#b7c7df}
   .shift-btn.preferred{background:rgba(19,107,53,.55);border-color:#23ca66}
@@ -340,6 +352,39 @@
   .signal-check{color:#d9ffe8}
   .signal-open{color:#ffe3a6}
   .signal-review{color:#d7ebff}
+
+  .scheduled-chip{
+    position:absolute;
+    top:4px;
+    right:5px;
+    bottom:4px;
+    width:25%;
+    min-width:42px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    line-height:1;
+    font-weight:900;
+    pointer-events:none;
+    box-shadow:0 0 0 1px rgba(255,255,255,.04) inset;
+  }
+  .scheduled-chip.final{
+    border:1px solid rgba(82,239,127,.95);
+    background:rgba(19,107,53,.34);
+    color:#e9fff1;
+  }
+  .scheduled-chip.tentative{
+    border:1px solid rgba(105,184,255,.95);
+    background:rgba(20,57,97,.34);
+    color:#dbefff;
+  }
+  .shift-btn.scheduled-odd{
+    box-shadow:
+      0 0 0 1px rgba(255,180,67,.20) inset,
+      0 0 14px rgba(255,180,67,.10);
+  }
 
   .empty-shell{
     border:1px dashed #294766;
@@ -657,6 +702,7 @@ let pendingAvailabilitySave = false;
 let pendingMemberSave = false;
 let isSaving = false;
 const AUTOSAVE_MS = 3000;
+const PUBLIC_WALLBOARD_HORIZON_DAYS = 7;
 let avoidSearchTerm = '';
 
 const memberSelect = document.getElementById('memberSelect');
@@ -698,6 +744,8 @@ function addDays(dateObj, days){ const d = new Date(dateObj.getFullYear(), dateO
 function startOfWeekSunday(d){ return addDays(d, -d.getDay()); }
 function getToday(){ const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
 function wallboardDateHasPassed(dateIso){ return dateIso <= iso(getToday()); }
+function getPublishedHorizonIso(){ return iso(addDays(getToday(), PUBLIC_WALLBOARD_HORIZON_DAYS)); }
+function isWithinPublishedWallboardHorizon(dateIso){ return dateIso <= getPublishedHorizonIso(); }
 
 function normalizeMembers(payload){
   const out = Array.isArray(payload) ? {members: payload} : (Array.isArray(payload?.members) ? payload : {members: []});
@@ -1109,42 +1157,56 @@ function isAssignedToMember(info, member){
   if(nm && info.assignedNames && info.assignedNames.has(nm)) return true;
   return false;
 }
-function getSignalForShift(dateIso, shift, state){
+function getShiftScheduleMarker(dateIso, shift){
   const info = resolvedLookup?.[dateIso]?.[shift];
   const member = getSelectedMember();
   if(!info || !member) return null;
+  if(!isAssignedToMember(info, member)) return null;
 
-  if(isAssignedToMember(info, member) && wallboardDateHasPassed(dateIso)){
-    return { icon:'✅', cls:'signal-check', title:'Assigned on displayed wallboard date' };
+  if(isWithinPublishedWallboardHorizon(dateIso)){
+    return {
+      type:'final',
+      icon:'✓',
+      title:'Scheduled in the currently published wallboard horizon'
+    };
   }
-  if(info.open){
-    if(state === 'preferred' || state === 'available'){
-      return { icon:'🔍', cls:'signal-review', title:'Under consideration in current planning window' };
-    }
-    if(state === ''){
-      return { icon:'📦', cls:'signal-open', title:'Open shift still needs coverage' };
-    }
-  }
-  return null;
+
+  return {
+    type:'tentative',
+    icon:'🔍',
+    title:'Scheduled in the current draft, but still before the public wallboard horizon'
+  };
+}
+function isOddScheduledPairing(state){
+  return state === '' || state === 'do_not_schedule';
+}
+function dayHasScheduleConflict(dateIso){
+  return ['AM','PM'].some(shift => {
+    const marker = getShiftScheduleMarker(dateIso, shift);
+    if(!marker) return false;
+    return isOddScheduledPairing(getShiftState(dateIso, shift));
+  });
 }
 function buildShiftButton(dateIso, shift){
   const state = getShiftState(dateIso, shift);
-  const signal = getSignalForShift(dateIso, shift, state);
+  const marker = getShiftScheduleMarker(dateIso, shift);
 
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = `shift-btn ${state || 'blank'}`;
-  btn.title = `${dateIso} ${shift}${signal ? ' - ' + signal.title : ''}`;
+  if(marker && isOddScheduledPairing(state)) btn.classList.add('scheduled-odd');
+  btn.title = `${dateIso} ${shift}${marker ? ' - ' + marker.title : ''}`;
 
   const label = document.createElement('span');
   label.textContent = STATE_LABEL[state];
   btn.appendChild(label);
 
-  if(signal){
-    const icon = document.createElement('span');
-    icon.className = `signal-icon ${signal.cls}`;
-    icon.textContent = signal.icon;
-    btn.appendChild(icon);
+  if(marker){
+    const chip = document.createElement('span');
+    chip.className = `scheduled-chip ${marker.type}`;
+    chip.textContent = marker.icon;
+    chip.title = marker.title;
+    btn.appendChild(chip);
   }
 
   btn.addEventListener('click', () => {
@@ -1192,6 +1254,7 @@ function renderCalendar(){
     day.className = 'day';
     if(dateObj < getToday()) day.classList.add('dim');
     if(dateIso === iso(getToday())) day.classList.add('today');
+    if(dayHasScheduleConflict(dateIso)) day.classList.add('schedule-conflict');
     day.innerHTML = `
       <div class="day-top">
         <div class="day-num">${dateObj.getDate()}</div>
