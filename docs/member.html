@@ -8,7 +8,6 @@
   :root{
     --bg:#08111f;
     --panel:#0f1b2d;
-    --panel2:#16243a;
     --line:#274160;
     --text:#eef4ff;
     --muted:#9eb4d5;
@@ -21,38 +20,38 @@
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-  .wrap{max-width:1700px;margin:0 auto;padding:12px}
-  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}
+  .wrap{max-width:1700px;margin:0 auto;padding:10px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:10px}
   .title{font-size:36px;font-weight:900}
   .sub{color:var(--muted);font-size:13px;margin-top:4px}
-  a{color:var(--blue)}
-  .stack{display:grid;gap:12px}
+  .mini-links{display:flex;gap:12px;flex-wrap:wrap;font-size:12px}
+  .stack{display:grid;gap:10px}
 
   .card{
     position:relative;
     background:linear-gradient(180deg,#0f1b2d,#0e1a2c);
     border:1px solid var(--line);
     border-radius:18px;
-    padding:12px;
+    padding:10px;
   }
 
-  label{display:block;font-size:11px;font-weight:800;color:#c9dbf7;margin-bottom:6px}
+  label{display:block;font-size:10px;font-weight:900;color:#c9dbf7;margin-bottom:5px;text-transform:uppercase;letter-spacing:.25px}
   input,select,button{font:inherit}
   input[type="number"],input[type="date"],select,.search-input{
     width:100%;
-    height:40px;
-    border-radius:11px;
+    height:38px;
+    border-radius:10px;
     border:1px solid #29507a;
     background:#09192f;
     color:var(--text);
-    padding:0 11px;
+    padding:0 10px;
   }
   button{
     border-radius:11px;
     border:1px solid #2d567f;
     background:#10213a;
     color:var(--text);
-    padding:9px 12px;
+    padding:8px 12px;
     font-weight:800;
     cursor:pointer;
   }
@@ -62,147 +61,157 @@
   .toolbar{
     display:grid;
     grid-template-columns:minmax(320px,1fr) auto auto;
-    gap:10px;
+    gap:8px;
     align-items:end;
   }
-  .status-line{font-size:12px;color:var(--muted);margin-top:8px}
-  .mini-links{display:flex;gap:12px;flex-wrap:wrap;font-size:12px}
+  .status-line{font-size:12px;color:var(--muted);margin-top:6px;min-height:16px}
+
+  .top-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    align-items:start;
+  }
 
   .member-card{
-    width:min(75%, 1080px);
-    min-width:320px;
+    min-height:160px;
   }
   .member-head{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    gap:12px;
-    margin-bottom:10px;
+    gap:10px;
+    margin-bottom:8px;
   }
-  .member-left{display:grid;gap:6px}
-  .member-title{font-size:12px;font-weight:900;color:#dbe9ff;text-transform:uppercase;letter-spacing:.4px}
+  .member-title{font-size:11px;font-weight:900;color:#dbe9ff;text-transform:uppercase;letter-spacing:.35px}
   .member-name{
-    font-size:44px;
+    font-size:48px;
     font-weight:900;
     line-height:1;
-    text-align:left;
+    margin-top:2px;
   }
   .cert-aemt{color:var(--green)}
   .cert-emt{color:var(--blue)}
   .cert-emr{color:var(--pink)}
   .cert-third{color:var(--white)}
-
-  .member-status-wrap{
-    display:flex;
-    justify-content:flex-end;
-    align-items:flex-start;
-    min-width:220px;
-  }
-
-  .member-grid{
+  .member-meta{
     display:grid;
     grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:10px;
-    align-items:stretch;
+    gap:8px;
     text-align:center;
   }
   .member-chip{
-    min-height:68px;
+    min-height:64px;
     border:1px solid #294766;
-    border-radius:14px;
+    border-radius:13px;
     background:#09192f;
-    padding:10px 12px;
+    padding:8px 10px;
     display:grid;
     align-content:center;
-    gap:4px;
+    gap:3px;
   }
   .member-chip .k{
     font-size:10px;
     font-weight:900;
     color:var(--muted);
-    letter-spacing:.3px;
     text-transform:uppercase;
+    letter-spacing:.25px;
   }
   .member-chip .v{
-    font-size:16px;
+    font-size:18px;
     font-weight:900;
-    color:#eef4ff;
-    line-height:1.15;
+    line-height:1.1;
   }
 
-  .prefs-card{padding-bottom:40px}
+  .prefs-card{
+    min-height:160px;
+    padding-bottom:34px;
+  }
   .prefs-title,
-  .controls-title,
-  .calendar-title-row{
+  .controls-title{
     font-size:18px;
     font-weight:900;
     margin-bottom:8px;
   }
 
-  .prefs-grid-top{
+  .prefs-grid{
     display:grid;
-    grid-template-columns:1fr 1fr 1fr 1fr 1.1fr;
-    gap:10px;
-    margin-bottom:10px;
-  }
-  .prefs-grid-bottom{
-    display:grid;
-    grid-template-columns:1.35fr .95fr;
-    gap:10px;
-    align-items:start;
-  }
-
-  .pref-cell{
-    border:1px solid #294766;
-    border-radius:14px;
-    background:#09192f;
-    padding:10px;
-    min-height:78px;
-    display:grid;
-    align-content:start;
+    grid-template-columns:repeat(3,minmax(0,1fr));
     gap:8px;
   }
-  .pref-label{
-    font-size:10px;
-    font-weight:900;
-    color:var(--muted);
-    letter-spacing:.3px;
-    text-transform:uppercase;
-    line-height:1.15;
+  .prefs-cell{
+    border:1px solid #294766;
+    border-radius:13px;
+    background:#09192f;
+    padding:8px;
+    min-height:58px;
+    display:grid;
+    align-content:start;
+    gap:6px;
   }
-  .pref-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .pref-value{font-size:12px;color:#dbe9ff;font-weight:800}
+  .prefs-cell.input-cell{
+    padding:8px 10px;
+  }
+  .prefs-cell.track-cell{
+    grid-column:span 1;
+  }
 
-  .state-btn{
-    min-width:112px;
-    min-height:34px;
-    padding:0 10px;
+  .setting-btn{
+    width:100%;
+    min-height:42px;
     border-radius:12px;
     border:1px solid #305270;
     background:#13243d;
     color:#f2f6ff;
-    font-size:12px;
-    font-weight:900;
-    display:inline-flex;
-    align-items:center;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
     justify-content:center;
-    text-align:center;
+    gap:2px;
+    padding:7px 10px;
+    text-align:left;
+  }
+  .setting-btn .t{
+    font-size:9px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.25px;
+    opacity:.92;
+  }
+  .setting-btn .v{
+    font-size:15px;
+    font-weight:900;
     line-height:1.05;
   }
-  .state-btn.green{background:rgba(19,107,53,.55);border-color:#23ca66}
-  .state-btn.yellow{background:rgba(120,88,11,.44);border-color:#ffb443}
-  .state-btn.red{background:rgba(98,23,31,.48);border-color:#ff5d5d}
-  .state-btn.blue{background:#0e2d4b;border-color:#1bc4ff}
-  .state-btn.white{background:#17314d;border-color:#7ea9d6}
-  .state-btn.small{min-width:96px}
-  .state-btn.status{
+  .setting-btn.green{background:rgba(19,107,53,.55);border-color:#23ca66}
+  .setting-btn.yellow{background:rgba(120,88,11,.44);border-color:#ffb443}
+  .setting-btn.red{background:rgba(98,23,31,.48);border-color:#ff5d5d}
+  .setting-btn.blue{background:#0e2d4b;border-color:#1bc4ff}
+  .setting-btn.white{background:#17314d;border-color:#7ea9d6}
+  .setting-btn.status{
     min-width:190px;
-    min-height:38px;
     border-radius:999px;
-    font-size:13px;
+    min-height:38px;
+    align-items:center;
+    text-align:center;
+    padding:0 14px;
+  }
+  .setting-btn.status .t{display:none}
+  .setting-btn.status .v{font-size:13px}
+  .setting-btn.sm .v{font-size:14px}
+
+  .avoid-wrap{
+    display:grid;
+    gap:4px;
+  }
+  .avoid-status{
+    font-size:12px;
+    font-weight:800;
+    color:#dbe9ff;
+    line-height:1.2;
   }
   .private-btn{
-    min-height:32px;
+    min-height:30px;
     padding:0 12px;
     border-radius:999px;
     border:1px solid #35557b;
@@ -210,77 +219,58 @@
     color:#e9f2ff;
     font-size:12px;
     font-weight:900;
-  }
-
-  .track-wrap{
-    border:1px solid #294766;
-    border-radius:14px;
-    background:#09192f;
-    padding:10px;
-    display:grid;
-    gap:8px;
-  }
-  .track-summary{
-    padding:10px 12px;
-    border:1px solid #294766;
-    border-radius:12px;
-    background:#0b1830;
-    min-height:42px;
-    display:grid;
-    align-content:center;
-  }
-  .track-summary strong{color:#dbe9ff}
-  .track-note{font-size:11px;color:var(--muted);margin-top:4px}
-  .hidden{display:none !important}
-
-  .controls-card{padding-bottom:40px}
-  .controls-grid{
-    display:grid;
-    grid-template-columns:1.5fr 1fr 1fr .8fr 1fr auto auto;
-    gap:10px;
-    align-items:end;
+    justify-self:start;
   }
 
   .save-indicator{
     position:absolute;
-    right:12px;
-    bottom:10px;
+    right:10px;
+    bottom:8px;
     font-size:12px;
     font-weight:900;
     color:#d8e7ff;
-    padding:5px 10px;
+    padding:4px 10px;
     border-radius:999px;
     border:1px solid #294766;
     background:#09192f;
-    min-width:140px;
+    min-width:132px;
     text-align:center;
   }
-  .save-indicator.top{bottom:auto;top:12px}
+  .save-indicator.top{bottom:auto;top:10px}
   .save-indicator.idle{opacity:.72}
   .save-indicator.pending{border-color:#ffb443;color:#ffe5b2}
   .save-indicator.saving{border-color:#69b8ff;color:#d6ecff}
   .save-indicator.saved{border-color:#23ca66;color:#d7ffe4}
 
-  .calendar-shell{padding-top:42px}
+  .controls-card{padding-bottom:34px}
+  .controls-grid{
+    display:grid;
+    grid-template-columns:1.4fr 1fr 1fr .8fr 1fr auto auto;
+    gap:8px;
+    align-items:end;
+  }
+
+  .calendar-shell{padding-top:40px}
   .calendar-headline{
-    margin-bottom:10px;
+    margin-bottom:8px;
     font-size:12px;
     color:#d8e7ff;
     line-height:1.4;
   }
-  .legend{display:flex;gap:10px;flex-wrap:wrap;color:#dbe9ff;font-size:11px;font-weight:800;margin-bottom:12px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;color:#dbe9ff;font-size:11px;font-weight:800;margin-bottom:10px}
   .legend-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid #2b4a72;background:#10213a}
   .swatch{width:9px;height:9px;border-radius:999px;display:inline-block}
   .swatch.pref{background:var(--green)}
   .swatch.avail{background:var(--yellow)}
   .swatch.dns{background:#ff5d5d}
+
   .calendar-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
   .calendar-top .spacer{justify-self:start}
   .window-title{font-size:18px;font-weight:900;text-align:center}
   .nav-row-mid,.nav-row-bottom{display:flex;justify-content:center}
-  .calendar-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+  .calendar-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
   .dow{padding:0 6px;text-align:center;font-size:12px;color:#d6e6ff;font-weight:900;letter-spacing:.6px}
-  .calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+  .calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
   .day{
     border:1px solid #274766;
     border-radius:16px;
@@ -297,9 +287,9 @@
   .day-num{font-size:34px;font-weight:900;line-height:.9}
   .day-dow{font-size:11px;color:var(--muted);font-weight:900}
   .day-date{font-size:11px;color:var(--muted);font-weight:800}
+
   .shift-box{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
   .shift-label{font-size:11px;font-weight:900;color:#d7e5ff}
-
   .shift-btn{
     position:relative;
     width:100%;
@@ -332,6 +322,16 @@
   .signal-check{color:#d9ffe8}
   .signal-open{color:#ffe3a6}
   .signal-review{color:#d7ebff}
+
+  .empty-shell{
+    border:1px dashed #294766;
+    border-radius:14px;
+    background:#09192f;
+    padding:28px 16px;
+    color:#d8e7ff;
+    text-align:center;
+    font-weight:800;
+  }
 
   .modal-backdrop{
     position:fixed;
@@ -366,27 +366,24 @@
   .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
 
   @media (max-width:1450px){
-    .prefs-grid-top{grid-template-columns:repeat(3,minmax(0,1fr))}
     .controls-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   }
-  @media (max-width:1100px){
-    .member-card{width:100%}
-    .member-grid{grid-template-columns:1fr}
-    .prefs-grid-bottom{grid-template-columns:1fr}
+  @media (max-width:1150px){
+    .top-row{grid-template-columns:1fr}
+    .prefs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .member-meta{grid-template-columns:1fr}
   }
   @media (max-width:900px){
     .toolbar{grid-template-columns:1fr 1fr}
     .toolbar > :first-child{grid-column:1 / -1}
-    .prefs-grid-top{grid-template-columns:1fr 1fr}
     .calendar-head,.calendar{grid-template-columns:repeat(2,minmax(0,1fr))}
     .avoid-list{grid-template-columns:1fr}
     .controls-grid{grid-template-columns:1fr 1fr}
   }
   @media (max-width:600px){
-    .toolbar,.prefs-grid-top,.controls-grid{grid-template-columns:1fr}
+    .toolbar,.prefs-grid,.controls-grid{grid-template-columns:1fr}
     .calendar-head,.calendar{grid-template-columns:1fr}
-    .member-head{grid-template-columns:1fr}
-    .member-status-wrap{justify-content:flex-start}
+    .member-head{flex-direction:column;align-items:flex-start}
   }
 </style>
 </head>
@@ -397,11 +394,11 @@
       <div class="title">Member Availability</div>
       <div class="sub">Set the shifts you want, the shifts you can cover, and the shifts you do not want to be scheduled for.</div>
     </div>
-    <div class="mini-links"><a href="supervisor.html">Supervisor</a><span>·</span><a href="wallboard.html">Wallboard</a></div>
+    <div class="mini-links"><a href="wallboard.html">Wallboard</a></div>
   </div>
 
   <div class="stack">
-    <div class="card member-card">
+    <div class="card">
       <div class="toolbar">
         <div>
           <label for="memberSelect">Member</label>
@@ -416,102 +413,89 @@
           <button class="secondary" id="clearVisibleBtn" type="button">Clear visible window</button>
         </div>
       </div>
-      <div class="status-line" id="statusLine">Loading…</div>
-
-      <div style="height:10px"></div>
-
-      <div class="member-head">
-        <div class="member-left">
-          <div class="member-title">Member</div>
-          <div class="member-name" id="summaryName">—</div>
-        </div>
-        <div class="member-status-wrap">
-          <button type="button" class="state-btn status green" id="activeStateBtn">Active for scheduling</button>
-        </div>
-      </div>
-
-      <div class="member-grid">
-        <div class="member-chip">
-          <div class="k">Certification</div>
-          <div class="v" id="summaryCert">—</div>
-        </div>
-        <div class="member-chip">
-          <div class="k">Employment</div>
-          <div class="v" id="summaryEmployment">—</div>
-        </div>
-        <div class="member-chip">
-          <div class="k">Rotation</div>
-          <div class="v" id="summaryRotation">—</div>
-        </div>
-      </div>
+      <div class="status-line" id="statusLine">Select a member to begin.</div>
     </div>
 
-    <div class="card prefs-card">
-      <div class="prefs-title">Preferences</div>
-
-      <div class="prefs-grid-top">
-        <div class="pref-cell">
-          <div class="pref-label">Desired hours / week</div>
-          <input id="desiredCapInput" type="number" min="0" step="1" />
-        </div>
-
-        <div class="pref-cell">
-          <div class="pref-label">AM / PM preference</div>
-          <div class="pref-inline">
-            <button type="button" class="state-btn small" id="prefAmpmCycleBtn">—</button>
-          </div>
-        </div>
-
-        <div class="pref-cell">
-          <div class="pref-label">24-hour preference</div>
-          <div class="pref-inline">
-            <button type="button" class="state-btn small" id="pref24CycleBtn">—</button>
-          </div>
-        </div>
-
-        <div class="pref-cell">
-          <div class="pref-label">Swap flexibility</div>
-          <div class="pref-inline">
-            <button type="button" class="state-btn small" id="swapCycleBtn">—</button>
-          </div>
-        </div>
-
-        <div class="pref-cell">
-          <div class="pref-label">Avoid-with handler</div>
-          <div class="pref-value" id="avoidPrivateStatus">Enabled • 0 selected</div>
+    <div class="top-row">
+      <div class="card member-card">
+        <div class="member-head">
           <div>
-            <button type="button" class="private-btn" id="openAvoidModalBtn">Open private settings</button>
+            <div class="member-title">Member</div>
+            <div class="member-name" id="summaryName">Select member</div>
+          </div>
+          <button type="button" class="setting-btn status green" id="activeStateBtn" disabled><span class="v">Active for scheduling</span></button>
+        </div>
+
+        <div class="member-meta">
+          <div class="member-chip">
+            <div class="k">Certification</div>
+            <div class="v" id="summaryCert">—</div>
+          </div>
+          <div class="member-chip">
+            <div class="k">Employment</div>
+            <div class="v" id="summaryEmployment">—</div>
+          </div>
+          <div class="member-chip">
+            <div class="k">Rotation</div>
+            <div class="v" id="summaryRotation">—</div>
           </div>
         </div>
       </div>
 
-      <div class="prefs-grid-bottom">
-        <div class="pref-cell">
-          <div class="pref-label">Shift Style</div>
-          <div class="pref-inline">
-            <button type="button" class="state-btn" id="shiftStyleCycleBtn">—</button>
-          </div>
-        </div>
+      <div class="card prefs-card">
+        <div class="prefs-title">Preferences</div>
 
-        <div class="pref-cell" id="rotation223Wrap">
-          <div class="pref-label">2-2-3 Panama 2-Week 12s</div>
-          <div class="track-wrap">
-            <select id="rotationTrackSelect">
-              <option value="">Select track</option>
-              <option value="A">A · Day, relieved by C</option>
-              <option value="B">B · Day, relieved by D</option>
-              <option value="C">C · Night, relieves A</option>
-              <option value="D">D · Night, relieves B</option>
-            </select>
-            <div class="track-summary" id="rotationSummary">
-              <div><strong>Track not selected</strong></div>
-              <div class="track-note">Choose A, B, C, or D to save the relief-paired 12-hour track.</div>
+        <div class="prefs-grid">
+          <div class="prefs-cell input-cell">
+            <label for="desiredCapInput">Desired hours / week</label>
+            <input id="desiredCapInput" type="number" min="0" step="1" disabled />
+          </div>
+
+          <div class="prefs-cell">
+            <button type="button" class="setting-btn blue sm" id="prefAmpmCycleBtn" disabled>
+              <span class="t">AM / PM preference</span>
+              <span class="v">—</span>
+            </button>
+          </div>
+
+          <div class="prefs-cell">
+            <button type="button" class="setting-btn blue sm" id="pref24CycleBtn" disabled>
+              <span class="t">24-hour preference</span>
+              <span class="v">—</span>
+            </button>
+          </div>
+
+          <div class="prefs-cell">
+            <button type="button" class="setting-btn blue sm" id="swapCycleBtn" disabled>
+              <span class="t">Swap flexibility</span>
+              <span class="v">—</span>
+            </button>
+          </div>
+
+          <div class="prefs-cell">
+            <div class="avoid-wrap">
+              <div class="avoid-status" id="avoidPrivateStatus">Enabled • 0 selected</div>
+              <button type="button" class="private-btn" id="openAvoidModalBtn" disabled>Open private settings</button>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="save-indicator idle" id="prefsSaveIndicator">Saved.</div>
+          <div class="prefs-cell">
+            <button type="button" class="setting-btn blue sm" id="shiftStyleCycleBtn" disabled>
+              <span class="t">Shift Style</span>
+              <span class="v">—</span>
+            </button>
+          </div>
+
+          <div class="prefs-cell track-cell hidden" id="rotation223Wrap">
+            <button type="button" class="setting-btn green sm" id="trackPairBtn" disabled>
+              <span class="t">2-2-3 Panama 2-Week 12s</span>
+              <span class="v">A/C</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="save-indicator idle" id="prefsSaveIndicator">Saved.</div>
+      </div>
     </div>
 
     <div class="card controls-card">
@@ -556,7 +540,7 @@
           <button class="secondary" id="fillVisibleBlanksBtn" type="button">Fill visible blanks</button>
         </div>
       </div>
-      <div class="hint" style="margin-top:10px">If <strong>Apply state</strong> is set to anything other than <strong>Match selected week</strong>, the chosen state is pushed forward directly. This is the safest way to blank out future weeks.</div>
+      <div class="status-line" style="margin-top:8px">If <strong>Apply state</strong> is set to anything other than <strong>Match selected week</strong>, the chosen state is pushed forward directly.</div>
       <div class="save-indicator idle" id="controlsSaveIndicator">Saved.</div>
     </div>
 
@@ -574,21 +558,8 @@
         <span class="legend-chip"><span class="swatch" style="background:#7f97b7"></span>Blank / undecided</span>
       </div>
 
-      <div class="calendar-top">
-        <div class="spacer"></div>
-        <div class="window-title" id="calendarTitle">—</div>
-        <div style="display:flex;justify-content:flex-end"><button class="secondary" id="todayBtn2" type="button">Today</button></div>
-      </div>
-
-      <div class="nav-row-mid">
-        <button class="secondary" id="backWeekBtn" type="button">← Back 1 Week</button>
-      </div>
-
-      <div class="calendar-head" id="calendarHead"></div>
-      <div class="calendar" id="calendar"></div>
-
-      <div class="nav-row-bottom">
-        <button class="secondary" id="forwardWeekBtn" type="button">Forward 1 Week →</button>
+      <div id="calendarContent">
+        <div class="empty-shell">Select a member from the dropdown to load availability.</div>
       </div>
     </div>
   </div>
@@ -607,7 +578,7 @@
       <input class="search-input" id="avoidSearch" placeholder="Search other members" />
       <div style="height:10px"></div>
       <div class="avoid-list" id="avoidList"></div>
-      <div class="hint" style="margin-top:10px">These names save into the member profile as directional avoid-with preferences.</div>
+      <div class="status-line" style="margin-top:10px">These names save into the member profile as directional avoid-with preferences.</div>
     </div>
     <div class="modal-actions">
       <button type="button" class="secondary" id="saveAvoidModalBtn">Done</button>
@@ -624,7 +595,6 @@ const STATE_LABEL = {
   available: 'Available',
   do_not_schedule: 'Do Not'
 };
-
 const PREF24_OPTIONS = [
   {value:'prefer', label:'Prefer 24'},
   {value:'avoid', label:'Avoid 24'},
@@ -663,30 +633,23 @@ let countdownInterval = null;
 let pendingAvailabilitySave = false;
 let pendingMemberSave = false;
 let isSaving = false;
-let saveState = 'idle';
 const AUTOSAVE_MS = 3000;
 let avoidSearchTerm = '';
 
 const memberSelect = document.getElementById('memberSelect');
 const statusLine = document.getElementById('statusLine');
-const calendarTitle = document.getElementById('calendarTitle');
-const calendarHead = document.getElementById('calendarHead');
-const calendar = document.getElementById('calendar');
 const patternWeekSelect = document.getElementById('patternWeekSelect');
 const bulkStateSelect = document.getElementById('bulkStateSelect');
 const bulkScopeSelect = document.getElementById('bulkScopeSelect');
 const bulkWeeksInput = document.getElementById('bulkWeeksInput');
 const bulkUntilDate = document.getElementById('bulkUntilDate');
-
 const pref24CycleBtn = document.getElementById('pref24CycleBtn');
 const prefAmpmCycleBtn = document.getElementById('prefAmpmCycleBtn');
 const shiftStyleCycleBtn = document.getElementById('shiftStyleCycleBtn');
 const swapCycleBtn = document.getElementById('swapCycleBtn');
 const activeStateBtn = document.getElementById('activeStateBtn');
-
+const trackPairBtn = document.getElementById('trackPairBtn');
 const rotation223Wrap = document.getElementById('rotation223Wrap');
-const rotationTrackSelect = document.getElementById('rotationTrackSelect');
-const rotationSummary = document.getElementById('rotationSummary');
 const avoidList = document.getElementById('avoidList');
 const avoidSearch = document.getElementById('avoidSearch');
 const avoidPrivateStatus = document.getElementById('avoidPrivateStatus');
@@ -695,6 +658,7 @@ const openAvoidModalBtn = document.getElementById('openAvoidModalBtn');
 const closeAvoidModalBtn = document.getElementById('closeAvoidModalBtn');
 const saveAvoidModalBtn = document.getElementById('saveAvoidModalBtn');
 const desiredCapInput = document.getElementById('desiredCapInput');
+const calendarContent = document.getElementById('calendarContent');
 
 const saveIndicators = [
   document.getElementById('calendarSaveIndicator'),
@@ -725,6 +689,7 @@ function getSelectedMember(){
 function getEmployment(member){ return member?.employment && typeof member.employment === 'object' ? member.employment : {}; }
 function getScheduler(member){ return member?.scheduler && typeof member.scheduler === 'object' ? member.scheduler : {}; }
 function getPreferences(member){ return member?.preferences && typeof member.preferences === 'object' ? member.preferences : {}; }
+
 function ensureShiftPreference(member){
   member.preferences ||= {};
   member.preferences.shift_preference ||= {
@@ -737,10 +702,6 @@ function ensureShiftPreference(member){
     swap_strategy: 'allow'
   };
   return member.preferences.shift_preference;
-}
-function getShiftStyle(member){
-  const prefs = getPreferences(member);
-  return prefs?.shift_preference?.style || 'availability_based';
 }
 function getRotationRole(track){
   if(track === 'A' || track === 'B') return 'day';
@@ -807,13 +768,6 @@ function getShiftLengthForStyle(style){
   if(style === 'partial_6h') return 6;
   return null;
 }
-function describeRotationTrack(track){
-  if(track === 'A') return 'A · Day · relieved by C';
-  if(track === 'B') return 'B · Day · relieved by D';
-  if(track === 'C') return 'C · Night · relieves A';
-  if(track === 'D') return 'D · Night · relieves B';
-  return 'Track not selected';
-}
 
 function certColorClass(certRaw){
   const cert = String(certRaw || '').toUpperCase();
@@ -833,26 +787,35 @@ function getOptionLabel(value, options){
   const row = options.find(o => o.value === value);
   return row ? row.label : '—';
 }
-function setButtonAppearance(btn, label, cls){
-  btn.textContent = label || '—';
-  btn.className = `state-btn ${cls || 'blue'}`;
+function setSettingButton(btn, title, value, cls){
+  btn.className = `setting-btn ${cls}`;
+  btn.innerHTML = `<span class="t">${esc(title)}</span><span class="v">${esc(value)}</span>`;
 }
-function ampmClass(value){
-  return value === 'no_preference' ? 'green' : 'yellow';
-}
-function pref24Class(value){
-  return value === 'no_preference' ? 'green' : 'yellow';
-}
-function swapClass(value){
-  return value === 'supervisor_only' ? 'yellow' : 'green';
-}
+function ampmClass(value){ return value === 'no_preference' ? 'green sm' : 'yellow sm'; }
+function pref24Class(value){ return value === 'no_preference' ? 'green sm' : 'green sm'; }
+function swapClass(value){ return value === 'supervisor_only' ? 'yellow sm' : 'green sm'; }
 function shiftStyleClass(value){
-  if(value === 'legacy_24h' || value === 'fixed_12h') return 'yellow';
-  if(value === 'partial_8h_day' || value === 'partial_6h') return 'red';
-  return 'green';
+  if(value === 'legacy_24h' || value === 'fixed_12h') return 'yellow sm';
+  if(value === 'partial_8h_day' || value === 'partial_6h') return 'red sm';
+  return 'green sm';
 }
-function activeStatusClass(isActive){
-  return isActive ? 'green status' : 'red status';
+function activeStatusClass(isActive){ return isActive ? 'green status' : 'red status'; }
+
+function getTrackPairValue(member){
+  const track = String(member?.rotation?.role || ensureShiftPreference(member).rotation_track || '').toUpperCase();
+  return pairForRole(track) || 'AC';
+}
+function toggleTrackPair(member){
+  const sp = ensureShiftPreference(member);
+  const currentRole = String(member?.rotation?.role || sp.rotation_track || 'A').toUpperCase();
+  const isNight = currentRole === 'C' || currentRole === 'D';
+  const currentPair = pairForRole(currentRole) || 'AC';
+  const nextPair = currentPair === 'AC' ? 'BD' : 'AC';
+  const nextRole = nextPair === 'AC' ? (isNight ? 'C' : 'A') : (isNight ? 'D' : 'B');
+  applyRotationBlock(member, nextRole);
+}
+function trackPairLabel(member){
+  return getTrackPairValue(member) === 'BD' ? 'B/D' : 'A/C';
 }
 
 function getVisibleStart(){
@@ -989,10 +952,7 @@ function buildResolvedLookup(){
 
   function scan(node, inherited={}){
     if(node == null) return;
-    if(Array.isArray(node)){
-      node.forEach(item => scan(item, inherited));
-      return;
-    }
+    if(Array.isArray(node)){ node.forEach(item => scan(item, inherited)); return; }
     if(typeof node !== 'object') return;
 
     const dateIso =
@@ -1018,35 +978,21 @@ function buildResolvedLookup(){
 
     const assignedMembers = [];
     const assignedNames = [];
-    [
-      node.member_id,
-      node.assigned_member_id,
-      node.selected_member_id,
-      node.memberId,
-      node.assignee_id
-    ].forEach(v => { if(v != null && v !== '') assignedMembers.push(v); });
+    [node.member_id, node.assigned_member_id, node.selected_member_id, node.memberId, node.assignee_id].forEach(v => {
+      if(v != null && v !== '') assignedMembers.push(v);
+    });
+    [node.member_name, node.assigned_member_name, node.selected_member_name, node.name].forEach(v => {
+      if(v) assignedNames.push(v);
+    });
 
-    [
-      node.member_name,
-      node.assigned_member_name,
-      node.selected_member_name,
-      node.name
-    ].forEach(v => { if(v) assignedNames.push(v); });
-
-    const memberArraySources = [
-      node.member_ids,
-      node.assigned_member_ids,
-      node.assigned_members,
-      node.members
-    ];
-    memberArraySources.forEach(src => {
+    [node.member_ids, node.assigned_member_ids, node.assigned_members, node.members].forEach(src => {
       if(Array.isArray(src)){
         src.forEach(item => {
           if(item && typeof item === 'object'){
             if(item.member_id != null) assignedMembers.push(item.member_id);
             if(item.id != null) assignedMembers.push(item.id);
             if(item.name) assignedNames.push(item.name);
-          } else if(item != null) {
+          } else if(item != null){
             assignedMembers.push(item);
           }
         });
@@ -1119,7 +1065,6 @@ function buildShiftButton(dateIso, shift){
     const icon = document.createElement('span');
     icon.className = `signal-icon ${signal.cls}`;
     icon.textContent = signal.icon;
-    icon.setAttribute('aria-hidden','true');
     btn.appendChild(icon);
   }
 
@@ -1132,16 +1077,36 @@ function buildShiftButton(dateIso, shift){
   return btn;
 }
 function renderCalendar(){
+  if(!selectedMemberId){
+    calendarContent.innerHTML = `<div class="empty-shell">Select a member from the dropdown to load availability.</div>`;
+    return;
+  }
+
   const dates = getVisibleDates();
   const start = dates[0];
-  calendarTitle.textContent = `${getWeekLabel(start)} • ${getWeekLabel(addDays(start,35))}`;
   patternWeekSelect.innerHTML = Array.from({length:6}).map((_,i) => {
     const wkStart = addDays(start, i*7);
     const label = `Week ${i+1}: ${getWeekLabel(wkStart)}`;
     return `<option value="${i}" ${i===1?'selected':''}>${esc(label)}</option>`;
   }).join('');
-  calendarHead.innerHTML = DOW.map(d => `<div class="dow">${d}</div>`).join('');
-  calendar.innerHTML = '';
+
+  const head = `<div class="calendar-top">
+      <div class="spacer"></div>
+      <div class="window-title">${esc(getWeekLabel(start))} • ${esc(getWeekLabel(addDays(start,35)))}</div>
+      <div style="display:flex;justify-content:flex-end"><button class="secondary" id="todayBtn2" type="button">Today</button></div>
+    </div>
+    <div class="nav-row-mid">
+      <button class="secondary" id="backWeekBtn" type="button">← Back 1 Week</button>
+    </div>
+    <div class="calendar-head">${DOW.map(d => `<div class="dow">${d}</div>`).join('')}</div>
+    <div class="calendar" id="calendarGrid"></div>
+    <div class="nav-row-bottom">
+      <button class="secondary" id="forwardWeekBtn" type="button">Forward 1 Week →</button>
+    </div>`;
+
+  calendarContent.innerHTML = head;
+  const grid = document.getElementById('calendarGrid');
+
   dates.forEach(dateObj => {
     const dateIso = iso(dateObj);
     const day = document.createElement('div');
@@ -1164,8 +1129,13 @@ function renderCalendar(){
       box.appendChild(buildShiftButton(dateIso, shift));
       day.appendChild(box);
     });
-    calendar.appendChild(day);
+    grid.appendChild(day);
   });
+
+  document.getElementById('backWeekBtn').addEventListener('click', () => { currentWeekOffset -= 1; renderCalendar(); });
+  document.getElementById('forwardWeekBtn').addEventListener('click', () => { currentWeekOffset += 1; renderCalendar(); });
+  document.getElementById('todayBtn2').addEventListener('click', () => { currentWeekOffset = 0; renderCalendar(); });
+
   const member = getSelectedMember();
   statusLine.textContent = member ? `Editing ${member.name} • rolling 6-week window` : 'Select a member to begin.';
 }
@@ -1176,6 +1146,7 @@ function getScopeShifts(){
   return ['AM','PM'];
 }
 function applyBulkCopy(){
+  if(!selectedMemberId) return;
   const dates = getVisibleDates();
   const start = dates[0];
   const selectedWeekIndex = parseInt(patternWeekSelect.value || '1', 10);
@@ -1197,7 +1168,7 @@ function applyBulkCopy(){
         let state = '';
         if(applyState === 'match_selected_week'){
           state = getShiftState(srcDate, shift);
-        } else if(applyState === 'blank') {
+        } else if(applyState === 'blank'){
           state = '';
         } else {
           state = applyState;
@@ -1212,6 +1183,7 @@ function applyBulkCopy(){
   queueAutoSave('availability');
 }
 function fillVisibleBlanks(){
+  if(!selectedMemberId) return;
   let count = 0;
   getVisibleDates().forEach(dateObj => {
     const dateIso = iso(dateObj);
@@ -1228,63 +1200,71 @@ function fillVisibleBlanks(){
   queueAutoSave('availability');
 }
 
+function setControlsDisabled(disabled){
+  [activeStateBtn, desiredCapInput, prefAmpmCycleBtn, pref24CycleBtn, swapCycleBtn, shiftStyleCycleBtn, openAvoidModalBtn, trackPairBtn].forEach(el => {
+    if(el) el.disabled = disabled;
+  });
+}
 function renderMemberSnapshot(){
   const m = getSelectedMember();
-  if(!m) return;
+  const nameEl = document.getElementById('summaryName');
+  if(!m){
+    nameEl.textContent = 'Select member';
+    nameEl.className = 'member-name';
+    document.getElementById('summaryCert').textContent = '—';
+    document.getElementById('summaryEmployment').textContent = '—';
+    document.getElementById('summaryRotation').textContent = '—';
+    setSettingButton(activeStateBtn, '', 'Select member', 'blue status');
+    desiredCapInput.value = '';
+    setControlsDisabled(true);
+    return;
+  }
+
   const emp = getEmployment(m);
   const rotation = m.rotation || null;
   const cert = m.raw_cert || m.ops_cert || m.cert || 'Unknown';
 
-  const nameEl = document.getElementById('summaryName');
   nameEl.textContent = m.name || 'Unknown';
   nameEl.className = `member-name ${certColorClass(cert)}`.trim();
-
   document.getElementById('summaryCert').textContent = cert;
   document.getElementById('summaryEmployment').textContent = emp.status || 'Unknown';
   document.getElementById('summaryRotation').textContent = rotation?.role ? `Track ${rotation.role}` : 'No rotation set';
-
-  setButtonAppearance(activeStateBtn, m.active ? 'Active for scheduling' : 'Do not schedule', activeStatusClass(Boolean(m.active)));
+  setSettingButton(activeStateBtn, '', m.active ? 'Active for scheduling' : 'Do not schedule', activeStatusClass(Boolean(m.active)));
   desiredCapInput.value = emp.preferred_weekly_hour_cap ?? '';
+  setControlsDisabled(false);
 }
 function renderPreferenceCycles(){
   const member = getSelectedMember();
-  if(!member) return;
+  if(!member) {
+    setSettingButton(prefAmpmCycleBtn, 'AM / PM preference', '—', 'blue sm');
+    setSettingButton(pref24CycleBtn, '24-hour preference', '—', 'blue sm');
+    setSettingButton(swapCycleBtn, 'Swap flexibility', '—', 'blue sm');
+    setSettingButton(shiftStyleCycleBtn, 'Shift Style', '—', 'blue sm');
+    setSettingButton(trackPairBtn, '2-2-3 Panama 2-Week 12s', 'A/C', 'green sm');
+    rotation223Wrap.classList.add('hidden');
+    avoidPrivateStatus.textContent = 'Enabled • 0 selected';
+    return;
+  }
+
   const prefs = getPreferences(member);
   const shiftPref = ensureShiftPreference(member);
-
-  setButtonAppearance(prefAmpmCycleBtn, getOptionLabel(prefs.ampm || 'no_preference', AMPM_OPTIONS), `${ampmClass(prefs.ampm || 'no_preference')} small`);
-  setButtonAppearance(pref24CycleBtn, getOptionLabel(prefs.shift24 || 'no_preference', PREF24_OPTIONS), `${pref24Class(prefs.shift24 || 'no_preference')} small`);
-  setButtonAppearance(swapCycleBtn, getOptionLabel(shiftPref.swap_strategy || 'allow', SWAP_OPTIONS), `${swapClass(shiftPref.swap_strategy || 'allow')} small`);
-  setButtonAppearance(shiftStyleCycleBtn, getOptionLabel(shiftPref.style || 'availability_based', SHIFT_STYLE_OPTIONS), shiftStyleClass(shiftPref.style || 'availability_based'));
+  setSettingButton(prefAmpmCycleBtn, 'AM / PM preference', getOptionLabel(prefs.ampm || 'no_preference', AMPM_OPTIONS), ampmClass(prefs.ampm || 'no_preference'));
+  setSettingButton(pref24CycleBtn, '24-hour preference', getOptionLabel(prefs.shift24 || 'no_preference', PREF24_OPTIONS), pref24Class(prefs.shift24 || 'no_preference'));
+  setSettingButton(swapCycleBtn, 'Swap flexibility', getOptionLabel(shiftPref.swap_strategy || 'allow', SWAP_OPTIONS), swapClass(shiftPref.swap_strategy || 'allow'));
+  setSettingButton(shiftStyleCycleBtn, 'Shift Style', getOptionLabel(shiftPref.style || 'availability_based', SHIFT_STYLE_OPTIONS), shiftStyleClass(shiftPref.style || 'availability_based'));
 
   const showRotation = shiftPref.style === 'rotation_223_relief';
   rotation223Wrap.classList.toggle('hidden', !showRotation);
-  rotationTrackSelect.value = showRotation ? (shiftPref.rotation_track || '') : '';
-
   if(showRotation){
-    const track = shiftPref.rotation_track || '';
-    const role = getRotationRole(track);
-    const relief = getReliefPartnerTrack(track);
-    rotationSummary.innerHTML = track ? `
-      <div><strong>${esc(describeRotationTrack(track))}</strong></div>
-      <div class="track-note">12-hour ${esc(role)} track • paired relief partner ${esc(relief)} • shift swaps should prefer same-style / same-track coverage.</div>
-    ` : `
-      <div><strong>Track not selected</strong></div>
-      <div class="track-note">Choose A, B, C, or D to save the relief-paired 12-hour track.</div>
-    `;
-  } else {
-    rotationSummary.innerHTML = `
-      <div><strong>Track hidden</strong></div>
-      <div class="track-note">Select 2-2-3 in Shift Style to assign A/B/C/D.</div>
-    `;
+    setSettingButton(trackPairBtn, '2-2-3 Panama 2-Week 12s', trackPairLabel(member), 'green sm');
   }
 }
 function renderPreferences(){
   renderMemberSnapshot();
   renderPreferenceCycles();
 }
-
 function openAvoidModal(){
+  if(!selectedMemberId) return;
   avoidModalBackdrop.classList.add('open');
   avoidModalBackdrop.setAttribute('aria-hidden','false');
   avoidSearch.value = avoidSearchTerm || '';
@@ -1351,9 +1331,8 @@ function setIndicators(text, cls){
   });
 }
 function setSaveState(state, secondsRemaining=null){
-  saveState = state;
   if(state === 'pending'){
-    const secs = Math.max(1, Math.ceil(secondsRemaining ?? AUTOSAVE_MS/1000));
+    const secs = Math.max(1, Math.ceil(secondsRemaining ?? AUTOSAVE_MS / 1000));
     setIndicators(`Saving in ${secs}…`, 'pending');
   } else if(state === 'saving'){
     setIndicators('Saving…', 'saving');
@@ -1366,7 +1345,7 @@ function setSaveState(state, secondsRemaining=null){
 function startCountdown(ms){
   clearInterval(countdownInterval);
   const started = Date.now();
-  setSaveState('pending', ms/1000);
+  setSaveState('pending', ms / 1000);
   countdownInterval = setInterval(() => {
     const remaining = ms - (Date.now() - started);
     if(remaining <= 0){
@@ -1407,10 +1386,6 @@ async function apiGet(url){
 }
 async function apiPost(url, body){
   const resolved = resolveDataUrl(url);
-  if(url === '/api/generate'){
-    localStorage.setItem('sc_static_generate_requested_at', new Date().toISOString());
-    return { ok:true, static:true, generated:false };
-  }
   const storageKey = storageKeyForUrl(url);
   if(storageKey){
     localStorage.setItem(storageKey, JSON.stringify(body));
@@ -1420,6 +1395,7 @@ async function apiPost(url, body){
 }
 
 function queueAutoSave(kind='both'){
+  if(!selectedMemberId) return;
   if(kind === 'availability' || kind === 'both') pendingAvailabilitySave = true;
   if(kind === 'member' || kind === 'both') pendingMemberSave = true;
   clearTimeout(autosaveTimer);
@@ -1447,7 +1423,7 @@ async function flushAutoSave(){
     setSaveState('saved');
     statusLine.textContent = 'Saved.';
   }catch(err){
-    setIndicators(`Save failed`, 'pending');
+    setIndicators('Save failed', 'pending');
     statusLine.textContent = `Auto-save failed: ${err.message}`;
   }finally{
     isSaving = false;
@@ -1464,7 +1440,8 @@ async function setSelectedMember(id, fromInit=false){
   renderCalendar();
   if(!fromInit){
     const url = new URL(window.location.href);
-    url.searchParams.set('member_id', selectedMemberId);
+    if(selectedMemberId) url.searchParams.set('member_id', selectedMemberId);
+    else url.searchParams.delete('member_id');
     history.replaceState({}, '', url);
   }
 }
@@ -1485,24 +1462,24 @@ async function init(){
     return;
   }
 
-  memberSelect.innerHTML = (membersPayload.members || []).map(m => `<option value="${esc(m.member_id)}">${esc(m.name || `Member ${m.member_id}`)}</option>`).join('');
+  const placeholder = `<option value="">Select member</option>`;
+  memberSelect.innerHTML = placeholder + (membersPayload.members || []).map(m => `<option value="${esc(m.member_id)}">${esc(m.name || `Member ${m.member_id}`)}</option>`).join('');
+
   const qp = new URLSearchParams(location.search);
   const preferredId = qp.get('member_id');
-  const firstId = preferredId && (membersPayload.members || []).some(m => String(m.member_id) === String(preferredId))
+  const initialId = preferredId && (membersPayload.members || []).some(m => String(m.member_id) === String(preferredId))
     ? preferredId
-    : String(membersPayload.members?.[0]?.member_id || '');
+    : '';
 
   setSaveState('saved');
-  await setSelectedMember(firstId, true);
+  await setSelectedMember(initialId, true);
 
   memberSelect.addEventListener('change', async () => { await setSelectedMember(memberSelect.value); });
-  document.getElementById('backWeekBtn').addEventListener('click', () => { currentWeekOffset -= 1; renderCalendar(); });
-  document.getElementById('forwardWeekBtn').addEventListener('click', () => { currentWeekOffset += 1; renderCalendar(); });
   document.getElementById('todayBtn').addEventListener('click', () => { currentWeekOffset = 0; renderCalendar(); });
-  document.getElementById('todayBtn2').addEventListener('click', () => { currentWeekOffset = 0; renderCalendar(); });
   document.getElementById('copyWeekForwardBtn').addEventListener('click', applyBulkCopy);
   document.getElementById('fillVisibleBlanksBtn').addEventListener('click', fillVisibleBlanks);
   document.getElementById('clearVisibleBtn').addEventListener('click', () => {
+    if(!selectedMemberId) return;
     clearExplicitVisible();
     renderCalendar();
     statusLine.textContent = 'Visible window cleared. Auto-save in 3 seconds…';
@@ -1569,23 +1546,23 @@ async function init(){
     const next = cycleOption(current, SHIFT_STYLE_OPTIONS);
     sp.style = next;
     sp.rotation_template_id = next === 'rotation_223_relief' ? 'rot_223_12h_relief' : null;
-    sp.rotation_track = next === 'rotation_223_relief' ? (sp.rotation_track || '') : null;
+    sp.rotation_track = next === 'rotation_223_relief' ? (sp.rotation_track || 'A') : null;
     sp.rotation_role = next === 'rotation_223_relief' ? getRotationRole(sp.rotation_track) : null;
     sp.relief_partner_track = next === 'rotation_223_relief' ? getReliefPartnerTrack(sp.rotation_track) : null;
     sp.shift_length_hours = getShiftLengthForStyle(next);
     if(!sp.swap_strategy) sp.swap_strategy = 'allow';
     if(next !== 'rotation_223_relief'){
       m.rotation = null;
-    } else if(sp.rotation_track){
-      applyRotationBlock(m, sp.rotation_track);
+    } else if(!m.rotation){
+      applyRotationBlock(m, 'A');
     }
     renderPreferences();
     queueAutoSave('member');
   });
 
-  rotationTrackSelect.addEventListener('change', () => {
+  trackPairBtn.addEventListener('click', () => {
     const m = getSelectedMember(); if(!m) return;
-    applyRotationBlock(m, rotationTrackSelect.value || null);
+    toggleTrackPair(m);
     renderPreferences();
     queueAutoSave('member');
   });
