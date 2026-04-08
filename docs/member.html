@@ -1232,7 +1232,7 @@ function renderMemberSnapshot(){
   const rotation = m.rotation || null;
   const cert = m.raw_cert || m.ops_cert || m.cert || 'Unknown';
 
- nameEl.textContent = m.name || 'Unknown';
+ nameEl.textContent = m.name || 'Unknown' + '<br>';
 nameEl.className = `member-name ${certColorClass(cert)}`.trim();
 
 document.getElementById('summaryCert').textContent = cert;
