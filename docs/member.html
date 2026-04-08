@@ -1256,7 +1256,10 @@ function renderMemberSnapshot(){
 
   document.getElementById('summaryCert').textContent = cert;
   document.getElementById('summaryEmployment').textContent = emp.status || 'Unknown';
-  document.getElementById('summaryRotation').textContent = rotation?.role ? rotation.role : 'No rotation';
+
+  const shiftPref = ensureShiftPreference(m);
+   document.getElementById('summaryShiftStyle').textContent =
+   getOptionLabel(shiftPref.style || 'availability_based', SHIFT_STYLE_OPTIONS);
 
   setSettingButton(
     activeStateBtn,
