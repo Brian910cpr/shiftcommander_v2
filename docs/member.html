@@ -1105,13 +1105,24 @@ function buildResolvedLookup(){
     const assignedMembers = [];
     const assignedNames = [];
 
-    [node.assigned_member_id, node.selected_member_id, node.assignee_id].forEach(v => {
-      if(v != null && v !== '') assignedMembers.push(v);
-    });
+// === MEMBER ID FIELDS ===
+[
+  node.assigned_member_id,
+  node.selected_member_id,
+  node.assignee_id,
+  node.assigned,            // ← ADD THIS
+].forEach(v => {
+  if(v != null && v !== '') assignedMembers.push(v);
+});
 
-    [node.assigned_member_name, node.selected_member_name].forEach(v => {
-      if(v) assignedNames.push(v);
-    });
+// === MEMBER NAME FIELDS ===
+[
+  node.assigned_member_name,
+  node.selected_member_name,
+  node.assigned_name        // ← ADD THIS
+].forEach(v => {
+  if(v) assignedNames.push(v);
+});
 
     [node.assigned_member_ids, node.assigned_members].forEach(src => {
       if(Array.isArray(src)){
