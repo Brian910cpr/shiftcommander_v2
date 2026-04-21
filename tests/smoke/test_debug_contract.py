@@ -1,0 +1,136 @@
+import copy
+import json
+import sys
+import unittest
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from engine.resolver import resolve  # noqa: E402
+
+
+FIXTURES = ROOT / "tests" / "fixtures"
+DEBUG_DIR = ROOT / "debug"
+DOCS_DIR = ROOT / "docs"
+
+
+def load_fixture(name: str) -> dict:
+    return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+
+
+def load_debug(name: str):
+    return json.loads((DEBUG_DIR / name).read_text(encoding="utf-8"))
+
+
+def apply_shift_date(data: dict, target_date: str) -> None:
+    for shift in data["shifts"]:
+        shift["date"] = target_date
+
+
+def apply_availability(data: dict, statuses: dict[str, str], label: str = "AM") -> None:
+    shift_date = data["shifts"][0]["date"]
+    month_key = shift_date[:7]
+    months = {month_key: {}}
+    for member in data["members"]:
+        member_id = member["member_id"]
+        status = statuses.get(member_id, "preferred")
+        months[month_key].setdefault(member_id, {})[shift_date] = {label: status}
+    data["availability"] = {"months": months}
+
+
+def ensure_debug_artifacts() -> None:
+    required = [
+        "latest_run_summary.json",
+        "latest_run_supervisor_cards.json",
+        "latest_run_full_audit.json",
+        "latest_run_failures.json",
+    ]
+    if all((DEBUG_DIR / name).exists() for name in required):
+        return
+
+    data = load_fixture("resolver_base.json")
+    apply_shift_date(data, (datetime.now(UTC).date() + timedelta(days=45)).isoformat())
+    apply_availability(data, {})
+    resolve(copy.deepcopy(data))
+
+
+class DebugContractTests(unittest.TestCase):
+    def setUp(self) -> None:
+        if DEBUG_DIR.exists():
+            for path in DEBUG_DIR.iterdir():
+                if path.is_file():
+                    try:
+                        path.unlink()
+                    except FileNotFoundError:
+                        pass
+
+    def test_debug_artifact_contract_matches_ui_expectations(self) -> None:
+        ensure_debug_artifacts()
+
+        summary = load_debug("latest_run_summary.json")
+        supervisor_cards = load_debug("latest_run_supervisor_cards.json")
+        full_audit = load_debug("latest_run_full_audit.json")
+        failures = load_debug("latest_run_failures.json")
+
+        self.assertIsInstance(summary, dict)
+        for key in ["generated_at", "shift_count", "seat_count", "fallback_used_count", "later_pass_reviewed_count", "failure_count"]:
+            self.assertIn(key, summary)
+
+        self.assertIsInstance(supervisor_cards, list)
+        self.assertGreater(len(supervisor_cards), 0)
+        for key in ["seat_id", "seat_type", "selected_member_id", "short_explanation", "flags"]:
+            self.assertIn(key, supervisor_cards[0])
+
+        self.assertIsInstance(full_audit, dict)
+        self.assertIn("seat_audit", full_audit)
+        self.assertIsInstance(full_audit["seat_audit"], list)
+        self.assertGreater(len(full_audit["seat_audit"]), 0)
+        seat = full_audit["seat_audit"][0]
+        for key in [
+            "seat_id",
+            "seat_type",
+            "selected_member_id",
+            "preserved_existing_assignment",
+            "fallback_used",
+            "decision_stage",
+            "pass_sequence",
+            "rotation_status",
+            "rotation_score_applied",
+            "missing_data_assumptions",
+            "fallback_reason",
+            "later_pass_reviewed",
+            "rejected_candidates",
+            "legal_candidates_remaining",
+            "short_explanation",
+            "long_explanation",
+            "flags",
+        ]:
+            self.assertIn(key, seat)
+
+        self.assertIsInstance(failures, list)
+
+    def test_docs_pages_reference_expected_truth_sources(self) -> None:
+        supervisor = (DOCS_DIR / "supervisor.html").read_text(encoding="utf-8")
+        member = (DOCS_DIR / "member.html").read_text(encoding="utf-8")
+        wallboard = (DOCS_DIR / "wallboard.html").read_text(encoding="utf-8")
+
+        self.assertIn("../debug/latest_run_summary.json", supervisor)
+        self.assertIn("../debug/latest_run_supervisor_cards.json", supervisor)
+        self.assertIn("../debug/latest_run_failures.json", supervisor)
+        self.assertIn("../debug/latest_run_full_audit.json", supervisor)
+
+        self.assertIn("/api/schedule", member)
+        self.assertIn("/debug/latest_run_full_audit.json", member)
+        self.assertIn("Assigned Shifts", member)
+
+        self.assertIn("/api/schedule", wallboard)
+        self.assertIn("/api/members", wallboard)
+        self.assertIn("Source: final resolved schedule", wallboard)
+
+
+if __name__ == "__main__":
+    unittest.main()

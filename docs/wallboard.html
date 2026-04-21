@@ -315,6 +315,7 @@
       align-items: center;
       justify-content: center;
       gap: 4px;
+      flex-direction: column;
     }
 
     .slot.open-seat {
@@ -368,6 +369,23 @@
       overflow: hidden;
       text-overflow: ellipsis;
       width: 100%;
+    }
+    .seat-flags{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:4px;
+      width:100%;
+    }
+    .seat-flag{
+      padding:2px 6px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(255,255,255,0.06);
+      color:#dbe9ff;
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:0.04em;
     }
 
 
@@ -425,7 +443,7 @@
         <button class="nav-btn" id="nextWeekBtn">Next Week →</button>
       </div>
       <div class="meta-pill" id="metaWindow">Window: --</div>
-      <div class="meta-pill" id="metaUnit">Source: ./data/schedule.json + ./data/members.json</div>
+      <div class="meta-pill" id="metaUnit">Source: final resolved schedule (./data/schedule.json)</div>
       <div class="meta-pill" id="metaUpdated">Updated: --</div>
     </div>
   </div>
@@ -435,8 +453,8 @@
   <div class="footer">Auto-refresh every 60 seconds • snaps back to Today after 60 seconds of no interaction</div>
 
   <script>
-    const SCHEDULE_URL = "./data/schedule.json";
-    const MEMBERS_URL = "./data/members.json";
+    const SCHEDULE_URLS = ["/api/schedule", "./data/schedule.json"];
+    const MEMBERS_URLS = ["/api/members", "./data/members.json"];
     const REFRESH_MS = 60000;
     const IDLE_RESET_MS = 60000;
     const VISIBLE_WEEKS = 5;
@@ -454,6 +472,20 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+    }
+
+    async function fetchFirstJson(urls) {
+      let lastError = null;
+      for (const url of urls) {
+        try {
+          const response = await fetch(`${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`, { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (error) {
+          lastError = new Error(`${url}: ${error.message || error}`);
+        }
+      }
+      throw lastError || new Error("No data source available");
     }
 
     function renderWeekdayRow() {
@@ -629,7 +661,7 @@
 
         const visibleSeats = seats.filter(seat => {
           const showOnBoard = seat?.display_on_board === true;
-          const hasAssigned = !!String(seat?.assigned_name || "").trim();
+          const hasAssigned = !!String(seat?.assigned_name || seat?.assigned || "").trim();
           return showOnBoard || hasAssigned;
         });
 
@@ -676,7 +708,12 @@
     }
 
     function renderSlot(seat, shiftDate, memberLookup) {
-      const rawName = String(seat?.assigned_name || "").trim();
+      const assignedId = String(seat?.assigned || "").trim();
+      const rawName = String(
+        seat?.assigned_name ||
+        memberLookup?.byId?.get(assignedId)?.name ||
+        ""
+      ).trim();
       const pastDate = isPastDate(shiftDate);
       const showOpenAlert = seat?.display_open_alert === true;
 
@@ -690,10 +727,16 @@
       const hasMember = !!rawName && rawName.toUpperCase() !== "OPEN";
       const memberClass = hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty");
       const openSeatClass = isFutureOpen ? "open-seat" : "";
+      const badges = [];
+      if (seat?.locked) badges.push("LOCKED");
+      if (seat?.preserved_existing_assignment) badges.push("PRESERVED");
+      if (seat?.fallback_used) badges.push("FALLBACK");
+      if (showOpenAlert && !rawName) badges.push("UNRESOLVED");
 
       return `
         <div class="slot ${openSeatClass}">
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
+          ${badges.length ? `<div class="seat-flags">${badges.map(flag => `<span class="seat-flag">${escapeHtml(flag)}</span>`).join("")}</div>` : ``}
         </div>
       `;
     }
@@ -835,15 +878,11 @@
 
       try {
         const [scheduleResponse, membersResponse] = await Promise.all([
-          fetch(`${SCHEDULE_URL}?t=${Date.now()}`, { cache: "no-store" }),
-          fetch(`${MEMBERS_URL}?t=${Date.now()}`, { cache: "no-store" })
+          fetchFirstJson(SCHEDULE_URLS),
+          fetchFirstJson(MEMBERS_URLS)
         ]);
-
-        if (!scheduleResponse.ok) throw new Error(`Schedule HTTP ${scheduleResponse.status}`);
-        if (!membersResponse.ok) throw new Error(`Members HTTP ${membersResponse.status}`);
-
-        const scheduleData = await scheduleResponse.json();
-        const membersData = await membersResponse.json();
+        const scheduleData = scheduleResponse;
+        const membersData = membersResponse;
 
         lastLoadedData = {
           ...scheduleData,
@@ -857,7 +896,7 @@
         app.className = "state";
         app.innerHTML = `
           <div>Failed to load wallboard data.</div>
-          <div style="margin-top:12px; font-size:18px;">Check paths: <code>${escapeHtml(SCHEDULE_URL)}</code> and <code>${escapeHtml(MEMBERS_URL)}</code></div>
+          <div style="margin-top:12px; font-size:18px;">Check sources: <code>${escapeHtml(SCHEDULE_URLS.join(" , "))}</code> and <code>${escapeHtml(MEMBERS_URLS.join(" , "))}</code></div>
           <div style="margin-top:12px; font-size:18px;">${escapeHtml(error.message || "Unknown error")}</div>
         `;
       }

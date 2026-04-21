@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+
+debug/
+data/shifts.json
+data/schedule.json
+.smoke_test_backup/

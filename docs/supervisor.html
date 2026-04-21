@@ -223,6 +223,118 @@
       white-space:nowrap;
     }
 
+    .resolverStack{ display:grid; gap:12px; }
+    .resolverSummaryGrid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+    .resolverStat{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(0,0,0,.16);
+      padding:12px;
+      display:grid;
+      gap:4px;
+    }
+    .resolverStat .k{
+      color:var(--muted);
+      font-size:.84rem;
+      font-weight:850;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .resolverStat .v{ font-size:1.2rem; font-weight:900; }
+    .filterBar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .filterBtn{
+      border:1px solid var(--btnBr);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      border-radius:999px;
+      padding:8px 12px;
+      font-weight:850;
+      cursor:pointer;
+    }
+    .filterBtn.is-active{
+      color:var(--text);
+      background:rgba(124,92,255,.22);
+      border-color:rgba(124,92,255,.45);
+    }
+    .emptyState{
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:18px;
+      padding:18px;
+      background:rgba(0,0,0,.12);
+      color:var(--muted);
+    }
+    .seatList{ display:grid; gap:12px; margin-top:12px; }
+    .seatCard{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    .seatHeader{
+      padding:14px;
+      display:grid;
+      grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;
+      gap:12px;
+      align-items:start;
+    }
+    .seatTitle{ display:grid; gap:6px; }
+    .seatTitle h3{ margin:0; font-size:1rem; }
+    .seatSubtitle{ color:var(--muted); font-size:.92rem; }
+    .seatMeta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    .seatDetailWrap{
+      border-top:1px solid var(--line);
+      padding:0 14px 14px;
+      background:rgba(255,255,255,.02);
+    }
+    .seatDetailWrap[hidden]{ display:none; }
+    .seatDetailGrid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;
+    }
+    .detailBlock{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(0,0,0,.18);
+    }
+    .detailBlock h4{
+      margin:0 0 8px;
+      font-size:.92rem;
+    }
+    .detailList{
+      display:grid;
+      gap:8px;
+      max-height:240px;
+      overflow:auto;
+    }
+    .detailItem{
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:12px;
+      padding:8px 10px;
+      background:rgba(255,255,255,.02);
+    }
+    .detailItem strong{ display:block; margin-bottom:4px; }
+    .detailLabel{ color:var(--muted); font-size:.84rem; }
+    .inlineList{ display:flex; flex-wrap:wrap; gap:6px; }
+    .monoBlock{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:.84rem;
+      white-space:pre-wrap;
+      line-height:1.4;
+    }
+
     /* Modal */
     .modalBackdrop{
       position:fixed; inset:0;
@@ -671,6 +783,10 @@ const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
     schedule: `${DATA_BASE}/schedule.json`,             // optional (viewer)
     overrides: `${DATA_BASE}/overrides.json`,           // optional
     history: `${DATA_BASE}/assignments_history.json`,   // optional (flat model)
+    debugSummary: `../debug/latest_run_summary.json`,
+    debugSupervisorCards: `../debug/latest_run_supervisor_cards.json`,
+    debugFailures: `../debug/latest_run_failures.json`,
+    debugFullAudit: `../debug/latest_run_full_audit.json`,
   };
 
   // Local storage keys
@@ -687,11 +803,24 @@ const DATA_BASE = "./data"; // expected: /docs/data on GitHub Pages
       org_settings: null,
       schedule: null,
       overrides: [],
-      history: null
+      history: null,
+      debug: {
+        summary: null,
+        supervisorCards: [],
+        failures: [],
+        fullAudit: null,
+      }
     },
     ui: {
       activeTab: "schedule",
       opsWeekStartIso: null,
+      scheduleFilters: {
+        fallbackOnly: false,
+        unresolvedOnly: false,
+        preservedOnly: false,
+        alsRiskOnly: false,
+        partialOnly: false,
+      },
       modal: { mode:null, payload:null }
     }
   };
@@ -1240,6 +1369,14 @@ const safeJson = async (resp)=>{
     }
   }
 
+  async function fetchFirstJson(paths){
+    for(const path of paths){
+      const data = await fetchLocalJson(path);
+      if(data) return data;
+    }
+    return null;
+  }
+
   // ---- LOAD ----
   async function loadAll(){
     setDataStatus("idle", "Loading…", "");
@@ -1275,9 +1412,15 @@ const safeJson = async (resp)=>{
     // Local fallback (or supplement)
     if(!members) members = await fetchLocalJson(LOCAL_PATHS.members);
     if(!org) org = await fetchLocalJson(LOCAL_PATHS.org);
-    if(!schedule) schedule = await fetchLocalJson(LOCAL_PATHS.schedule);
+    if(!schedule) schedule = await fetchFirstJson(["/api/schedule", LOCAL_PATHS.schedule]);
     if(!overrides) overrides = await fetchLocalJson(LOCAL_PATHS.overrides);
     if(!history) history = await fetchLocalJson(LOCAL_PATHS.history);
+    const [debugSummary, debugSupervisorCards, debugFailures, debugFullAudit] = await Promise.all([
+      fetchLocalJson(LOCAL_PATHS.debugSummary),
+      fetchLocalJson(LOCAL_PATHS.debugSupervisorCards),
+      fetchLocalJson(LOCAL_PATHS.debugFailures),
+      fetchLocalJson(LOCAL_PATHS.debugFullAudit),
+    ]);
 
     // Normalize
     app.data.members = Array.isArray(members) ? members : (members && members.members) ? members.members : [];
@@ -1289,6 +1432,12 @@ const safeJson = async (resp)=>{
     app.data.schedule = (schedule && schedule.payload) ? schedule.payload : (schedule || null);
     app.data.overrides = Array.isArray(overrides) ? overrides : (overrides && overrides.overrides) ? overrides.overrides : [];
     app.data.history = history || null;
+    app.data.debug = {
+      summary: (debugSummary && typeof debugSummary === "object") ? debugSummary : null,
+      supervisorCards: Array.isArray(debugSupervisorCards) ? debugSupervisorCards : [],
+      failures: Array.isArray(debugFailures) ? debugFailures : [],
+      fullAudit: (debugFullAudit && typeof debugFullAudit === "object") ? debugFullAudit : null,
+    };
 
     // Ensure qualifications list exists (grows over time)
     app.data.org_settings.qualifications ||= [];
@@ -1421,63 +1570,269 @@ const safeJson = async (resp)=>{
     return String(str || "").toLowerCase().includes(q);
   }
 
+  function getScheduleSeatMeta(){
+    const out = new Map();
+    const shifts = Array.isArray(app.data.debug?.fullAudit?.shifts) ? app.data.debug.fullAudit.shifts : [];
+    shifts.forEach(shift => {
+      (Array.isArray(shift?.seats) ? shift.seats : []).forEach(seat => {
+        if(seat?.seat_id) out.set(String(seat.seat_id), seat);
+      });
+    });
+    return out;
+  }
+
+  function getFailureMap(){
+    const map = new Map();
+    (Array.isArray(app.data.debug?.failures) ? app.data.debug.failures : []).forEach(item => {
+      const seatId = String(item?.seat_id || "").trim();
+      if(!seatId) return;
+      if(!map.has(seatId)) map.set(seatId, []);
+      map.get(seatId).push(item);
+    });
+    return map;
+  }
+
+  function seatLabelFromSeatId(seatId, seatType){
+    const parts = String(seatId || "").split(":");
+    if(parts.length >= 4){
+      return `${parts[0]} • ${parts[1]} • ${seatType || parts[2]} #${parts[3]}`;
+    }
+    return seatId || seatType || "Seat";
+  }
+
+  function getSelectedMemberLabel(memberId){
+    if(!memberId) return "Unresolved";
+    const member = getMemberById(memberId);
+    return member ? `${displayName(member)} (${memberId})` : memberId;
+  }
+
+  function normalizeSeatRecord(rawRecord, cardMap, seatMetaMap, failureMap){
+    const seatId = String(rawRecord?.seat_id || "").trim();
+    const seatMeta = seatMetaMap.get(seatId) || {};
+    const card = cardMap.get(seatId) || {};
+    const failures = failureMap.get(seatId) || [];
+    const rejectedCandidates = Array.isArray(rawRecord?.rejected_candidates) ? rawRecord.rejected_candidates : failures.map(f => ({
+      member_id: f.member_id || "",
+      rule: f.rule || "unknown",
+      reason: f.reason || "resolver_failure",
+    }));
+    const legalCandidatesRemaining = Array.isArray(rawRecord?.legal_candidates_remaining) ? rawRecord.legal_candidates_remaining : [];
+    const flags = Array.isArray(rawRecord?.flags) ? rawRecord.flags : Array.isArray(card?.flags) ? card.flags : [];
+    const selectedMemberId = rawRecord?.selected_member_id ?? card?.selected_member_id ?? seatMeta?.assigned ?? null;
+
+    return {
+      seat_id: seatId,
+      seat_type: rawRecord?.seat_type || card?.seat_type || seatMeta?.role || "UNKNOWN",
+      seat_label: seatLabelFromSeatId(seatId, rawRecord?.seat_type || seatMeta?.role),
+      selected_member_id: selectedMemberId,
+      selected_member_label: getSelectedMemberLabel(selectedMemberId),
+      preserved_existing_assignment: Boolean(rawRecord?.preserved_existing_assignment || seatMeta?.preserved_existing_assignment),
+      fallback_used: Boolean(rawRecord?.fallback_used || seatMeta?.fallback_used),
+      locked: Boolean(seatMeta?.locked),
+      short_explanation: rawRecord?.short_explanation || card?.short_explanation || "No resolver explanation available.",
+      long_explanation: rawRecord?.long_explanation || "No extended explanation was recorded for this seat.",
+      rejected_candidates: rejectedCandidates,
+      legal_candidates_remaining: legalCandidatesRemaining,
+      rejected_count: rejectedCandidates.length,
+      flags,
+      decision_stage: rawRecord?.decision_stage || seatMeta?.decision_stage || "unknown",
+      pass_sequence: Array.isArray(rawRecord?.pass_sequence) ? rawRecord.pass_sequence : [],
+      fallback_reason: rawRecord?.fallback_reason || seatMeta?.fallback_reason || null,
+      rotation_status: rawRecord?.rotation_status || seatMeta?.rotation_status || "not_recorded",
+      rotation_score_applied: Boolean(rawRecord?.rotation_score_applied || seatMeta?.rotation_score_applied),
+      missing_data_assumptions: Array.isArray(rawRecord?.missing_data_assumptions) ? rawRecord.missing_data_assumptions : [],
+      later_pass_reviewed: Boolean(rawRecord?.later_pass_reviewed),
+      hard_filter_summary: rawRecord?.hard_filter_summary || {},
+    };
+  }
+
+  function getResolverSeatRecords(){
+    const debug = app.data.debug || {};
+    const cards = Array.isArray(debug.supervisorCards) ? debug.supervisorCards : [];
+    const seatAudit = Array.isArray(debug.fullAudit?.seat_audit) ? debug.fullAudit.seat_audit : [];
+    const cardMap = new Map(cards.map(card => [String(card?.seat_id || ""), card]));
+    const seatMetaMap = getScheduleSeatMeta();
+    const failureMap = getFailureMap();
+
+    if(seatAudit.length){
+      return seatAudit.map(row => normalizeSeatRecord(row, cardMap, seatMetaMap, failureMap));
+    }
+    if(cards.length){
+      return cards.map(row => normalizeSeatRecord(row, cardMap, seatMetaMap, failureMap));
+    }
+    return [];
+  }
+
+  function recordMatchesScheduleFilters(record){
+    const f = app.ui.scheduleFilters || {};
+    if(f.fallbackOnly && !record.fallback_used) return false;
+    if(f.unresolvedOnly && record.selected_member_id) return false;
+    if(f.preservedOnly && !(record.preserved_existing_assignment || record.locked || record.flags.includes("LOCKED_PRESERVED"))) return false;
+    if(f.alsRiskOnly && !record.flags.includes("ALS_WASTE_RISK")) return false;
+    if(f.partialOnly && !record.flags.includes("PARTIAL_AVAILABILITY_USED")) return false;
+    return true;
+  }
+
+  function renderResolverTags(values){
+    if(!Array.isArray(values) || !values.length) return `<span class="small">None</span>`;
+    return values.map(value => `<span class="tag">${esc(value)}</span>`).join("");
+  }
+
+  function renderCandidateList(items, type){
+    if(!Array.isArray(items) || !items.length){
+      return `<div class="small">None recorded.</div>`;
+    }
+    return `<div class="detailList">${items.map(item => {
+      if(type === "rejected"){
+        return `
+          <div class="detailItem">
+            <strong>${esc(item.member_id || "unknown")}</strong>
+            <div class="detailLabel">${esc(item.rule || "rule")} • ${esc(item.reason || "reason unavailable")}</div>
+          </div>
+        `;
+      }
+      const score = item?.score_breakdown?.final_score;
+      return `
+        <div class="detailItem">
+          <strong>${esc(item.member_id || "unknown")}</strong>
+          <div class="detailLabel">Final score: ${score != null ? esc(score) : "n/a"}</div>
+          <div class="monoBlock">${esc(JSON.stringify(item.score_breakdown || {}, null, 2))}</div>
+        </div>
+      `;
+    }).join("")}</div>`;
+  }
+
+  function renderPassSequence(sequence){
+    if(!Array.isArray(sequence) || !sequence.length) return `<span class="small">No pass history recorded.</span>`;
+    return `<div class="inlineList">${sequence.map(step => `<span class="tag">${esc(`${step.stage || "unknown"} / ${step.pass || "unknown"}`)}</span>`).join("")}</div>`;
+  }
+
+  function renderSeatInspectionCard(record){
+    return `
+      <details class="seatCard">
+        <summary class="seatHeader" style="list-style:none; cursor:pointer;">
+          <div class="seatTitle">
+            <h3>${esc(record.seat_label)}</h3>
+            <div class="seatSubtitle">${esc(record.selected_member_label)}</div>
+            <div class="small">${esc(record.short_explanation)}</div>
+          </div>
+          <div>
+            <div class="small">Decision stage: <strong>${esc(record.decision_stage)}</strong></div>
+            <div class="small">Rejected: <strong>${esc(record.rejected_count)}</strong></div>
+            <div class="small">Fallback: <strong>${record.fallback_used ? "Yes" : "No"}</strong></div>
+          </div>
+          <div class="seatMeta">
+            ${record.locked ? `<span class="tag">LOCKED</span>` : ``}
+            ${record.preserved_existing_assignment ? `<span class="tag">PRESERVED</span>` : ``}
+            ${record.fallback_used ? `<span class="tag">FALLBACK</span>` : ``}
+            ${record.flags.map(flag => `<span class="tag">${esc(flag)}</span>`).join("")}
+          </div>
+        </summary>
+        <div class="seatDetailWrap">
+          <div class="seatDetailGrid">
+            <div class="detailBlock">
+              <h4>Seat Status</h4>
+              <div class="detailList">
+                <div class="detailItem"><strong>Selected member</strong><div class="detailLabel">${esc(record.selected_member_label)}</div></div>
+                <div class="detailItem"><strong>Preserved existing assignment</strong><div class="detailLabel">${record.preserved_existing_assignment ? "Yes" : "No"}</div></div>
+                <div class="detailItem"><strong>Fallback reason</strong><div class="detailLabel">${esc(record.fallback_reason || "None")}</div></div>
+                <div class="detailItem"><strong>Rotation status</strong><div class="detailLabel">${esc(record.rotation_status)}</div></div>
+              </div>
+            </div>
+            <div class="detailBlock">
+              <h4>Rejected Candidates</h4>
+              ${renderCandidateList(record.rejected_candidates, "rejected")}
+            </div>
+            <div class="detailBlock">
+              <h4>Legal Candidates Remaining</h4>
+              ${renderCandidateList(record.legal_candidates_remaining, "legal")}
+            </div>
+            <div class="detailBlock">
+              <h4>Pass Sequence</h4>
+              ${renderPassSequence(record.pass_sequence)}
+              <div style="margin-top:10px;"><strong class="small">Missing-data assumptions</strong></div>
+              <div class="inlineList" style="margin-top:8px;">${renderResolverTags(record.missing_data_assumptions)}</div>
+            </div>
+          </div>
+          <div class="detailBlock" style="margin-top:12px;">
+            <h4>Explanation</h4>
+            <div class="small">${esc(record.long_explanation)}</div>
+          </div>
+        </div>
+      </details>
+    `;
+  }
+
+  function bindScheduleFilters(){
+    $$("[data-schedule-filter]").forEach(btn => {
+      btn.onclick = ()=>{
+        const key = btn.dataset.scheduleFilter;
+        app.ui.scheduleFilters[key] = !app.ui.scheduleFilters[key];
+        renderSchedule();
+      };
+    });
+    const openAudit = $("#btnOpenAudit");
+    if(openAudit) openAudit.onclick = () => openModalAudit();
+  }
+
   function renderSchedule(){
     const history = app.data.history;
     const hasHistory = !!history;
+    const records = getResolverSeatRecords().filter(recordMatchesScheduleFilters);
+    const summary = app.data.debug?.summary || {};
+    const debugAvailable = getResolverSeatRecords().length > 0;
+    const filterButtons = [
+      ["fallbackOnly", "Fallback used"],
+      ["unresolvedOnly", "Unresolved seats"],
+      ["preservedOnly", "Locked / preserved"],
+      ["alsRiskOnly", "ALS risk"],
+      ["partialOnly", "Partial availability"],
+    ];
 
     el.panelBody.innerHTML = `
-      <div class="row" style="margin-bottom:10px;">
-        <span class="chip"><span class="dot ${app.connected ? "ok":"warn"}"></span>
-          <span title="Drive connection status">Drive</span>: <strong>${app.connected ? "Connected":"Offline"}</strong>
-        </span>
-        <span class="chip" title="History file is optional (assignment log).">
-          <span class="dot ${hasHistory ? "ok":"warn"}"></span>
-          History: <strong>${hasHistory ? "Loaded":"Missing"}</strong>
-        </span>
-        <span class="chip" title="This page is not a schedule calculator yet; it is a supervisor review surface.">
-          <span class="dot idle"></span> Review surface
-        </span>
-        <span class="spacer"></span>
-        <button class="btn" id="btnOpenAudit">Audit / History</button>
-      </div>
-
-      <div class="field">
-        <label>What this tab is for (v1)</label>
-        <div class="hint">
-          <div style="margin-bottom:6px;">Supervisor responsibilities:</div>
-          <div class="row" style="gap:8px;">
-            <span class="tag">Review past weeks</span>
-            <span class="tag">Approve / lock</span>
-            <span class="tag">Apply overrides (documented)</span>
-            <span class="tag">Export for reporting</span>
-          </div>
-          <div style="margin-top:10px;">
-            We are intentionally holding off on aggressive “Needs” predictions until closer to the shift window
-            (ex: 3-week lead).
-          </div>
+      <div class="resolverStack">
+        <div class="row">
+          <span class="chip"><span class="dot ${app.connected ? "ok":"warn"}"></span> Drive: <strong>${app.connected ? "Connected":"Offline"}</strong></span>
+          <span class="chip"><span class="dot ${debugAvailable ? "ok":"warn"}"></span> Resolver debug: <strong>${debugAvailable ? "Loaded":"Missing"}</strong></span>
+          <span class="chip"><span class="dot ${hasHistory ? "ok":"warn"}"></span> History: <strong>${hasHistory ? "Loaded":"Missing"}</strong></span>
+          <span class="spacer"></span>
+          <button class="btn" id="btnOpenAudit">Audit / History</button>
         </div>
-      </div>
 
-      <div class="row" style="margin-top:12px;">
-        <div class="field" style="flex:1; min-width:260px;">
-          <label>Lead window (display only for now)</label>
-          <div class="hint">
-            We can keep suggestions & warnings hidden until <strong>21 days</strong> out.
-            (This is the same idea we discussed in member view: “don’t stress people out months in advance.”)
+        <div class="field">
+          <label>Resolver Outcome Overview</label>
+          <div class="hint">This tab now reflects the actual resolver run. The final schedule remains the source of truth; the debug files provide the seat-by-seat explanation layer.</div>
+          <div class="resolverSummaryGrid">
+            <div class="resolverStat"><div class="k">Generated</div><div class="v">${esc(summary.generated_at || "—")}</div></div>
+            <div class="resolverStat"><div class="k">Seats</div><div class="v">${esc(summary.seat_count ?? "—")}</div></div>
+            <div class="resolverStat"><div class="k">Fallback used</div><div class="v">${esc(summary.fallback_used_count ?? "—")}</div></div>
+            <div class="resolverStat"><div class="k">Later-pass reviewed</div><div class="v">${esc(summary.later_pass_reviewed_count ?? "—")}</div></div>
+            <div class="resolverStat"><div class="k">Failures</div><div class="v">${esc(summary.failure_count ?? "—")}</div></div>
+          </div>
+          <div class="filterBar">
+            ${filterButtons.map(([key, label]) => `<button class="filterBtn ${app.ui.scheduleFilters[key] ? "is-active" : ""}" data-schedule-filter="${esc(key)}">${esc(label)}</button>`).join("")}
           </div>
         </div>
 
-        <div class="field" style="flex:1; min-width:260px;">
-          <label>3rd Rider seat (policy)</label>
-          <div class="hint">
-            Default: <strong>OFF</strong>. Supervisor can enable per-shift (FTO / student riding).
-            This is a seat toggle, not an always-on requirement.
+        ${!debugAvailable ? `
+          <div class="emptyState">
+            <strong>No resolver debug artifacts were found.</strong>
+            <div style="margin-top:8px;">Generate a schedule first so <span class="mono">/debug/latest_run_*.json</span> exists. The rest of Supervisor will still work without them.</div>
           </div>
-        </div>
+        ` : records.length ? `
+          <div class="seatList">
+            ${records.map(renderSeatInspectionCard).join("")}
+          </div>
+        ` : `
+          <div class="emptyState">
+            <strong>No seats match the current filters.</strong>
+            <div style="margin-top:8px;">Clear one or more filter chips to see the full resolver result set again.</div>
+          </div>
+        `}
       </div>
     `;
 
-    $("#btnOpenAudit").onclick = () => openModalAudit();
+    bindScheduleFilters();
   }
 
 

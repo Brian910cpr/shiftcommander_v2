@@ -395,6 +395,40 @@
     text-align:center;
     font-weight:800;
   }
+  .assignment-card{padding-bottom:12px}
+  .assignment-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .assignment-title{font-size:18px;font-weight:900}
+  .assignment-sub{font-size:12px;color:var(--muted);line-height:1.4}
+  .assignment-list{display:grid;gap:8px}
+  .assignment-item{
+    border:1px solid #294766;
+    border-radius:14px;
+    background:#09192f;
+    padding:10px 12px;
+    display:grid;
+    grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+    gap:10px;
+    align-items:start;
+  }
+  .assignment-main{display:grid;gap:4px}
+  .assignment-label{font-size:14px;font-weight:900;color:#eef4ff}
+  .assignment-meta{font-size:12px;color:var(--muted)}
+  .assignment-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+  .assignment-tag{
+    padding:4px 8px;
+    border-radius:999px;
+    border:1px solid #35557b;
+    background:#10213a;
+    color:#dbe9ff;
+    font-size:11px;
+    font-weight:900;
+  }
 
   .modal-backdrop{
     position:fixed;
@@ -560,6 +594,18 @@
       </div>
     </div>
 
+    <div class="card assignment-card">
+      <div class="assignment-head">
+        <div>
+          <div class="assignment-title">Assigned Shifts</div>
+          <div class="assignment-sub" id="assignmentSub">Current resolved schedule truth for the selected member.</div>
+        </div>
+      </div>
+      <div id="assignmentList" class="assignment-list">
+        <div class="empty-shell">Select a member to see assigned shifts from the resolved schedule.</div>
+      </div>
+    </div>
+
     <div class="card controls-card">
       <div class="controls-title">Scheduling Controls</div>
       <div class="controls-grid">
@@ -692,7 +738,9 @@ const SWAP_OPTIONS = [
 let membersPayload = { members: [] };
 let availabilityPayload = { months: {}, patterns_by_member:{} };
 let schedulePayload = null;
+let debugAuditPayload = null;
 let resolvedLookup = {};
+let memberAssignments = {};
 let currentAvailability = {};
 let currentWeekOffset = 0;
 let selectedMemberId = '';
@@ -728,6 +776,8 @@ const closeAvoidModalBtn = document.getElementById('closeAvoidModalBtn');
 const saveAvoidModalBtn = document.getElementById('saveAvoidModalBtn');
 const desiredCapInput = document.getElementById('desiredCapInput');
 const calendarContent = document.getElementById('calendarContent');
+const assignmentList = document.getElementById('assignmentList');
+const assignmentSub = document.getElementById('assignmentSub');
 
 const saveIndicators = [
   document.getElementById('calendarSaveIndicator'),
@@ -1160,6 +1210,45 @@ function buildResolvedLookup(){
 
   scan(schedulePayload, {});
 }
+function buildMemberAssignments(){
+  memberAssignments = {};
+  const shifts = Array.isArray(schedulePayload?.shifts) ? schedulePayload.shifts : [];
+  const seatAudit = Array.isArray(debugAuditPayload?.seat_audit) ? debugAuditPayload.seat_audit : [];
+  const auditBySeatId = new Map(seatAudit.map(item => [String(item?.seat_id || ''), item]));
+
+  shifts.forEach(shift => {
+    const dateIso = normalizeDateValue(shift?.date || shift?.shift_date);
+    const shiftLabel = normalizeShiftValue(shift?.label || shift?.shift || shift?.name) || String(shift?.label || shift?.shift || 'SHIFT').toUpperCase();
+    const unit = String(shift?.unit || shift?.unit_name || '').trim();
+    const seats = Array.isArray(shift?.seats) ? shift.seats : [];
+    seats.forEach((seat, index) => {
+      const assignedId = String(seat?.assigned || seat?.selected_member_id || '').trim();
+      if(!assignedId || assignedId.toUpperCase() === 'OPEN') return;
+      const seatId = String(seat?.seat_id || `${dateIso || 'unknown'}:${shiftLabel}:${seat?.role || 'SEAT'}:${index}`);
+      const audit = auditBySeatId.get(seatId) || {};
+      memberAssignments[assignedId] ||= [];
+      memberAssignments[assignedId].push({
+        seatId,
+        dateIso: dateIso || '',
+        shift: shiftLabel,
+        unit,
+        seatType: String(seat?.role || audit?.seat_type || 'SEAT'),
+        locked: Boolean(seat?.locked),
+        preserved: Boolean(seat?.preserved_existing_assignment || audit?.preserved_existing_assignment),
+        fallbackUsed: Boolean(seat?.fallback_used || audit?.fallback_used),
+        decisionStage: audit?.decision_stage || seat?.decision_stage || 'resolved',
+      });
+    });
+  });
+
+  Object.values(memberAssignments).forEach(list => {
+    list.sort((a,b) => {
+      const da = `${a.dateIso}|${a.shift}|${a.seatType}`;
+      const db = `${b.dateIso}|${b.shift}|${b.seatType}`;
+      return da.localeCompare(db);
+    });
+  });
+}
 function isAssignedToMember(info, member){
   if(!info || !member) return false;
   const memberId = String(member.member_id);
@@ -1197,6 +1286,37 @@ function dayHasScheduleConflict(dateIso){
     if(!marker) return false;
     return isOddScheduledPairing(getShiftState(dateIso, shift));
   });
+}
+function renderAssignmentList(){
+  if(!selectedMemberId){
+    assignmentSub.textContent = 'Current resolved schedule truth for the selected member.';
+    assignmentList.innerHTML = `<div class="empty-shell">Select a member to see assigned shifts from the resolved schedule.</div>`;
+    return;
+  }
+
+  const assignments = memberAssignments[String(selectedMemberId)] || [];
+  assignmentSub.textContent = debugAuditPayload
+    ? 'Assignments come from the resolved schedule, with lock/fallback details layered in from the resolver audit when available.'
+    : 'Assignments come from the resolved schedule. Resolver debug details are optional and currently unavailable.';
+
+  if(!assignments.length){
+    assignmentList.innerHTML = `<div class="empty-shell">No current assignments were found for this member in the resolved schedule.</div>`;
+    return;
+  }
+
+  assignmentList.innerHTML = assignments.map(item => `
+    <div class="assignment-item">
+      <div class="assignment-main">
+        <div class="assignment-label">${esc(item.dateIso)} • ${esc(item.shift)} • ${esc(item.seatType)}</div>
+        <div class="assignment-meta">${esc(item.unit ? `Unit ${item.unit}` : 'Unit not specified')} • decision stage ${esc(item.decisionStage)}</div>
+      </div>
+      <div class="assignment-tags">
+        ${item.locked ? `<span class="assignment-tag">LOCKED</span>` : ``}
+        ${item.preserved ? `<span class="assignment-tag">PRESERVED</span>` : ``}
+        ${item.fallbackUsed ? `<span class="assignment-tag">FALLBACK</span>` : ``}
+      </div>
+    </div>
+  `).join('');
 }
 function buildShiftButton(dateIso, shift){
   const state = getShiftState(dateIso, shift);
@@ -1524,7 +1644,8 @@ const STATIC_ENDPOINTS = {
   '/api/settings': './data/settings.json',
   '/api/shifts': './data/shifts.json',
   '/api/schedule': './data/schedule.json',
-  '/data/schedule.json': './data/schedule.json'
+  '/data/schedule.json': './data/schedule.json',
+  '/debug/latest_run_full_audit.json': '../debug/latest_run_full_audit.json'
 };
 function resolveDataUrl(url){
   if (STATIC_ENDPOINTS[url]) return STATIC_ENDPOINTS[url];
@@ -1599,6 +1720,7 @@ async function setSelectedMember(id, fromInit=false){
   loadExplicitForMember();
   renderPreferences();
   renderAvoidList();
+  renderAssignmentList();
   renderCalendar();
   if(!fromInit){
     const url = new URL(window.location.href);
@@ -1610,15 +1732,18 @@ async function setSelectedMember(id, fromInit=false){
 
 async function init(){
   try{
-    const [members, availability, schedule] = await Promise.all([
+    const [members, availability, schedule, debugAudit] = await Promise.all([
       apiGet('/api/members'),
       apiGet('/api/availability'),
-      apiGet('/api/schedule').catch(() => null)
+      apiGet('/api/schedule').catch(() => null),
+      apiGet('/debug/latest_run_full_audit.json').catch(() => null)
     ]);
     membersPayload = normalizeMembers(members);
     availabilityPayload = availability;
     schedulePayload = schedule;
+    debugAuditPayload = debugAudit;
     buildResolvedLookup();
+    buildMemberAssignments();
   }catch(err){
     statusLine.textContent = `Load failed: ${err.message}`;
     return;

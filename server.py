@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from flask import Flask, request, jsonify, send_from_directory, redirect
 
 app = Flask(__name__)
@@ -8,6 +8,7 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DOCS_DIR = os.path.join(BASE_DIR, "docs")
+DEBUG_DIR = os.path.join(BASE_DIR, "debug")
 
 MEMBERS_FILE = os.path.join(DATA_DIR, "members.json")
 SHIFTS_FILE = os.path.join(DATA_DIR, "shifts.json")
@@ -15,6 +16,8 @@ SCHEDULE_FILE = os.path.join(DATA_DIR, "schedule.json")
 SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
 AVAILABILITY_FILE = os.path.join(DATA_DIR, "availability.json")
 INFERRED_PREFERENCES_FILE = os.path.join(DATA_DIR, "inferred_preferences.json")
+SCHEDULE_LOCKED_FILE = os.path.join(DATA_DIR, "schedule_locked.json")
+ROTATION_TEMPLATES_FILE = os.path.join(DATA_DIR, "rotation_templates.json")
 
 
 # =========================
@@ -38,7 +41,7 @@ def save_json(path, data):
 
 
 def now_iso():
-    return datetime.utcnow().isoformat() + "Z"
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 # =========================
@@ -193,6 +196,11 @@ def serve_data(path):
     return send_from_directory(DATA_DIR, path)
 
 
+@app.route("/debug/<path:path>")
+def serve_debug(path):
+    return send_from_directory(DEBUG_DIR, path)
+
+
 @app.route("/wallboard")
 def wallboard_shortcut():
     return redirect("/docs/wallboard.html")
@@ -340,12 +348,16 @@ def run_resolver():
     shifts = load_shifts()
     settings = load_settings()
     availability = load_availability_payload()
+    schedule_locked = load_json(SCHEDULE_LOCKED_FILE, {})
+    rotation_templates = load_json(ROTATION_TEMPLATES_FILE, {})
 
     ctx = {
         "members": members,
         "shifts": shifts,
         "settings": settings,
         "availability": availability,
+        "schedule_locked": schedule_locked,
+        "rotation_templates": rotation_templates,
         "build": {
             "generated_at": now_iso()
         }

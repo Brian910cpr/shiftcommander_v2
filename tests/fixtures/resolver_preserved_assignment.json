@@ -1,0 +1,83 @@
+{
+  "settings": {
+    "day_rules": {
+      "Mon": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Tue": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Wed": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Thu": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Fri": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Sat": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Sun": {"AM": "ALS+EMT", "PM": "ALS+EMT"}
+    },
+    "shift_definitions": {
+      "AM": {"hours": 12},
+      "PM": {"hours": 12}
+    },
+    "default_unit": "120"
+  },
+  "members": [
+    {
+      "member_id": "emt_driver",
+      "name": "EMT Driver",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": true},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {},
+      "qualifications": ["EMT", "DRIVER"]
+    },
+    {
+      "member_id": "emt_attendant",
+      "name": "EMT Attendant",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": false},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {},
+      "qualifications": ["EMT"]
+    },
+    {
+      "member_id": "ncld_driver",
+      "name": "NCLD Driver",
+      "active": true,
+      "cert": "NCLD",
+      "ops_cert": "NCLD",
+      "raw_cert": "NCLD",
+      "drive": {"120": true},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {},
+      "qualifications": ["DRIVER"]
+    }
+  ],
+  "shifts": [
+    {
+      "date": "2099-01-01",
+      "label": "AM",
+      "unit": "120",
+      "seats": [
+        {
+          "role": "DRIVER",
+          "hours": 12.0,
+          "assigned": "emt_driver",
+          "assigned_name": "EMT Driver"
+        },
+        {
+          "role": "ATTENDANT",
+          "hours": 12.0,
+          "assigned": "ncld_driver",
+          "assigned_name": "NCLD Driver"
+        }
+      ]
+    }
+  ],
+  "availability": {
+    "months": {}
+  }
+}

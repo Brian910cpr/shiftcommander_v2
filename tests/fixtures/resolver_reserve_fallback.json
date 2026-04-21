@@ -1,0 +1,71 @@
+{
+  "settings": {
+    "day_rules": {
+      "Mon": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Tue": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Wed": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Thu": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Fri": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Sat": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Sun": {"AM": "ALS+EMT", "PM": "ALS+EMT"}
+    },
+    "shift_definitions": {
+      "AM": {"hours": 12}
+    },
+    "default_unit": "120"
+  },
+  "members": [
+    {
+      "member_id": "normal_unavailable",
+      "name": "Normal Unavailable",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": true},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {},
+      "qualifications": ["EMT", "DRIVER"]
+    },
+    {
+      "member_id": "reserve_legal",
+      "name": "Reserve Legal",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": true},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {"reserve_only": true},
+      "qualifications": ["EMT", "DRIVER"]
+    },
+    {
+      "member_id": "reserve_illegal",
+      "name": "Reserve Illegal",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": false},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {"reserve_only": true},
+      "qualifications": ["EMT"]
+    }
+  ],
+  "shifts": [
+    {
+      "date": "2099-01-01",
+      "label": "AM",
+      "unit": "120",
+      "seats": [
+        {"role": "DRIVER", "hours": 12.0}
+      ]
+    }
+  ],
+  "availability": {
+    "months": {}
+  }
+}

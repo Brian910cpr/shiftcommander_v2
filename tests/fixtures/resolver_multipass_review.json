@@ -1,0 +1,89 @@
+{
+  "settings": {
+    "day_rules": {
+      "Mon": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Tue": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Wed": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Thu": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Fri": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Sat": {"AM": "ALS+EMT", "PM": "ALS+EMT"},
+      "Sun": {"AM": "ALS+EMT", "PM": "ALS+EMT"}
+    },
+    "shift_definitions": {
+      "AM": {"hours": 12},
+      "PM": {"hours": 12}
+    },
+    "default_unit": "120",
+    "restricted_pairings": [
+      {"member_a": "driver_a", "member_b": "attendant_b"}
+    ]
+  },
+  "members": [
+    {
+      "member_id": "driver_a",
+      "name": "Driver A",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": true},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {},
+      "qualifications": ["EMT", "DRIVER"]
+    },
+    {
+      "member_id": "attendant_b",
+      "name": "Attendant B",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": false},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {},
+      "qualifications": ["EMT"]
+    },
+    {
+      "member_id": "attendant_c",
+      "name": "Attendant C",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": false},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {},
+      "qualifications": ["EMT"]
+    },
+    {
+      "member_id": "attendant_missing",
+      "name": "Attendant Missing",
+      "active": true,
+      "cert": "EMT",
+      "ops_cert": "EMT",
+      "raw_cert": "EMT",
+      "drive": {"120": false},
+      "employment": {"status": "PT", "pay_type": "hourly", "hard_weekly_hour_cap": 60},
+      "preferences": {"ampm": "no_preference", "shift24": "no_preference"},
+      "scheduler": {},
+      "qualifications": ["EMT"]
+    }
+  ],
+  "shifts": [
+    {
+      "date": "2099-01-01",
+      "label": "AM",
+      "unit": "120",
+      "seats": [
+        {"role": "DRIVER", "hours": 12.0},
+        {"role": "ATTENDANT", "hours": 12.0}
+      ]
+    }
+  ],
+  "availability": {
+    "months": {}
+  }
+}
