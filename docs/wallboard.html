@@ -201,7 +201,7 @@
       border-bottom: 1px solid var(--border);
       background: rgba(255,255,255,0.03);
       display: grid;
-      grid-template-columns: auto 1fr;
+      grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 10px;
     }
@@ -237,6 +237,14 @@
       color: var(--muted);
       letter-spacing: 0.4px;
       text-transform: uppercase;
+    }
+
+    .birthday-indicator {
+      justify-self: end;
+      align-self: start;
+      font-size: 18px;
+      line-height: 1;
+      opacity: 0.96;
     }
 
     .day-number {
@@ -591,11 +599,13 @@
         const memberId = String(member?.member_id ?? member?.id ?? "").trim();
         const name = String(member?.name || [member?.first_name, member?.last_name].filter(Boolean).join(" ")).trim();
         const cert = normalizeCertValue(member?.ops_cert || member?.cert || member?.raw_cert || "");
+        const birthdayMonthDay = normalizeBirthdayMonthDay(member?.birthday_mmdd || member?.birthday);
 
         const entry = {
           id: memberId,
           name,
-          cert
+          cert,
+          birthdayMonthDay
         };
 
         if (memberId) byId.set(memberId, entry);
@@ -603,6 +613,26 @@
       }
 
       return { byId, byName };
+    }
+
+    function normalizeBirthdayMonthDay(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return null;
+      const shortValue = raw.match(/^(\d{2})[-/](\d{2})$/);
+      if (shortValue) return `${shortValue[1]}-${shortValue[2]}`;
+      const isoValue = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (isoValue) return `${isoValue[2]}-${isoValue[3]}`;
+      const slashValue = raw.match(/^(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?$/);
+      if (slashValue) return `${slashValue[1].padStart(2, "0")}-${slashValue[2].padStart(2, "0")}`;
+      return null;
+    }
+
+    function resolveMemberEntry(seat, memberLookup) {
+      const assignedId = String(seat?.assigned ?? "").trim();
+      const assignedName = String(seat?.assigned_name || "").trim();
+      if (assignedId && memberLookup?.byId?.has(assignedId)) return memberLookup.byId.get(assignedId);
+      if (assignedName && memberLookup?.byName?.has(assignedName.toUpperCase())) return memberLookup.byName.get(assignedName.toUpperCase());
+      return null;
     }
 
     function colorClassFromSeat(seat, memberLookup) {
@@ -620,6 +650,16 @@
       if (cert === "EMT") return "blue";
       if (cert === "NCLD") return "pink";
       return "default";
+    }
+
+    function seatSortPriority(seat, memberLookup) {
+      const colorClass = colorClassFromSeat(seat, memberLookup);
+      if (colorClass === "green") return 0;
+      if (colorClass === "blue") return 1;
+      if (colorClass === "pink") return 2;
+      const rawName = String(seat?.assigned_name || "").trim().toUpperCase();
+      if (!rawName || rawName === "OPEN" || rawName === "UNFILLED") return 4;
+      return 3;
     }
 
     function isPastDate(isoDate) {
@@ -742,7 +782,15 @@
     }
 
     function renderShiftCard(shift, memberLookup) {
-      const renderedSlots = (shift.seats || [])
+      const orderedSeats = (shift.seats || [])
+        .slice()
+        .sort((left, right) => {
+          const priority = seatSortPriority(left, memberLookup) - seatSortPriority(right, memberLookup);
+          if (priority !== 0) return priority;
+          return String(left?.role || "").localeCompare(String(right?.role || ""));
+        });
+
+      const renderedSlots = orderedSeats
         .map(seat => renderSlot(seat, shift.date, memberLookup))
         .filter(Boolean);
 
@@ -801,6 +849,7 @@
 
       const monthClasses = monthBoundaryClasses(visibleDates, index);
       const shiftsHtml = dayShifts.length ? dayShifts.map(shift => renderShiftCard(shift, memberLookup)).join("") : "";
+      const birthdayIndicator = hasBirthdayAssignmentForDate(iso, dayShifts, memberLookup) ? "🎂" : "";
 
       return `
         <section class="day-card ${dayClass} ${monthClasses}">
@@ -810,10 +859,23 @@
               <div class="day-title">${escapeHtml(dayFmt.weekday)}</div>
               <div class="day-subtitle">${escapeHtml(dayFmt.monthLabel)}</div>
             </div>
+            <div class="birthday-indicator">${birthdayIndicator}</div>
           </div>
           <div class="shift-list">${shiftsHtml}</div>
         </section>
       `;
+    }
+
+    function hasBirthdayAssignmentForDate(iso, dayShifts, memberLookup) {
+      const monthDay = String(iso || "").slice(5, 10);
+      if (!monthDay) return false;
+      for (const shift of dayShifts || []) {
+        for (const seat of shift?.seats || []) {
+          const member = resolveMemberEntry(seat, memberLookup);
+          if (member?.birthdayMonthDay === monthDay) return true;
+        }
+      }
+      return false;
     }
 
     function renderSchedule(data) {
