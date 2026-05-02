@@ -724,6 +724,8 @@ def member_roster_payload():
                 "member_id": str(member.get("member_id", member.get("id"))),
                 "name": member.get("name") or f"Member {member.get('member_id', member.get('id'))}",
                 "ops_cert": member.get("ops_cert") or member.get("cert") or member.get("raw_cert"),
+                "birthday": member.get("birthday"),
+                "birthday_mmdd": member.get("birthday_mmdd"),
             }
         )
     return roster
@@ -822,11 +824,6 @@ def serve_docs(path):
     if lowered == "member.html" and current_auth()["role"] not in {"member", "supervisor"}:
         return login_redirect("member")
     return send_from_directory(DOCS_DIR, path)
-
-
-@app.route("/data/<path:path>")
-def serve_data(path):
-    return send_from_directory(DATA_DIR, path)
 
 
 @app.route("/debug/<path:path>")
@@ -1017,6 +1014,11 @@ def auth_reset_member_password():
 @require_role("supervisor")
 def get_members():
     return jsonify(load_members_payload())
+
+
+@app.route("/api/wallboard_members", methods=["GET"])
+def get_wallboard_members():
+    return jsonify(member_roster_payload())
 
 
 @app.route("/api/members", methods=["POST"])

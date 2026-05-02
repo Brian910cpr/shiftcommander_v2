@@ -118,17 +118,17 @@ class DebugContractTests(unittest.TestCase):
         member = (DOCS_DIR / "member.html").read_text(encoding="utf-8")
         wallboard = (DOCS_DIR / "wallboard.html").read_text(encoding="utf-8")
 
-        self.assertIn("../debug/latest_run_summary.json", supervisor)
-        self.assertIn("../debug/latest_run_supervisor_cards.json", supervisor)
-        self.assertIn("../debug/latest_run_failures.json", supervisor)
-        self.assertIn("../debug/latest_run_full_audit.json", supervisor)
+        self.assertIn("/api/schedule", supervisor)
+        self.assertIn("/api/supervisor/state", supervisor)
+        self.assertIn("Open Seats", supervisor)
 
-        self.assertIn("/api/schedule", member)
-        self.assertIn("/debug/latest_run_full_audit.json", member)
+        self.assertIn("/api/member/context", member)
+        self.assertNotIn("./data/", member)
         self.assertIn("Assigned Shifts", member)
 
         self.assertIn("/api/schedule", wallboard)
-        self.assertIn("/api/members", wallboard)
+        self.assertIn("/api/wallboard_members", wallboard)
+        self.assertNotIn("./data/", wallboard)
         self.assertIn("Source: final resolved schedule", wallboard)
 
 

@@ -2109,6 +2109,159 @@ def build_seat_debug_record(shift: Dict[str, Any], seat: Dict[str, Any], ctx: Di
     }
 
 
+def summarize_open_reasons(seat: Dict[str, Any], limit: int = 3) -> List[str]:
+    summary = seat.get("failure_summary", {}) or {}
+    if isinstance(summary, dict) and summary:
+        ordered = sorted(summary.items(), key=lambda item: (-item[1], str(item[0])))
+        return [f"{reason} ({count})" for reason, count in ordered[:limit]]
+    if seat.get("fallback_reason"):
+        return [str(seat.get("fallback_reason"))]
+    if seat.get("locked") and seat.get("assigned") in (None, ""):
+        return ["locked_unfilled"]
+    return ["no_legal_candidates_after_hard_filters"]
+
+
+def build_selection_factors(
+    selected_member: Optional[Dict[str, Any]],
+    seat: Dict[str, Any],
+    selected_breakdown: Dict[str, Any],
+    pass_name: Optional[str],
+) -> List[str]:
+    factors = ["legally qualified", "available for the scheduled block"]
+    if seat.get("preserved_existing_assignment"):
+        factors.insert(0, "existing protected assignment remained legal")
+    if selected_breakdown.get("availability_status") == "PREFERRED":
+        factors.append("preferred availability matched")
+    if selected_breakdown.get("rotation_score_applied"):
+        factors.append("matched scheduled rotation")
+    if selected_breakdown.get("ft_minimum_bonus"):
+        factors.append("supported full-time minimum target")
+    if selected_breakdown.get("als_required_bonus"):
+        factors.append("met ALS-required seat need")
+    if pass_name == "reserve" or seat.get("fallback_used"):
+        factors.append("best legal reserve fallback")
+    if get_seat_role(seat) == "DRIVER":
+        cert = get_member_cert(selected_member or {})
+        if cert == "EMT":
+            factors.append("preferred driver certification fit")
+        elif cert == "NCLD":
+            factors.append("used licensed driver fallback")
+    return list(dict.fromkeys(factors))
+
+
+def contender_not_selected_reason(
+    selected_audit: Dict[str, Any],
+    contender_audit: Dict[str, Any],
+    seat: Dict[str, Any],
+) -> str:
+    selected_breakdown = (selected_audit or {}).get("score_breakdown", {}) or {}
+    contender_breakdown = (contender_audit or {}).get("score_breakdown", {}) or {}
+
+    selected_weekly = float(selected_breakdown.get("weekly_hours_before", 0.0) or 0.0)
+    contender_weekly = float(contender_breakdown.get("weekly_hours_before", 0.0) or 0.0)
+    if contender_weekly > selected_weekly:
+        return "higher current weekly hours"
+
+    selected_pref = float(selected_breakdown.get("availability_preferred_bonus", 0.0) or 0.0)
+    contender_pref = float(contender_breakdown.get("availability_preferred_bonus", 0.0) or 0.0)
+    if contender_pref < selected_pref:
+        return "weaker preference match"
+
+    selected_als_penalty = float(selected_breakdown.get("als_driver_conservation_penalty", 0.0) or 0.0)
+    contender_als_penalty = float(contender_breakdown.get("als_driver_conservation_penalty", 0.0) or 0.0)
+    if contender_als_penalty < selected_als_penalty:
+        return "higher ALS preservation cost"
+
+    selected_rotation = 1 if selected_breakdown.get("rotation_score_applied") else 0
+    contender_rotation = 1 if contender_breakdown.get("rotation_score_applied") else 0
+    if contender_rotation < selected_rotation:
+        return "weaker rotation fit"
+
+    selected_ft = float(selected_breakdown.get("ft_minimum_bonus", 0.0) or 0.0)
+    contender_ft = float(contender_breakdown.get("ft_minimum_bonus", 0.0) or 0.0)
+    if contender_ft < selected_ft:
+        return "lower fairness/minimum-hours priority"
+
+    if get_seat_role(seat) == "DRIVER":
+        selected_rank = {"EMT": 0, "EMR": 1, "NCLD": 2, "ALS": 3}.get(get_member_cert(selected_audit.get("_member", {}) or {}), 9)
+        contender_rank = {"EMT": 0, "EMR": 1, "NCLD": 2, "ALS": 3}.get(get_member_cert(contender_audit.get("_member", {}) or {}), 9)
+        if contender_rank > selected_rank:
+            return "weaker driver seat fit"
+
+    return "lower overall score"
+
+
+def build_live_seat_summary(shift: Dict[str, Any], seat: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+    legal_audits: List[Dict[str, Any]] = []
+    selected_audit: Dict[str, Any] = {}
+    selected_member_id = str(seat.get("assigned") or "").strip()
+    selected_member = ctx["member_index"].get(selected_member_id) if selected_member_id else None
+
+    for audit in seat.get("candidate_audit", []):
+        if audit.get("eligible") is not True:
+            continue
+        enriched = dict(audit)
+        member_id = str(audit.get("member_id") or "").strip()
+        if member_id:
+            enriched["_member"] = ctx["member_index"].get(member_id)
+        legal_audits.append(enriched)
+        if member_id and member_id == selected_member_id:
+            selected_audit = enriched
+
+    legal_audits.sort(key=lambda row: (-float(row.get("score", 0.0) or 0.0), tuple(row.get("tie_break_key") or [])))
+
+    considered_candidates = []
+    for audit in legal_audits:
+        member_id = str(audit.get("member_id") or "").strip()
+        if not member_id or member_id == selected_member_id:
+            continue
+        considered_candidates.append({
+            "member_id": member_id,
+            "member_name": audit.get("member_name"),
+            "score": audit.get("score"),
+            "why_not_selected": contender_not_selected_reason(selected_audit, audit, seat),
+        })
+        if len(considered_candidates) >= 3:
+            break
+
+    if selected_member_id:
+        selected_breakdown = (selected_audit or {}).get("score_breakdown", {}) or {}
+        selection_factors = build_selection_factors(selected_member, seat, selected_breakdown, seat.get("fill_pass"))
+        if seat.get("preserved_existing_assignment") and seat.get("locked"):
+            selection_statement = f"Preserved {seat.get('assigned_name') or selected_member_id} because the protected assignment remained legal for this seat."
+        elif seat.get("preserved_existing_assignment"):
+            selection_statement = f"Preserved {seat.get('assigned_name') or selected_member_id} because the existing assignment remained legal for this seat."
+        elif seat.get("fallback_used"):
+            selection_statement = f"Selected {seat.get('assigned_name') or selected_member_id} as the best legal reserve fallback after no normal-pass candidate qualified."
+        else:
+            selection_statement = f"Selected {seat.get('assigned_name') or selected_member_id} as the best legal match for this seat."
+        return {
+            "selection_statement": selection_statement,
+            "selection_factors": selection_factors,
+            "considered_candidates": considered_candidates,
+            "open_reason_summary": [],
+        }
+
+    return {
+        "selection_statement": f"Left {seat.get('seat_id')} open because no legal candidate could be assigned.",
+        "selection_factors": [],
+        "considered_candidates": [],
+        "open_reason_summary": summarize_open_reasons(seat),
+    }
+
+
+def sanitize_shift_for_live_output(shift: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+    clean_shift = deepcopy(shift)
+    for seat in clean_shift.get("seats", []):
+        live_summary = build_live_seat_summary(shift, seat, ctx)
+        seat.update(live_summary)
+        seat.pop("candidate_audit", None)
+        seat.pop("failure_summary", None)
+        seat.pop("pass_sequence", None)
+        seat.pop("missing_data_assumptions", None)
+    return clean_shift
+
+
 def write_debug_outputs(ctx: Dict[str, Any], output: Dict[str, Any]) -> None:
     try:
         debug_dir = Path(__file__).resolve().parent.parent / "debug"
@@ -2317,7 +2470,7 @@ def build_output(ctx: Dict[str, Any]) -> Dict[str, Any]:
         build["debug_write_error"] = ctx["debug_write_error"]
     return {
         "build": build,
-        "shifts": ctx["shifts"],
+        "shifts": [sanitize_shift_for_live_output(shift, ctx) for shift in ctx["shifts"]],
     }
 
 
@@ -2362,7 +2515,7 @@ def main() -> int:
     parser.add_argument("--settings", required=True, help="Path to settings.json")
     parser.add_argument("--shifts", required=True, help="Path to shifts.json")
     parser.add_argument("--availability", required=True, help="Path to availability.json")
-    parser.add_argument("--output", default="docs/data/schedule.json", help="Path to schedule.json output")
+    parser.add_argument("--output", default="data/schedule.json", help="Path to schedule.json output")
     args = parser.parse_args()
 
     data = {

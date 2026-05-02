@@ -25,6 +25,11 @@ def load_debug(name: str):
     return json.loads((DEBUG_DIR / name).read_text(encoding="utf-8"))
 
 
+def find_seat_audit(seat_id: str) -> dict:
+    full_audit = load_debug("latest_run_full_audit.json")
+    return next(row for row in full_audit["seat_audit"] if row["seat_id"] == seat_id)
+
+
 def rotation_templates_payload() -> dict:
     return {
         "rotation_templates": [
@@ -87,7 +92,9 @@ class ResolverHardFilterTests(unittest.TestCase):
                 member["drive"]["120"] = False
         result = resolve(copy.deepcopy(data))
         driver_seat = result["shifts"][0]["seats"][0]
-        rejected = [row for row in driver_seat["candidate_audit"] if row.get("member_id") == "emt_driver" and not row.get("eligible")]
+        self.assertNotIn("candidate_audit", driver_seat)
+        seat_record = find_seat_audit(driver_seat["seat_id"])
+        rejected = [row for row in seat_record["rejected_candidates"] if row.get("member_id") == "emt_driver"]
         self.assertTrue(rejected)
         self.assertEqual(rejected[0]["reason"], "role_cert_block")
 
@@ -97,7 +104,8 @@ class ResolverHardFilterTests(unittest.TestCase):
         apply_availability(data, {"emt_driver": "do_not_schedule"})
         result = resolve(copy.deepcopy(data))
         driver_seat = result["shifts"][0]["seats"][0]
-        rejected = [row for row in driver_seat["candidate_audit"] if row.get("member_id") == "emt_driver" and not row.get("eligible")]
+        seat_record = find_seat_audit(driver_seat["seat_id"])
+        rejected = [row for row in seat_record["rejected_candidates"] if row.get("member_id") == "emt_driver"]
         self.assertTrue(rejected)
         self.assertTrue(str(rejected[0]["reason"]).startswith("availability_dns:"))
 
@@ -117,7 +125,8 @@ class ResolverHardFilterTests(unittest.TestCase):
         apply_availability(data, {"emt_driver": "do_not_schedule", "als_secondary": "do_not_schedule", "ncld_driver": "do_not_schedule"})
         result = resolve(copy.deepcopy(data))
         attendant_seat = result["shifts"][0]["seats"][1]
-        rejected = [row for row in attendant_seat["candidate_audit"] if row.get("member_id") == "als_primary" and not row.get("eligible")]
+        seat_record = find_seat_audit(attendant_seat["seat_id"])
+        rejected = [row for row in seat_record["rejected_candidates"] if row.get("member_id") == "als_primary"]
         self.assertTrue(rejected)
         self.assertEqual(rejected[0]["reason"], "double_booked_same_shift")
         self.assertEqual(attendant_seat["assigned"], "emt_attendant")
@@ -128,7 +137,8 @@ class ResolverHardFilterTests(unittest.TestCase):
         apply_availability(data, {"emt_driver": "do_not_schedule", "ncld_driver": "do_not_schedule"})
         result = resolve(copy.deepcopy(data))
         attendant_seat = result["shifts"][0]["seats"][1]
-        rejected = [row for row in attendant_seat["candidate_audit"] if row.get("member_id") == "als_secondary" and not row.get("eligible")]
+        seat_record = find_seat_audit(attendant_seat["seat_id"])
+        rejected = [row for row in seat_record["rejected_candidates"] if row.get("member_id") == "als_secondary"]
         self.assertTrue(rejected)
         self.assertEqual(rejected[0]["reason"], "als_als_pair_block")
         self.assertEqual(attendant_seat["assigned"], "emt_attendant")
@@ -141,8 +151,11 @@ class ResolverHardFilterTests(unittest.TestCase):
         attendant_seat = result["shifts"][0]["seats"][1]
         self.assertEqual(attendant_seat["assigned"], "emt_attendant")
         self.assertFalse(attendant_seat["preserved_existing_assignment"])
+        self.assertIn("selection_statement", attendant_seat)
+        self.assertNotIn("candidate_audit", attendant_seat)
 
-        preserve_audit = [row for row in attendant_seat["candidate_audit"] if row.get("pass") == "preserve_existing" and not row.get("eligible")]
+        seat_record = find_seat_audit(attendant_seat["seat_id"])
+        preserve_audit = [row for row in seat_record["rejected_candidates"] if row.get("member_id") == "ncld_driver" and row.get("reason") == "role_cert_block"]
         self.assertTrue(preserve_audit)
         self.assertEqual(preserve_audit[0]["reason"], "role_cert_block")
 
@@ -201,15 +214,12 @@ class ResolverHardFilterTests(unittest.TestCase):
         self.assertEqual(attendant_seat.get("assigned"), "attendant_c")
         self.assertTrue(attendant_seat.get("later_pass_reviewed"))
 
-        stages = [row["stage"] for row in attendant_seat.get("pass_sequence", [])]
+        seat_record = find_seat_audit(attendant_seat["seat_id"])
+        stages = [row["stage"] for row in seat_record.get("pass_sequence", [])]
         self.assertIn("initial_core", stages)
         self.assertIn("review_reset", stages)
         self.assertIn("post_review_core", stages)
-
-        missing_rejections = [
-            row for row in attendant_seat["candidate_audit"]
-            if row.get("member_id") == "attendant_missing" and not row.get("eligible")
-        ]
+        missing_rejections = [row for row in seat_record["rejected_candidates"] if row.get("member_id") == "attendant_missing"]
         self.assertGreaterEqual(len(missing_rejections), 2)
         self.assertTrue(all(str(row.get("reason")).startswith("availability_missing:") for row in missing_rejections))
 
@@ -323,7 +333,8 @@ class ResolverHardFilterTests(unittest.TestCase):
         attendant_seat = result["shifts"][0]["seats"][1]
         self.assertIsNone(driver_seat.get("assigned"))
         self.assertEqual(attendant_seat.get("assigned"), "als_primary")
-        driver_rejections = [row for row in driver_seat["candidate_audit"] if row.get("member_id") == "als_primary" and not row.get("eligible")]
+        seat_record = find_seat_audit(driver_seat["seat_id"])
+        driver_rejections = [row for row in seat_record["rejected_candidates"] if row.get("member_id") == "als_primary"]
         self.assertTrue(driver_rejections)
         self.assertEqual(driver_rejections[0]["reason"], "als_reserved_for_higher_priority_seat")
 

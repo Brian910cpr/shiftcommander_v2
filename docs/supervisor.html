@@ -374,23 +374,16 @@
       return "DRAFT";
     }
 
-    function rejectionReasons(seat){
-      const out = [];
-      for(const item of asArray(seat?.candidate_audit)){
-        if(item?.eligible) continue;
-        const reason = String(item?.reason || item?.code || "rejected").trim();
-        if(reason) out.push(reason);
-      }
-      return [...new Set(out)];
-    }
-
     function openReasonSummary(seat){
-      const reasons = rejectionReasons(seat);
+      const reasons = asArray(seat?.open_reason_summary).filter(Boolean);
       if(reasons.length) return reasons.slice(0, 5);
-      const notes = asArray(seat?.resolver_stamp ? [] : []);
       if(seat?.locked && !seat?.assigned) return ["locked_unfilled"];
       if(seat?.fallback_reason) return [seat.fallback_reason];
       return ["no_recorded_candidate_reason"];
+    }
+
+    function consideredCandidates(seat){
+      return asArray(seat?.considered_candidates).slice(0, 3);
     }
 
     function groupedWeekShifts(){
@@ -546,7 +539,8 @@
                         const member = memberId ? state.memberById.get(memberId) : null;
                         const assignedName = String(seat?.assigned_name || member?.name || "").trim();
                         const empty = !assignedName;
-                        const reasons = rejectionReasons(seat).slice(0, 5);
+                        const contenders = consideredCandidates(seat);
+                        const selectionFactors = asArray(seat?.selection_factors).slice(0, 4);
                         return `
                           <div class="seat-card">
                             <div class="seat-top">
@@ -557,10 +551,21 @@
                               </div>
                               <div class="chip-row">${seatBadges(seatState, member, seat)}</div>
                             </div>
-                            ${(seatState === "OPEN" || seatState === "DROPPED" || reasons.length) ? `
+                            ${seat?.selection_statement ? `
                               <div class="reason-box">
-                                <strong>${seatState === "OPEN" || seatState === "DROPPED" ? "Why unresolved" : "Candidate rejections"}</strong>
-                                <div class="reason-list">${(seatState === "OPEN" || seatState === "DROPPED" ? openReasonSummary(seat) : reasons).map((reason) => `<span class="reason-chip">${esc(reason)}</span>`).join("")}</div>
+                                <strong>${seatState === "OPEN" || seatState === "DROPPED" ? "Why unresolved" : "Why selected"}</strong>
+                                <div class="seat-sub" style="margin-top:6px;">${esc(seat.selection_statement)}</div>
+                                ${selectionFactors.length ? `<div class="reason-list" style="margin-top:8px;">${selectionFactors.map((reason) => `<span class="reason-chip">${esc(reason)}</span>`).join("")}</div>` : ``}
+                              </div>
+                            ` : ``}
+                            ${(seatState === "OPEN" || seatState === "DROPPED" || contenders.length) ? `
+                              <div class="reason-box">
+                                <strong>${seatState === "OPEN" || seatState === "DROPPED" ? "Why unresolved" : "Other legal contenders"}</strong>
+                                ${
+                                  seatState === "OPEN" || seatState === "DROPPED"
+                                    ? `<div class="reason-list">${openReasonSummary(seat).map((reason) => `<span class="reason-chip">${esc(reason)}</span>`).join("")}</div>`
+                                    : `<div class="reason-list">${contenders.map((item) => `<span class="reason-chip">${esc(item.member_name || item.member_id || "candidate")}: ${esc(item.why_not_selected || "lower overall score")}</span>`).join("")}</div>`
+                                }
                               </div>
                             ` : ``}
                             <div class="seat-actions">${renderSeatActions(shift, seat, index, seatState)}</div>

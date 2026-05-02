@@ -1,3 +1,219 @@
+# Current Target Model
+
+Updated: 2026-05-01
+
+This file now has two purposes:
+
+1. define the current implementation target for ShiftCommander
+2. preserve older phase notes below as historical context
+
+The authoritative current rule baseline is:
+
+- [docs/CONFIRMED_SCHEDULING_RULES.md](E:\GitHub\shiftcommander_v2\docs\CONFIRMED_SCHEDULING_RULES.md)
+- [docs/PROJECT_BOUNDARIES.md](E:\GitHub\shiftcommander_v2\docs\PROJECT_BOUNDARIES.md)
+
+## Confirmed Operational Baseline
+
+The live target is no longer an abstract resolver cleanup. It is a crew scheduling system with these fixed operational facts:
+
+- 12-hour 2-2-3 backbone
+- standard 0600-1800 and 1800-0600 shifts
+- up to 3 units now, with ambulance and QRV support
+- ALS preservation as a core scheduling doctrine
+- editable per-shift seat structure
+- member qualification split between medical certs and per-unit `qualOp`
+- publish horizon and lock horizon as distinct concepts
+- weekly publish boundary at Wednesday 23:59
+- open-seat workflow with supervised offer/claim handling
+- fairness driven by hours/shifts first and Preferred-grant rate second
+- member and supervisor authentication with logged control paths
+- one runtime source of truth, not duplicated schedule truth
+
+## Current Implementation Priorities
+
+### Priority 1: Normalize The Scheduling Model
+
+Replace ambiguous builder-era assumptions with an explicit scheduling model that can represent:
+
+- date
+- shift
+- unit
+- seat
+- seat requirement
+- assignment
+- open seat
+- published state
+- supervisor override
+
+This model must support:
+
+- 12-hour seats
+- 6-hour partial coverage blocks
+- ambulance seats
+- QRV seats
+- future NEMT compatibility
+
+### Priority 2: Make Legality Explicit
+
+The resolver must separate hard legality from soft scoring.
+
+Hard legality must cover at least:
+
+- certification
+- seat eligibility
+- unit-specific `qualOp`
+- availability
+- partial-block compatibility
+- weekly hard limits
+- mandatory safety boundaries
+- legal driver minimums
+- published/override protection
+- no impossible overlaps
+
+Soft scoring must then prioritize:
+
+1. ALS preservation
+2. OT/budget control
+3. preference
+4. fairness
+
+### Priority 3: Replace Auto-Lock Assumptions With Publish-State Truth
+
+The current system still carries older auto-window lock behavior. The target model is:
+
+- visible horizon default: 8 weeks
+- lock horizon default: 2 weeks
+- once visible, assignments do not reshuffle merely to improve score
+- once locked/published, members remain responsible until release, drop, or approved swap
+- supervisor overrides are protected from future resolver runs
+
+This means publish state, open state, override state, and lock state need explicit storage and explicit resolver ingestion.
+
+### Priority 4: Model ALS Coverage At Shift Level
+
+The resolver must stop reasoning only seat-by-seat and must understand broader shift ALS coverage:
+
+- ALS ambulance attendant satisfies ALS coverage
+- ALS QRV can satisfy broader coverage for BLS ambulances
+- using higher-cert members in lower seats is allowed only as a high-penalty fallback
+- legal combinations must be evaluated at unit and shift level, not just candidate level
+
+### Priority 5: Add Real Open-Seat Handling
+
+Open seats are a real system state, not just a failure artifact.
+
+The implementation target is:
+
+- legal seats may remain `OPEN`
+- critical open seats become more urgent as the date approaches
+- at 3 weeks out, unresolved ALS/legal-driver/open critical seats notify Supervisor
+- open-seat offer workflow tracks:
+  - interested candidates
+  - scored candidates
+  - active offer
+  - expiration
+  - next candidate
+  - first-come fallback when allowed
+
+### Priority 6: Support Swaps And Locked-Period Requests
+
+After the lock horizon:
+
+- members do not directly erase themselves from assignments
+- changes move through release/swap workflows
+- same-week two-member swaps may auto-approve when all hard rules still pass
+- swap/release actions are logged
+
+### Priority 7: Align Supervisor, Member, Wallboard, And Mobile
+
+The scheduling data model must feed all surfaces consistently:
+
+- Supervisor:
+  - define shift structure
+  - define desired unit count
+  - view approaching failures
+  - drag/drop assignments
+  - override with reason logging
+- Member:
+  - edit own availability before lock horizon
+  - request changes after lock horizon
+  - view own assignments and open opportunities
+- Wallboard:
+  - display 6 to 8 weeks
+  - group by date, shift, unit, seat
+  - visually escalate open-seat urgency
+- Mobile:
+  - my shifts
+  - who is on shift now
+  - pick up open shifts
+  - full schedule
+
+### Priority 8: Add Cost And Reporting Support
+
+The resolver does not need payroll integration, but it does need enough structured data to report:
+
+- assigned hours
+- OT risk
+- budget risk
+- fairness balance
+- open critical coverage gaps
+
+This requires member pay type/rate fields and schedule reporting outputs, even if optimization remains conservative at first.
+
+## Immediate Implementation Plan
+
+### Phase A: Data-Model Reset
+
+- define canonical runtime entities for schedule, shift, unit, seat, assignment, published state, and override state
+- remove duplicate runtime-truth assumptions
+- document authoritative files in `data/*`
+- justify or remove static fallbacks explicitly
+
+### Phase B: Resolver Rule Refactor
+
+- convert confirmed rules into explicit hard-rule and soft-score layers
+- add shift-level ALS coverage evaluation
+- add 6-hour partial-block support
+- add role and `qualOp` legality rules for ambulance and QRV seats
+- make higher-cert lower-seat fallback explicit and heavily penalized
+
+### Phase C: Publish/Lock/Open Workflow
+
+- ingest explicit published/open/override state
+- enforce visible horizon vs lock horizon behavior
+- preserve published assignments on rerun
+- allow only open/dropped/released seats to refill automatically after publish
+
+### Phase D: Swap/Release Workflow
+
+- add logged swap and release objects
+- support auto-approvable same-week two-member swaps
+- add supervisor review path for everything else
+
+### Phase E: Supervisor And Wallboard Alignment
+
+- make Supervisor the control surface for unit count, seat structure, OT window settings, and override logging
+- make Wallboard display the same assignment truth with open-seat urgency cues
+- keep debug files internal only
+
+### Phase F: Member And Mobile Alignment
+
+- keep member writes self-scoped
+- support preferred contact methods
+- expose open-shift offer status cleanly
+- preserve one schedule truth across member and mobile views
+
+## Non-Negotiable Design Constraints
+
+- one runtime source of truth
+- no duplicate schedule truth without explicit justification
+- no frontend-only security assumptions
+- no resolver reshuffle of published assignments merely for score improvement
+- no driver fallback below licensed driver
+- no hidden debug exposure in public/member surfaces
+
+## Historical Phase Notes
+
 # Phase 2
 
 ## What Was Broken
