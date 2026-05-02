@@ -103,6 +103,13 @@
     .flash.show{display:block}
     .flash.error{border-color:rgba(255,123,123,.35);color:#ffd2d2}
     .flash.success{border-color:rgba(82,239,127,.35);color:#ccffe1}
+    .startup-issues{display:none;padding:14px 16px;border-radius:var(--radius);border:1px solid rgba(255,123,123,.35);background:rgba(255,123,123,.08);color:#ffd2d2}
+    .startup-issues.show{display:block}
+    .startup-issues h3{margin:0 0 8px}
+    .startup-issues ul{margin:0;padding-left:18px}
+    .startup-issues li{margin:6px 0}
+    .empty.error{border:1px solid rgba(255,123,123,.35);background:rgba(255,123,123,.08);color:#ffd2d2}
+    .error-detail{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word}
     .legend{display:grid;gap:8px}
     @media (max-width: 1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}}
   </style>
@@ -128,6 +135,7 @@
     </section>
 
     <div class="flash" id="flash"></div>
+    <section class="startup-issues" id="startupIssues"></section>
 
     <div class="layout">
       <aside class="card">
@@ -265,10 +273,30 @@
       return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[char]));
     }
 
-    async function apiGet(url){
+    async function apiGetDetailed(url){
       const response = await fetch(url);
-      if(!response.ok) throw new Error(`${url} failed`);
-      return response.json();
+      const text = await response.text();
+      let data = null;
+      try{
+        data = text ? JSON.parse(text) : null;
+      }catch{
+        data = null;
+      }
+      if(!response.ok){
+        const error = new Error(`${url} failed with HTTP ${response.status}`);
+        error.url = url;
+        error.status = response.status;
+        error.statusText = response.statusText;
+        error.responseText = text;
+        error.responseJson = data;
+        throw error;
+      }
+      return { url, status: response.status, statusText: response.statusText, text, data };
+    }
+
+    async function apiGet(url){
+      const result = await apiGetDetailed(url);
+      return result.data;
     }
 
     async function apiPost(url, payload){
@@ -288,6 +316,20 @@
       node.textContent = message;
       clearTimeout(showFlash._timer);
       showFlash._timer = setTimeout(() => node.className = "flash", 4200);
+    }
+
+    function setStartupIssues(issues){
+      const node = document.getElementById("startupIssues");
+      if(!issues.length){
+        node.className = "startup-issues";
+        node.innerHTML = "";
+        return;
+      }
+      node.className = "startup-issues show";
+      node.innerHTML = `
+        <h3>Startup issues</h3>
+        <ul>${issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>
+      `;
     }
 
     function asArray(value){
@@ -430,6 +472,35 @@
         <div class="summary-stat"><span class="k">Supervisor Locked</span><span class="v">${stats.locked}</span></div>
       `;
       document.getElementById("boardMeta").textContent = `Week of ${state.selectedWeek} · OPEN seats remain eligible for reruns · displayed seats stay preserved`;
+    }
+
+    function renderBoardError(title, message, detail=""){
+      const board = document.getElementById("board");
+      const boardMeta = document.getElementById("boardMeta");
+      boardMeta.textContent = "Schedule load failed";
+      board.innerHTML = `
+        <div class="empty error">
+          <strong>${esc(title)}</strong>
+          <div style="margin-top:8px">${esc(message)}</div>
+          ${detail ? `<div class="error-detail">${esc(detail)}</div>` : ``}
+        </div>
+      `;
+    }
+
+    function renderOpenSeatsError(message){
+      document.getElementById("openSeatsPanel").innerHTML = `
+        <div class="empty error">
+          <strong>Open seats unavailable</strong>
+          <div style="margin-top:8px">${esc(message)}</div>
+        </div>
+      `;
+    }
+
+    function renderNoShiftsBuilt(){
+      document.getElementById("weekSummary").innerHTML = "";
+      document.getElementById("boardMeta").textContent = "No shifts built";
+      document.getElementById("openSeatsPanel").innerHTML = `<div class="empty">No shifts built yet. Click Build Shift Skeletons.</div>`;
+      document.getElementById("board").innerHTML = `<div class="empty">No shifts built yet. Click Build Shift Skeletons.</div>`;
     }
 
     function renderOpenSeats(){
@@ -600,14 +671,64 @@
     }
 
     async function loadAll(){
-      const [sessionInfo, members, settings, schedule, supervisorState] = await Promise.all([
-        apiGet("/api/auth/session"),
-        apiGet("/api/members"),
-        apiGet("/api/settings"),
-        apiGet("/api/schedule"),
-        apiGet("/api/supervisor/state").catch(() => ({ entries: [] }))
-      ]);
-      state.session = sessionInfo;
+      const issues = [];
+      document.getElementById("boardMeta").textContent = "Loading schedule…";
+      setStartupIssues([]);
+
+      let sessionInfo = null;
+      let members = null;
+      let settings = null;
+      let schedule = null;
+      let supervisorState = { entries: [] };
+
+      try{
+        sessionInfo = (await apiGetDetailed("/api/auth/session")).data;
+      }catch(error){
+        console.error("Supervisor startup: failed to load /api/auth/session", error);
+        issues.push(`/api/auth/session failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
+      }
+
+      try{
+        members = (await apiGetDetailed("/api/members")).data;
+      }catch(error){
+        console.error("Supervisor startup: failed to load /api/members", error);
+        issues.push(`/api/members failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
+      }
+
+      try{
+        settings = (await apiGetDetailed("/api/settings")).data;
+      }catch(error){
+        console.error("Supervisor startup: failed to load /api/settings", error);
+        issues.push(`/api/settings failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
+      }
+
+      try{
+        schedule = (await apiGetDetailed("/api/schedule")).data;
+      }catch(error){
+        console.error("Supervisor startup: failed to load /api/schedule", error);
+        const responseText = String(error.responseText || "").trim() || "(empty response)";
+        renderOpenSeatsError(`/api/schedule failed with HTTP ${error.status || "unknown"}`);
+        renderBoardError(
+          "Schedule load failed",
+          `/api/schedule returned HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim(),
+          responseText
+        );
+        document.getElementById("weekSelect").innerHTML = `<option value="">Schedule load failed</option>`;
+        document.getElementById("weekSummary").innerHTML = "";
+        issues.push(`/api/schedule failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
+        setStartupIssues(issues);
+        return;
+      }
+
+      try{
+        supervisorState = (await apiGetDetailed("/api/supervisor/state")).data || { entries: [] };
+      }catch(error){
+        console.error("Supervisor startup: failed to load /api/supervisor/state", error);
+        issues.push(`/api/supervisor/state failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
+        supervisorState = { entries: [] };
+      }
+
+      state.session = sessionInfo || {};
       state.members = asArray(members?.members || members).map((member) => ({
         ...member,
         birthday_md: normalizeBirthday(member?.birthday_mmdd || member?.birthday)
@@ -617,10 +738,35 @@
       state.schedule = schedule || {};
       state.supervisorState = supervisorState || { entries: [] };
       document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(sessionInfo?.role || "unknown")}`;
-      populateWeekSelect();
-      renderWeekSummary();
-      renderOpenSeats();
-      renderBoard();
+
+      const shiftList = asArray(state.schedule?.shifts);
+      if(!shiftList.length){
+        console.error("Supervisor startup: /api/schedule succeeded but returned no shifts", state.schedule);
+        document.getElementById("weekSelect").innerHTML = `<option value="">No shifts built yet</option>`;
+        state.selectedWeek = null;
+        renderNoShiftsBuilt();
+        setStartupIssues(issues);
+        return;
+      }
+
+      try{
+        populateWeekSelect();
+        renderWeekSummary();
+        renderOpenSeats();
+        renderBoard();
+        if(!groupedWeekShifts().length){
+          document.getElementById("boardMeta").textContent = `Week of ${state.selectedWeek} · no resolved shifts in selected week`;
+          document.getElementById("board").innerHTML = `<div class="empty">No resolved shifts found for the selected week.</div>`;
+          document.getElementById("openSeatsPanel").innerHTML = `<div class="empty">No open or dropped seats found for the selected week.</div>`;
+        }
+      }catch(error){
+        console.error("Supervisor startup: render failure", error);
+        renderOpenSeatsError(error.message || "Render failed");
+        renderBoardError("Render failed", "Supervisor page could not render the current schedule payload.", error.stack || error.message || "");
+        issues.push(`Render failed: ${error.message || "unknown render error"}`);
+      }
+
+      setStartupIssues(issues);
     }
 
     async function doLiveAction(action, payload, successMessage){
