@@ -41,7 +41,10 @@
     "unmatched_raw_names_from_history": {
       "Lisa": 70,
       "Open": 48
-    }
+    },
+    "manual_import_notes": [
+      "2026-05 whiteboard import: only May 1-31 imported; listed names set to preferred; all other active members set to do_not_schedule for each AM/PM block."
+    ]
   },
   "months": {
     "2022-10": {
@@ -11211,513 +11214,9 @@
       }
     },
     "2026-05": {
-      "102": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "103": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "104": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "106": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
       "107": {
         "2026-05-01": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-02": {
@@ -11729,23 +11228,23 @@
           "PM": "do_not_schedule"
         },
         "2026-05-04": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-05": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-06": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-07": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-08": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-09": {
@@ -11757,23 +11256,23 @@
           "PM": "do_not_schedule"
         },
         "2026-05-11": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-12": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-13": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-14": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-15": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-16": {
@@ -11785,23 +11284,23 @@
           "PM": "do_not_schedule"
         },
         "2026-05-18": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-19": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-20": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-21": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-22": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-23": {
@@ -11813,23 +11312,23 @@
           "PM": "do_not_schedule"
         },
         "2026-05-25": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-26": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-27": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-28": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-29": {
-          "AM": "available",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-30": {
@@ -11843,132 +11342,6 @@
       },
       "112": {
         "2026-05-01": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-02": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-03": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-04": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-05": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-06": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-07": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-08": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-09": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-10": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-11": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-12": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-13": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-14": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-15": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-16": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-17": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-18": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-19": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-20": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-21": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-22": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-23": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-24": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-25": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-26": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-27": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-28": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-29": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-30": {
-          "AM": "available",
-          "PM": "available"
-        },
-        "2026-05-31": {
-          "AM": "available",
-          "PM": "available"
-        }
-      },
-      "141": {
-        "2026-05-01": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
@@ -12091,510 +11464,132 @@
         "2026-05-31": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
-        }
-      },
-      "142": {
-        "2026-05-01": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-02": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-03": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-04": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-05": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-06": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-07": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-08": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-09": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-10": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-11": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-12": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-13": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-14": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-15": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-16": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-17": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-18": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-19": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-20": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-21": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-22": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-23": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-24": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-25": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-26": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-27": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-28": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-29": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-30": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-31": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        }
-      },
-      "143": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "144": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
         }
       },
       "145": {
         "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         }
       },
       "146": {
@@ -12723,262 +11718,136 @@
           "PM": "do_not_schedule"
         }
       },
-      "147": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
       "148": {
         "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         }
       },
       "149": {
         "2026-05-01": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-02": {
           "AM": "do_not_schedule",
@@ -12986,27 +11855,27 @@
         },
         "2026-05-03": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-04": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-05": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-06": {
           "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-07": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-08": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-09": {
           "AM": "do_not_schedule",
@@ -13014,15 +11883,15 @@
         },
         "2026-05-10": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-11": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-12": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-13": {
           "AM": "do_not_schedule",
@@ -13030,11 +11899,11 @@
         },
         "2026-05-14": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-15": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-16": {
           "AM": "do_not_schedule",
@@ -13042,15 +11911,15 @@
         },
         "2026-05-17": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-18": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-19": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-20": {
           "AM": "do_not_schedule",
@@ -13058,11 +11927,11 @@
         },
         "2026-05-21": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-22": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-23": {
           "AM": "do_not_schedule",
@@ -13070,15 +11939,15 @@
         },
         "2026-05-24": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-25": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-26": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-27": {
           "AM": "do_not_schedule",
@@ -13086,11 +11955,11 @@
         },
         "2026-05-28": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-29": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-30": {
           "AM": "do_not_schedule",
@@ -13098,133 +11967,7 @@
         },
         "2026-05-31": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
-        }
-      },
-      "150": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
+          "PM": "do_not_schedule"
         }
       },
       "151": {
@@ -13278,7 +12021,7 @@
         },
         "2026-05-13": {
           "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-14": {
           "AM": "do_not_schedule",
@@ -13353,7 +12096,7 @@
           "PM": "do_not_schedule"
         }
       },
-      "153": {
+      "156": {
         "2026-05-01": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
@@ -13419,11 +12162,11 @@
           "PM": "do_not_schedule"
         },
         "2026-05-17": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "AM": "preferred",
+          "PM": "preferred"
         },
         "2026-05-18": {
-          "AM": "do_not_schedule",
+          "AM": "preferred",
           "PM": "do_not_schedule"
         },
         "2026-05-19": {
@@ -13477,1017 +12220,135 @@
         "2026-05-31": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
-        }
-      },
-      "154": {
-        "2026-05-01": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-02": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-03": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-04": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-05": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-06": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-07": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-08": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-09": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-10": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-11": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-12": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-13": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-14": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-15": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-16": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-17": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-18": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-19": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-20": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-21": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-22": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-23": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-24": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-25": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-26": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-27": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-28": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-29": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-30": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-31": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        }
-      },
-      "155": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "157": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "158": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
         }
       },
       "159": {
         "2026-05-01": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-02": {
-          "AM": "preferred",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-06": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-07": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-08": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-09": {
-          "AM": "preferred",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-13": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-14": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-15": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-16": {
-          "AM": "preferred",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-20": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-21": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-22": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-23": {
-          "AM": "preferred",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-27": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-28": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-29": {
-          "AM": "blank",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-30": {
-          "AM": "preferred",
-          "PM": "preferred"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         }
       },
-      "160": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "161": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "162": {
-        "2026-05-01": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-02": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-03": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-04": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-05": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-06": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-07": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-08": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-09": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-10": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-11": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-12": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-13": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-14": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-15": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-16": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-17": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-18": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-19": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-20": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-21": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-22": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-23": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-24": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-25": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-26": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-27": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-28": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-29": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-30": {
-          "AM": "blank",
-          "PM": "blank"
-        },
-        "2026-05-31": {
-          "AM": "blank",
-          "PM": "blank"
-        }
-      },
-      "168": {
+      "163": {
         "2026-05-01": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
@@ -14616,14 +12477,14 @@
       "180": {
         "2026-05-01": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-02": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-03": {
-          "AM": "do_not_schedule",
+          "AM": "preferred",
           "PM": "preferred"
         },
         "2026-05-04": {
@@ -14636,11 +12497,11 @@
         },
         "2026-05-06": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-07": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
+          "AM": "preferred",
+          "PM": "do_not_schedule"
         },
         "2026-05-08": {
           "AM": "do_not_schedule",
@@ -14655,12 +12516,12 @@
           "PM": "do_not_schedule"
         },
         "2026-05-11": {
-          "AM": "do_not_schedule",
+          "AM": "preferred",
           "PM": "preferred"
         },
         "2026-05-12": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-13": {
           "AM": "do_not_schedule",
@@ -14676,27 +12537,27 @@
         },
         "2026-05-16": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-17": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-18": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-19": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "AM": "preferred",
+          "PM": "preferred"
         },
         "2026-05-20": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-21": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-22": {
           "AM": "do_not_schedule",
@@ -14712,11 +12573,137 @@
         },
         "2026-05-25": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-26": {
           "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-27": {
+          "AM": "preferred",
           "PM": "preferred"
+        },
+        "2026-05-28": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-29": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-30": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-31": {
+          "AM": "preferred",
+          "PM": "preferred"
+        }
+      },
+      "181": {
+        "2026-05-01": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-02": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-03": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-04": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-05": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-06": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-07": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-08": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-09": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-10": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-11": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-12": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-13": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-14": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-15": {
+          "AM": "preferred",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-16": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-17": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-18": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-19": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-20": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-21": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-22": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-23": {
+          "AM": "preferred",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-24": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-25": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-26": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
         "2026-05-27": {
           "AM": "do_not_schedule",
@@ -14728,18 +12715,18 @@
         },
         "2026-05-29": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-30": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-31": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         }
       },
-      "181": {
+      "182": {
         "2026-05-01": {
           "AM": "preferred",
           "PM": "do_not_schedule"
@@ -14753,7 +12740,7 @@
           "PM": "do_not_schedule"
         },
         "2026-05-04": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-05": {
@@ -14761,15 +12748,15 @@
           "PM": "do_not_schedule"
         },
         "2026-05-06": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-07": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
+          "AM": "do_not_schedule",
+          "PM": "preferred"
         },
         "2026-05-08": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-09": {
@@ -14781,23 +12768,23 @@
           "PM": "do_not_schedule"
         },
         "2026-05-11": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-12": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-13": {
           "AM": "preferred",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-14": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-15": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-16": {
@@ -14805,27 +12792,27 @@
           "PM": "do_not_schedule"
         },
         "2026-05-17": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-18": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
-        "2026-05-18": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
-        },
         "2026-05-19": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-20": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-21": {
           "AM": "preferred",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-22": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-23": {
@@ -14837,23 +12824,23 @@
           "PM": "do_not_schedule"
         },
         "2026-05-25": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-26": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-27": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-28": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-29": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-30": {
@@ -14866,132 +12853,6 @@
         }
       },
       "183": {
-        "2026-05-01": {
-          "AM": "preferred",
-          "PM": "preferred"
-        },
-        "2026-05-02": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-03": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-04": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-05": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-06": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-07": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
-        },
-        "2026-05-08": {
-          "AM": "preferred",
-          "PM": "preferred"
-        },
-        "2026-05-09": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-10": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-11": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-12": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-13": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-14": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
-        },
-        "2026-05-15": {
-          "AM": "preferred",
-          "PM": "preferred"
-        },
-        "2026-05-16": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-17": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-18": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-19": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-20": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-21": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
-        },
-        "2026-05-22": {
-          "AM": "preferred",
-          "PM": "preferred"
-        },
-        "2026-05-23": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-24": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-25": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-26": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-27": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-28": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
-        },
-        "2026-05-29": {
-          "AM": "preferred",
-          "PM": "preferred"
-        },
-        "2026-05-30": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
-        },
-        "2026-05-31": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
-        }
-      },
-      "184": {
         "2026-05-01": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
@@ -15119,15 +12980,15 @@
       },
       "185": {
         "2026-05-01": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-02": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-03": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-04": {
@@ -15139,16 +13000,16 @@
           "PM": "do_not_schedule"
         },
         "2026-05-06": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-07": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-08": {
           "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-09": {
           "AM": "do_not_schedule",
@@ -15159,12 +13020,12 @@
           "PM": "do_not_schedule"
         },
         "2026-05-11": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-12": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
+          "AM": "do_not_schedule",
+          "PM": "preferred"
         },
         "2026-05-13": {
           "AM": "do_not_schedule",
@@ -15172,18 +13033,18 @@
         },
         "2026-05-14": {
           "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-15": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-16": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-17": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-18": {
@@ -15195,16 +13056,16 @@
           "PM": "do_not_schedule"
         },
         "2026-05-20": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-21": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-22": {
           "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-23": {
           "AM": "do_not_schedule",
@@ -15215,12 +13076,12 @@
           "PM": "do_not_schedule"
         },
         "2026-05-25": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
+          "AM": "do_not_schedule",
+          "PM": "preferred"
         },
         "2026-05-26": {
-          "AM": "preferred",
-          "PM": "do_not_schedule"
+          "AM": "do_not_schedule",
+          "PM": "preferred"
         },
         "2026-05-27": {
           "AM": "do_not_schedule",
@@ -15231,29 +13092,155 @@
           "PM": "do_not_schedule"
         },
         "2026-05-29": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-30": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-31": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         }
       },
       "186": {
         "2026-05-01": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-02": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-03": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-04": {
           "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-05": {
+          "AM": "do_not_schedule",
+          "PM": "preferred"
+        },
+        "2026-05-06": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-07": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-08": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-09": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-10": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-11": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-12": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-13": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-14": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-15": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-16": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-17": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-18": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-19": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-20": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-21": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-22": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-23": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-24": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-25": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-26": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-27": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-28": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-29": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-30": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-31": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        }
+      },
+      "187": {
+        "2026-05-01": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-02": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-03": {
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-04": {
@@ -15265,11 +13252,11 @@
           "PM": "do_not_schedule"
         },
         "2026-05-06": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-07": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-08": {
@@ -15285,11 +13272,11 @@
           "PM": "do_not_schedule"
         },
         "2026-05-11": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-12": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-13": {
@@ -15301,15 +13288,15 @@
           "PM": "do_not_schedule"
         },
         "2026-05-15": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-16": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-17": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-18": {
@@ -15321,11 +13308,11 @@
           "PM": "do_not_schedule"
         },
         "2026-05-20": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-21": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-22": {
@@ -15341,11 +13328,11 @@
           "PM": "do_not_schedule"
         },
         "2026-05-25": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-26": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-27": {
@@ -15357,15 +13344,15 @@
           "PM": "do_not_schedule"
         },
         "2026-05-29": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-30": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-31": {
-          "AM": "preferred",
+          "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         }
       },
@@ -15380,15 +13367,15 @@
         },
         "2026-05-03": {
           "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-04": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-05": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
+          "AM": "preferred",
+          "PM": "do_not_schedule"
         },
         "2026-05-06": {
           "AM": "do_not_schedule",
@@ -15399,12 +13386,12 @@
           "PM": "do_not_schedule"
         },
         "2026-05-08": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
+          "AM": "preferred",
+          "PM": "do_not_schedule"
         },
         "2026-05-09": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-10": {
           "AM": "do_not_schedule",
@@ -15415,16 +13402,142 @@
           "PM": "do_not_schedule"
         },
         "2026-05-12": {
+          "AM": "preferred",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-13": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-14": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-15": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-16": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-17": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-18": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-19": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-20": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-21": {
+          "AM": "preferred",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-22": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-23": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-24": {
+          "AM": "do_not_schedule",
+          "PM": "preferred"
+        },
+        "2026-05-25": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-26": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-27": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-28": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-29": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-30": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-31": {
+          "AM": "do_not_schedule",
+          "PM": "preferred"
+        }
+      },
+      "189": {
+        "2026-05-01": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-02": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-03": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-04": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-05": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-06": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-07": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-08": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-09": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-10": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
+        },
+        "2026-05-11": {
+          "AM": "preferred",
+          "PM": "preferred"
+        },
+        "2026-05-12": {
           "AM": "do_not_schedule",
           "PM": "do_not_schedule"
         },
         "2026-05-13": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-14": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
+          "AM": "preferred",
+          "PM": "do_not_schedule"
         },
         "2026-05-15": {
           "AM": "do_not_schedule",
@@ -15440,11 +13553,11 @@
         },
         "2026-05-18": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-19": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-20": {
           "AM": "do_not_schedule",
@@ -15452,19 +13565,19 @@
         },
         "2026-05-21": {
           "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-05-22": {
-          "AM": "do_not_schedule",
-          "PM": "preferred"
+          "AM": "preferred",
+          "PM": "do_not_schedule"
         },
         "2026-05-23": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-24": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-25": {
           "AM": "do_not_schedule",
@@ -15476,15 +13589,15 @@
         },
         "2026-05-27": {
           "AM": "do_not_schedule",
-          "PM": "preferred"
+          "PM": "do_not_schedule"
         },
         "2026-05-28": {
           "AM": "do_not_schedule",
           "PM": "preferred"
         },
         "2026-05-29": {
-          "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "AM": "preferred",
+          "PM": "preferred"
         },
         "2026-05-30": {
           "AM": "do_not_schedule",
@@ -15495,2608 +13608,130 @@
           "PM": "do_not_schedule"
         }
       },
-      "2026-05-01": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "DO_NOT_SCHEDULE"
+      "190": {
+        "2026-05-01": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "AVAILABLE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-02": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "AVAILABLE"
+        "2026-05-02": {
+          "AM": "preferred",
+          "PM": "preferred"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-03": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-03": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "DO_NOT_SCHEDULE"
-        }
-      },
-      "2026-05-04": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-04": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-05": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-05": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "AVAILABLE"
-        }
-      },
-      "2026-05-06": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "PREFERRED"
+        "2026-05-06": {
+          "AM": "preferred",
+          "PM": "preferred"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "PREFERRED",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-07": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-07": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "PREFERRED",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "PREFERRED",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-08": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-08": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "AVAILABLE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-09": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "AVAILABLE"
+        "2026-05-09": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-10": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-10": {
+          "AM": "preferred",
+          "PM": "preferred"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "DO_NOT_SCHEDULE"
-        }
-      },
-      "2026-05-11": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-11": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-12": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-12": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "AVAILABLE"
-        }
-      },
-      "2026-05-13": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "PREFERRED"
+        "2026-05-13": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "PREFERRED",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-14": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-14": {
+          "AM": "preferred",
+          "PM": "preferred"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "PREFERRED",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "PREFERRED",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-15": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-15": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "AVAILABLE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-16": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "AVAILABLE"
+        "2026-05-16": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-17": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-17": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "DO_NOT_SCHEDULE"
-        }
-      },
-      "2026-05-18": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-18": {
+          "AM": "preferred",
+          "PM": "preferred"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-19": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-19": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "AVAILABLE"
-        }
-      },
-      "2026-05-20": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "PREFERRED"
+        "2026-05-20": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "PREFERRED",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-21": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-21": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "PREFERRED",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "PREFERRED",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-22": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-22": {
+          "AM": "preferred",
+          "PM": "preferred"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "AVAILABLE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-23": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "AVAILABLE"
+        "2026-05-23": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-24": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-24": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "DO_NOT_SCHEDULE"
-        }
-      },
-      "2026-05-25": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-25": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-26": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-26": {
+          "AM": "preferred",
+          "PM": "preferred"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "AVAILABLE"
-        }
-      },
-      "2026-05-27": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "PREFERRED",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "PREFERRED"
+        "2026-05-27": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "PREFERRED",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-28": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "PREFERRED",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-28": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "AVAILABLE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "PREFERRED",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "PREFERRED",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-29": {
-        "AM": {
-          "102": "PREFERRED",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "PREFERRED",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "PREFERRED",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "PREFERRED",
-          "187": "AVAILABLE",
-          "188": "AVAILABLE",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-29": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         },
-        "PM": {
-          "102": "PREFERRED",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "AVAILABLE",
-          "112": "AVAILABLE",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "PREFERRED",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "PREFERRED",
-          "151": "DO_NOT_SCHEDULE",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "PREFERRED",
-          "157": "PREFERRED",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "PREFERRED",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "AVAILABLE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-30": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "AVAILABLE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "AVAILABLE"
+        "2026-05-30": {
+          "AM": "preferred",
+          "PM": "preferred"
         },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "PREFERRED",
-          "106": "PREFERRED",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "PREFERRED",
-          "141": "PREFERRED",
-          "142": "PREFERRED",
-          "143": "PREFERRED",
-          "144": "PREFERRED",
-          "145": "PREFERRED",
-          "146": "PREFERRED",
-          "147": "PREFERRED",
-          "148": "AVAILABLE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "PREFERRED",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "PREFERRED",
-          "155": "PREFERRED",
-          "156": "AVAILABLE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "PREFERRED",
-          "159": "PREFERRED",
-          "160": "PREFERRED",
-          "161": "PREFERRED",
-          "162": "PREFERRED",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "PREFERRED",
-          "180": "AVAILABLE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "PREFERRED",
-          "185": "PREFERRED",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "PREFERRED",
-          "188": "PREFERRED",
-          "189": "PREFERRED"
-        }
-      },
-      "2026-05-31": {
-        "AM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "DO_NOT_SCHEDULE",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "AVAILABLE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "DO_NOT_SCHEDULE",
-          "146": "PREFERRED",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "DO_NOT_SCHEDULE",
-          "149": "DO_NOT_SCHEDULE",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "DO_NOT_SCHEDULE",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "DO_NOT_SCHEDULE",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "PREFERRED",
-          "182": "AVAILABLE",
-          "183": "PREFERRED",
-          "184": "AVAILABLE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "DO_NOT_SCHEDULE",
-          "189": "DO_NOT_SCHEDULE"
-        },
-        "PM": {
-          "102": "DO_NOT_SCHEDULE",
-          "103": "PREFERRED",
-          "104": "DO_NOT_SCHEDULE",
-          "106": "DO_NOT_SCHEDULE",
-          "107": "DO_NOT_SCHEDULE",
-          "112": "DO_NOT_SCHEDULE",
-          "141": "DO_NOT_SCHEDULE",
-          "142": "DO_NOT_SCHEDULE",
-          "143": "DO_NOT_SCHEDULE",
-          "144": "DO_NOT_SCHEDULE",
-          "145": "PREFERRED",
-          "146": "DO_NOT_SCHEDULE",
-          "147": "DO_NOT_SCHEDULE",
-          "148": "PREFERRED",
-          "149": "PREFERRED",
-          "150": "DO_NOT_SCHEDULE",
-          "151": "PREFERRED",
-          "153": "PREFERRED",
-          "154": "DO_NOT_SCHEDULE",
-          "155": "DO_NOT_SCHEDULE",
-          "156": "PREFERRED",
-          "157": "DO_NOT_SCHEDULE",
-          "158": "DO_NOT_SCHEDULE",
-          "159": "DO_NOT_SCHEDULE",
-          "160": "DO_NOT_SCHEDULE",
-          "161": "DO_NOT_SCHEDULE",
-          "162": "DO_NOT_SCHEDULE",
-          "163": "DO_NOT_SCHEDULE",
-          "168": "DO_NOT_SCHEDULE",
-          "180": "DO_NOT_SCHEDULE",
-          "181": "DO_NOT_SCHEDULE",
-          "182": "PREFERRED",
-          "183": "DO_NOT_SCHEDULE",
-          "184": "DO_NOT_SCHEDULE",
-          "185": "DO_NOT_SCHEDULE",
-          "186": "DO_NOT_SCHEDULE",
-          "187": "AVAILABLE",
-          "188": "PREFERRED",
-          "189": "DO_NOT_SCHEDULE"
+        "2026-05-31": {
+          "AM": "do_not_schedule",
+          "PM": "do_not_schedule"
         }
       }
     },
