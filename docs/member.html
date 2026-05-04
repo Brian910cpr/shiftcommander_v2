@@ -94,7 +94,8 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
           <span class="pill" id="sessionPill"><strong>Session</strong> Loading…</span>
           <span class="badge warn">Self-service only. You cannot edit other members.</span>
-          <span class="badge">Build <span id="buildPill">SC-BUILD-2026-05-04-MEMBER-DIAG-001</span></span>
+          <span class="badge warn" id="quickTestBanner" style="display:none">QUICK TEST MODE ACTIVE - AUTH DISABLED</span>
+          <span class="badge">Build <span id="buildPill">SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span></span>
         </div>
       </div>
       <div class="hero-actions">
@@ -108,19 +109,32 @@
     <section class="card diag-panel">
       <div class="section-title">
         <h2>Startup Diagnostics</h2>
-        <span class="mini" id="diagBuildCode">SC-BUILD-2026-05-04-MEMBER-DIAG-001</span>
+        <span class="mini" id="diagBuildCode">SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span>
       </div>
       <div class="diag-grid">
         <div class="diag-item"><strong>Mode</strong><span id="diagMode">unknown</span></div>
+        <div class="diag-item"><strong>Auth Mode</strong><span id="diagAuthMode">unknown</span></div>
         <div class="diag-item"><strong>Origin</strong><span id="diagOrigin"></span></div>
         <div class="diag-item"><strong>Path</strong><span id="diagPath"></span></div>
-        <div class="diag-item"><strong>Build</strong><span>SC-BUILD-2026-05-04-MEMBER-DIAG-001</span></div>
+        <div class="diag-item"><strong>API Base</strong><span id="diagApiBase"></span></div>
+        <div class="diag-item"><strong>Backend Health</strong><span id="diagHealth">unknown</span></div>
+        <div class="diag-item"><strong>User</strong><span id="diagUser">Not logged in</span></div>
+        <div class="diag-item"><strong>Build</strong><span>SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span></div>
       </div>
       <div id="diagFetches" class="diag-list"></div>
     </section>
 
     <div class="layout">
       <aside class="stack">
+        <section class="card" id="quickTestCard" style="display:none">
+          <div class="section-title"><h2>Quick Test Mode</h2></div>
+          <div class="mini">Authentication is bypassed temporarily. Select a member and test the live resolver/member context without logging in.</div>
+          <div class="field" style="margin-top:12px">
+            <label for="quickTestMemberSelect">Selected member</label>
+            <select id="quickTestMemberSelect"></select>
+          </div>
+        </section>
+
         <section class="card">
           <div class="summary-name" id="memberName">Loading…</div>
           <div class="summary-sub" id="memberSub">Member self-service</div>
@@ -166,7 +180,7 @@
           </div>
         </section>
 
-        <section class="card">
+        <section class="card" id="passwordCard">
           <div class="section-title"><h2>Change Password</h2></div>
           <div class="stack">
             <div class="field"><label for="currentPassword">Current password</label><input id="currentPassword" type="password" /></div>
@@ -206,16 +220,25 @@
   </div>
 
   <script>
-    const BUILD_CODE = "SC-BUILD-2026-05-04-MEMBER-DIAG-001";
+    const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
+    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || "";
+    const STORAGE_TOKEN_KEY = "sc_member_session_token";
+    const STORAGE_USER_KEY = "sc_member_user_id";
+    const STORAGE_QT_MEMBER_KEY = "sc_quick_test_member_id";
     const appState = {
       session: null,
       member: null,
+      roster: [],
       availability: { months: {} },
       schedule: {},
       currentWeekOffset: 0,
       dirtyAvailability: false,
+      quickTestMode: false,
+      selectedMemberId: "",
       startup: {
         mode: "unknown",
+        authMode: "unknown",
+        health: "unknown",
         origin: window.location.origin || "file://",
         pathname: window.location.pathname || "",
         fetches: [],
@@ -226,12 +249,18 @@
     function esc(value){
       return String(value ?? "").replace(/[&<>\"']/g, (char) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[char]));
     }
+    function apiPath(path){
+      return `${API_BASE}${path}`;
+    }
+    function loginUrl(){
+      return `/login.html?next=${encodeURIComponent(window.location.pathname || "/member")}`;
+    }
     function asArray(value){ return Array.isArray(value) ? value : []; }
     function isoToDate(iso){ return new Date(`${iso}T00:00:00`); }
     function formatDate(date){ return date.toISOString().slice(0,10); }
     function startOfWeek(date){ const d = new Date(date); const offset = (d.getDay()+6)%7; d.setDate(d.getDate()-offset); return d; }
     function monthKey(iso){ return String(iso||"").slice(0,7); }
-    function getMemberId(){ return String(appState.member?.member_id || appState.member?.id || ""); }
+    function getMemberId(){ return String(appState.selectedMemberId || appState.member?.member_id || appState.member?.id || appState.session?.member_id || ""); }
     function getStatus(dateIso, shift){ return appState.availability?.months?.[monthKey(dateIso)]?.[getMemberId()]?.[dateIso]?.[shift] || ""; }
     function setStatus(dateIso, shift, value){
       appState.availability.months ||= {};
@@ -244,6 +273,9 @@
     function currentWindowStart(){ const today = new Date(); const start = startOfWeek(today); start.setDate(start.getDate() + (appState.currentWeekOffset * 7)); return start; }
     function visibleDates(){ const start = currentWindowStart(); return Array.from({length:14}, (_,i) => { const d = new Date(start); d.setDate(start.getDate()+i); return d; }); }
     function editLocked(dateIso){ const date = isoToDate(dateIso); const cutoff = new Date(); cutoff.setHours(0,0,0,0); cutoff.setDate(cutoff.getDate()+14); return date < cutoff; }
+    function selectedMemberName(){
+      return appState.member?.name || appState.session?.member_name || appState.roster.find((member) => String(member.member_id || member.id) === getMemberId())?.name || "Member";
+    }
 
     function showFlash(message, kind="success"){
       const node=document.getElementById("flash");
@@ -257,16 +289,35 @@
       const ids = [
         "logoutBtn","saveProfileBtn","changePasswordBtn","saveAvailabilityBtn",
         "desiredHours","ampmPreference","shift24Preference","swapPreference",
-        "currentPassword","newPassword","confirmPassword","prevBtn","todayBtn","nextBtn"
+        "currentPassword","newPassword","confirmPassword","prevBtn","todayBtn","nextBtn","quickTestMemberSelect"
       ];
       ids.forEach((id) => {
         const node = document.getElementById(id);
         if(node) node.disabled = !enabled;
       });
+      if(appState.quickTestMode){
+        const passwordCard = document.getElementById("passwordCard");
+        if(passwordCard) passwordCard.style.display = "none";
+      }
     }
 
     function setSessionBadge(text){
       document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(text)}`;
+    }
+
+    function persistClientSessionMarker(sessionInfo){
+      if(sessionInfo?.member_id){
+        localStorage.setItem(STORAGE_USER_KEY, String(sessionInfo.member_id));
+      }
+    }
+
+    function clearClientSessionMarker(){
+      localStorage.removeItem(STORAGE_TOKEN_KEY);
+      localStorage.removeItem(STORAGE_USER_KEY);
+    }
+
+    function redirectToLogin(){
+      window.location.replace(loginUrl());
     }
 
     function setMemberFallback(title, subtitle){
@@ -312,7 +363,7 @@
     async function fetchJsonWithDiag(url, { method="GET", body=null } = {}){
       const entry = { url, method, status: 0, ok: false, preview: "", error: "", contentType: "" };
       try{
-        const options = { method, headers:{} };
+        const options = { method, headers:{}, credentials:"include" };
         if(body !== null){
           options.headers["Content-Type"] = "application/json";
           options.body = JSON.stringify(body);
@@ -341,17 +392,26 @@
     }
 
     function inferMode(apiHealthOk){
-      const path = (window.location.pathname || "").toLowerCase();
       if(!apiHealthOk) return "static";
-      if(path === "/member" || path === "/supervisor" || path === "/wallboard" || path.startsWith("/docs/")) return "api";
-      return "hybrid";
+      return API_BASE ? "hybrid" : "api";
+    }
+
+    function applyModeUi(){
+      document.getElementById("quickTestBanner").style.display = appState.quickTestMode ? "" : "none";
+      document.getElementById("quickTestCard").style.display = appState.quickTestMode ? "block" : "none";
+      document.getElementById("passwordCard").style.display = appState.quickTestMode ? "none" : "block";
+      document.getElementById("logoutBtn").textContent = appState.quickTestMode ? "Open Login" : "Logout";
     }
 
     function renderDiagnostics(){
       document.getElementById("diagBuildCode").textContent = BUILD_CODE;
       document.getElementById("diagMode").textContent = appState.startup.mode;
+      document.getElementById("diagAuthMode").textContent = appState.startup.authMode;
       document.getElementById("diagOrigin").textContent = appState.startup.origin;
       document.getElementById("diagPath").textContent = appState.startup.pathname;
+      document.getElementById("diagApiBase").textContent = API_BASE || "(same origin)";
+      document.getElementById("diagHealth").textContent = appState.startup.health;
+      document.getElementById("diagUser").textContent = getMemberId() || localStorage.getItem(STORAGE_USER_KEY) || "Not logged in";
       document.getElementById("diagFetches").innerHTML = appState.startup.fetches.length ? appState.startup.fetches.map((item) => `
         <div class="diag-entry ${item.ok ? "ok" : "fail"}">
           <div><strong>${esc(item.method)} ${esc(item.url)}</strong></div>
@@ -364,9 +424,10 @@
 
     function renderSummary(){
       const m = appState.member || {};
-      setSessionBadge(appState.session?.member_name || m.name || "Member");
+      const labelPrefix = appState.quickTestMode ? "Quick Test" : "Session";
+      setSessionBadge(`${labelPrefix} ${selectedMemberName()} (${getMemberId() || "unknown"})`);
       document.getElementById("memberName").textContent = m.name || "Member";
-      document.getElementById("memberSub").textContent = `Member ID ${getMemberId()}`;
+      document.getElementById("memberSub").textContent = `${appState.quickTestMode ? "Quick Test member" : "Member"} ID ${getMemberId()}`;
       document.getElementById("memberCert").textContent = m.ops_cert || m.cert || m.raw_cert || "—";
       document.getElementById("memberEmployment").textContent = m.employment?.status || "—";
       document.getElementById("desiredHours").value = m.employment?.preferred_weekly_hour_cap ?? "";
@@ -390,7 +451,7 @@
           <strong>${esc(shift.date)} · ${esc(shift.label)} · ${esc(shift.unit || "Unit")}</strong>
           <div class="meta">${esc(seat.role || "Seat")} ${seat.locked ? "· Displayed / frozen" : "· Draft or open window"}</div>
         </div>
-      `).join("") : `<div class="empty">No assigned shifts were found for your account in the current resolved schedule.</div>`;
+      `).join("") : `<div class="empty">No assigned shifts were found for this member in the current resolved schedule.</div>`;
     }
 
     function renderCalendar(){
@@ -436,13 +497,81 @@
       }).join("");
     }
 
+    function setQuickTestSelectedMember(memberId){
+      appState.selectedMemberId = String(memberId || "");
+      if(appState.selectedMemberId){
+        localStorage.setItem(STORAGE_QT_MEMBER_KEY, appState.selectedMemberId);
+      }
+      const url = new URL(window.location.href);
+      if(appState.selectedMemberId){
+        url.searchParams.set("member_id", appState.selectedMemberId);
+      }else{
+        url.searchParams.delete("member_id");
+      }
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    function populateQuickTestMembers(){
+      const select = document.getElementById("quickTestMemberSelect");
+      const members = appState.roster.filter((member) => member?.active !== false);
+      select.innerHTML = members.map((member) => `<option value="${esc(member.member_id || member.id)}">${esc(member.name || member.member_id || member.id)}</option>`).join("");
+      if(!appState.selectedMemberId && members.length){
+        appState.selectedMemberId = String(members[0].member_id || members[0].id);
+      }
+      if(appState.selectedMemberId){
+        select.value = appState.selectedMemberId;
+      }
+    }
+
+    async function loadQuickTestMembers(){
+      const result = await fetchJsonWithDiag(apiPath("/api/members"));
+      if(!result.ok){
+        throw new Error(result.entry?.error || "Quick Test member list failed.");
+      }
+      appState.roster = asArray(result.data?.members || result.data);
+      const url = new URL(window.location.href);
+      const preferred = url.searchParams.get("member_id") || localStorage.getItem(STORAGE_QT_MEMBER_KEY) || localStorage.getItem(STORAGE_USER_KEY) || "";
+      appState.selectedMemberId = preferred || "";
+      populateQuickTestMembers();
+      if(!appState.selectedMemberId && appState.roster.length){
+        setQuickTestSelectedMember(String(appState.roster[0].member_id || appState.roster[0].id || ""));
+      } else if(appState.selectedMemberId){
+        setQuickTestSelectedMember(appState.selectedMemberId);
+      }
+    }
+
+    async function loadMemberContextFor(memberId){
+      const query = appState.quickTestMode ? `?member_id=${encodeURIComponent(memberId)}` : "";
+      const context = await fetchJsonWithDiag(apiPath(`/api/member/context${query}`));
+      if(!context.ok){
+        throw new Error(context.entry?.error || "Member context failed.");
+      }
+      appState.member = context.data.member;
+      appState.availability = context.data.availability || { months:{} };
+      appState.schedule = context.data.schedule || {};
+      appState.contextReady = true;
+      appState.dirtyAvailability = false;
+      renderSummary();
+      renderAssignments();
+      renderCalendar();
+      setInteractiveEnabled(true);
+      renderDiagnostics();
+    }
+
     async function loadContext(){
       document.getElementById("buildPill").textContent = BUILD_CODE;
+      applyModeUi();
       setStartupState("Checking backend...");
       renderDiagnostics();
 
-      const health = await fetchJsonWithDiag("/api/health");
+      const health = await fetchJsonWithDiag(apiPath("/api/health"));
       appState.startup.mode = inferMode(health.ok);
+      appState.startup.health = health.ok ? `${health.data?.status || "ok"}` : "unreachable";
+      if(health.ok){
+        appState.quickTestMode = !!health.data?.quick_test_mode;
+        appState.startup.authMode = appState.quickTestMode ? "Quick Test" : "Real Login";
+      }
+      applyModeUi();
       renderDiagnostics();
 
       if(!health.ok){
@@ -457,11 +586,24 @@
         return;
       }
 
-      const sessionInfo = await fetchJsonWithDiag("/api/auth/session");
+      if(appState.quickTestMode){
+        await loadQuickTestMembers();
+        appState.session = {
+          authenticated: false,
+          role: "quick_test",
+          member_id: getMemberId(),
+          member_name: selectedMemberName(),
+        };
+        await loadMemberContextFor(getMemberId());
+        showFlash("Quick Test Mode member context loaded.");
+        return;
+      }
+
+      const sessionInfo = await fetchJsonWithDiag(apiPath("/api/auth/session"));
       if(!sessionInfo.ok){
         const message = "Session check failed. The page cannot determine member identity.";
         setSessionBadge("Session failed");
-        setMemberFallback("Session failed", "Could not read /api/auth/session");
+        setMemberFallback("Session failed", `Could not read ${apiPath("/api/auth/session")}`);
         setAssignmentsFallback(message);
         setCalendarFallback(message);
         showFlash(message, "error");
@@ -470,34 +612,19 @@
 
       appState.session = sessionInfo.data || {};
       if(!appState.session.authenticated || !appState.session.member_id){
-        const message = "Authentication required. The live Flask app redirects /member to login; static hosting cannot authenticate this page by itself.";
-        setSessionBadge("Not signed in");
-        setMemberFallback("Authentication required", "Sign in through the live member backend");
-        setAssignmentsFallback("Assigned shifts are unavailable until a member session exists.");
-        setCalendarFallback("Availability calendar is unavailable until a member session exists.");
+        const message = "Not logged in. Redirecting to the member login page.";
+        clearClientSessionMarker();
+        setSessionBadge("Not logged in");
+        setMemberFallback("Authentication required", "Redirecting to /login.html");
+        setAssignmentsFallback("Assigned shifts are unavailable until you log in.");
+        setCalendarFallback("Availability calendar is unavailable until you log in.");
         showFlash(message, "error");
+        renderDiagnostics();
+        setTimeout(redirectToLogin, 300);
         return;
       }
-
-      const context = await fetchJsonWithDiag("/api/member/context");
-      if(!context.ok){
-        const message = context.entry?.error || "Member context failed.";
-        setSessionBadge("Context failed");
-        setMemberFallback("Member context failed", message);
-        setAssignmentsFallback(`Assigned shifts could not load: ${message}`);
-        setCalendarFallback(`Availability calendar could not render: ${message}`);
-        showFlash(message, "error");
-        return;
-      }
-
-      appState.member = context.data.member;
-      appState.availability = context.data.availability || { months:{} };
-      appState.schedule = context.data.schedule || {};
-      appState.contextReady = true;
-      setInteractiveEnabled(true);
-      renderSummary();
-      renderAssignments();
-      renderCalendar();
+      persistClientSessionMarker(appState.session);
+      await loadMemberContextFor(appState.session.member_id);
       showFlash("Member context loaded.");
     }
 
@@ -509,7 +636,8 @@
 
     async function saveProfile(){
       try{
-        await apiPost("/api/member/profile", {
+        await apiPost(apiPath("/api/member/profile"), {
+          member_id: getMemberId(),
           preferred_weekly_hour_cap: document.getElementById("desiredHours").value,
           ampm: document.getElementById("ampmPreference").value,
           shift24: document.getElementById("shift24Preference").value,
@@ -523,7 +651,10 @@
 
     async function saveAvailability(){
       try{
-        await apiPost("/api/member/availability", appState.availability);
+        await apiPost(apiPath("/api/member/availability"), {
+          ...appState.availability,
+          member_id: getMemberId(),
+        });
         appState.dirtyAvailability = false;
         showFlash("Availability saved.");
       }catch(error){
@@ -532,8 +663,12 @@
     }
 
     async function changePassword(){
+      if(appState.quickTestMode){
+        showFlash("Change Password is disabled in Quick Test Mode.", "error");
+        return;
+      }
       try{
-        await apiPost("/api/auth/change_password", {
+        await apiPost(apiPath("/api/auth/change_password"), {
           current_password: document.getElementById("currentPassword").value,
           new_password: document.getElementById("newPassword").value,
           confirm_password: document.getElementById("confirmPassword").value,
@@ -548,9 +683,15 @@
     }
 
     document.getElementById("logoutBtn").addEventListener("click", async () => {
+      if(appState.quickTestMode){
+        clearClientSessionMarker();
+        window.location.href = "/login.html";
+        return;
+      }
       try{
-        await apiPost("/api/auth/logout", {});
-        window.location.href = "/login/member";
+        await apiPost(apiPath("/api/auth/logout"), {});
+        clearClientSessionMarker();
+        window.location.href = "/login.html";
       }catch(error){
         showFlash(error.message || "Logout failed", "error");
       }
@@ -561,6 +702,24 @@
     document.getElementById("todayBtn").addEventListener("click", () => { appState.currentWeekOffset = 0; renderCalendar(); });
     document.getElementById("prevBtn").addEventListener("click", () => { appState.currentWeekOffset -= 1; renderCalendar(); });
     document.getElementById("nextBtn").addEventListener("click", () => { appState.currentWeekOffset += 1; renderCalendar(); });
+    document.getElementById("quickTestMemberSelect").addEventListener("change", async (event) => {
+      if(!appState.quickTestMode) return;
+      setQuickTestSelectedMember(event.target.value);
+      appState.session = {
+        authenticated: false,
+        role: "quick_test",
+        member_id: getMemberId(),
+        member_name: selectedMemberName(),
+      };
+      try{
+        await loadMemberContextFor(getMemberId());
+        showFlash(`Quick Test switched to ${selectedMemberName()}.`);
+      }catch(error){
+        setAssignmentsFallback(error.message || "Assigned shifts could not load.");
+        setCalendarFallback(error.message || "Availability calendar could not render.");
+        showFlash(error.message || "Failed to switch Quick Test member.", "error");
+      }
+    });
     document.body.addEventListener("click", (event) => {
       const button = event.target.closest(".state-btn");
       if(!button || !appState.contextReady) return;
@@ -569,6 +728,7 @@
     });
 
     setInteractiveEnabled(false);
+    applyModeUi();
     loadContext().catch((error) => {
       setSessionBadge("Startup failed");
       setMemberFallback("Startup failed", error.message || "Unexpected member page error");

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander Login</title>
+  <style>
+    :root{
+      --bg:#08111f;--bg2:#0b1627;--panel:#0f1b2d;--panel2:#16243a;--line:#243754;--text:#eef4ff;--muted:#a7b8d8;
+      --blue:#69b8ff;--red:#ff8f8f;--green:#52ef7f;--shadow:0 18px 40px rgba(0,0,0,.35);--radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:
+      radial-gradient(900px 600px at 15% -10%, rgba(143,125,255,.18), transparent 55%),
+      radial-gradient(900px 600px at 90% 0%, rgba(105,184,255,.14), transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);font-family:Arial,Helvetica,sans-serif}
+    body{display:grid;place-items:center;padding:18px}
+    .card{width:min(460px,94vw);background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow);display:grid;gap:16px}
+    h1{margin:0;font-size:30px}
+    p{margin:0;color:var(--muted);line-height:1.45}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-weight:800}
+    .stack{display:grid;gap:12px}
+    .field{display:grid;gap:8px}
+    .field label{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+    .field input{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:0 12px}
+    .btn{height:46px;border-radius:12px;border:1px solid rgba(105,184,255,.45);background:rgba(105,184,255,.18);color:var(--text);font-weight:900;cursor:pointer}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .status{min-height:20px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);display:none}
+    .status.show{display:block}
+    .status.error{border-color:rgba(255,143,143,.35);color:#ffd0d0}
+    .status.success{border-color:rgba(82,239,127,.35);color:#ccffe1}
+    .mini{font-size:12px;color:var(--muted)}
+    .diag{display:grid;gap:8px;font-size:12px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="stack">
+      <h1>ShiftCommander Login</h1>
+      <p>Use the member test login to establish a working session cookie, then continue to the member page.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pill">Build SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span>
+        <span class="pill" id="sessionState">Not logged in</span>
+      </div>
+    </div>
+
+    <form id="loginForm" class="stack">
+      <div class="field">
+        <label for="username">Username / Email</label>
+        <input id="username" name="username" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </div>
+      <button class="btn" id="loginBtn" type="submit">Log In</button>
+    </form>
+
+    <div id="status" class="status"></div>
+
+    <div class="diag">
+      <div><strong>Origin:</strong> <span id="origin"></span></div>
+      <div><strong>Path:</strong> <span id="path"></span></div>
+      <div><strong>API Base:</strong> <span id="apiBase"></span></div>
+      <div><strong>Backend Health:</strong> <span id="backendHealth">unknown</span></div>
+      <div><strong>Auth Mode:</strong> <span id="authMode">unknown</span></div>
+      <div><strong>Next:</strong> <span id="nextPath"></span></div>
+      <div class="mini">Test credentials currently enabled: <code>test / test</code></div>
+    </div>
+  </main>
+
+  <script>
+    const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
+    const STORAGE_TOKEN_KEY = "sc_member_session_token";
+    const STORAGE_USER_KEY = "sc_member_user_id";
+    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || "";
+
+    function apiUrl(path){
+      return `${API_BASE}${path}`;
+    }
+
+    function esc(value){
+      return String(value ?? "").replace(/[&<>\"']/g, (char) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[char]));
+    }
+
+    function nextPath(){
+      const url = new URL(window.location.href);
+      return url.searchParams.get("next") || (API_BASE ? "/member.html" : "/member");
+    }
+
+    function setStatus(message, kind="error"){
+      const node = document.getElementById("status");
+      node.className = `status show ${kind}`;
+      node.textContent = message;
+    }
+
+    function setSessionState(text){
+      document.getElementById("sessionState").textContent = text;
+    }
+
+    async function fetchJson(url, options = {}){
+      const response = await fetch(url, { credentials: "include", ...options });
+      const text = await response.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch {}
+      return { ok: response.ok, status: response.status, data, text };
+    }
+
+    async function loadHealth(){
+      try{
+        const result = await fetchJson(apiUrl("/api/health"));
+        if(!result.ok){
+          document.getElementById("backendHealth").textContent = `HTTP ${result.status}`;
+          document.getElementById("authMode").textContent = "unknown";
+          return;
+        }
+        document.getElementById("backendHealth").textContent = result.data?.status || "ok";
+        document.getElementById("authMode").textContent = result.data?.quick_test_mode ? "Quick Test + Real Login" : "Real Login";
+      }catch(error){
+        document.getElementById("backendHealth").textContent = error.message || "unreachable";
+        document.getElementById("authMode").textContent = "unknown";
+        setStatus(error.message || "Could not reach backend health endpoint.");
+      }
+    }
+
+    async function checkExistingSession(){
+      try{
+        const result = await fetchJson(apiUrl("/api/auth/session"));
+        if(result.ok && result.data?.authenticated && result.data?.member_id){
+          localStorage.setItem(STORAGE_USER_KEY, result.data.member_id);
+          setSessionState(`Logged in as ${result.data.member_id}`);
+          window.location.replace(nextPath());
+          return;
+        }
+      }catch(error){
+        setStatus(error.message || "Could not verify existing session.");
+      }
+    }
+
+    async function onSubmit(event){
+      event.preventDefault();
+      const button = document.getElementById("loginBtn");
+      button.disabled = true;
+      setStatus("Signing in...", "success");
+      try{
+        const result = await fetchJson(apiUrl("/api/login"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: document.getElementById("username").value.trim(),
+            password: document.getElementById("password").value,
+            next: nextPath(),
+          }),
+        });
+        if(!result.ok){
+          throw new Error(result.data?.error || `Login failed (${result.status})`);
+        }
+        localStorage.setItem(STORAGE_TOKEN_KEY, result.data?.session_token || "");
+        localStorage.setItem(STORAGE_USER_KEY, result.data?.member_id || "");
+        setSessionState(`Logged in as ${result.data?.member_id || "member"}`);
+        setStatus(`Login succeeded for ${result.data?.member_name || result.data?.member_id || "member"}.`, "success");
+        window.location.replace(result.data?.redirect || "/member");
+      }catch(error){
+        localStorage.removeItem(STORAGE_TOKEN_KEY);
+        localStorage.removeItem(STORAGE_USER_KEY);
+        setSessionState("Not logged in");
+        setStatus(error.message || "Login failed.");
+      }finally{
+        button.disabled = false;
+      }
+    }
+
+    document.getElementById("origin").textContent = window.location.origin || "file://";
+    document.getElementById("path").textContent = window.location.pathname || "";
+    document.getElementById("apiBase").textContent = API_BASE || "(same origin)";
+    document.getElementById("nextPath").textContent = nextPath();
+    document.getElementById("loginForm").addEventListener("submit", onSubmit);
+    loadHealth();
+    checkExistingSession();
+  </script>
+</body>
+</html>

@@ -446,13 +446,18 @@
     </div>
     <div class="meta">
       <div class="meta-row">
-        <span class="meta-pill">Build SC-BUILD-2026-05-04-MEMBER-DIAG-001</span>
+        <span class="meta-pill">Build SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span>
         <button class="nav-btn" id="prevWeekBtn">← Prev Week</button>
         <button class="nav-btn" id="todayBtn">Today</button>
         <button class="nav-btn" id="nextWeekBtn">Next Week →</button>
       </div>
       <div class="meta-pill" id="metaWindow">Window: --</div>
-      <div class="meta-pill" id="metaUnit">Source: final resolved schedule (/api/schedule)</div>
+      <div class="meta-pill" id="metaUnit">Source: final resolved schedule</div>
+      <div class="meta-pill" id="metaOrigin">Origin: --</div>
+      <div class="meta-pill" id="metaApiBase">API Base: --</div>
+      <div class="meta-pill" id="metaAuthMode">Auth Mode: --</div>
+      <div class="meta-pill" id="metaViewer">Viewer: public</div>
+      <div class="meta-pill" id="metaHealth">Health: --</div>
       <div class="meta-pill" id="metaUpdated">Updated: --</div>
     </div>
   </div>
@@ -462,8 +467,11 @@
   <div class="footer">Auto-refresh every 60 seconds • snaps back to Today after 60 seconds of no interaction</div>
 
   <script>
+    const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
+    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || "";
     const SCHEDULE_URL = "/api/schedule";
     const MEMBERS_URL = "/api/wallboard_members";
+    const HEALTH_URL = "/api/health";
     const REFRESH_MS = 60000;
     const IDLE_RESET_MS = 60000;
     const VISIBLE_WEEKS = 5;
@@ -473,6 +481,11 @@
     let currentWeekOffset = 0;
     let lastLoadedData = null;
     let idleTimer = null;
+    let runtimeHealth = null;
+
+    function apiUrl(path) {
+      return `${API_BASE}${path}`;
+    }
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -487,7 +500,8 @@
       let lastError = null;
       for (const url of urls) {
         try {
-          const response = await fetch(`${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`, { cache: "no-store" });
+          const fullUrl = `${apiUrl(url)}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+          const response = await fetch(fullUrl, { cache: "no-store", credentials: "include" });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           return await response.json();
         } catch (error) {
@@ -495,6 +509,13 @@
         }
       }
       throw lastError || new Error("No data source available");
+    }
+
+    function renderRuntimeMeta() {
+      document.getElementById("metaOrigin").textContent = `Origin: ${window.location.origin || "file://"}`;
+      document.getElementById("metaApiBase").textContent = `API Base: ${API_BASE || "(same origin)"}`;
+      document.getElementById("metaAuthMode").textContent = `Auth Mode: ${runtimeHealth?.quick_test_mode ? "Quick Test Available" : "Real Login"}`;
+      document.getElementById("metaHealth").textContent = `Health: ${runtimeHealth?.status || "unreachable"}`;
     }
 
     function renderWeekdayRow() {
@@ -938,8 +959,15 @@
 
     async function loadSchedule() {
       const app = document.getElementById("app");
+      renderRuntimeMeta();
 
       try {
+        try {
+          runtimeHealth = await fetchFirstJson([HEALTH_URL]);
+        } catch (error) {
+          runtimeHealth = { status: "unreachable", quick_test_mode: false };
+        }
+        renderRuntimeMeta();
         const [scheduleResponse, membersResponse] = await Promise.all([
           fetchFirstJson([SCHEDULE_URL]),
           fetchFirstJson([MEMBERS_URL])
@@ -959,13 +987,14 @@
         app.className = "state";
         app.innerHTML = `
           <div>Failed to load wallboard data.</div>
-          <div style="margin-top:12px; font-size:18px;">Check sources: <code>${escapeHtml(SCHEDULE_URL)}</code> and <code>${escapeHtml(MEMBERS_URL)}</code></div>
+          <div style="margin-top:12px; font-size:18px;">Check sources: <code>${escapeHtml(apiUrl(SCHEDULE_URL))}</code> and <code>${escapeHtml(apiUrl(MEMBERS_URL))}</code></div>
           <div style="margin-top:12px; font-size:18px;">${escapeHtml(error.message || "Unknown error")}</div>
         `;
       }
     }
 
     renderWeekdayRow();
+    renderRuntimeMeta();
     registerInteractionHandlers();
     resetIdleTimer();
     loadSchedule();

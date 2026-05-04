@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: shiftcommander-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app
+    envVars:
+      - key: SC_QUICK_TEST_MODE
+        value: "true"
+      - key: SC_ALLOWED_ORIGINS
+        value: https://adr-fr.org,https://www.adr-fr.org
+      - key: SC_PUBLIC_BASE_URL
+        value: https://shiftcommander-backend.onrender.com
+      - key: SECRET_KEY
+        generateValue: true

@@ -124,7 +124,11 @@
           <span class="pill"><strong>Live routes</strong> /api/health · /api/build_shifts · /api/generate · /api/schedule</span>
           <span class="pill"><strong>Display state</strong> /api/supervisor/state · /api/supervisor/publish_week · /api/supervisor/open_seat</span>
           <span class="pill" id="sessionPill"><strong>Session</strong> Supervisor</span>
-          <span class="pill">Build SC-BUILD-2026-05-04-MEMBER-DIAG-001</span>
+          <span class="pill" id="originPill"><strong>Origin</strong> --</span>
+          <span class="pill" id="apiBasePill"><strong>API Base</strong> --</span>
+          <span class="pill" id="authModePill"><strong>Auth Mode</strong> --</span>
+          <span class="pill" id="healthPill"><strong>Health</strong> --</span>
+          <span class="pill">Build SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span>
         </div>
       </div>
       <div class="hero-actions">
@@ -259,6 +263,8 @@
   </div>
 
   <script>
+    const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
+    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || "";
     const state = {
       members: [],
       memberById: new Map(),
@@ -268,14 +274,19 @@
       supervisorState: { entries: [] },
       selectedWeek: null,
       session: null,
+      health: null,
     };
+
+    function apiUrl(path){
+      return `${API_BASE}${path}`;
+    }
 
     function esc(value){
       return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[char]));
     }
 
     async function apiGetDetailed(url){
-      const response = await fetch(url);
+      const response = await fetch(apiUrl(url), { credentials: "include" });
       const text = await response.text();
       let data = null;
       try{
@@ -301,8 +312,9 @@
     }
 
     async function apiPost(url, payload){
-      const response = await fetch(url, {
+      const response = await fetch(apiUrl(url), {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload || {})
       });
@@ -331,6 +343,13 @@
         <h3>Startup issues</h3>
         <ul>${issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>
       `;
+    }
+
+    function renderRuntimePills(){
+      document.getElementById("originPill").innerHTML = `<strong>Origin</strong> ${esc(window.location.origin || "file://")}`;
+      document.getElementById("apiBasePill").innerHTML = `<strong>API Base</strong> ${esc(API_BASE || "(same origin)")}`;
+      document.getElementById("authModePill").innerHTML = `<strong>Auth Mode</strong> ${esc(state.health?.quick_test_mode ? "Quick Test Available" : "Real Login")}`;
+      document.getElementById("healthPill").innerHTML = `<strong>Health</strong> ${esc(state.health?.status || "unreachable")}`;
     }
 
     function asArray(value){
@@ -675,6 +694,16 @@
       const issues = [];
       document.getElementById("boardMeta").textContent = "Loading schedule…";
       setStartupIssues([]);
+      renderRuntimePills();
+
+      try{
+        state.health = (await apiGetDetailed("/api/health")).data;
+      }catch(error){
+        console.error("Supervisor startup: failed to load /api/health", error);
+        issues.push(`/api/health failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
+        state.health = { status: "unreachable", quick_test_mode: false };
+      }
+      renderRuntimePills();
 
       let sessionInfo = null;
       let members = null;
@@ -738,7 +767,7 @@
       state.settings = settings || {};
       state.schedule = schedule || {};
       state.supervisorState = supervisorState || { entries: [] };
-      document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(sessionInfo?.role || "unknown")}`;
+      document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(sessionInfo?.member_id || sessionInfo?.role || "unknown")}`;
 
       const shiftList = asArray(state.schedule?.shifts);
       if(!shiftList.length){

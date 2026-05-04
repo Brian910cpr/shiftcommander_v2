@@ -29,6 +29,64 @@ SCHEDULE_LOCKED_FILE = os.path.join(DATA_DIR, "schedule_locked.json")
 ROTATION_TEMPLATES_FILE = os.path.join(DATA_DIR, "rotation_templates.json")
 SUPERVISOR_STATE_FILE = os.path.join(DATA_DIR, "supervisor_state.json")
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
+TEST_MEMBER_LOGIN = {
+    "username": "test",
+    "password": "test",
+    "member_id": "180",
+}
+BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001"
+
+
+def env_flag(name, default=False):
+    raw = str(os.environ.get(name) or "").strip().lower()
+    if not raw:
+        return default
+    return raw in {"1", "true", "yes", "on"}
+
+
+def parse_csv_env(name, default_values):
+    raw = str(os.environ.get(name) or "").strip()
+    values = [item.strip().rstrip("/") for item in raw.split(",") if item.strip()] if raw else list(default_values)
+    seen = []
+    for value in values:
+        if value and value not in seen:
+            seen.append(value)
+    return seen
+
+
+SC_QUICK_TEST_MODE = env_flag("SC_QUICK_TEST_MODE", False)
+SC_ALLOWED_ORIGINS = parse_csv_env(
+    "SC_ALLOWED_ORIGINS",
+    [
+        "https://adr-fr.org",
+        "https://www.adr-fr.org",
+        "http://127.0.0.1:5000",
+        "http://localhost:5000",
+        "http://127.0.0.1:8001",
+        "http://localhost:8001",
+    ],
+)
+SC_PUBLIC_BASE_URL = str(os.environ.get("SC_PUBLIC_BASE_URL") or "").strip().rstrip("/")
+SC_FLASK_DEBUG = env_flag("FLASK_DEBUG", False)
+
+
+@app.before_request
+def handle_api_options_preflight():
+    if request.method == "OPTIONS" and request.path.startswith("/api/"):
+        return ("", 204)
+
+
+@app.after_request
+def apply_cors_headers(response):
+    origin = allowed_request_origin()
+    if request.path.startswith("/api/"):
+        response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers.add("Vary", "Origin")
+    return response
 
 
 # =========================
@@ -136,10 +194,32 @@ def auth_json_error(message, status_code=401):
     return jsonify({"error": message}), status_code
 
 
+def quick_test_mode_enabled():
+    return SC_QUICK_TEST_MODE
+
+
+def current_public_base_url():
+    if SC_PUBLIC_BASE_URL:
+        return SC_PUBLIC_BASE_URL
+    return str(request.host_url or "").strip().rstrip("/")
+
+
+def allowed_request_origin():
+    origin = str(request.headers.get("Origin") or "").strip().rstrip("/")
+    if not origin:
+        return None
+    host_origin = str(request.host_url or "").strip().rstrip("/")
+    if origin == host_origin or origin in SC_ALLOWED_ORIGINS:
+        return origin
+    return None
+
+
 def login_redirect(role_name):
     next_path = request.path
     if request.query_string:
         next_path = f"{next_path}?{request.query_string.decode('utf-8')}"
+    if role_name == "member":
+        return redirect(f"/login.html?next={next_path}")
     return redirect(f"/login/{role_name}?next={next_path}")
 
 
@@ -155,7 +235,7 @@ def require_role(role_name):
             if role_name == "supervisor" and auth["role"] != "supervisor":
                 return auth_json_error("Supervisor access required", 403) if request.path.startswith("/api/") else redirect("/member")
             if role_name == "member" and auth["role"] not in {"member", "supervisor"}:
-                return auth_json_error("Member access required", 403) if request.path.startswith("/api/") else redirect("/login/member")
+                return auth_json_error("Member access required", 403) if request.path.startswith("/api/") else redirect("/login.html")
             return func(*args, **kwargs)
         return wrapped
     return decorator
@@ -167,6 +247,82 @@ def current_member_record():
     if not member_id:
         return None
     return next((member for member in load_members() if str(member.get("member_id", member.get("id"))) == member_id), None)
+
+
+def member_record_by_id(member_id):
+    member_id = str(member_id or "").strip()
+    if not member_id:
+        return None
+    return next((member for member in load_members() if str(member.get("member_id", member.get("id"))) == member_id), None)
+
+
+def start_member_session(member_id):
+    session.clear()
+    session["auth_role"] = "member"
+    session["member_id"] = str(member_id or "").strip()
+
+
+def start_supervisor_session():
+    session.clear()
+    session["auth_role"] = "supervisor"
+
+
+def member_login_success_payload(member_id, redirect_to="/member"):
+    member = member_record_by_id(member_id)
+    return {
+        "status": "ok",
+        "authenticated": True,
+        "role": "member",
+        "member_id": str(member_id or "").strip(),
+        "member_name": (member or {}).get("name") or f"Member {member_id}",
+        "redirect": redirect_to,
+        # Existing Flask session cookie remains authoritative. This token is a client-side marker.
+        "session_token": f"member:{member_id}:{secrets.token_hex(8)}",
+    }
+
+
+def default_quick_test_member_id():
+    active_members = [member for member in load_members() if member.get("active", True)]
+    preferred = next((member for member in active_members if str(member.get("member_id", member.get("id"))) == TEST_MEMBER_LOGIN["member_id"]), None)
+    if preferred:
+        return str(preferred.get("member_id", preferred.get("id")))
+    if active_members:
+        first = active_members[0]
+        return str(first.get("member_id", first.get("id")))
+    members = load_members()
+    if members:
+        first = members[0]
+        return str(first.get("member_id", first.get("id")))
+    return None
+
+
+def requested_member_id(payload=None):
+    values = []
+    if isinstance(payload, dict):
+        values.extend([payload.get("member_id"), payload.get("selected_member_id")])
+    values.extend([request.args.get("member_id"), request.args.get("selected_member_id")])
+    for value in values:
+        text = str(value or "").strip()
+        if text:
+            return text
+    return None
+
+
+def resolve_member_request_member(payload=None):
+    if quick_test_mode_enabled():
+        member_id = requested_member_id(payload) or default_quick_test_member_id()
+        member = member_record_by_id(member_id)
+        if member is None:
+            return None, None, auth_json_error("Quick Test member record not found", 404)
+        return str(member_id), member, None
+    auth = current_auth()
+    member_id = str(auth.get("member_id") or "").strip()
+    if auth.get("role") != "member" or not member_id:
+        return None, None, auth_json_error("Authentication required", 401)
+    member = current_member_record()
+    if member is None:
+        return None, None, auth_json_error("Member record not found", 404)
+    return member_id, member, None
 
 
 def login_page_html(role_name, next_url=""):
@@ -821,7 +977,7 @@ def serve_docs(path):
     lowered = str(path or "").lower()
     if lowered == "supervisor.html" and current_auth()["role"] != "supervisor":
         return login_redirect("supervisor")
-    if lowered == "member.html" and current_auth()["role"] not in {"member", "supervisor"}:
+    if lowered == "member.html" and not quick_test_mode_enabled() and current_auth()["role"] not in {"member", "supervisor"}:
         return login_redirect("member")
     return send_from_directory(DOCS_DIR, path)
 
@@ -845,9 +1001,20 @@ def supervisor_shortcut():
 
 @app.route("/member")
 def member_shortcut():
-    if current_auth()["role"] not in {"member", "supervisor"}:
+    if not quick_test_mode_enabled() and current_auth()["role"] not in {"member", "supervisor"}:
         return login_redirect("member")
     return redirect("/docs/member.html")
+
+
+@app.route("/login")
+def login_shortcut():
+    next_url = request.args.get("next", "/member")
+    return redirect(f"/login.html?next={next_url}")
+
+
+@app.route("/login.html")
+def login_html_page():
+    return send_from_directory(DOCS_DIR, "login.html")
 
 
 @app.route("/login/supervisor")
@@ -857,7 +1024,8 @@ def login_supervisor_page():
 
 @app.route("/login/member")
 def login_member_page():
-    return login_page_html("member", request.args.get("next", "/docs/member.html"))
+    next_url = request.args.get("next", "/member")
+    return redirect(f"/login.html?next={next_url}")
 
 
 # =========================
@@ -871,12 +1039,35 @@ def auth_session():
         "authenticated": auth["authenticated"],
         "role": auth["role"],
         "member_id": auth["member_id"],
+        "quick_test_mode": quick_test_mode_enabled(),
+        "auth_mode": "quick_test" if quick_test_mode_enabled() and not auth["authenticated"] else "real_login",
+        "build_code": BUILD_CODE,
+        "public_base_url": current_public_base_url(),
     }
     if auth["role"] == "member":
         member = current_member_record()
         if member:
             payload["member_name"] = member.get("name") or f"Member {auth['member_id']}"
     return jsonify(payload)
+
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    payload = request.get_json(silent=True) or request.form or {}
+    username = str(payload.get("username") or payload.get("email") or "").strip().lower()
+    password = str(payload.get("password") or "").strip()
+    next_url = str(payload.get("next") or "/member").strip() or "/member"
+    if username != TEST_MEMBER_LOGIN["username"] or password != TEST_MEMBER_LOGIN["password"]:
+        return auth_json_error("Invalid credentials", 401)
+    member = member_record_by_id(TEST_MEMBER_LOGIN["member_id"])
+    if not member:
+        return auth_json_error("Configured test member is missing", 500)
+    start_member_session(TEST_MEMBER_LOGIN["member_id"])
+    response = member_login_success_payload(TEST_MEMBER_LOGIN["member_id"], next_url)
+    response["build_code"] = BUILD_CODE
+    response["auth_mode"] = "real_login"
+    response["quick_test_mode"] = quick_test_mode_enabled()
+    return jsonify(response)
 
 
 @app.route("/api/auth/login", methods=["POST"])
@@ -899,8 +1090,7 @@ def auth_login():
             if request.is_json:
                 return auth_json_error("Invalid supervisor password", 401)
             return redirect("/login/supervisor?error=Invalid+password")
-        session.clear()
-        session["auth_role"] = "supervisor"
+        start_supervisor_session()
         if request.is_json:
             return jsonify({"status": "ok", "role": "supervisor"})
         return redirect(next_url or "/docs/supervisor.html")
@@ -921,11 +1111,13 @@ def auth_login():
             if request.is_json:
                 return auth_json_error("Invalid member password", 401)
             return redirect("/login/member?error=Invalid+credentials")
-        session.clear()
-        session["auth_role"] = "member"
-        session["member_id"] = member_id
+        start_member_session(member_id)
         if request.is_json:
-            return jsonify({"status": "ok", "role": "member", "member_id": member_id})
+            response = member_login_success_payload(member_id, next_url or "/member")
+            response["build_code"] = BUILD_CODE
+            response["auth_mode"] = "real_login"
+            response["quick_test_mode"] = quick_test_mode_enabled()
+            return jsonify(response)
         return redirect(next_url or "/docs/member.html")
 
     return auth_json_error("Unsupported login role", 400) if request.is_json else redirect("/login/member?error=Unsupported+role")
@@ -1011,8 +1203,9 @@ def auth_reset_member_password():
 # =========================
 
 @app.route("/api/members", methods=["GET"])
-@require_role("supervisor")
 def get_members():
+    if not quick_test_mode_enabled() and current_auth()["role"] != "supervisor":
+        return auth_json_error("Supervisor access required", 403)
     return jsonify(load_members_payload())
 
 
@@ -1090,19 +1283,20 @@ def clear_future_availability():
 
 
 @app.route("/api/member/context", methods=["GET"])
-@require_role("member")
 def get_member_context():
-    auth = current_auth()
-    member = current_member_record()
-    if member is None:
-        return auth_json_error("Member record not found", 404)
+    member_id, member, error = resolve_member_request_member()
+    if error:
+        return error
     return jsonify(
         {
             "member": member,
             "roster": member_roster_payload(),
-            "availability": extract_member_availability(auth["member_id"]),
+            "availability": extract_member_availability(member_id),
             "schedule": load_json(SCHEDULE_FILE, {}),
             "editing_lock_days": 14,
+            "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
+            "quick_test_mode": quick_test_mode_enabled(),
+            "selected_member_id": member_id,
         }
     )
 
@@ -1117,30 +1311,42 @@ def api_me():
 
 
 @app.route("/api/member/profile", methods=["POST"])
-@require_role("member")
 def save_member_profile():
-    auth = current_auth()
     payload = request.get_json(silent=True) or {}
+    member_id, _, error = resolve_member_request_member(payload)
+    if error:
+        return error
     members_payload = load_members_payload()
     members = members_payload.get("members", [])
-    target = next((member for member in members if str(member.get("member_id", member.get("id"))) == auth["member_id"]), None)
+    target = next((member for member in members if str(member.get("member_id", member.get("id"))) == member_id), None)
     if target is None:
         return auth_json_error("Member record not found", 404)
     apply_member_profile_update(target, payload)
     save_members_payload(members_payload)
-    return jsonify({"status": "ok", "member_id": auth["member_id"]})
+    return jsonify({
+        "status": "ok",
+        "member_id": member_id,
+        "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
+        "quick_test_mode": quick_test_mode_enabled(),
+    })
 
 
 @app.route("/api/member/availability", methods=["POST"])
-@require_role("member")
 def save_member_availability():
-    auth = current_auth()
     payload = request.get_json(silent=True) or {}
+    member_id, _, error = resolve_member_request_member(payload)
+    if error:
+        return error
     try:
-        apply_member_availability_update(auth["member_id"], payload)
+        apply_member_availability_update(member_id, payload)
     except ValueError as exc:
         return auth_json_error(str(exc), 400)
-    return jsonify({"status": "ok", "member_id": auth["member_id"]})
+    return jsonify({
+        "status": "ok",
+        "member_id": member_id,
+        "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
+        "quick_test_mode": quick_test_mode_enabled(),
+    })
 
 
 @app.route("/api/my-availability", methods=["GET"])
@@ -1530,7 +1736,12 @@ def get_schedule_api():
 def health():
     return jsonify({
         "status": "ok",
-        "time": now_iso()
+        "time": now_iso(),
+        "build_code": BUILD_CODE,
+        "quick_test_mode": quick_test_mode_enabled(),
+        "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
+        "public_base_url": current_public_base_url(),
+        "allowed_origins": SC_ALLOWED_ORIGINS,
     })
 
 
@@ -1539,4 +1750,5 @@ def health():
 # =========================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=SC_FLASK_DEBUG)

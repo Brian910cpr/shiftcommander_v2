@@ -52,6 +52,17 @@ class AppSmokeTests(unittest.TestCase):
         cls.server = load_server_module()
         cls.client = cls.server.app.test_client()
 
+    def login_supervisor(self):
+        with self.client.session_transaction() as session:
+            session.clear()
+            session["auth_role"] = "supervisor"
+
+    def login_member(self, member_id="180"):
+        with self.client.session_transaction() as session:
+            session.clear()
+            session["auth_role"] = "member"
+            session["member_id"] = str(member_id)
+
     @classmethod
     def tearDownClass(cls):
         for path in cls.paths_to_preserve:
@@ -62,18 +73,25 @@ class AppSmokeTests(unittest.TestCase):
         shutil.rmtree(cls.backup_dir, ignore_errors=True)
 
     def test_docs_routes_serve_without_error(self):
-        expected_snippets = {
-            "/docs/supervisor.html": "latest_run_supervisor_cards.json",
-            "/docs/member.html": "Assigned Shifts",
-            "/docs/wallboard.html": "Source: final resolved schedule",
-        }
-        for route, snippet in expected_snippets.items():
-            response = self.client.get(route)
-            self.assertEqual(response.status_code, 200, route)
-            self.assertIn(snippet, response.get_data(as_text=True))
-            response.close()
+        self.login_supervisor()
+        response = self.client.get("/docs/supervisor.html")
+        self.assertEqual(response.status_code, 200, "/docs/supervisor.html")
+        self.assertIn("SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001", response.get_data(as_text=True))
+        response.close()
+
+        self.login_member()
+        response = self.client.get("/docs/member.html")
+        self.assertEqual(response.status_code, 200, "/docs/member.html")
+        self.assertIn("Assigned Shifts", response.get_data(as_text=True))
+        response.close()
+
+        response = self.client.get("/docs/wallboard.html")
+        self.assertEqual(response.status_code, 200, "/docs/wallboard.html")
+        self.assertIn("Source: final resolved schedule", response.get_data(as_text=True))
+        response.close()
 
     def test_generate_writes_schedule_and_debug_outputs(self):
+        self.login_supervisor()
         debug_dir = ROOT / "debug"
         if debug_dir.exists():
             shutil.rmtree(debug_dir)
@@ -101,6 +119,7 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("seat_count", summary)
 
     def test_debug_endpoints_serve_after_generation(self):
+        self.login_supervisor()
         self.client.post("/api/generate")
         for route in [
             "/debug/latest_run_summary.json",
