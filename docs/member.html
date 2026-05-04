@@ -71,6 +71,15 @@
     .day-note{font-size:11px;color:var(--muted)}
     .empty{padding:18px;color:var(--muted)}
     .mini{font-size:12px;color:var(--muted)}
+    .diag-panel{display:grid;gap:12px}
+    .diag-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .diag-item{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);display:grid;gap:6px}
+    .diag-item strong{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    .diag-list{display:grid;gap:8px}
+    .diag-entry{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);display:grid;gap:4px;font-size:12px}
+    .diag-entry.ok{border-color:rgba(82,239,127,.35)}
+    .diag-entry.fail{border-color:rgba(255,143,143,.35)}
+    .diag-preview{color:var(--muted);font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-word}
     @media (max-width:1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}}
     @media (max-width:900px){.calendar-head,.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:640px){.calendar-head,.calendar-grid,.summary-grid{grid-template-columns:1fr}}
@@ -85,6 +94,7 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
           <span class="pill" id="sessionPill"><strong>Session</strong> Loading…</span>
           <span class="badge warn">Self-service only. You cannot edit other members.</span>
+          <span class="badge">Build <span id="buildPill">SC-BUILD-2026-05-04-MEMBER-DIAG-001</span></span>
         </div>
       </div>
       <div class="hero-actions">
@@ -93,6 +103,21 @@
     </section>
 
     <div class="flash" id="flash"></div>
+
+
+    <section class="card diag-panel">
+      <div class="section-title">
+        <h2>Startup Diagnostics</h2>
+        <span class="mini" id="diagBuildCode">SC-BUILD-2026-05-04-MEMBER-DIAG-001</span>
+      </div>
+      <div class="diag-grid">
+        <div class="diag-item"><strong>Mode</strong><span id="diagMode">unknown</span></div>
+        <div class="diag-item"><strong>Origin</strong><span id="diagOrigin"></span></div>
+        <div class="diag-item"><strong>Path</strong><span id="diagPath"></span></div>
+        <div class="diag-item"><strong>Build</strong><span>SC-BUILD-2026-05-04-MEMBER-DIAG-001</span></div>
+      </div>
+      <div id="diagFetches" class="diag-list"></div>
+    </section>
 
     <div class="layout">
       <aside class="stack">
@@ -174,12 +199,14 @@
           </div>
           <div class="calendar-head" id="calendarHead"></div>
           <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="empty" id="calendarFallback" style="display:none"></div>
         </section>
       </main>
     </div>
   </div>
 
   <script>
+    const BUILD_CODE = "SC-BUILD-2026-05-04-MEMBER-DIAG-001";
     const appState = {
       session: null,
       member: null,
@@ -187,20 +214,23 @@
       schedule: {},
       currentWeekOffset: 0,
       dirtyAvailability: false,
+      startup: {
+        mode: "unknown",
+        origin: window.location.origin || "file://",
+        pathname: window.location.pathname || "",
+        fetches: [],
+      },
+      contextReady: false,
     };
 
     function esc(value){
-      return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[char]));
+      return String(value ?? "").replace(/[&<>\"']/g, (char) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[char]));
     }
-    async function apiGet(url){ const r = await fetch(url); const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error || `${url} failed`); return j; }
-    async function apiPost(url,payload){ const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload||{})}); const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error || `${url} failed`); return j; }
-    function showFlash(message, kind="success"){ const node=document.getElementById("flash"); node.className=`flash show ${kind}`; node.textContent=message; clearTimeout(showFlash._t); showFlash._t=setTimeout(()=>node.className="flash",4200); }
     function asArray(value){ return Array.isArray(value) ? value : []; }
     function isoToDate(iso){ return new Date(`${iso}T00:00:00`); }
     function formatDate(date){ return date.toISOString().slice(0,10); }
     function startOfWeek(date){ const d = new Date(date); const offset = (d.getDay()+6)%7; d.setDate(d.getDate()-offset); return d; }
     function monthKey(iso){ return String(iso||"").slice(0,7); }
-    function stateLabel(value){ return ({ preferred:"Preferred", available:"Available", do_not_schedule:"Do Not", "":"Blank" })[value] || "Blank"; }
     function getMemberId(){ return String(appState.member?.member_id || appState.member?.id || ""); }
     function getStatus(dateIso, shift){ return appState.availability?.months?.[monthKey(dateIso)]?.[getMemberId()]?.[dateIso]?.[shift] || ""; }
     function setStatus(dateIso, shift, value){
@@ -214,9 +244,127 @@
     function currentWindowStart(){ const today = new Date(); const start = startOfWeek(today); start.setDate(start.getDate() + (appState.currentWeekOffset * 7)); return start; }
     function visibleDates(){ const start = currentWindowStart(); return Array.from({length:14}, (_,i) => { const d = new Date(start); d.setDate(start.getDate()+i); return d; }); }
     function editLocked(dateIso){ const date = isoToDate(dateIso); const cutoff = new Date(); cutoff.setHours(0,0,0,0); cutoff.setDate(cutoff.getDate()+14); return date < cutoff; }
+
+    function showFlash(message, kind="success"){
+      const node=document.getElementById("flash");
+      node.className=`flash show ${kind}`;
+      node.textContent=message;
+      clearTimeout(showFlash._t);
+      showFlash._t=setTimeout(()=>node.className="flash",6000);
+    }
+
+    function setInteractiveEnabled(enabled){
+      const ids = [
+        "logoutBtn","saveProfileBtn","changePasswordBtn","saveAvailabilityBtn",
+        "desiredHours","ampmPreference","shift24Preference","swapPreference",
+        "currentPassword","newPassword","confirmPassword","prevBtn","todayBtn","nextBtn"
+      ];
+      ids.forEach((id) => {
+        const node = document.getElementById(id);
+        if(node) node.disabled = !enabled;
+      });
+    }
+
+    function setSessionBadge(text){
+      document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(text)}`;
+    }
+
+    function setMemberFallback(title, subtitle){
+      document.getElementById("memberName").textContent = title;
+      document.getElementById("memberSub").textContent = subtitle;
+      document.getElementById("memberCert").textContent = "—";
+      document.getElementById("memberEmployment").textContent = "—";
+    }
+
+    function setAssignmentsFallback(message){
+      document.getElementById("assignmentList").innerHTML = `<div class="empty error">${esc(message)}</div>`;
+    }
+
+    function setCalendarFallback(message){
+      document.getElementById("calendarHead").style.display = "none";
+      document.getElementById("calendarGrid").style.display = "none";
+      const box = document.getElementById("calendarFallback");
+      box.style.display = "block";
+      box.className = "empty error";
+      box.textContent = message;
+    }
+
+    function clearCalendarFallback(){
+      document.getElementById("calendarHead").style.display = "";
+      document.getElementById("calendarGrid").style.display = "";
+      const box = document.getElementById("calendarFallback");
+      box.style.display = "none";
+      box.textContent = "";
+    }
+
+    function setStartupState(message){
+      setSessionBadge(message);
+      setMemberFallback("Member page waiting", message);
+      setAssignmentsFallback(message);
+      setCalendarFallback(message);
+      setInteractiveEnabled(false);
+    }
+
+    function responsePreview(text){
+      return String(text || "").replace(/\s+/g, " ").trim().slice(0, 180);
+    }
+
+    async function fetchJsonWithDiag(url, { method="GET", body=null } = {}){
+      const entry = { url, method, status: 0, ok: false, preview: "", error: "", contentType: "" };
+      try{
+        const options = { method, headers:{} };
+        if(body !== null){
+          options.headers["Content-Type"] = "application/json";
+          options.body = JSON.stringify(body);
+        }
+        const res = await fetch(url, options);
+        const text = await res.text();
+        entry.status = res.status;
+        entry.ok = res.ok;
+        entry.contentType = res.headers.get("content-type") || "";
+        entry.preview = responsePreview(text);
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch {}
+        if(!res.ok){
+          entry.error = data?.error || `${method} ${url} failed`;
+        }
+        appState.startup.fetches.push(entry);
+        renderDiagnostics();
+        return { ok: res.ok, status: res.status, data, text, entry };
+      }catch(error){
+        entry.error = error.message || "Network error";
+        entry.preview = entry.error;
+        appState.startup.fetches.push(entry);
+        renderDiagnostics();
+        return { ok:false, status:0, data:null, text:"", entry, error };
+      }
+    }
+
+    function inferMode(apiHealthOk){
+      const path = (window.location.pathname || "").toLowerCase();
+      if(!apiHealthOk) return "static";
+      if(path === "/member" || path === "/supervisor" || path === "/wallboard" || path.startsWith("/docs/")) return "api";
+      return "hybrid";
+    }
+
+    function renderDiagnostics(){
+      document.getElementById("diagBuildCode").textContent = BUILD_CODE;
+      document.getElementById("diagMode").textContent = appState.startup.mode;
+      document.getElementById("diagOrigin").textContent = appState.startup.origin;
+      document.getElementById("diagPath").textContent = appState.startup.pathname;
+      document.getElementById("diagFetches").innerHTML = appState.startup.fetches.length ? appState.startup.fetches.map((item) => `
+        <div class="diag-entry ${item.ok ? "ok" : "fail"}">
+          <div><strong>${esc(item.method)} ${esc(item.url)}</strong></div>
+          <div>Status: ${esc(item.status || 0)}</div>
+          <div>${esc(item.ok ? "success" : (item.error || "failed"))}</div>
+          <div class="diag-preview">${esc(item.preview || "(empty)")}</div>
+        </div>
+      `).join("") : `<div class="diag-entry">No startup fetches attempted yet.</div>`;
+    }
+
     function renderSummary(){
       const m = appState.member || {};
-      document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(appState.session?.member_name || m.name || "Member")}`;
+      setSessionBadge(appState.session?.member_name || m.name || "Member");
       document.getElementById("memberName").textContent = m.name || "Member";
       document.getElementById("memberSub").textContent = `Member ID ${getMemberId()}`;
       document.getElementById("memberCert").textContent = m.ops_cert || m.cert || m.raw_cert || "—";
@@ -226,6 +374,7 @@
       document.getElementById("shift24Preference").value = m.preferences?.shift24 || "no_preference";
       document.getElementById("swapPreference").value = m.preferences?.shift_preference?.swap_strategy || "allow";
     }
+
     function memberAssignments(){
       const shifts = asArray(appState.schedule?.shifts);
       const memberId = getMemberId();
@@ -233,6 +382,7 @@
         .filter(({seat}) => String(seat?.assigned || "").trim() === memberId)
         .sort((a,b) => `${a.shift.date}${a.shift.label}`.localeCompare(`${b.shift.date}${b.shift.label}`));
     }
+
     function renderAssignments(){
       const rows = memberAssignments();
       document.getElementById("assignmentList").innerHTML = rows.length ? rows.map(({shift, seat}) => `
@@ -242,7 +392,13 @@
         </div>
       `).join("") : `<div class="empty">No assigned shifts were found for your account in the current resolved schedule.</div>`;
     }
+
     function renderCalendar(){
+      if(!appState.member){
+        setCalendarFallback("Availability calendar cannot render because member context is unavailable.");
+        return;
+      }
+      clearCalendarFallback();
       const dates = visibleDates();
       document.getElementById("calendarHead").innerHTML = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun"].slice(0, dates.length).map((dow) => `<div class="dow">${dow}</div>`).join("");
       document.getElementById("calendarGrid").innerHTML = dates.map((date) => {
@@ -279,16 +435,78 @@
         `;
       }).join("");
     }
+
     async function loadContext(){
-      const [sessionInfo, context] = await Promise.all([apiGet("/api/auth/session"), apiGet("/api/member/context")]);
-      appState.session = sessionInfo;
-      appState.member = context.member;
-      appState.availability = context.availability || { months:{} };
-      appState.schedule = context.schedule || {};
+      document.getElementById("buildPill").textContent = BUILD_CODE;
+      setStartupState("Checking backend...");
+      renderDiagnostics();
+
+      const health = await fetchJsonWithDiag("/api/health");
+      appState.startup.mode = inferMode(health.ok);
+      renderDiagnostics();
+
+      if(!health.ok){
+        await fetchJsonWithDiag("/data/schedule.json");
+        const message = "API unavailable on this origin. This page shell loaded, but the member backend routes are not reachable.";
+        setSessionBadge("API unavailable");
+        setMemberFallback("Member backend unavailable", "Static shell detected");
+        setAssignmentsFallback("Assigned shifts cannot load because /api/member/context is unavailable on this origin.");
+        setCalendarFallback("Availability calendar cannot render because member API routes are unavailable. GitHub Pages alone cannot serve /api/*.");
+        showFlash(message, "error");
+        renderDiagnostics();
+        return;
+      }
+
+      const sessionInfo = await fetchJsonWithDiag("/api/auth/session");
+      if(!sessionInfo.ok){
+        const message = "Session check failed. The page cannot determine member identity.";
+        setSessionBadge("Session failed");
+        setMemberFallback("Session failed", "Could not read /api/auth/session");
+        setAssignmentsFallback(message);
+        setCalendarFallback(message);
+        showFlash(message, "error");
+        return;
+      }
+
+      appState.session = sessionInfo.data || {};
+      if(!appState.session.authenticated || !appState.session.member_id){
+        const message = "Authentication required. The live Flask app redirects /member to login; static hosting cannot authenticate this page by itself.";
+        setSessionBadge("Not signed in");
+        setMemberFallback("Authentication required", "Sign in through the live member backend");
+        setAssignmentsFallback("Assigned shifts are unavailable until a member session exists.");
+        setCalendarFallback("Availability calendar is unavailable until a member session exists.");
+        showFlash(message, "error");
+        return;
+      }
+
+      const context = await fetchJsonWithDiag("/api/member/context");
+      if(!context.ok){
+        const message = context.entry?.error || "Member context failed.";
+        setSessionBadge("Context failed");
+        setMemberFallback("Member context failed", message);
+        setAssignmentsFallback(`Assigned shifts could not load: ${message}`);
+        setCalendarFallback(`Availability calendar could not render: ${message}`);
+        showFlash(message, "error");
+        return;
+      }
+
+      appState.member = context.data.member;
+      appState.availability = context.data.availability || { months:{} };
+      appState.schedule = context.data.schedule || {};
+      appState.contextReady = true;
+      setInteractiveEnabled(true);
       renderSummary();
       renderAssignments();
       renderCalendar();
+      showFlash("Member context loaded.");
     }
+
+    async function apiPost(url,payload){
+      const result = await fetchJsonWithDiag(url, { method:"POST", body:payload || {} });
+      if(!result.ok) throw new Error(result.entry?.error || `${url} failed`);
+      return result.data;
+    }
+
     async function saveProfile(){
       try{
         await apiPost("/api/member/profile", {
@@ -302,6 +520,7 @@
         showFlash(error.message || "Profile save failed", "error");
       }
     }
+
     async function saveAvailability(){
       try{
         await apiPost("/api/member/availability", appState.availability);
@@ -311,6 +530,7 @@
         showFlash(error.message || "Availability save failed", "error");
       }
     }
+
     async function changePassword(){
       try{
         await apiPost("/api/auth/change_password", {
@@ -326,7 +546,15 @@
         showFlash(error.message || "Password change failed", "error");
       }
     }
-    document.getElementById("logoutBtn").addEventListener("click", async () => { await apiPost("/api/auth/logout", {}); window.location.href = "/login/member"; });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try{
+        await apiPost("/api/auth/logout", {});
+        window.location.href = "/login/member";
+      }catch(error){
+        showFlash(error.message || "Logout failed", "error");
+      }
+    });
     document.getElementById("saveProfileBtn").addEventListener("click", saveProfile);
     document.getElementById("saveAvailabilityBtn").addEventListener("click", saveAvailability);
     document.getElementById("changePasswordBtn").addEventListener("click", changePassword);
@@ -335,11 +563,23 @@
     document.getElementById("nextBtn").addEventListener("click", () => { appState.currentWeekOffset += 1; renderCalendar(); });
     document.body.addEventListener("click", (event) => {
       const button = event.target.closest(".state-btn");
-      if(!button) return;
+      if(!button || !appState.contextReady) return;
       setStatus(button.dataset.date, button.dataset.shift, button.dataset.value);
       renderCalendar();
     });
-    loadContext().catch((error) => showFlash(error.message || "Failed to load member context", "error"));
+
+    setInteractiveEnabled(false);
+    loadContext().catch((error) => {
+      setSessionBadge("Startup failed");
+      setMemberFallback("Startup failed", error.message || "Unexpected member page error");
+      setAssignmentsFallback(error.message || "Assigned shifts could not load.");
+      setCalendarFallback(error.message || "Availability calendar could not render.");
+      showFlash(error.message || "Failed to load member context", "error");
+    });
   </script>
+
+
+
 </body>
 </html>
+
