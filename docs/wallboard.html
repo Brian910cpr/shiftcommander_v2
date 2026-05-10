@@ -16,20 +16,18 @@
       --green-bg: rgba(18, 54, 31, 0.76);
       --green-bd: #2d8a4b;
 
-      --yellow-bg: rgba(72, 56, 13, 0.78);
-      --yellow-bd: #caa236;
+      --red-bg: rgba(92, 20, 24, 0.88);
+      --red-bd: #ff5b5b;
 
-      --red-bg: rgba(74, 24, 24, 0.82);
-      --red-bd: #d9534f;
-
-      --gray-bg: rgba(43, 57, 82, 0.82);
-      --gray-bd: #566985;
+      --gray-bg: rgba(28, 35, 49, 0.9);
+      --gray-bd: #4c5a70;
 
       --name-green: #52ef7f;
       --name-blue: #69b8ff;
       --name-pink: #ff8fcb;
       --name-red: #ff9c9c;
       --name-default: #eef4ff;
+      --name-dark: #d7dfec;
 
       --today-ring: #8fd3ff;
       --today-glow: rgba(143, 211, 255, 0.18);
@@ -37,8 +35,8 @@
       --past-dim: 0.76;
       --future-soft: 0.96;
 
-      --open-seat-border: rgba(255, 118, 118, 0.82);
-      --open-seat-glow: rgba(255, 118, 118, 0.20);
+      --open-seat-border: rgba(255, 100, 100, 0.9);
+      --open-seat-glow: rgba(255, 100, 100, 0.24);
       --month-line: rgba(143, 211, 255, 0.28);
       --month-line-strong: rgba(143, 211, 255, 0.42);
     }
@@ -62,7 +60,7 @@
       gap: 14px;
       align-items: center;
       margin-bottom: 12px;
-      padding: 16px 18px;
+      padding: 18px 20px;
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 18px;
@@ -77,7 +75,7 @@
 
     .subtitle {
       margin-top: 6px;
-      font-size: 15px;
+      font-size: 18px;
       color: var(--muted);
     }
 
@@ -104,6 +102,44 @@
       color: var(--text);
       white-space: nowrap;
     }
+
+    .meta-pill.quiet {
+      background: rgba(255,255,255,0.035);
+      color: var(--muted);
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+      background: rgba(255,255,255,0.035);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--name-default);
+    }
+
+    .legend-dot.als { background: var(--name-blue); }
+    .legend-dot.emt { background: var(--name-green); }
+    .legend-dot.open { background: var(--name-red); }
+    .legend-dot.ncld { background: var(--name-pink); }
+    .legend-dot.duty { background: #101722; border: 1px solid #526071; }
 
     .nav-btn {
       cursor: pointer;
@@ -256,7 +292,7 @@
     }
 
     .shift-list {
-      padding: 8px 10px 10px 10px;
+      padding: 10px 10px 12px 10px;
       display: grid;
       gap: 10px;
       flex: 1;
@@ -266,9 +302,9 @@
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 8px 10px 10px 10px;
+      padding: 10px;
       display: grid;
-      gap: 10px;
+      gap: 8px;
       position: relative;
       overflow: hidden;
     }
@@ -280,120 +316,134 @@
       box-shadow: none;
     }
 
-    .shift-card.yellow {
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), var(--yellow-bg);
-      border-color: var(--yellow-bd);
-      box-shadow: inset 0 0 0 1px rgba(202, 162, 54, 0.10);
-    }
-
     .shift-card.red {
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), var(--red-bg);
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)), var(--red-bg);
       border-color: var(--red-bd);
-      box-shadow: inset 0 0 0 1px rgba(217, 83, 79, 0.10);
+      box-shadow: inset 0 0 0 1px rgba(255, 91, 91, 0.12);
     }
 
     .shift-top {
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 14px;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 22px;
     }
 
     .shift-name {
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 18px;
+      color: var(--text);
       letter-spacing: 0.6px;
       text-transform: uppercase;
       font-weight: 900;
       line-height: 1;
     }
 
+    .shift-status {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
     .slots {
       display: grid;
-      gap: 4px;
+      gap: 8px;
     }
 
     .slot {
-      padding: 8px 2px;
+      padding: 9px 10px;
       border-radius: 12px;
-      background: transparent;
-      border: 0;
-      min-height: 44px;
-      display: flex;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.07);
+      min-height: 62px;
+      display: grid;
+      grid-template-columns: minmax(76px, 0.42fr) minmax(0, 1fr);
       align-items: center;
-      justify-content: center;
-      gap: 4px;
-      flex-direction: column;
+      gap: 10px;
+    }
+
+    .slot.duty-seat {
+      background: rgba(7, 10, 15, 0.84);
+      border-color: rgba(180, 191, 210, 0.2);
     }
 
     .slot.open-seat {
-      animation: slowPulseRed 2.8s ease-in-out infinite;
+      border-color: var(--open-seat-border);
+      background: rgba(118, 22, 27, 0.52);
+    }
+
+    .slot.open-calm {
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .slot.open-soon {
+      animation: slowPulseRed 3.8s ease-in-out infinite;
+    }
+
+    .slot.open-near {
+      animation: slowPulseRed 2.7s ease-in-out infinite;
+    }
+
+    .slot.open-now {
+      background: rgba(155, 28, 34, 0.74);
+      animation: slowPulseRed 1.9s ease-in-out infinite;
     }
 
     @keyframes slowPulseRed {
-      0% { box-shadow: 0 0 0 0 rgba(255, 118, 118, 0.02); }
-      50% { box-shadow: 0 0 18px 4px var(--open-seat-glow); }
-      100% { box-shadow: 0 0 0 0 rgba(255, 118, 118, 0.02); }
+      0% { box-shadow: 0 0 0 0 rgba(255, 100, 100, 0.03); }
+      50% { box-shadow: 0 0 20px 4px var(--open-seat-glow); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 100, 100, 0.03); }
+    }
+
+    .seat-role {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      line-height: 1.15;
+      text-transform: uppercase;
     }
 
     .member {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 26px;
+      justify-content: flex-start;
+      font-size: 25px;
       font-weight: 900;
-      line-height: 0.96;
+      line-height: 1.02;
       word-break: break-word;
       letter-spacing: 0.1px;
-      text-align: center !important;
+      text-align: left !important;
       width: 100%;
-      padding: 8px 10px;
+      padding: 4px 0;
       border-radius: 12px;
-      background: rgba(255,255,255,0.05);
+      background: transparent;
     }
 
     .member.green { color: var(--name-green); }
     .member.blue { color: var(--name-blue); }
     .member.pink { color: var(--name-pink); }
     .member.red { color: var(--name-red); }
+    .member.dark { color: var(--name-dark); }
     .member.default { color: var(--name-default); }
     .member.empty {
-      color: #ffb8b6;
-      font-style: italic;
+      color: #ffd1d1;
+      font-style: normal;
       background: transparent;
       border: 0;
       box-shadow: none;
       padding: 0;
+      letter-spacing: 0.04em;
     }
 
-    .seat-stamp {
-      margin-top: 4px;
-      font-size: 10px;
-      line-height: 1.15;
-      color: rgba(220, 230, 255, 0.58);
-      text-align: center;
-      letter-spacing: 0.15px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      width: 100%;
-    }
-    .seat-flags{
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      gap:4px;
-      width:100%;
-    }
-    .seat-flag{
-      padding:2px 6px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.14);
-      background:rgba(255,255,255,0.06);
-      color:#dbe9ff;
-      font-size:9px;
-      font-weight:900;
-      letter-spacing:0.04em;
+    .slot-note {
+      grid-column: 2;
+      margin-top: -6px;
+      color: rgba(238,244,255,0.62);
+      font-size: 11px;
+      font-weight: 800;
     }
 
 
@@ -428,13 +478,15 @@
       .header { grid-template-columns: 1fr; }
       .meta { justify-items: start; }
       .meta-row { justify-content: flex-start; }
+      .legend { justify-content: flex-start; }
     }
 
     @media (max-width: 700px) {
       .weekday-row, .board { grid-template-columns: 1fr; }
       .title { font-size: 28px; }
       .member { font-size: 22px; text-align: left; }
-      .slot { justify-content: flex-start; }
+      .slot { grid-template-columns: 1fr; gap: 4px; }
+      .slot-note { grid-column: 1; margin-top: 0; }
     }
   </style>
 </head>
@@ -442,29 +494,31 @@
   <div class="header">
     <div>
       <div class="title">ShiftCommander Wallboard</div>
-      <div class="subtitle" id="subtitle">1 week back • current week • 3 weeks forward</div>
+      <div class="subtitle" id="subtitle">Here is who is working. Here is what is open.</div>
     </div>
     <div class="meta">
       <div class="meta-row">
-        <span class="meta-pill">Build SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span>
         <button class="nav-btn" id="prevWeekBtn">← Prev Week</button>
         <button class="nav-btn" id="todayBtn">Today</button>
         <button class="nav-btn" id="nextWeekBtn">Next Week →</button>
       </div>
-      <div class="meta-pill" id="metaWindow">Window: --</div>
-      <div class="meta-pill" id="metaUnit">Source: final resolved schedule</div>
-      <div class="meta-pill" id="metaOrigin">Origin: --</div>
-      <div class="meta-pill" id="metaApiBase">API Base: --</div>
-      <div class="meta-pill" id="metaAuthMode">Auth Mode: --</div>
-      <div class="meta-pill" id="metaViewer">Viewer: public</div>
-      <div class="meta-pill" id="metaHealth">Health: --</div>
-      <div class="meta-pill" id="metaUpdated">Updated: --</div>
+      <div class="legend" aria-label="Wallboard colors">
+        <span class="legend-chip"><span class="legend-dot als"></span>AEMT / ALS</span>
+        <span class="legend-chip"><span class="legend-dot emt"></span>EMT</span>
+        <span class="legend-chip"><span class="legend-dot open"></span>OPEN</span>
+        <span class="legend-chip"><span class="legend-dot ncld"></span>NCLD</span>
+        <span class="legend-chip"><span class="legend-dot duty"></span>Duty / Fire</span>
+      </div>
+      <div class="meta-row">
+        <div class="meta-pill quiet" id="metaWindow">Showing: --</div>
+        <div class="meta-pill quiet" id="metaUpdated">Updated: --</div>
+      </div>
     </div>
   </div>
 
   <div class="weekday-row" id="weekdayRow"></div>
   <div id="app" class="state">Loading wallboard...</div>
-  <div class="footer">Auto-refresh every 60 seconds • snaps back to Today after 60 seconds of no interaction</div>
+  <div class="footer">Auto-refresh every 60 seconds</div>
 
   <script>
     const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
@@ -476,7 +530,6 @@
     const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || defaultApiBase();
     const SCHEDULE_URL = "/api/schedule";
     const MEMBERS_URL = "/api/wallboard_members";
-    const HEALTH_URL = "/api/health";
     const REFRESH_MS = 60000;
     const IDLE_RESET_MS = 60000;
     const VISIBLE_WEEKS = 5;
@@ -486,7 +539,6 @@
     let currentWeekOffset = 0;
     let lastLoadedData = null;
     let idleTimer = null;
-    let runtimeHealth = null;
 
     function apiUrl(path) {
       return `${API_BASE}${path}`;
@@ -517,10 +569,7 @@
     }
 
     function renderRuntimeMeta() {
-      document.getElementById("metaOrigin").textContent = `Origin: ${window.location.origin || "file://"}`;
-      document.getElementById("metaApiBase").textContent = `API Base: ${API_BASE || "(same origin)"}`;
-      document.getElementById("metaAuthMode").textContent = `Auth Mode: ${runtimeHealth?.quick_test_mode ? "Quick Test Available" : "Real Login"}`;
-      document.getElementById("metaHealth").textContent = `Health: ${runtimeHealth?.status || "unreachable"}`;
+      document.body.dataset.apiBase = API_BASE || "same-origin";
     }
 
     function renderWeekdayRow() {
@@ -617,6 +666,34 @@
       return raw;
     }
 
+    function seatCertValue(seat, memberLookup) {
+      const assignedId = String(seat?.assigned ?? "").trim();
+      const assignedName = String(seat?.assigned_name || "").trim();
+      const fromId = assignedId ? memberLookup?.byId?.get(assignedId) : null;
+      const fromName = assignedName ? memberLookup?.byName?.get(assignedName.toUpperCase()) : null;
+      return normalizeCertValue(seat?.cert || seat?.ops_cert || seat?.raw_cert || fromId?.cert || fromName?.cert || "");
+    }
+
+    function isOpenName(value) {
+      const raw = String(value || "").trim().toUpperCase();
+      return !raw || raw === "OPEN" || raw === "UNFILLED";
+    }
+
+    function isAttendantSeat(seat) {
+      const role = `${seat?.role || ""} ${seat?.display_role || ""}`.toUpperCase();
+      return role.includes("ATTENDANT") || role.includes("ALS");
+    }
+
+    function isDutySeat(seat) {
+      const role = `${seat?.role || ""} ${seat?.display_role || ""}`.toUpperCase();
+      return role.includes("DUTY") || role.includes("FIRE");
+    }
+
+    function isDriverSeat(seat) {
+      const role = `${seat?.role || ""} ${seat?.display_role || ""}`.toUpperCase();
+      return role.includes("DRIVER") || role.includes("SUPPORT") || isDutySeat(seat);
+    }
+
     function buildMemberLookup(payload) {
       const members = Array.isArray(payload?.members) ? payload.members : (Array.isArray(payload) ? payload : []);
       const byId = new Map();
@@ -673,16 +750,19 @@
       const fromName = rawName ? memberLookup?.byName?.get(rawName.toUpperCase()) : null;
       const cert = normalizeCertValue(fromId?.cert || fromName?.cert || "");
 
-      if (cert === "ALS") return "green";
-      if (cert === "EMT") return "blue";
+      if (isDutySeat(seat)) return "dark";
+      if (cert === "ALS") return "blue";
+      if (cert === "EMT") return "green";
       if (cert === "NCLD") return "pink";
       return "default";
     }
 
     function seatSortPriority(seat, memberLookup) {
       const colorClass = colorClassFromSeat(seat, memberLookup);
-      if (colorClass === "green") return 0;
-      if (colorClass === "blue") return 1;
+      if (isAttendantSeat(seat)) return 0;
+      if (isDriverSeat(seat)) return 1;
+      if (colorClass === "blue") return 0;
+      if (colorClass === "green") return 1;
       if (colorClass === "pink") return 2;
       const rawName = String(seat?.assigned_name || "").trim().toUpperCase();
       if (!rawName || rawName === "OPEN" || rawName === "UNFILLED") return 4;
@@ -703,13 +783,46 @@
       return raw;
     }
 
+    function daysUntil(isoDate) {
+      const d = parseIsoDate(isoDate);
+      if (Number.isNaN(d.getTime())) return 999;
+      return Math.round((d - getTodayDate()) / 86400000);
+    }
+
+    function openUrgencyClass(isoDate) {
+      const days = daysUntil(isoDate);
+      if (days <= 1) return "open-now";
+      if (days <= 3) return "open-near";
+      if (days <= 7) return "open-soon";
+      return "open-calm";
+    }
+
+    function seatRoleLabel(seat, forceAlsOpen = false) {
+      if (forceAlsOpen || isAttendantSeat(seat)) return "ALS";
+      if (isDutySeat(seat)) return "Duty / Fire";
+      if (isDriverSeat(seat)) return "Driver";
+      return "Support";
+    }
+
+    function hasActualAlsAssigned(seats, memberLookup) {
+      return (seats || []).some(seat => {
+        const rawName = String(seat?.assigned_name || "").trim();
+        if (isOpenName(rawName)) return false;
+        return isAttendantSeat(seat) && seatCertValue(seat, memberLookup) === "ALS";
+      });
+    }
+
+    function shouldShowOpenAls(seats, memberLookup, shiftDate) {
+      if (isPastDate(shiftDate)) return false;
+      const hasAttendant = (seats || []).some(seat => isAttendantSeat(seat));
+      return hasAttendant && !hasActualAlsAssigned(seats, memberLookup);
+    }
+
 
     function pillClassForShift(shift) {
-      const notes = (shift?.resolver?.notes || []).join(" ").toLowerCase();
       const seats = Array.isArray(shift?.seats) ? shift.seats : [];
       const hasOpen = seats.some(seat => !seat?.assigned_name || String(seat.assigned_name).trim().toUpperCase() === "OPEN");
-      if (hasOpen || notes.includes("unfilled")) return "red";
-      if (notes.includes("reserve")) return "yellow";
+      if (hasOpen || shift?.openAls) return "red";
       if (!seats.length) return "gray";
       return "green";
     }
@@ -738,8 +851,7 @@
           date,
           label: shortShiftLabel(label),
           pillClass: pillClassForShift({ ...shift, seats: visibleSeats }),
-          seats: visibleSeats,
-          notes: Array.isArray(shift?.resolver?.notes) ? shift.resolver.notes : []
+          seats: visibleSeats
         });
       }
 
@@ -754,27 +866,7 @@
       return days;
     }
 
-
-    function formatStampTime(value) {
-      if (!value) return "--";
-      const d = new Date(value);
-      if (Number.isNaN(d.getTime())) return "--";
-      return d.toLocaleString(undefined, {
-        month: "numeric",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
-      });
-    }
-
-    function seatStampText(seat) {
-      const stamp = seat?.resolver_stamp || {};
-      const when = formatStampTime(stamp.generated_at);
-      const locked = stamp.locked ? "LOCK" : "LIVE";
-      return `${locked} • ${when}`;
-    }
-
-    function renderSlot(seat, shiftDate, memberLookup) {
+    function renderSlot(seat, shiftDate, memberLookup, options = {}) {
       const assignedId = String(seat?.assigned || "").trim();
       const rawName = String(
         seat?.assigned_name ||
@@ -782,33 +874,34 @@
         ""
       ).trim();
       const pastDate = isPastDate(shiftDate);
-      const showOpenAlert = seat?.display_open_alert === true;
+      const showOpenAlert = seat?.display_open_alert === true || options.forceOpenAls === true;
 
       if (!rawName && !showOpenAlert) return "";
 
       const displayName = rawName
         ? displayAssignedName(shiftDate, rawName)
-        : (pastDate ? "—" : "OPEN");
+        : (pastDate ? "—" : (options.forceOpenAls ? "OPEN ALS" : "OPEN"));
 
-      const isFutureOpen = !rawName && showOpenAlert && !pastDate;
+      const normalizedName = String(displayName || "").trim().toUpperCase();
+      const isFutureOpen = !pastDate && (options.forceOpenAls || normalizedName === "OPEN" || normalizedName === "OPEN ALS" || (!rawName && showOpenAlert));
       const hasMember = !!rawName && rawName.toUpperCase() !== "OPEN";
       const memberClass = hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty");
-      const openSeatClass = isFutureOpen ? "open-seat" : "";
-      const badges = [];
-      if (seat?.locked) badges.push("LOCKED");
-      if (seat?.preserved_existing_assignment) badges.push("PRESERVED");
-      if (seat?.fallback_used) badges.push("FALLBACK");
-      if (showOpenAlert && !rawName) badges.push("UNRESOLVED");
+      const openSeatClass = isFutureOpen ? `open-seat ${openUrgencyClass(shiftDate)}` : "";
+      const dutyClass = isDutySeat(seat) ? "duty-seat" : "";
+      const role = seatRoleLabel(seat, options.forceOpenAls);
+      const note = options.forceOpenAls ? "No AEMT assigned" : "";
 
       return `
-        <div class="slot ${openSeatClass}">
+        <div class="slot ${openSeatClass} ${dutyClass}">
+          <div class="seat-role">${escapeHtml(role)}</div>
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
-          ${badges.length ? `<div class="seat-flags">${badges.map(flag => `<span class="seat-flag">${escapeHtml(flag)}</span>`).join("")}</div>` : ``}
+          ${note ? `<div class="slot-note">${escapeHtml(note)}</div>` : ``}
         </div>
       `;
     }
 
     function renderShiftCard(shift, memberLookup) {
+      const showOpenAls = shouldShowOpenAls(shift.seats || [], memberLookup, shift.date);
       const orderedSeats = (shift.seats || [])
         .slice()
         .sort((left, right) => {
@@ -817,8 +910,15 @@
           return String(left?.role || "").localeCompare(String(right?.role || ""));
         });
 
-      const renderedSlots = orderedSeats
-        .map(seat => renderSlot(seat, shift.date, memberLookup))
+      const renderedSlots = [
+        ...(showOpenAls ? [renderSlot({ role: "ATTENDANT", display_role: "ALS Attendant", display_open_alert: true }, shift.date, memberLookup, { forceOpenAls: true })] : []),
+        ...orderedSeats.map(seat => {
+          if (showOpenAls && isAttendantSeat(seat) && seatCertValue(seat, memberLookup) !== "ALS") {
+            return renderSlot({ ...seat, role: "SUPPORT", display_role: "Support" }, shift.date, memberLookup);
+          }
+          return renderSlot(seat, shift.date, memberLookup);
+        })
+      ]
         .filter(Boolean);
 
       const slotsHtml = renderedSlots.length
@@ -830,9 +930,10 @@
         `;
 
       return `
-        <div class="shift-card ${shift.pillClass}">
+        <div class="shift-card ${showOpenAls ? "red" : shift.pillClass}">
           <div class="shift-top">
             <div class="shift-name">${escapeHtml(shift.label)}</div>
+            <div class="shift-status">${showOpenAls ? "Open ALS" : "Staffed"}</div>
           </div>
           <div class="slots">${slotsHtml}</div>
         </div>
@@ -916,9 +1017,9 @@
       const visibleDates = buildVisibleDates(currentWeekOffset);
       const offsetLabel = currentWeekOffset === 0 ? "Today focus" : `${currentWeekOffset > 0 ? "+" : ""}${currentWeekOffset} week`;
 
-      subtitle.textContent = `1 week back • current week • 3 weeks forward • ${offsetLabel}`;
+      subtitle.textContent = `Here is who is working. Here is what is open. ${offsetLabel}`;
       metaUpdated.textContent = `Updated: ${formatGeneratedAt(data?.build?.generated_at)}`;
-      metaWindow.textContent = `Window: ${visibleDates[0].iso} to ${visibleDates[visibleDates.length - 1].iso}`;
+      metaWindow.textContent = `Showing: ${visibleDates[0].iso} to ${visibleDates[visibleDates.length - 1].iso}`;
 
       app.className = "board";
       app.innerHTML = visibleDates.map((day, index) => renderDayCard(day.iso, daysMap[day.iso] || [], todayIso, visibleDates, index, data?.memberLookup)).join("");
@@ -967,12 +1068,6 @@
       renderRuntimeMeta();
 
       try {
-        try {
-          runtimeHealth = await fetchFirstJson([HEALTH_URL]);
-        } catch (error) {
-          runtimeHealth = { status: "unreachable", quick_test_mode: false };
-        }
-        renderRuntimeMeta();
         const [scheduleResponse, membersResponse] = await Promise.all([
           fetchFirstJson([SCHEDULE_URL]),
           fetchFirstJson([MEMBERS_URL])
@@ -991,9 +1086,8 @@
         console.error("Failed to load wallboard data:", error);
         app.className = "state";
         app.innerHTML = `
-          <div>Failed to load wallboard data.</div>
-          <div style="margin-top:12px; font-size:18px;">Check sources: <code>${escapeHtml(apiUrl(SCHEDULE_URL))}</code> and <code>${escapeHtml(apiUrl(MEMBERS_URL))}</code></div>
-          <div style="margin-top:12px; font-size:18px;">${escapeHtml(error.message || "Unknown error")}</div>
+          <div>Could not load the wallboard right now.</div>
+          <div style="margin-top:12px; font-size:18px;">Please refresh this page in a moment.</div>
         `;
       }
     }

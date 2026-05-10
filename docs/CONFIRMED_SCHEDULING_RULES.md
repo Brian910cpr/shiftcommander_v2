@@ -37,7 +37,7 @@ This document is the current operational rule baseline for ShiftCommander. It de
   - fallback: EMT
 - `DRIVER`
   - goal: EMT with `qualOp` for the specific unit
-  - fallback: NMLD with `qualOp`
+  - fallback: NCLD with `qualOp`
 - `3RD_RIDER`
   - optional
   - EMS student or volunteer only when allowed
@@ -64,7 +64,7 @@ This document is the current operational rule baseline for ShiftCommander. It de
 - Paramedic
 - EMT
 - EMR
-- NMLD
+- NCLD
 - Student
 - FF
 
@@ -77,7 +77,7 @@ This document is the current operational rule baseline for ShiftCommander. It de
   - `qual_op_131`
   - `qual_op_QRV1`
 - EMT/ALS members may hold a driver license but still cannot drive a unit unless they have that unit's `qualOp`.
-- NMLD means licensed non-medical driver and is the lowest acceptable driver fallback.
+- NCLD means Non-credentialed, Licensed Driver and is the lowest acceptable driver fallback.
 - Driver fallback must not go below licensed driver.
 
 ## 6. Roles
@@ -198,10 +198,10 @@ Priority order:
 - Night theme preferred.
 - Names and dates should be the focus.
 - Certifications should not be overtly shown, but name color may indicate level:
-  - ALS green
-  - BLS blue
+  - ALS blue
+  - EMT green
   - third rider black
-  - NMLD pink
+  - NCLD pink
 
 ## 16. Mobile
 

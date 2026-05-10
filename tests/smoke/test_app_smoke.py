@@ -87,7 +87,7 @@ class AppSmokeTests(unittest.TestCase):
 
         response = self.client.get("/docs/wallboard.html")
         self.assertEqual(response.status_code, 200, "/docs/wallboard.html")
-        self.assertIn("Source: final resolved schedule", response.get_data(as_text=True))
+        self.assertIn("Here is who is working. Here is what is open.", response.get_data(as_text=True))
         response.close()
 
     def test_generate_writes_schedule_and_debug_outputs(self):

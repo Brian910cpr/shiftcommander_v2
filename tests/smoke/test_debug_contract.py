@@ -129,7 +129,7 @@ class DebugContractTests(unittest.TestCase):
         self.assertIn("/api/schedule", wallboard)
         self.assertIn("/api/wallboard_members", wallboard)
         self.assertNotIn("./data/", wallboard)
-        self.assertIn("Source: final resolved schedule", wallboard)
+        self.assertIn("Here is who is working. Here is what is open.", wallboard)
 
     def test_github_pages_uses_render_api_base_without_breaking_local_dev(self) -> None:
         for name in ["member.html", "supervisor.html", "wallboard.html"]:
