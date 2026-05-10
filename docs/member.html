@@ -32,6 +32,11 @@
     .flash.show{display:block}
     .flash.error{border-color:rgba(255,143,143,.35);color:#ffd0d0}
     .flash.success{border-color:rgba(82,239,127,.35);color:#ccffe1}
+    .intro-banner{display:none;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:16px 18px;border-radius:18px;border:1px solid rgba(255,209,102,.32);background:rgba(255,209,102,.09);box-shadow:var(--shadow)}
+    .intro-banner.show{display:grid}
+    .intro-copy{display:grid;gap:6px;line-height:1.45}
+    .intro-copy strong{font-size:16px}
+    .intro-copy span{color:var(--muted)}
     .layout{display:grid;grid-template-columns:360px 1fr;gap:14px}
     .card{padding:16px}
     .field{display:grid;gap:8px}
@@ -96,7 +101,7 @@
     @media (max-width:1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}}
     @media (max-width:1100px){.calendar-head,.calendar-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     @media (max-width:900px){.calendar-head{display:none}.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media (max-width:640px){.calendar-head,.calendar-grid,.summary-grid{grid-template-columns:1fr}}
+    @media (max-width:640px){.calendar-head,.calendar-grid,.summary-grid,.intro-banner{grid-template-columns:1fr}.intro-banner .btn{width:100%}}
   </style>
 </head>
 <body>
@@ -118,6 +123,14 @@
     </section>
 
     <div class="flash" id="flash"></div>
+
+    <section class="intro-banner" id="memberIntroBanner" aria-live="polite">
+      <div class="intro-copy">
+        <strong>Some availability may already be filled in based on shifts you have worked before. This is only a starting guess, not a final schedule. Please correct anything that is wrong and save your changes.</strong>
+        <span>Treat this like the station whiteboard: update your own availability, don't change someone else's.</span>
+      </div>
+      <button class="btn primary" id="memberIntroDismiss" type="button">Got it</button>
+    </section>
 
 
     <section class="card diag-panel" style="display:none">
@@ -252,6 +265,7 @@
     const STORAGE_TOKEN_KEY = "sc_member_session_token";
     const STORAGE_USER_KEY = "sc_member_user_id";
     const STORAGE_QT_MEMBER_KEY = "sc_quick_test_member_id";
+    const STORAGE_INTRO_KEY = "sc_member_intro_v1_dismissed";
     const appState = {
       session: null,
       member: null,
@@ -380,6 +394,21 @@
       node.textContent=message;
       clearTimeout(showFlash._t);
       showFlash._t=setTimeout(()=>node.className="flash",6000);
+    }
+
+    function initIntroBanner(){
+      const banner = document.getElementById("memberIntroBanner");
+      const dismiss = document.getElementById("memberIntroDismiss");
+      if(!banner || !dismiss) return;
+      if(localStorage.getItem(STORAGE_INTRO_KEY) === "true"){
+        banner.classList.remove("show");
+      }else{
+        banner.classList.add("show");
+      }
+      dismiss.addEventListener("click", () => {
+        localStorage.setItem(STORAGE_INTRO_KEY, "true");
+        banner.classList.remove("show");
+      });
     }
 
     function setInteractiveEnabled(enabled){
@@ -828,6 +857,7 @@
     });
 
     setInteractiveEnabled(false);
+    initIntroBanner();
     applyModeUi();
     loadContext().catch((error) => {
       setSessionBadge("Startup failed");
