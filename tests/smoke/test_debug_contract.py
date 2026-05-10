@@ -131,6 +131,13 @@ class DebugContractTests(unittest.TestCase):
         self.assertNotIn("./data/", wallboard)
         self.assertIn("Source: final resolved schedule", wallboard)
 
+    def test_github_pages_uses_render_api_base_without_breaking_local_dev(self) -> None:
+        for name in ["member.html", "supervisor.html", "wallboard.html"]:
+            text = (DOCS_DIR / name).read_text(encoding="utf-8")
+            self.assertIn('const PUBLIC_API_BASE = "https://shiftcommander-backend.onrender.com";', text)
+            self.assertIn('host === "adr-fr.org" || host === "www.adr-fr.org"', text)
+            self.assertIn('|| defaultApiBase()', text)
+
     def test_public_docs_do_not_contain_git_conflict_markers(self) -> None:
         markers = ["<<<<<<<", "=======", ">>>>>>>", "Updated upstream", "Stashed changes"]
         for name in ["index.html", "member.html", "supervisor.html", "wallboard.html"]:
