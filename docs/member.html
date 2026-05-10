@@ -7,7 +7,7 @@
   <style>
     :root{
       --bg:#08111f;--bg2:#0b1627;--panel:#0f1b2d;--panel2:#16243a;--line:#243754;--text:#eef4ff;--muted:#a7b8d8;
-      --green:#52ef7f;--blue:#69b8ff;--yellow:#ffd166;--red:#ff8f8f;--shadow:0 14px 34px rgba(0,0,0,.32);--radius:18px;
+      --green:#52ef7f;--blue:#69b8ff;--yellow:#ffd166;--red:#ff8f8f;--gray:#9fb0ca;--shadow:0 14px 34px rgba(0,0,0,.32);--radius:18px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%;background:
@@ -46,29 +46,42 @@
     .summary-chip .v{display:block;margin-top:4px;font-size:20px;font-weight:900}
     .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
     .section-title h2{margin:0}
-    .assignment-list,.calendar-grid,.calendar-head{display:grid;gap:10px}
+    .assignment-list,.calendar-grid,.calendar-head{display:grid;gap:12px}
     .assignment{padding:12px;box-shadow:none;background:rgba(255,255,255,.03)}
     .assignment strong{display:block}
     .assignment .meta{margin-top:4px;color:var(--muted);font-size:13px}
-    .calendar-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    .calendar-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    .calendar-note{margin:0 0 14px;color:var(--muted);line-height:1.45}
+    .calendar-legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .legend-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 10px;background:rgba(255,255,255,.03);font-size:12px;font-weight:850;color:var(--muted)}
+    .legend-dot{width:10px;height:10px;border-radius:999px;background:var(--gray)}
+    .legend-dot.preferred{background:var(--green)}
+    .legend-dot.available{background:var(--yellow)}
+    .legend-dot.do_not_schedule{background:var(--red)}
+    .save-status{font-size:13px;color:var(--muted);font-weight:800}
+    .save-status.dirty{color:var(--yellow)}
+    .save-status.saved{color:var(--green)}
     .calendar-head,.calendar-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
     .dow{padding:0 6px;text-align:center;font-size:12px;color:var(--muted);font-weight:900;letter-spacing:.05em;text-transform:uppercase}
-    .day-card{padding:10px;display:grid;gap:8px;min-height:160px;box-shadow:none;background:rgba(255,255,255,.03)}
-    .day-card.locked{opacity:.72}
+    .day-card{padding:14px;display:grid;gap:12px;min-height:216px;box-shadow:none;background:rgba(255,255,255,.035);border-radius:16px}
+    .day-card.locked{opacity:.6;background:rgba(255,255,255,.018)}
     .day-top{display:flex;justify-content:space-between;align-items:start}
-    .day-num{font-size:28px;font-weight:900}
-    .day-date{font-size:11px;color:var(--muted);font-weight:800}
-    .state-grid{display:grid;gap:8px}
-    .shift-row{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
-    .shift-label{font-size:12px;font-weight:900;color:var(--muted)}
-    .state-btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-    .state-btn{min-height:36px;border-radius:10px;border:1px solid #305270;background:#13243d;color:#eef4ff;font-size:12px;font-weight:900;cursor:pointer}
-    .state-btn.active.preferred{background:rgba(19,107,53,.55);border-color:#23ca66}
-    .state-btn.active.available{background:rgba(120,88,11,.44);border-color:#ffb443}
-    .state-btn.active.do_not_schedule{background:rgba(98,23,31,.48);border-color:#ff5d5d}
-    .state-btn.active.blank{background:#20324b;border-color:#587091}
+    .day-num{font-size:34px;font-weight:950;line-height:1}
+    .day-date{font-size:12px;color:var(--muted);font-weight:850;text-align:right}
+    .state-grid{display:grid;gap:10px}
+    .shift-row{display:grid;gap:7px}
+    .shift-label{font-size:12px;font-weight:950;color:var(--muted);letter-spacing:.06em}
+    .state-btns{display:grid;gap:0}
+    .state-btn{width:100%;min-height:62px;border-radius:16px;border:1px solid #3a5578;background:#17283f;color:#eef4ff;font-size:15px;font-weight:950;cursor:pointer;text-align:left;padding:12px 14px;display:grid;gap:3px;box-shadow:0 8px 18px rgba(0,0,0,.18)}
+    .state-btn .state-main{display:block;font-size:16px}
+    .state-btn .state-help{display:block;font-size:11px;color:rgba(238,244,255,.72);font-weight:750}
+    .state-btn.preferred{background:rgba(20,103,55,.72);border-color:#28d36b}
+    .state-btn.available{background:rgba(113,82,12,.74);border-color:#ffbd4d}
+    .state-btn.do_not_schedule{background:rgba(105,31,39,.76);border-color:#ff6f6f}
+    .state-btn.blank{background:#1d3049;border-color:#587091}
+    .state-btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.05)}
     .state-btn:disabled{opacity:.45;cursor:not-allowed}
-    .day-note{font-size:11px;color:var(--muted)}
+    .day-note{font-size:12px;color:var(--muted);line-height:1.35}
     .empty{padding:18px;color:var(--muted)}
     .mini{font-size:12px;color:var(--muted)}
     .diag-panel{display:grid;gap:12px}
@@ -81,7 +94,8 @@
     .diag-entry.fail{border-color:rgba(255,143,143,.35)}
     .diag-preview{color:var(--muted);font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-word}
     @media (max-width:1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}}
-    @media (max-width:900px){.calendar-head,.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:1100px){.calendar-head,.calendar-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media (max-width:900px){.calendar-head{display:none}.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:640px){.calendar-head,.calendar-grid,.summary-grid{grid-template-columns:1fr}}
   </style>
 </head>
@@ -90,7 +104,7 @@
     <section class="hero">
       <div>
         <div class="title">ShiftCommander Member</div>
-        <div class="subtitle">Review suggested availability, make corrections, and see your draft assignments. Edits inside the next 2 weeks are locked.</div>
+        <div class="subtitle">Review suggested availability and make corrections for future weeks. Near-term shifts are locked after supervisors start using them.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
           <span class="pill" id="sessionPill"><strong>Session</strong> Loading…</span>
           <span class="badge warn">Self-service only. You cannot edit other members.</span>
@@ -203,12 +217,19 @@
         <section class="card">
           <div class="section-title">
             <h2>Availability Calendar</h2>
-            <span class="mini">Preferred, Available, Cannot work, or Blank</span>
+            <span class="save-status" id="saveStatus">No changes yet</span>
+          </div>
+          <p class="calendar-note">We start on editable future weeks so you can correct the system's assumptions. Locked shifts are dimmed because they are already close to the schedule.</p>
+          <div class="calendar-legend">
+            <span class="legend-chip" title="I especially want this shift."><span class="legend-dot preferred"></span>Preferred</span>
+            <span class="legend-chip" title="I can work this if needed."><span class="legend-dot available"></span>Available</span>
+            <span class="legend-chip" title="I cannot work this shift."><span class="legend-dot do_not_schedule"></span>Cannot work</span>
+            <span class="legend-chip" title="No answer yet."><span class="legend-dot blank"></span>Blank</span>
           </div>
           <div class="calendar-controls">
-            <button class="btn" id="prevBtn">← Prev Week</button>
-            <button class="btn" id="todayBtn">Today</button>
-            <button class="btn" id="nextBtn">Next Week →</button>
+            <button class="btn" id="prevBtn">← Earlier</button>
+            <button class="btn" id="todayBtn">Next Editable Weeks</button>
+            <button class="btn" id="nextBtn">Later →</button>
             <button class="btn primary" id="saveAvailabilityBtn">Save Availability</button>
           </div>
           <div class="calendar-head" id="calendarHead"></div>
@@ -222,6 +243,7 @@
   <script>
     const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
     const PUBLIC_API_BASE = "https://shiftcommander-v2.onrender.com";
+    const DEFAULT_EDITABLE_WEEK_OFFSET = 3;
     function defaultApiBase(){
       const host = window.location.hostname;
       return host === "adr-fr.org" || host === "www.adr-fr.org" ? PUBLIC_API_BASE : "";
@@ -236,8 +258,9 @@
       roster: [],
       availability: { months: {} },
       schedule: {},
-      currentWeekOffset: 0,
+      currentWeekOffset: DEFAULT_EDITABLE_WEEK_OFFSET,
       dirtyAvailability: false,
+      lastSavedAt: "",
       quickTestMode: false,
       selectedMemberId: "",
       startup: {
@@ -278,6 +301,29 @@
       if(raw === "do_not_schedule" || raw === "unavailable") return "do_not_schedule";
       return "";
     }
+    const AVAILABILITY_STATES = ["", "preferred", "available", "do_not_schedule"];
+    function stateLabel(value){
+      const status = normalizeStatus(value);
+      if(status === "preferred") return "Preferred";
+      if(status === "available") return "Available";
+      if(status === "do_not_schedule") return "Cannot work";
+      return "Blank";
+    }
+    function stateHelp(value){
+      const status = normalizeStatus(value);
+      if(status === "preferred") return "I especially want this shift.";
+      if(status === "available") return "I can work this if needed.";
+      if(status === "do_not_schedule") return "I cannot work this shift.";
+      return "No answer yet.";
+    }
+    function stateClass(value){
+      return normalizeStatus(value) || "blank";
+    }
+    function nextState(value){
+      const current = normalizeStatus(value);
+      const index = AVAILABILITY_STATES.indexOf(current);
+      return AVAILABILITY_STATES[(index + 1) % AVAILABILITY_STATES.length];
+    }
     function getSuggestedStatus(dateIso, shift){
       const memberPatterns = appState.availability?.patterns_by_member?.[getMemberId()] || {};
       const key = patternKey(dateIso, shift);
@@ -298,12 +344,34 @@
       appState.availability.months[monthKey(dateIso)][getMemberId()][dateIso] ||= {};
       appState.availability.months[monthKey(dateIso)][getMemberId()][dateIso][shift] = value;
       appState.dirtyAvailability = true;
+      renderSaveState();
     }
     function currentWindowStart(){ const today = new Date(); const start = startOfWeek(today); start.setDate(start.getDate() + (appState.currentWeekOffset * 7)); return start; }
     function visibleDates(){ const start = currentWindowStart(); return Array.from({length:14}, (_,i) => { const d = new Date(start); d.setDate(start.getDate()+i); return d; }); }
     function editLocked(dateIso){ const date = isoToDate(dateIso); const cutoff = new Date(); cutoff.setHours(0,0,0,0); cutoff.setDate(cutoff.getDate()+14); return date < cutoff; }
     function selectedMemberName(){
       return appState.member?.name || appState.session?.member_name || appState.roster.find((member) => String(member.member_id || member.id) === getMemberId())?.name || "Member";
+    }
+
+    function renderSaveState(){
+      const status = document.getElementById("saveStatus");
+      const button = document.getElementById("saveAvailabilityBtn");
+      if(!status || !button) return;
+      if(appState.dirtyAvailability){
+        status.textContent = "Unsaved changes";
+        status.className = "save-status dirty";
+        button.textContent = "Save Changes";
+        return;
+      }
+      if(appState.lastSavedAt){
+        status.textContent = `Saved ${appState.lastSavedAt}`;
+        status.className = "save-status saved";
+        button.textContent = "Saved";
+        return;
+      }
+      status.textContent = "No changes yet";
+      status.className = "save-status";
+      button.textContent = "Save Availability";
     }
 
     function showFlash(message, kind="success"){
@@ -496,19 +564,18 @@
         const locked = editLocked(iso);
         const rows = ["AM","PM"].map((shift) => {
           const value = getStatus(iso, shift);
-          const choices = [
-            ["","Blank","blank"],
-            ["preferred","Preferred","preferred"],
-            ["available","Available","available"],
-            ["do_not_schedule","Cannot","do_not_schedule"],
-          ];
+          const label = stateLabel(value);
+          const help = locked ? "Locked because this date is close to the schedule." : stateHelp(value);
+          const next = nextState(value);
+          const cls = stateClass(value);
           return `
             <div class="shift-row">
               <div class="shift-label">${shift}</div>
               <div class="state-btns">
-                ${choices.map(([choice,label,cls]) => `
-                  <button class="state-btn ${cls} ${value===choice ? `active ${cls}` : ""}" title="${choice === "preferred" ? "Use this if you especially want this shift." : choice === "available" ? "You can probably work this shift if needed." : choice === "do_not_schedule" ? "You are unavailable for this shift." : "No assumption yet. Use this if you are not sure."}" data-date="${iso}" data-shift="${shift}" data-value="${choice}" ${locked ? "disabled" : ""}>${label}</button>
-                `).join("")}
+                <button class="state-btn ${cls}" title="${esc(help)}" data-date="${iso}" data-shift="${shift}" data-value="${esc(next)}" ${locked ? "disabled" : ""}>
+                  <span class="state-main">${esc(label)}</span>
+                  <span class="state-help">${esc(help)}</span>
+                </button>
               </div>
             </div>
           `;
@@ -520,10 +587,11 @@
               <div class="day-date">${date.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</div>
             </div>
             <div class="state-grid">${rows}</div>
-            <div class="day-note">${locked ? "Locked inside the next 2 weeks" : "Suggested from past boards until you change it"}</div>
+            <div class="day-note">${locked ? "Locked because this date is close to the schedule." : "Tap AM or PM to change your answer."}</div>
           </div>
         `;
       }).join("");
+      renderSaveState();
     }
 
     function setQuickTestSelectedMember(memberId){
@@ -580,6 +648,7 @@
       appState.schedule = context.data.schedule || {};
       appState.contextReady = true;
       appState.dirtyAvailability = false;
+      appState.lastSavedAt = "";
       renderSummary();
       renderAssignments();
       renderCalendar();
@@ -685,6 +754,8 @@
           member_id: getMemberId(),
         });
         appState.dirtyAvailability = false;
+        appState.lastSavedAt = new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+        renderSaveState();
         showFlash("Availability saved.");
       }catch(error){
         showFlash(error.message || "Availability save failed", "error");
@@ -728,7 +799,7 @@
     document.getElementById("saveProfileBtn").addEventListener("click", saveProfile);
     document.getElementById("saveAvailabilityBtn").addEventListener("click", saveAvailability);
     document.getElementById("changePasswordBtn").addEventListener("click", changePassword);
-    document.getElementById("todayBtn").addEventListener("click", () => { appState.currentWeekOffset = 0; renderCalendar(); });
+    document.getElementById("todayBtn").addEventListener("click", () => { appState.currentWeekOffset = DEFAULT_EDITABLE_WEEK_OFFSET; renderCalendar(); });
     document.getElementById("prevBtn").addEventListener("click", () => { appState.currentWeekOffset -= 1; renderCalendar(); });
     document.getElementById("nextBtn").addEventListener("click", () => { appState.currentWeekOffset += 1; renderCalendar(); });
     document.getElementById("quickTestMemberSelect").addEventListener("change", async (event) => {
