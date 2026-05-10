@@ -123,6 +123,9 @@ class DebugContractTests(unittest.TestCase):
         self.assertIn("Open Seats", supervisor)
 
         self.assertIn("/api/member/context", member)
+        self.assertIn('id="startupLine"', member)
+        self.assertIn("FETCH_TIMEOUT_MS", member)
+        self.assertIn("startupMessageFor", member)
         self.assertIn('event.target.closest(".state-btn")', member)
         self.assertIn('setStatus(button.dataset.date, button.dataset.shift, button.dataset.value)', member)
         self.assertIn('apiPath("/api/member/availability")', member)

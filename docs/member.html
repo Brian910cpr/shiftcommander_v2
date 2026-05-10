@@ -32,6 +32,9 @@
     .flash.show{display:block}
     .flash.error{border-color:rgba(255,143,143,.35);color:#ffd0d0}
     .flash.success{border-color:rgba(82,239,127,.35);color:#ccffe1}
+    .startup-line{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:var(--muted);font-size:13px;font-weight:800;line-height:1.35;word-break:break-word}
+    .startup-line.ok{border-color:rgba(82,239,127,.35);color:#ccffe1}
+    .startup-line.fail{border-color:rgba(255,143,143,.35);color:#ffd0d0}
     .intro-banner{display:none;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:16px 18px;border-radius:18px;border:1px solid rgba(255,209,102,.32);background:rgba(255,209,102,.09);box-shadow:var(--shadow)}
     .intro-banner.show{display:grid}
     .intro-copy{display:grid;gap:6px;line-height:1.45}
@@ -123,6 +126,7 @@
     </section>
 
     <div class="flash" id="flash"></div>
+    <div class="startup-line" id="startupLine">API base: checking...</div>
 
     <section class="intro-banner" id="memberIntroBanner" aria-live="polite">
       <div class="intro-copy">
@@ -266,6 +270,7 @@
     const STORAGE_USER_KEY = "sc_member_user_id";
     const STORAGE_QT_MEMBER_KEY = "sc_quick_test_member_id";
     const STORAGE_INTRO_KEY = "sc_member_intro_v1_dismissed";
+    const FETCH_TIMEOUT_MS = 12000;
     const appState = {
       session: null,
       member: null,
@@ -396,6 +401,19 @@
       showFlash._t=setTimeout(()=>node.className="flash",6000);
     }
 
+    function updateStartupLine(message, kind=""){
+      const node = document.getElementById("startupLine");
+      if(!node) return;
+      node.className = `startup-line ${kind}`.trim();
+      node.textContent = message;
+    }
+
+    function startupMessageFor(entry){
+      const status = entry.status ? `status ${entry.status}` : (entry.error || "pending");
+      const target = entry.url || "(no URL)";
+      return `API base: ${API_BASE || "(same origin)"} · ${entry.method || "GET"} ${target} · ${status}`;
+    }
+
     function initIntroBanner(){
       const banner = document.getElementById("memberIntroBanner");
       const dismiss = document.getElementById("memberIntroDismiss");
@@ -479,6 +497,7 @@
       setMemberFallback("Member page waiting", message);
       setAssignmentsFallback(message);
       setCalendarFallback(message);
+      updateStartupLine(`API base: ${API_BASE || "(same origin)"} · ${message}`);
       setInteractiveEnabled(false);
     }
 
@@ -488,8 +507,11 @@
 
     async function fetchJsonWithDiag(url, { method="GET", body=null } = {}){
       const entry = { url, method, status: 0, ok: false, preview: "", error: "", contentType: "" };
+      updateStartupLine(startupMessageFor({ ...entry, error: "loading" }));
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
       try{
-        const options = { method, headers:{}, credentials:"include" };
+        const options = { method, headers:{}, credentials:"include", signal: controller.signal };
         if(body !== null){
           options.headers["Content-Type"] = "application/json";
           options.body = JSON.stringify(body);
@@ -506,14 +528,18 @@
           entry.error = data?.error || `${method} ${url} failed`;
         }
         appState.startup.fetches.push(entry);
+        updateStartupLine(startupMessageFor(entry), entry.ok ? "ok" : "fail");
         renderDiagnostics();
         return { ok: res.ok, status: res.status, data, text, entry };
       }catch(error){
-        entry.error = error.message || "Network error";
+        entry.error = error?.name === "AbortError" ? `Timeout after ${Math.round(FETCH_TIMEOUT_MS / 1000)} seconds` : (error.message || "Network error");
         entry.preview = entry.error;
         appState.startup.fetches.push(entry);
+        updateStartupLine(startupMessageFor(entry), "fail");
         renderDiagnostics();
         return { ok:false, status:0, data:null, text:"", entry, error };
+      }finally{
+        clearTimeout(timer);
       }
     }
 
@@ -652,12 +678,19 @@
     async function loadQuickTestMembers(){
       const result = await fetchJsonWithDiag(apiPath("/api/members"));
       if(!result.ok){
-        throw new Error(result.entry?.error || "Quick Test member list failed.");
+        throw new Error(`${result.entry?.url || apiPath("/api/members")} · ${result.entry?.status || 0} · ${result.entry?.error || "Member list failed."}`);
       }
       appState.roster = asArray(result.data?.members || result.data);
+      if(!appState.roster.length){
+        throw new Error(`${result.entry?.url || apiPath("/api/members")} · ${result.entry?.status || 200} · Member list was empty.`);
+      }
       const url = new URL(window.location.href);
       const preferred = url.searchParams.get("member_id") || localStorage.getItem(STORAGE_QT_MEMBER_KEY) || localStorage.getItem(STORAGE_USER_KEY) || "";
-      appState.selectedMemberId = preferred || "";
+      const activeIds = new Set(appState.roster
+        .filter((member) => member?.active !== false)
+        .map((member) => String(member.member_id || member.id || ""))
+        .filter(Boolean));
+      appState.selectedMemberId = activeIds.has(String(preferred)) ? String(preferred) : "";
       populateQuickTestMembers();
       if(!appState.selectedMemberId && appState.roster.length){
         setQuickTestSelectedMember(String(appState.roster[0].member_id || appState.roster[0].id || ""));
@@ -670,7 +703,7 @@
       const query = appState.quickTestMode ? `?member_id=${encodeURIComponent(memberId)}` : "";
       const context = await fetchJsonWithDiag(apiPath(`/api/member/context${query}`));
       if(!context.ok){
-        throw new Error(context.entry?.error || "Member context failed.");
+        throw new Error(`${context.entry?.url || apiPath(`/api/member/context${query}`)} · ${context.entry?.status || 0} · ${context.entry?.error || "Member context failed."}`);
       }
       appState.member = context.data.member;
       appState.availability = context.data.availability || { months:{} };
@@ -702,12 +735,12 @@
       renderDiagnostics();
 
       if(!health.ok){
-        await fetchJsonWithDiag("/data/schedule.json");
-        const message = "API unavailable on this origin. This page shell loaded, but the member backend routes are not reachable.";
+        const message = `${health.entry?.url || apiPath("/api/health")} · ${health.entry?.status || 0} · ${health.entry?.error || "API unavailable"}`;
         setSessionBadge("API unavailable");
         setMemberFallback("Member backend unavailable", "Static shell detected");
-        setAssignmentsFallback("Assigned shifts cannot load because /api/member/context is unavailable on this origin.");
-        setCalendarFallback("Availability calendar cannot render because member API routes are unavailable. GitHub Pages alone cannot serve /api/*.");
+        setAssignmentsFallback(message);
+        setCalendarFallback(message);
+        updateStartupLine(`API base: ${API_BASE || "(same origin)"} · ${message}`, "fail");
         showFlash(message, "error");
         renderDiagnostics();
         return;
@@ -730,9 +763,11 @@
       if(!sessionInfo.ok){
         const message = "Session check failed. The page cannot determine member identity.";
         setSessionBadge("Session failed");
-        setMemberFallback("Session failed", `Could not read ${apiPath("/api/auth/session")}`);
-        setAssignmentsFallback(message);
-        setCalendarFallback(message);
+        const detail = `${sessionInfo.entry?.url || apiPath("/api/auth/session")} · ${sessionInfo.entry?.status || 0} · ${sessionInfo.entry?.error || message}`;
+        setMemberFallback("Session failed", detail);
+        setAssignmentsFallback(detail);
+        setCalendarFallback(detail);
+        updateStartupLine(`API base: ${API_BASE || "(same origin)"} · ${detail}`, "fail");
         showFlash(message, "error");
         return;
       }
@@ -865,6 +900,7 @@
       setAssignmentsFallback(error.message || "Assigned shifts could not load.");
       setCalendarFallback(error.message || "Availability calendar could not render.");
       showFlash(error.message || "Failed to load member context", "error");
+      renderDiagnostics();
     });
   </script>
 
