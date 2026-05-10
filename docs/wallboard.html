@@ -457,6 +457,30 @@
       border-radius: 20px;
     }
 
+    .state-title {
+      color: var(--text);
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .state-detail {
+      margin-top: 12px;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    .state-url {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      color: #d9e8ff;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      word-break: break-all;
+    }
+
     .footer {
       margin-top: 14px;
       text-align: right;
@@ -531,6 +555,8 @@
     const SCHEDULE_URL = "/api/schedule";
     const MEMBERS_URL = "/api/wallboard_members";
     const REFRESH_MS = 60000;
+    const SCHEDULE_TIMEOUT_MS = 15000;
+    const MEMBERS_TIMEOUT_MS = 8000;
     const IDLE_RESET_MS = 60000;
     const VISIBLE_WEEKS = 5;
     const VISIBLE_DAYS = VISIBLE_WEEKS * 7;
@@ -553,19 +579,79 @@
         .replaceAll("'", "&#39;");
     }
 
-    async function fetchFirstJson(urls) {
-      let lastError = null;
-      for (const url of urls) {
+    function apiUrlWithCacheBust(path) {
+      const fullUrl = apiUrl(path);
+      return `${fullUrl}${fullUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    }
+
+    async function fetchJson(path, timeoutMs) {
+      const fullUrl = apiUrlWithCacheBust(path);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(fullUrl, {
+          cache: "no-store",
+          credentials: "include",
+          signal: controller.signal
+        });
+        const text = await response.text();
+        let data = null;
         try {
-          const fullUrl = `${apiUrl(url)}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
-          const response = await fetch(fullUrl, { cache: "no-store", credentials: "include" });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return await response.json();
+          data = text ? JSON.parse(text) : null;
         } catch (error) {
-          lastError = new Error(`${url}: ${error.message || error}`);
+          const jsonError = new Error(`Response was not JSON from ${fullUrl}`);
+          jsonError.url = fullUrl;
+          jsonError.status = response.status;
+          throw jsonError;
         }
+        if (!response.ok) {
+          const httpError = new Error(`HTTP ${response.status} from ${fullUrl}`);
+          httpError.url = fullUrl;
+          httpError.status = response.status;
+          httpError.preview = String(text || "").slice(0, 180);
+          throw httpError;
+        }
+        return { data, url: fullUrl, status: response.status };
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          const timeoutError = new Error(`Timed out after ${Math.round(timeoutMs / 1000)} seconds`);
+          timeoutError.url = fullUrl;
+          timeoutError.status = "timeout";
+          throw timeoutError;
+        }
+        error.url ||= fullUrl;
+        error.status ||= "failed";
+        throw error;
+      } finally {
+        clearTimeout(timer);
       }
-      throw lastError || new Error("No data source available");
+    }
+
+    function schedulePayload(raw) {
+      if (Array.isArray(raw?.shifts)) return raw;
+      if (Array.isArray(raw?.schedule?.shifts)) return raw.schedule;
+      if (Array.isArray(raw?.data?.shifts)) return raw.data;
+      return { build: raw?.build || {}, shifts: [] };
+    }
+
+    function showNoScheduleBuilt() {
+      const app = document.getElementById("app");
+      app.className = "state";
+      app.innerHTML = `
+        <div class="state-title">No schedule built yet</div>
+        <div class="state-detail">Once shifts are generated, this wallboard will show who is working and what is open.</div>
+      `;
+    }
+
+    function showApiError(error) {
+      const app = document.getElementById("app");
+      app.className = "state";
+      app.innerHTML = `
+        <div class="state-title">Could not load the wallboard</div>
+        <div class="state-detail">Status: ${escapeHtml(error?.status || "failed")}</div>
+        <div class="state-url">${escapeHtml(error?.url || apiUrl(SCHEDULE_URL))}</div>
+        <div class="state-detail">Please refresh this page in a moment.</div>
+      `;
     }
 
     function renderRuntimeMeta() {
@@ -1013,6 +1099,7 @@
       const metaUpdated = document.getElementById("metaUpdated");
 
       const daysMap = normalizeShiftsToDays(data);
+      const shifts = Array.isArray(data?.shifts) ? data.shifts : [];
       const todayIso = getTodayIso();
       const visibleDates = buildVisibleDates(currentWeekOffset);
       const offsetLabel = currentWeekOffset === 0 ? "Today focus" : `${currentWeekOffset > 0 ? "+" : ""}${currentWeekOffset} week`;
@@ -1020,6 +1107,11 @@
       subtitle.textContent = `Here is who is working. Here is what is open. ${offsetLabel}`;
       metaUpdated.textContent = `Updated: ${formatGeneratedAt(data?.build?.generated_at)}`;
       metaWindow.textContent = `Showing: ${visibleDates[0].iso} to ${visibleDates[visibleDates.length - 1].iso}`;
+
+      if (!shifts.length) {
+        showNoScheduleBuilt();
+        return;
+      }
 
       app.className = "board";
       app.innerHTML = visibleDates.map((day, index) => renderDayCard(day.iso, daysMap[day.iso] || [], todayIso, visibleDates, index, data?.memberLookup)).join("");
@@ -1064,16 +1156,19 @@
     }
 
     async function loadSchedule() {
-      const app = document.getElementById("app");
       renderRuntimeMeta();
 
       try {
-        const [scheduleResponse, membersResponse] = await Promise.all([
-          fetchFirstJson([SCHEDULE_URL]),
-          fetchFirstJson([MEMBERS_URL])
-        ]);
-        const scheduleData = scheduleResponse;
-        const membersData = membersResponse;
+        const scheduleResponse = await fetchJson(SCHEDULE_URL, SCHEDULE_TIMEOUT_MS);
+        const scheduleData = schedulePayload(scheduleResponse.data);
+        let membersData = { members: [] };
+
+        try {
+          const membersResponse = await fetchJson(MEMBERS_URL, MEMBERS_TIMEOUT_MS);
+          membersData = membersResponse.data;
+        } catch (error) {
+          console.warn("Wallboard member list did not load. Names from the schedule will still be shown.", error);
+        }
 
         lastLoadedData = {
           ...scheduleData,
@@ -1084,11 +1179,7 @@
         renderSchedule(lastLoadedData);
       } catch (error) {
         console.error("Failed to load wallboard data:", error);
-        app.className = "state";
-        app.innerHTML = `
-          <div>Could not load the wallboard right now.</div>
-          <div style="margin-top:12px; font-size:18px;">Please refresh this page in a moment.</div>
-        `;
+        showApiError(error);
       }
     }
 
