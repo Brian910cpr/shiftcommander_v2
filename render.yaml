@@ -13,6 +13,6 @@ services:
       - key: SC_ALLOWED_ORIGINS
         value: https://adr-fr.org,https://www.adr-fr.org
       - key: SC_PUBLIC_BASE_URL
-        value: https://shiftcommander-backend.onrender.com
+        value: https://shiftcommander-v2.onrender.com
       - key: SECRET_KEY
         generateValue: true

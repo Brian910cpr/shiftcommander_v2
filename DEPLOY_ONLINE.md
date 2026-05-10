@@ -16,7 +16,7 @@ Example:
 PORT=5000
 SC_QUICK_TEST_MODE=true
 SC_ALLOWED_ORIGINS=https://adr-fr.org,https://www.adr-fr.org
-SC_PUBLIC_BASE_URL=https://shiftcommander-backend.onrender.com
+SC_PUBLIC_BASE_URL=https://shiftcommander-v2.onrender.com
 SECRET_KEY=replace-this
 ```
 
@@ -35,8 +35,8 @@ Configured web service:
 
 Expected Render backend URL:
 
-- `https://shiftcommander-backend.onrender.com`
-- health check URL: `https://shiftcommander-backend.onrender.com/api/health`
+- `https://shiftcommander-v2.onrender.com`
+- health check URL: `https://shiftcommander-v2.onrender.com/api/health`
 
 If Render forces a different service slug, use the actual Render-assigned hostname instead.
 
