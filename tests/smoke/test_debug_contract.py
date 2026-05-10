@@ -131,6 +131,13 @@ class DebugContractTests(unittest.TestCase):
         self.assertNotIn("./data/", wallboard)
         self.assertIn("Source: final resolved schedule", wallboard)
 
+    def test_public_docs_do_not_contain_git_conflict_markers(self) -> None:
+        markers = ["<<<<<<<", "=======", ">>>>>>>", "Updated upstream", "Stashed changes"]
+        for name in ["index.html", "member.html", "supervisor.html", "wallboard.html"]:
+            text = (DOCS_DIR / name).read_text(encoding="utf-8")
+            for marker in markers:
+                self.assertNotIn(marker, text, f"{name} contains {marker}")
+
 
 if __name__ == "__main__":
     unittest.main()
