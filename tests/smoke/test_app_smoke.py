@@ -90,6 +90,31 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("Here is who is working. Here is what is open.", response.get_data(as_text=True))
         response.close()
 
+    def test_schedule_api_returns_fast_published_json_or_empty_fallback(self):
+        response = self.client.get("/api/schedule")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content_type, "application/json")
+        self.assertIn("X-ShiftCommander-Read-Ms", response.headers)
+        payload = response.get_json()
+        self.assertIsInstance(payload, dict)
+        self.assertIn("shifts", payload)
+        response.close()
+
+        schedule_path = ROOT / "data" / "schedule.json"
+        temp_path = ROOT / "data" / "schedule.json.smoke_tmp"
+        if schedule_path.exists():
+            shutil.move(str(schedule_path), str(temp_path))
+        try:
+            response = self.client.get("/api/schedule")
+            self.assertEqual(response.status_code, 200)
+            payload = response.get_json()
+            self.assertEqual(payload.get("shifts"), [])
+            self.assertEqual(response.headers.get("X-ShiftCommander-Source"), "empty")
+            response.close()
+        finally:
+            if temp_path.exists():
+                shutil.move(str(temp_path), str(schedule_path))
+
     def test_generate_writes_schedule_and_debug_outputs(self):
         self.login_supervisor()
         debug_dir = ROOT / "debug"

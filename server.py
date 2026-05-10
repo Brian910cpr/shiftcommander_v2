@@ -5,9 +5,10 @@ import hashlib
 import hmac
 import secrets
 import shutil
+import time
 from datetime import datetime, timedelta, UTC
 from functools import wraps
-from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string
+from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or "shiftcommander-local-dev-secret-key"
@@ -35,6 +36,7 @@ TEST_MEMBER_LOGIN = {
     "member_id": "180",
 }
 BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001"
+EMPTY_SCHEDULE_BYTES = b'{"build":{"generated_at":null,"summary":{"total_seats":0,"filled_seats":0,"unfilled_seats":0}},"shifts":[]}\n'
 
 
 def env_flag(name, default=False):
@@ -109,6 +111,33 @@ def save_json(path, data):
     with open(temp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     os.replace(temp_path, path)
+
+
+def fast_json_file_response(path, empty_payload=EMPTY_SCHEDULE_BYTES):
+    started = time.perf_counter()
+    source = "file"
+    status = 200
+    try:
+        if not os.path.exists(path) or os.path.getsize(path) <= 0:
+            payload = empty_payload
+            source = "empty"
+        else:
+            with open(path, "rb") as f:
+                payload = f.read()
+    except OSError as error:
+        payload = empty_payload
+        source = f"fallback:{error.__class__.__name__}"
+        status = 200
+
+    elapsed_ms = (time.perf_counter() - started) * 1000
+    response = Response(payload, status=status, mimetype="application/json")
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-ShiftCommander-Source"] = source
+    response.headers["X-ShiftCommander-Read-Ms"] = f"{elapsed_ms:.1f}"
+    response.headers["X-ShiftCommander-Bytes"] = str(len(payload))
+    if elapsed_ms > 500:
+        app.logger.warning("/api/schedule slow read %.1fms source=%s bytes=%s", elapsed_ms, source, len(payload))
+    return response
 
 
 def now_iso():
@@ -1728,7 +1757,7 @@ def supervisor_resolve_week():
 
 @app.route("/api/schedule", methods=["GET"])
 def get_schedule_api():
-    return jsonify(load_json(SCHEDULE_FILE, {}))
+    return fast_json_file_response(SCHEDULE_FILE)
 
 
 # =========================
