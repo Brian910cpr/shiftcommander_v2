@@ -889,13 +889,16 @@ def member_roster_payload():
 
 def extract_member_availability(member_id):
     payload = load_availability_payload()
-    filtered = {"months": {}}
+    filtered = {"months": {}, "patterns_by_member": {}}
     for month_key, month_bucket in payload.get("months", {}).items():
         if not isinstance(month_bucket, dict):
             continue
         member_bucket = month_bucket.get(member_id)
         if isinstance(member_bucket, dict):
             filtered["months"][month_key] = {member_id: member_bucket}
+    patterns = payload.get("patterns_by_member", {})
+    if isinstance(patterns, dict) and isinstance(patterns.get(member_id), dict):
+        filtered["patterns_by_member"][member_id] = patterns[member_id]
     return filtered
 
 

@@ -61,7 +61,7 @@
     .state-grid{display:grid;gap:8px}
     .shift-row{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
     .shift-label{font-size:12px;font-weight:900;color:var(--muted)}
-    .state-btns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+    .state-btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
     .state-btn{min-height:36px;border-radius:10px;border:1px solid #305270;background:#13243d;color:#eef4ff;font-size:12px;font-weight:900;cursor:pointer}
     .state-btn.active.preferred{background:rgba(19,107,53,.55);border-color:#23ca66}
     .state-btn.active.available{background:rgba(120,88,11,.44);border-color:#ffb443}
@@ -90,7 +90,7 @@
     <section class="hero">
       <div>
         <div class="title">ShiftCommander Member</div>
-        <div class="subtitle">Update your own availability and your allowed scheduling preferences. Edits inside the next 2 weeks are locked.</div>
+        <div class="subtitle">Review suggested availability, make corrections, and see your draft assignments. Edits inside the next 2 weeks are locked.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
           <span class="pill" id="sessionPill"><strong>Session</strong> Loading…</span>
           <span class="badge warn">Self-service only. You cannot edit other members.</span>
@@ -106,7 +106,7 @@
     <div class="flash" id="flash"></div>
 
 
-    <section class="card diag-panel">
+    <section class="card diag-panel" style="display:none">
       <div class="section-title">
         <h2>Startup Diagnostics</h2>
         <span class="mini" id="diagBuildCode">SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span>
@@ -128,7 +128,7 @@
       <aside class="stack">
         <section class="card" id="quickTestCard" style="display:none">
           <div class="section-title"><h2>Quick Test Mode</h2></div>
-          <div class="mini">Authentication is bypassed temporarily. Select a member and test the live resolver/member context without logging in.</div>
+          <div class="mini">Authentication is bypassed temporarily. Select a member and test the member view without logging in.</div>
           <div class="field" style="margin-top:12px">
             <label for="quickTestMemberSelect">Selected member</label>
             <select id="quickTestMemberSelect"></select>
@@ -203,7 +203,7 @@
         <section class="card">
           <div class="section-title">
             <h2>Availability Calendar</h2>
-            <span class="mini">Preferred, Available, Do Not, or Blank</span>
+            <span class="mini">Preferred, Available, Cannot work, or Blank</span>
           </div>
           <div class="calendar-controls">
             <button class="btn" id="prevBtn">← Prev Week</button>
@@ -261,7 +261,31 @@
     function startOfWeek(date){ const d = new Date(date); const offset = (d.getDay()+6)%7; d.setDate(d.getDate()-offset); return d; }
     function monthKey(iso){ return String(iso||"").slice(0,7); }
     function getMemberId(){ return String(appState.selectedMemberId || appState.member?.member_id || appState.member?.id || appState.session?.member_id || ""); }
-    function getStatus(dateIso, shift){ return appState.availability?.months?.[monthKey(dateIso)]?.[getMemberId()]?.[dateIso]?.[shift] || ""; }
+    function patternKey(dateIso, shift){
+      const date = isoToDate(dateIso);
+      const days = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+      return `${days[date.getDay()]}_${shift}`;
+    }
+    function normalizeStatus(value){
+      const raw = String(value || "").trim().toLowerCase();
+      if(raw === "preferred") return "preferred";
+      if(raw === "available") return "available";
+      if(raw === "do_not_schedule" || raw === "unavailable") return "do_not_schedule";
+      return "";
+    }
+    function getSuggestedStatus(dateIso, shift){
+      const memberPatterns = appState.availability?.patterns_by_member?.[getMemberId()] || {};
+      const key = patternKey(dateIso, shift);
+      const explicit = normalizeStatus(memberPatterns?.statuses?.[key]);
+      if(explicit) return explicit;
+      if(asArray(memberPatterns.preferred_shift_types).map(String).includes(key)) return "preferred";
+      if(asArray(memberPatterns.available_shift_types).map(String).includes(key)) return "available";
+      if(asArray(memberPatterns.do_not_schedule_shift_types).map(String).includes(key)) return "do_not_schedule";
+      return "";
+    }
+    function getStatus(dateIso, shift){
+      return normalizeStatus(appState.availability?.months?.[monthKey(dateIso)]?.[getMemberId()]?.[dateIso]?.[shift]) || getSuggestedStatus(dateIso, shift);
+    }
     function setStatus(dateIso, shift, value){
       appState.availability.months ||= {};
       appState.availability.months[monthKey(dateIso)] ||= {};
@@ -469,16 +493,16 @@
           const value = getStatus(iso, shift);
           const choices = [
             ["","Blank","blank"],
-            ["preferred","Pref","preferred"],
-            ["available","Avail","available"],
-            ["do_not_schedule","Do Not","do_not_schedule"],
+            ["preferred","Preferred","preferred"],
+            ["available","Available","available"],
+            ["do_not_schedule","Cannot","do_not_schedule"],
           ];
           return `
             <div class="shift-row">
               <div class="shift-label">${shift}</div>
               <div class="state-btns">
                 ${choices.map(([choice,label,cls]) => `
-                  <button class="state-btn ${cls} ${value===choice ? `active ${cls}` : ""}" data-date="${iso}" data-shift="${shift}" data-value="${choice}" ${locked ? "disabled" : ""}>${label}</button>
+                  <button class="state-btn ${cls} ${value===choice ? `active ${cls}` : ""}" title="${choice === "preferred" ? "Use this if you especially want this shift." : choice === "available" ? "You can probably work this shift if needed." : choice === "do_not_schedule" ? "You are unavailable for this shift." : "No assumption yet. Use this if you are not sure."}" data-date="${iso}" data-shift="${shift}" data-value="${choice}" ${locked ? "disabled" : ""}>${label}</button>
                 `).join("")}
               </div>
             </div>
@@ -491,7 +515,7 @@
               <div class="day-date">${date.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</div>
             </div>
             <div class="state-grid">${rows}</div>
-            <div class="day-note">${locked ? "Locked inside the next 2 weeks" : "Editable"}</div>
+            <div class="day-note">${locked ? "Locked inside the next 2 weeks" : "Suggested from past boards until you change it"}</div>
           </div>
         `;
       }).join("");

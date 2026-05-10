@@ -119,7 +119,7 @@
     <section class="hero">
       <div>
         <div class="title">ShiftCommander Supervisor</div>
-        <div class="subtitle">Run the real weekly workflow against the live backend: choose week, build demand, dry run, resolve, review open seats, and publish/freeze only the assignments you want displayed.</div>
+        <div class="subtitle">Choose a week, build draft shifts, preview best matches, fill open seats, review holes, and publish only the assignments you want displayed.</div>
         <div class="status-row" style="margin-top:12px">
           <span class="pill"><strong>Live routes</strong> /api/health · /api/build_shifts · /api/generate · /api/schedule</span>
           <span class="pill"><strong>Display state</strong> /api/supervisor/state · /api/supervisor/publish_week · /api/supervisor/open_seat</span>
@@ -161,10 +161,10 @@
           </div>
           <div class="step">
             <div class="step-badge planned">Safe preview</div>
-            <h3>2. Dry run the resolver</h3>
-            <p>Preview the resolver against the current rules without changing saved schedule output.</p>
+            <h3>2. Preview best matches</h3>
+            <p>Preview suggested staffing without changing the saved schedule.</p>
             <div class="step-actions">
-              <button class="btn warn" id="dryRunBtn">Dry Run Week</button>
+              <button class="btn warn" id="dryRunBtn">Preview Week</button>
             </div>
           </div>
           <div class="step">
@@ -172,7 +172,7 @@
             <h3>3. Fill only unresolved open seats</h3>
             <p>Displayed or supervisor-locked seats stay preserved. OPEN and dropped seats remain eligible for re-resolution.</p>
             <div class="step-actions">
-              <button class="btn primary" id="resolveBtn">Resolve Open Seats</button>
+              <button class="btn primary" id="resolveBtn" title="Searches for the best available people to fill open shifts.">Fill Open Seats</button>
             </div>
           </div>
           <div class="step">
@@ -186,12 +186,12 @@
           <div class="step">
             <div class="step-badge planned">Policy</div>
             <h3>5. Member behavior</h3>
-            <p>Member preference for a dropped/open seat is a signal only. The resolver still applies legality, fairness, and company rules before assigning it.</p>
+            <p>Member preference for an open shift is a signal only. The system suggests; supervisors still review and approve.</p>
           </div>
           <div class="step">
             <div class="step-badge live">Resolver test</div>
-            <h3>6. Clear future availability intent</h3>
-            <p>Erase all declared future AM/PM intent after today, preserve past history, and create a backup before mutation. This also clears resolver fallback pattern intent so no future declarations means no future declarations.</p>
+            <h3>6. Clear future availability</h3>
+            <p>Erase declared future AM/PM availability after today, preserve past history, and create a backup before changing files.</p>
             <div class="step-actions">
               <button class="btn danger" id="clearFutureAvailabilityBtn">Clear Future Availability Intent</button>
             </div>

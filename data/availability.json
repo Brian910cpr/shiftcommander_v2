@@ -47,7 +47,12 @@
       "2026-06 whiteboard import: June A/B/C/D calendar used as canonical 24-hour AEMT preference baseline; A=Sophie, B=Lynnsey, C=open, D=Barbara; assigned AEMT marked preferred for both AM and PM, all others do_not_schedule.",
       "2026-06 whiteboard import: June A/B/C/D calendar used as canonical 24-hour AEMT weighting baseline; A=Sophie, B=Lynnsey, C=open, D=Barbara; shift-model AEMTs marked preferred for assigned track days and available for off-track days; C days remain open with no preferred track AEMT.",
       "2026-06 whiteboard import: June A/B/C/D calendar used as canonical 24-hour AEMT weighting baseline; A=Sophie, B=Lynnsey, C=open, D=Barbara; shift-model AEMTs marked preferred for assigned track days; all other active members left blank as no-selection state; C days remain open with no preferred track AEMT."
-    ]
+    ],
+    "suggested_availability": {
+      "generated_at": "2026-05-10T15:12:05.886550+00:00",
+      "source": "historical whiteboard staffing patterns",
+      "note": "Suggested only. Members should edit anything that is wrong."
+    }
   },
   "months": {
     "2022-10": {
@@ -101830,389 +101835,113 @@
     }
   },
   "patterns_by_member": {
-    "102": {
-      "available_shift_types": [
-        "WED_AM",
-        "WED_PM",
-        "FRI_PM",
-        "MON_AM",
-        "FRI_AM",
-        "MON_PM"
-      ],
-      "do_not_schedule_shift_types": [
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SAT_AM",
-        "SAT_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "102",
-      "member_name": "Stephen Camlin",
-      "preferred_shift_types": [
-        "WED_AM",
-        "WED_PM",
-        "FRI_PM",
-        "MON_AM",
-        "FRI_AM",
-        "MON_PM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "103": {
-      "available_shift_types": [
-        "FRI_PM",
-        "SUN_PM",
-        "SAT_PM",
-        "MON_PM",
-        "TUE_PM",
-        "WED_PM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "TUE_AM",
-        "WED_AM",
-        "THU_AM",
-        "THU_PM",
-        "FRI_AM",
-        "SAT_AM",
-        "SUN_AM"
-      ],
-      "history_counts": {},
-      "member_id": "103",
-      "member_name": "Wilbert Phelps",
-      "preferred_shift_types": [
-        "FRI_PM",
-        "SUN_PM",
-        "SAT_PM",
-        "MON_PM",
-        "TUE_PM",
-        "WED_PM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "104": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "104",
-      "member_name": "Thomas Benson",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "106": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "106",
-      "member_name": "Hazen Taggett",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
     "107": {
-      "available_shift_types": [
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
         "MON_AM",
-        "WED_AM",
-        "THU_AM",
-        "FRI_AM",
         "MON_PM",
-        "WED_PM",
-        "THU_PM",
-        "FRI_PM",
         "TUE_AM",
-        "TUE_PM"
-      ],
-      "do_not_schedule_shift_types": [
+        "TUE_PM",
+        "WED_AM",
+        "WED_PM",
+        "THU_AM",
+        "THU_PM",
+        "FRI_AM",
+        "FRI_PM",
         "SAT_AM",
         "SAT_PM",
         "SUN_AM",
         "SUN_PM"
-      ],
-      "history_counts": {
-        "FRI_AM": 13,
-        "FRI_PM": 13,
-        "MON_AM": 13,
-        "MON_PM": 13,
-        "THU_AM": 13,
-        "THU_PM": 13,
-        "TUE_AM": 12,
-        "TUE_PM": 12,
-        "WED_AM": 13,
-        "WED_PM": 13
-      },
-      "member_id": "107",
-      "member_name": "Gracie Toney",
-      "preferred_shift_types": [
-        "MON_AM",
-        "WED_AM",
-        "THU_AM",
-        "FRI_AM",
-        "MON_PM",
-        "WED_PM"
-      ],
-      "source": "history"
+      ]
     },
     "112": {
-      "available_shift_types": [
-        "MON_PM",
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
         "MON_AM",
+        "MON_PM",
+        "TUE_AM",
+        "TUE_PM",
+        "WED_AM",
         "WED_PM",
-        "SAT_AM",
-        "SAT_PM",
+        "THU_AM",
+        "THU_PM",
         "FRI_AM",
         "FRI_PM",
-        "TUE_AM",
-        "WED_AM",
-        "THU_AM",
-        "SUN_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "TUE_PM",
-        "THU_PM",
-        "SUN_PM"
-      ],
-      "history_counts": {
-        "FRI_AM": 2,
-        "FRI_PM": 2,
-        "MON_AM": 6,
-        "MON_PM": 7,
-        "SAT_AM": 4,
-        "SAT_PM": 4,
-        "SUN_AM": 1,
-        "THU_AM": 1,
-        "TUE_AM": 1,
-        "WED_AM": 1,
-        "WED_PM": 4
-      },
-      "member_id": "112",
-      "member_name": "Nicholas Tripp",
-      "preferred_shift_types": [
-        "MON_PM",
-        "MON_AM",
-        "WED_PM",
         "SAT_AM",
         "SAT_PM",
-        "FRI_AM"
-      ],
-      "source": "history"
-    },
-    "141": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
         "SUN_AM",
         "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "141",
-      "member_name": "James Hines",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "142": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "142",
-      "member_name": "James Grice",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "143": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "143",
-      "member_name": "Sandra Simmons",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "144": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "144",
-      "member_name": "Jonathan Smith",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
+      ]
     },
     "145": {
-      "available_shift_types": [
-        "FRI_PM",
-        "SUN_PM",
-        "SAT_PM",
-        "MON_PM",
-        "TUE_PM",
-        "WED_PM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "TUE_AM",
-        "WED_AM",
-        "THU_AM",
-        "THU_PM",
-        "FRI_AM",
-        "SAT_AM",
-        "SUN_AM"
-      ],
-      "history_counts": {},
-      "member_id": "145",
-      "member_name": "Roger Toney",
-      "preferred_shift_types": [
-        "FRI_PM",
-        "SUN_PM",
-        "SAT_PM",
-        "MON_PM",
-        "TUE_PM",
-        "WED_PM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "146": {
-      "available_shift_types": [
-        "SUN_AM",
-        "THU_PM",
-        "SAT_AM",
-        "SAT_PM"
-      ],
-      "do_not_schedule_shift_types": [
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
         "MON_AM",
         "MON_PM",
         "TUE_AM",
@@ -102220,167 +101949,181 @@
         "WED_AM",
         "WED_PM",
         "THU_AM",
+        "THU_PM",
         "FRI_AM",
         "FRI_PM",
+        "SAT_AM",
+        "SAT_PM",
+        "SUN_AM",
         "SUN_PM"
-      ],
-      "history_counts": {
+      ]
+    },
+    "146": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 5,
+      "slot_counts": {
         "SAT_AM": 1,
         "SAT_PM": 1,
         "SUN_AM": 2,
         "THU_PM": 1
       },
-      "member_id": "146",
-      "member_name": "Sherman Huff",
-      "preferred_shift_types": [
-        "SUN_AM",
-        "THU_PM",
-        "SAT_AM",
-        "SAT_PM"
-      ],
-      "source": "history"
-    },
-    "147": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
+      "statuses": {
+        "MON_AM": "DO_NOT_SCHEDULE",
+        "MON_PM": "DO_NOT_SCHEDULE",
+        "TUE_AM": "DO_NOT_SCHEDULE",
+        "TUE_PM": "DO_NOT_SCHEDULE",
+        "WED_AM": "DO_NOT_SCHEDULE",
+        "WED_PM": "DO_NOT_SCHEDULE",
+        "THU_AM": "DO_NOT_SCHEDULE",
+        "THU_PM": "BLANK",
+        "FRI_AM": "DO_NOT_SCHEDULE",
+        "FRI_PM": "DO_NOT_SCHEDULE",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "DO_NOT_SCHEDULE"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
       "do_not_schedule_shift_types": [
         "MON_AM",
         "MON_PM",
         "TUE_AM",
         "TUE_PM",
+        "WED_AM",
+        "WED_PM",
         "THU_AM",
-        "THU_PM",
-        "SUN_AM",
+        "FRI_AM",
+        "FRI_PM",
         "SUN_PM"
       ],
-      "history_counts": {},
-      "member_id": "147",
-      "member_name": "Jeffrey Lennon",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
+      "blank_shift_types": [
+        "THU_PM",
         "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
+        "SAT_PM",
+        "SUN_AM"
+      ]
     },
     "148": {
-      "available_shift_types": [
-        "FRI_PM",
-        "MON_PM",
-        "THU_PM",
-        "SUN_PM",
-        "TUE_PM",
-        "WED_PM",
-        "SAT_PM",
-        "SAT_AM"
-      ],
-      "do_not_schedule_shift_types": [
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
         "MON_AM",
-        "TUE_AM",
-        "WED_AM",
-        "THU_AM",
-        "FRI_AM",
-        "SUN_AM"
-      ],
-      "history_counts": {},
-      "member_id": "148",
-      "member_name": "Cynthia O'Hara",
-      "preferred_shift_types": [
-        "FRI_PM",
         "MON_PM",
-        "THU_PM",
-        "SUN_PM",
+        "TUE_AM",
         "TUE_PM",
-        "WED_PM"
-      ],
-      "source": "fallback_from_peer_patterns"
+        "WED_AM",
+        "WED_PM",
+        "THU_AM",
+        "THU_PM",
+        "FRI_AM",
+        "FRI_PM",
+        "SAT_AM",
+        "SAT_PM",
+        "SUN_AM",
+        "SUN_PM"
+      ]
     },
     "149": {
-      "available_shift_types": [
-        "FRI_PM",
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 23,
+      "slot_counts": {
+        "FRI_PM": 11,
+        "MON_PM": 11,
+        "SUN_PM": 1
+      },
+      "statuses": {
+        "MON_AM": "DO_NOT_SCHEDULE",
+        "MON_PM": "PREFERRED",
+        "TUE_AM": "DO_NOT_SCHEDULE",
+        "TUE_PM": "DO_NOT_SCHEDULE",
+        "WED_AM": "DO_NOT_SCHEDULE",
+        "WED_PM": "DO_NOT_SCHEDULE",
+        "THU_AM": "DO_NOT_SCHEDULE",
+        "THU_PM": "DO_NOT_SCHEDULE",
+        "FRI_AM": "DO_NOT_SCHEDULE",
+        "FRI_PM": "PREFERRED",
+        "SAT_AM": "DO_NOT_SCHEDULE",
+        "SAT_PM": "DO_NOT_SCHEDULE",
+        "SUN_AM": "DO_NOT_SCHEDULE",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [
         "MON_PM",
-        "TUE_PM",
-        "SUN_PM",
-        "THU_PM"
+        "FRI_PM"
       ],
+      "available_shift_types": [],
       "do_not_schedule_shift_types": [
         "MON_AM",
         "TUE_AM",
+        "TUE_PM",
         "WED_AM",
         "WED_PM",
         "THU_AM",
+        "THU_PM",
         "FRI_AM",
         "SAT_AM",
         "SAT_PM",
         "SUN_AM"
       ],
-      "history_counts": {
-        "FRI_PM": 14,
-        "MON_PM": 11,
-        "SUN_PM": 3,
-        "THU_PM": 1,
-        "TUE_PM": 4
-      },
-      "member_id": "149",
-      "member_name": "Shane Polletta",
-      "preferred_shift_types": [
-        "FRI_PM",
-        "MON_PM",
-        "TUE_PM",
-        "SUN_PM",
-        "THU_PM"
-      ],
-      "source": "history"
-    },
-    "150": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
+      "blank_shift_types": [
         "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "150",
-      "member_name": "Christopher Russ",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
+      ]
     },
     "151": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 9,
+      "slot_counts": {
+        "MON_AM": 1,
+        "SAT_AM": 2,
+        "SAT_PM": 3,
+        "SUN_AM": 1,
+        "SUN_PM": 1,
+        "WED_PM": 1
+      },
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "DO_NOT_SCHEDULE",
+        "TUE_AM": "DO_NOT_SCHEDULE",
+        "TUE_PM": "DO_NOT_SCHEDULE",
+        "WED_AM": "DO_NOT_SCHEDULE",
+        "WED_PM": "BLANK",
+        "THU_AM": "DO_NOT_SCHEDULE",
+        "THU_PM": "DO_NOT_SCHEDULE",
+        "FRI_AM": "DO_NOT_SCHEDULE",
+        "FRI_PM": "DO_NOT_SCHEDULE",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "AVAILABLE",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
       "available_shift_types": [
-        "SAT_PM",
-        "SAT_AM",
-        "MON_AM",
-        "SUN_AM",
-        "WED_PM",
-        "SUN_PM"
+        "SAT_PM"
       ],
       "do_not_schedule_shift_types": [
         "MON_PM",
@@ -102392,361 +102135,87 @@
         "FRI_AM",
         "FRI_PM"
       ],
-      "history_counts": {
-        "MON_AM": 1,
-        "SAT_AM": 2,
-        "SAT_PM": 3,
-        "SUN_AM": 1,
-        "SUN_PM": 1,
-        "WED_PM": 1
-      },
-      "member_id": "151",
-      "member_name": "Nora Hines",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "SAT_AM",
+      "blank_shift_types": [
         "MON_AM",
-        "SUN_AM",
         "WED_PM",
-        "SUN_PM"
-      ],
-      "source": "history"
-    },
-    "153": {
-      "available_shift_types": [
-        "FRI_PM",
-        "SUN_PM",
-        "SAT_PM",
-        "MON_PM",
-        "TUE_PM",
-        "WED_PM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "TUE_AM",
-        "WED_AM",
-        "THU_AM",
-        "THU_PM",
-        "FRI_AM",
         "SAT_AM",
-        "SUN_AM"
-      ],
-      "history_counts": {},
-      "member_id": "153",
-      "member_name": "Adam Coleman",
-      "preferred_shift_types": [
-        "FRI_PM",
-        "SUN_PM",
-        "SAT_PM",
-        "MON_PM",
-        "TUE_PM",
-        "WED_PM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "154": {
-      "available_shift_types": [
-        "WED_PM",
-        "FRI_PM",
-        "SAT_PM",
-        "WED_AM",
-        "SAT_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "FRI_AM",
         "SUN_AM",
         "SUN_PM"
-      ],
-      "history_counts": {
-        "FRI_PM": 2,
-        "SAT_AM": 1,
-        "SAT_PM": 2,
-        "WED_AM": 1,
-        "WED_PM": 2
-      },
-      "member_id": "154",
-      "member_name": "Clifton Warner",
-      "preferred_shift_types": [
-        "WED_PM",
-        "FRI_PM",
-        "SAT_PM",
-        "WED_AM",
-        "SAT_AM"
-      ],
-      "source": "history"
-    },
-    "155": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "155",
-      "member_name": "Jonathan Wright",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
+      ]
     },
     "156": {
-      "available_shift_types": [
-        "FRI_PM",
-        "MON_PM",
-        "THU_PM",
-        "SUN_PM",
-        "TUE_PM",
-        "WED_PM",
-        "SAT_PM",
-        "SAT_AM"
-      ],
-      "do_not_schedule_shift_types": [
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
         "MON_AM",
-        "TUE_AM",
-        "WED_AM",
-        "THU_AM",
-        "FRI_AM",
-        "SUN_AM"
-      ],
-      "history_counts": {},
-      "member_id": "156",
-      "member_name": "Christian Wright",
-      "preferred_shift_types": [
-        "FRI_PM",
         "MON_PM",
-        "THU_PM",
-        "SUN_PM",
-        "TUE_PM",
-        "WED_PM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "157": {
-      "available_shift_types": [
-        "WED_AM",
-        "WED_PM",
-        "FRI_PM",
-        "MON_AM",
-        "FRI_AM",
-        "MON_PM"
-      ],
-      "do_not_schedule_shift_types": [
         "TUE_AM",
         "TUE_PM",
+        "WED_AM",
+        "WED_PM",
         "THU_AM",
         "THU_PM",
+        "FRI_AM",
+        "FRI_PM",
         "SAT_AM",
         "SAT_PM",
         "SUN_AM",
         "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "157",
-      "member_name": "Myles Swain",
-      "preferred_shift_types": [
-        "WED_AM",
-        "WED_PM",
-        "FRI_PM",
-        "MON_AM",
-        "FRI_AM",
-        "MON_PM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "158": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "158",
-      "member_name": "Aric Linzey",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
+      ]
     },
     "159": {
-      "available_shift_types": [
-        "SAT_PM",
-        "THU_PM",
-        "FRI_PM",
-        "WED_PM",
-        "SAT_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "WED_AM",
-        "THU_AM",
-        "FRI_AM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {
-        "FRI_PM": 2,
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 15,
+      "slot_counts": {
+        "FRI_PM": 1,
         "SAT_AM": 1,
         "SAT_PM": 7,
         "THU_PM": 5,
         "WED_PM": 1
       },
-      "member_id": "159",
-      "member_name": "Brett Toney",
+      "statuses": {
+        "MON_AM": "DO_NOT_SCHEDULE",
+        "MON_PM": "DO_NOT_SCHEDULE",
+        "TUE_AM": "DO_NOT_SCHEDULE",
+        "TUE_PM": "DO_NOT_SCHEDULE",
+        "WED_AM": "DO_NOT_SCHEDULE",
+        "WED_PM": "BLANK",
+        "THU_AM": "DO_NOT_SCHEDULE",
+        "THU_PM": "PREFERRED",
+        "FRI_AM": "DO_NOT_SCHEDULE",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "PREFERRED",
+        "SUN_AM": "DO_NOT_SCHEDULE",
+        "SUN_PM": "DO_NOT_SCHEDULE"
+      },
       "preferred_shift_types": [
-        "SAT_PM",
         "THU_PM",
-        "FRI_PM",
-        "WED_PM",
-        "SAT_AM"
+        "SAT_PM"
       ],
-      "source": "history"
-    },
-    "160": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "160",
-      "member_name": "Kaitlynn Croom",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "161": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "161",
-      "member_name": "Natalie Toney",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "162": {
-      "available_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
-        "TUE_PM",
-        "THU_AM",
-        "THU_PM",
-        "SUN_AM",
-        "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "162",
-      "member_name": "Timothy Riley",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_PM",
-        "FRI_PM",
-        "SAT_AM",
-        "WED_AM",
-        "FRI_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
-    },
-    "163": {
-      "available_shift_types": [
-        "WED_PM",
-        "THU_PM"
-      ],
+      "available_shift_types": [],
       "do_not_schedule_shift_types": [
         "MON_AM",
         "MON_PM",
@@ -102755,31 +102224,85 @@
         "WED_AM",
         "THU_AM",
         "FRI_AM",
-        "FRI_PM",
-        "SAT_AM",
-        "SAT_PM",
         "SUN_AM",
         "SUN_PM"
       ],
-      "history_counts": {
+      "blank_shift_types": [
+        "WED_PM",
+        "FRI_PM",
+        "SAT_AM"
+      ]
+    },
+    "163": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 10,
+      "slot_counts": {
         "THU_PM": 5,
         "WED_PM": 5
       },
-      "member_id": "163",
-      "member_name": "AJ Smith",
+      "statuses": {
+        "MON_AM": "DO_NOT_SCHEDULE",
+        "MON_PM": "DO_NOT_SCHEDULE",
+        "TUE_AM": "DO_NOT_SCHEDULE",
+        "TUE_PM": "DO_NOT_SCHEDULE",
+        "WED_AM": "DO_NOT_SCHEDULE",
+        "WED_PM": "PREFERRED",
+        "THU_AM": "DO_NOT_SCHEDULE",
+        "THU_PM": "PREFERRED",
+        "FRI_AM": "DO_NOT_SCHEDULE",
+        "FRI_PM": "DO_NOT_SCHEDULE",
+        "SAT_AM": "DO_NOT_SCHEDULE",
+        "SAT_PM": "DO_NOT_SCHEDULE",
+        "SUN_AM": "DO_NOT_SCHEDULE",
+        "SUN_PM": "DO_NOT_SCHEDULE"
+      },
       "preferred_shift_types": [
         "WED_PM",
         "THU_PM"
       ],
-      "source": "history"
-    },
-    "168": {
-      "available_shift_types": [
-        "FRI_AM",
-        "SAT_AM",
-        "SAT_PM"
-      ],
+      "available_shift_types": [],
       "do_not_schedule_shift_types": [
+        "MON_AM",
+        "MON_PM",
+        "TUE_AM",
+        "TUE_PM",
+        "WED_AM",
+        "THU_AM",
+        "FRI_AM",
+        "FRI_PM",
+        "SAT_AM",
+        "SAT_PM",
+        "SUN_AM",
+        "SUN_PM"
+      ],
+      "blank_shift_types": []
+    },
+    "180": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
         "MON_AM",
         "MON_PM",
         "TUE_AM",
@@ -102788,49 +102311,19 @@
         "WED_PM",
         "THU_AM",
         "THU_PM",
+        "FRI_AM",
         "FRI_PM",
+        "SAT_AM",
+        "SAT_PM",
         "SUN_AM",
         "SUN_PM"
-      ],
-      "history_counts": {
-        "FRI_AM": 1,
-        "SAT_AM": 1,
-        "SAT_PM": 1
-      },
-      "member_id": "168",
-      "member_name": "Cassandra Grass",
-      "preferred_shift_types": [
-        "FRI_AM",
-        "SAT_AM",
-        "SAT_PM"
-      ],
-      "source": "history"
-    },
-    "180": {
-      "available_shift_types": [],
-      "do_not_schedule_shift_types": [],
-      "preferred_shift_types": []
+      ]
     },
     "181": {
-      "available_shift_types": [
-        "TUE_AM",
-        "SUN_AM",
-        "WED_AM",
-        "SAT_AM",
-        "MON_AM",
-        "THU_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_PM",
-        "TUE_PM",
-        "WED_PM",
-        "THU_PM",
-        "FRI_AM",
-        "FRI_PM",
-        "SAT_PM",
-        "SUN_PM"
-      ],
-      "history_counts": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 22,
+      "slot_counts": {
         "MON_AM": 2,
         "SAT_AM": 3,
         "SUN_AM": 5,
@@ -102838,37 +102331,50 @@
         "TUE_AM": 8,
         "WED_AM": 3
       },
-      "member_id": "181",
-      "member_name": "Anna Squires",
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "DO_NOT_SCHEDULE",
+        "TUE_AM": "PREFERRED",
+        "TUE_PM": "DO_NOT_SCHEDULE",
+        "WED_AM": "AVAILABLE",
+        "WED_PM": "DO_NOT_SCHEDULE",
+        "THU_AM": "BLANK",
+        "THU_PM": "DO_NOT_SCHEDULE",
+        "FRI_AM": "DO_NOT_SCHEDULE",
+        "FRI_PM": "DO_NOT_SCHEDULE",
+        "SAT_AM": "AVAILABLE",
+        "SAT_PM": "DO_NOT_SCHEDULE",
+        "SUN_AM": "PREFERRED",
+        "SUN_PM": "DO_NOT_SCHEDULE"
+      },
       "preferred_shift_types": [
         "TUE_AM",
-        "SUN_AM",
-        "WED_AM",
-        "SAT_AM",
-        "MON_AM",
-        "THU_AM"
+        "SUN_AM"
       ],
-      "source": "history"
-    },
-    "182": {
       "available_shift_types": [
-        "THU_PM",
-        "THU_AM",
-        "SUN_PM",
-        "WED_PM",
-        "TUE_PM",
         "WED_AM",
-        "SUN_AM",
+        "SAT_AM"
+      ],
+      "do_not_schedule_shift_types": [
         "MON_PM",
+        "TUE_PM",
+        "WED_PM",
+        "THU_PM",
         "FRI_AM",
         "FRI_PM",
-        "MON_AM",
-        "TUE_AM",
-        "SAT_AM",
-        "SAT_PM"
+        "SAT_PM",
+        "SUN_PM"
       ],
-      "do_not_schedule_shift_types": [],
-      "history_counts": {
+      "blank_shift_types": [
+        "MON_AM",
+        "THU_AM"
+      ]
+    },
+    "182": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 77,
+      "slot_counts": {
         "FRI_AM": 5,
         "FRI_PM": 5,
         "MON_AM": 4,
@@ -102884,38 +102390,48 @@
         "WED_AM": 6,
         "WED_PM": 7
       },
-      "member_id": "182",
-      "member_name": "Nikki Meeks",
+      "statuses": {
+        "MON_AM": "AVAILABLE",
+        "MON_PM": "AVAILABLE",
+        "TUE_AM": "AVAILABLE",
+        "TUE_PM": "PREFERRED",
+        "WED_AM": "PREFERRED",
+        "WED_PM": "PREFERRED",
+        "THU_AM": "PREFERRED",
+        "THU_PM": "PREFERRED",
+        "FRI_AM": "AVAILABLE",
+        "FRI_PM": "AVAILABLE",
+        "SAT_AM": "AVAILABLE",
+        "SAT_PM": "AVAILABLE",
+        "SUN_AM": "PREFERRED",
+        "SUN_PM": "PREFERRED"
+      },
       "preferred_shift_types": [
-        "THU_PM",
-        "THU_AM",
-        "SUN_PM",
-        "WED_PM",
-        "TUE_PM",
-        "WED_AM"
-      ],
-      "source": "history"
-    },
-    "183": {
-      "available_shift_types": [
-        "THU_PM",
-        "FRI_AM",
-        "FRI_PM",
-        "SAT_AM",
-        "SAT_PM",
-        "SUN_AM"
-      ],
-      "do_not_schedule_shift_types": [
-        "MON_AM",
-        "MON_PM",
-        "TUE_AM",
         "TUE_PM",
         "WED_AM",
         "WED_PM",
         "THU_AM",
+        "THU_PM",
+        "SUN_AM",
         "SUN_PM"
       ],
-      "history_counts": {
+      "available_shift_types": [
+        "MON_AM",
+        "MON_PM",
+        "TUE_AM",
+        "FRI_AM",
+        "FRI_PM",
+        "SAT_AM",
+        "SAT_PM"
+      ],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": []
+    },
+    "183": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 8,
+      "slot_counts": {
         "FRI_AM": 1,
         "FRI_PM": 1,
         "SAT_AM": 1,
@@ -102923,79 +102439,142 @@
         "SUN_AM": 1,
         "THU_PM": 3
       },
-      "member_id": "183",
-      "member_name": "Serenity Joyner",
-      "preferred_shift_types": [
-        "THU_PM",
-        "FRI_AM",
-        "FRI_PM",
-        "SAT_AM",
-        "SAT_PM",
-        "SUN_AM"
-      ],
-      "source": "history"
-    },
-    "184": {
+      "statuses": {
+        "MON_AM": "DO_NOT_SCHEDULE",
+        "MON_PM": "DO_NOT_SCHEDULE",
+        "TUE_AM": "DO_NOT_SCHEDULE",
+        "TUE_PM": "DO_NOT_SCHEDULE",
+        "WED_AM": "DO_NOT_SCHEDULE",
+        "WED_PM": "DO_NOT_SCHEDULE",
+        "THU_AM": "DO_NOT_SCHEDULE",
+        "THU_PM": "AVAILABLE",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "DO_NOT_SCHEDULE"
+      },
+      "preferred_shift_types": [],
       "available_shift_types": [
-        "SAT_PM",
-        "WED_AM",
-        "THU_PM",
-        "FRI_PM",
-        "WED_PM",
-        "SAT_AM",
-        "TUE_AM",
-        "SUN_AM"
+        "THU_PM"
       ],
       "do_not_schedule_shift_types": [
         "MON_AM",
         "MON_PM",
+        "TUE_AM",
         "TUE_PM",
+        "WED_AM",
+        "WED_PM",
         "THU_AM",
-        "FRI_AM",
         "SUN_PM"
       ],
-      "history_counts": {},
-      "member_id": "184",
-      "member_name": "Unknown",
-      "preferred_shift_types": [
-        "SAT_PM",
-        "WED_AM",
-        "THU_PM",
+      "blank_shift_types": [
+        "FRI_AM",
         "FRI_PM",
-        "WED_PM",
-        "SAT_AM"
-      ],
-      "source": "fallback_from_peer_patterns"
+        "SAT_AM",
+        "SAT_PM",
+        "SUN_AM"
+      ]
     },
     "185": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
       "available_shift_types": [],
       "do_not_schedule_shift_types": [],
-      "preferred_shift_types": []
-    },
-    "186": {
-      "available_shift_types": [],
-      "do_not_schedule_shift_types": [],
-      "preferred_shift_types": []
-    },
-    "187": {
-      "available_shift_types": [
-        "FRI_PM",
-        "WED_AM",
-        "SAT_AM",
-        "WED_PM",
-        "SAT_PM",
+      "blank_shift_types": [
         "MON_AM",
         "MON_PM",
         "TUE_AM",
         "TUE_PM",
-        "FRI_AM",
+        "WED_AM",
+        "WED_PM",
         "THU_AM",
         "THU_PM",
+        "FRI_AM",
+        "FRI_PM",
+        "SAT_AM",
+        "SAT_PM",
+        "SUN_AM",
+        "SUN_PM"
+      ]
+    },
+    "186": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 36,
+      "slot_counts": {
+        "FRI_AM": 5,
+        "FRI_PM": 2,
+        "MON_AM": 7,
+        "THU_AM": 2,
+        "THU_PM": 2,
+        "WED_AM": 11,
+        "WED_PM": 7
+      },
+      "statuses": {
+        "MON_AM": "PREFERRED",
+        "MON_PM": "DO_NOT_SCHEDULE",
+        "TUE_AM": "DO_NOT_SCHEDULE",
+        "TUE_PM": "DO_NOT_SCHEDULE",
+        "WED_AM": "PREFERRED",
+        "WED_PM": "PREFERRED",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "AVAILABLE",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "DO_NOT_SCHEDULE",
+        "SAT_PM": "DO_NOT_SCHEDULE",
+        "SUN_AM": "DO_NOT_SCHEDULE",
+        "SUN_PM": "DO_NOT_SCHEDULE"
+      },
+      "preferred_shift_types": [
+        "MON_AM",
+        "WED_AM",
+        "WED_PM"
+      ],
+      "available_shift_types": [
+        "FRI_AM"
+      ],
+      "do_not_schedule_shift_types": [
+        "MON_PM",
+        "TUE_AM",
+        "TUE_PM",
+        "SAT_AM",
+        "SAT_PM",
         "SUN_AM",
         "SUN_PM"
       ],
-      "do_not_schedule_shift_types": [],
-      "history_counts": {
+      "blank_shift_types": [
+        "THU_AM",
+        "THU_PM",
+        "FRI_PM"
+      ]
+    },
+    "187": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 86,
+      "slot_counts": {
         "FRI_AM": 6,
         "FRI_PM": 11,
         "MON_AM": 6,
@@ -103011,54 +102590,178 @@
         "WED_AM": 10,
         "WED_PM": 9
       },
-      "member_id": "187",
-      "member_name": "Gordon Grant",
+      "statuses": {
+        "MON_AM": "PREFERRED",
+        "MON_PM": "PREFERRED",
+        "TUE_AM": "PREFERRED",
+        "TUE_PM": "PREFERRED",
+        "WED_AM": "PREFERRED",
+        "WED_PM": "PREFERRED",
+        "THU_AM": "AVAILABLE",
+        "THU_PM": "AVAILABLE",
+        "FRI_AM": "PREFERRED",
+        "FRI_PM": "PREFERRED",
+        "SAT_AM": "PREFERRED",
+        "SAT_PM": "PREFERRED",
+        "SUN_AM": "AVAILABLE",
+        "SUN_PM": "BLANK"
+      },
       "preferred_shift_types": [
-        "FRI_PM",
+        "MON_AM",
+        "MON_PM",
+        "TUE_AM",
+        "TUE_PM",
         "WED_AM",
-        "SAT_AM",
         "WED_PM",
-        "SAT_PM",
-        "MON_AM"
+        "FRI_AM",
+        "FRI_PM",
+        "SAT_AM",
+        "SAT_PM"
       ],
-      "source": "history"
+      "available_shift_types": [
+        "THU_AM",
+        "THU_PM",
+        "SUN_AM"
+      ],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
+        "SUN_PM"
+      ]
     },
     "188": {
-      "available_shift_types": [],
-      "do_not_schedule_shift_types": [],
-      "preferred_shift_types": []
-    },
-    "189": {
-      "available_shift_types": [
-        "FRI_PM",
-        "THU_PM",
-        "SAT_PM",
-        "WED_PM",
-        "WED_AM",
-        "MON_PM",
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 69,
+      "slot_counts": {
+        "FRI_AM": 3,
+        "FRI_PM": 9,
+        "MON_PM": 10,
+        "SAT_PM": 5,
+        "SUN_PM": 20,
+        "THU_PM": 4,
+        "TUE_PM": 14,
+        "WED_PM": 4
+      },
+      "statuses": {
+        "MON_AM": "DO_NOT_SCHEDULE",
+        "MON_PM": "AVAILABLE",
+        "TUE_AM": "DO_NOT_SCHEDULE",
+        "TUE_PM": "PREFERRED",
+        "WED_AM": "DO_NOT_SCHEDULE",
+        "WED_PM": "AVAILABLE",
+        "THU_AM": "DO_NOT_SCHEDULE",
+        "THU_PM": "AVAILABLE",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "AVAILABLE",
+        "SAT_AM": "DO_NOT_SCHEDULE",
+        "SAT_PM": "AVAILABLE",
+        "SUN_AM": "DO_NOT_SCHEDULE",
+        "SUN_PM": "PREFERRED"
+      },
+      "preferred_shift_types": [
         "TUE_PM",
-        "SAT_AM"
+        "SUN_PM"
+      ],
+      "available_shift_types": [
+        "MON_PM",
+        "WED_PM",
+        "THU_PM",
+        "FRI_PM",
+        "SAT_PM"
       ],
       "do_not_schedule_shift_types": [
         "MON_AM",
         "TUE_AM",
+        "WED_AM",
         "THU_AM",
+        "SAT_AM",
+        "SUN_AM"
+      ],
+      "blank_shift_types": [
+        "FRI_AM"
+      ]
+    },
+    "189": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
+        "MON_AM",
+        "MON_PM",
+        "TUE_AM",
+        "TUE_PM",
+        "WED_AM",
+        "WED_PM",
+        "THU_AM",
+        "THU_PM",
         "FRI_AM",
+        "FRI_PM",
+        "SAT_AM",
+        "SAT_PM",
         "SUN_AM",
         "SUN_PM"
-      ],
-      "history_counts": {},
-      "member_id": "189",
-      "member_name": "Collin Harrison",
-      "preferred_shift_types": [
-        "FRI_PM",
-        "THU_PM",
-        "SAT_PM",
-        "WED_PM",
+      ]
+    },
+    "190": {
+      "source": "suggested_from_historical_boards",
+      "confirmed": false,
+      "sample_size": 0,
+      "slot_counts": {},
+      "statuses": {
+        "MON_AM": "BLANK",
+        "MON_PM": "BLANK",
+        "TUE_AM": "BLANK",
+        "TUE_PM": "BLANK",
+        "WED_AM": "BLANK",
+        "WED_PM": "BLANK",
+        "THU_AM": "BLANK",
+        "THU_PM": "BLANK",
+        "FRI_AM": "BLANK",
+        "FRI_PM": "BLANK",
+        "SAT_AM": "BLANK",
+        "SAT_PM": "BLANK",
+        "SUN_AM": "BLANK",
+        "SUN_PM": "BLANK"
+      },
+      "preferred_shift_types": [],
+      "available_shift_types": [],
+      "do_not_schedule_shift_types": [],
+      "blank_shift_types": [
+        "MON_AM",
+        "MON_PM",
+        "TUE_AM",
+        "TUE_PM",
         "WED_AM",
-        "MON_PM"
-      ],
-      "source": "fallback_from_peer_patterns"
+        "WED_PM",
+        "THU_AM",
+        "THU_PM",
+        "FRI_AM",
+        "FRI_PM",
+        "SAT_AM",
+        "SAT_PM",
+        "SUN_AM",
+        "SUN_PM"
+      ]
     }
   }
 }
