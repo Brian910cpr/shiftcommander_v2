@@ -269,7 +269,7 @@
       const host = window.location.hostname;
       return host === "adr-fr.org" || host === "www.adr-fr.org" ? PUBLIC_API_BASE : "";
     }
-    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || defaultApiBase();
+    const API_BASE = window.SC_API_BASE_URL || defaultApiBase() || localStorage.getItem("sc_api_base_url") || "";
     const state = {
       members: [],
       memberById: new Map(),

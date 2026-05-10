@@ -123,6 +123,10 @@ class DebugContractTests(unittest.TestCase):
         self.assertIn("Open Seats", supervisor)
 
         self.assertIn("/api/member/context", member)
+        self.assertIn('event.target.closest(".state-btn")', member)
+        self.assertIn('setStatus(button.dataset.date, button.dataset.shift, button.dataset.value)', member)
+        self.assertIn('apiPath("/api/member/availability")', member)
+        self.assertIn("DEFAULT_EDITABLE_WEEK_OFFSET = 3", member)
         self.assertNotIn("./data/", member)
         self.assertIn("Assigned Shifts", member)
 
@@ -136,7 +140,7 @@ class DebugContractTests(unittest.TestCase):
             text = (DOCS_DIR / name).read_text(encoding="utf-8")
             self.assertIn('const PUBLIC_API_BASE = "https://shiftcommander-v2.onrender.com";', text)
             self.assertIn('host === "adr-fr.org" || host === "www.adr-fr.org"', text)
-            self.assertIn('|| defaultApiBase()', text)
+            self.assertIn('window.SC_API_BASE_URL || defaultApiBase() || localStorage.getItem("sc_api_base_url") || ""', text)
 
     def test_public_docs_do_not_contain_git_conflict_markers(self) -> None:
         markers = ["<<<<<<<", "=======", ">>>>>>>", "Updated upstream", "Stashed changes"]

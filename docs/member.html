@@ -261,7 +261,7 @@
       const host = window.location.hostname;
       return host === "adr-fr.org" || host === "www.adr-fr.org" ? PUBLIC_API_BASE : "";
     }
-    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || defaultApiBase();
+    const API_BASE = window.SC_API_BASE_URL || defaultApiBase() || localStorage.getItem("sc_api_base_url") || "";
     const STORAGE_TOKEN_KEY = "sc_member_session_token";
     const STORAGE_USER_KEY = "sc_member_user_id";
     const STORAGE_QT_MEMBER_KEY = "sc_quick_test_member_id";
