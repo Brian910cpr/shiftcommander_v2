@@ -145,6 +145,18 @@ class DebugContractTests(unittest.TestCase):
             for marker in markers:
                 self.assertNotIn(marker, text, f"{name} contains {marker}")
 
+    def test_render_backend_config_points_at_flask_app(self) -> None:
+        render_yaml = (ROOT / "render.yaml").read_text(encoding="utf-8")
+        procfile = (ROOT / "Procfile").read_text(encoding="utf-8")
+        start_command = "python -m gunicorn server:app --bind 0.0.0.0:$PORT"
+
+        self.assertIn("name: shiftcommander-backend", render_yaml)
+        self.assertIn("runtime: python", render_yaml)
+        self.assertIn(f"startCommand: {start_command}", render_yaml)
+        self.assertIn("healthCheckPath: /api/health", render_yaml)
+        self.assertIn("autoDeployTrigger: commit", render_yaml)
+        self.assertIn(f"web: {start_command}", procfile)
+
 
 if __name__ == "__main__":
     unittest.main()

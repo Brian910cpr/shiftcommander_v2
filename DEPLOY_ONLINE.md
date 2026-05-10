@@ -30,7 +30,8 @@ Configured web service:
 
 - service name: `shiftcommander-backend`
 - build command: `pip install -r requirements.txt`
-- start command: `gunicorn server:app`
+- start command: `python -m gunicorn server:app --bind 0.0.0.0:$PORT`
+- health check path: `/api/health`
 
 Expected Render backend URL:
 
@@ -85,10 +86,20 @@ python server.py
 Render / Railway ready:
 
 ```text
-gunicorn server:app
+python -m gunicorn server:app --bind 0.0.0.0:$PORT
 ```
 
 Render injects `PORT` automatically. `server.py` also binds to `0.0.0.0` for local fallback execution.
+
+If configuring Render manually in the dashboard, use:
+
+- Runtime: Python
+- Root directory: blank / repository root
+- Branch: `main`
+- Build command: `pip install -r requirements.txt`
+- Start command: `python -m gunicorn server:app --bind 0.0.0.0:$PORT`
+- Health check path: `/api/health`
+- Auto deploy: enabled for `main`
 
 ## Required backend endpoints
 
