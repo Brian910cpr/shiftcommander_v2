@@ -3,6 +3,7 @@ import json
 import shutil
 import sys
 import unittest
+from datetime import date
 from pathlib import Path
 
 
@@ -186,6 +187,25 @@ class AppSmokeTests(unittest.TestCase):
                 for shift in shifts[:10]
             )
         )
+        assignment_start = date.fromisoformat(payload["build"].get("assignment_start_date"))
+        assigned_shift_dates = [
+            date.fromisoformat(str(shift.get("date")))
+            for shift in shifts
+            if any(seat.get("assigned") for seat in shift.get("seats", []) if seat.get("active") is not False)
+        ]
+        self.assertGreaterEqual(min(assigned_shift_dates), assignment_start)
+        active_cycle_shifts = [
+            shift
+            for shift in shifts
+            if str(shift.get("date") or "") and date.fromisoformat(str(shift.get("date"))) < assignment_start
+        ]
+        self.assertGreater(len(active_cycle_shifts), 0)
+        self.assertFalse(any(
+            seat.get("assigned")
+            for shift in active_cycle_shifts
+            for seat in shift.get("seats", [])
+            if seat.get("active") is not False
+        ))
 
         self.assertTrue(debug_dir.exists(), str(debug_dir))
         self.assertTrue(shifts_path.exists(), str(shifts_path))

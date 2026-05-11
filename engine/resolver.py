@@ -7,12 +7,16 @@ from copy import deepcopy
 from datetime import datetime, timedelta, UTC
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from engine.rotation_engine import get_track_status_for_date
 
 DEFAULT_POLICY = {
     "visible_weeks": 3,
     "lock_buffer_weeks": 1,
+    "operational_cycle_start_weekday": "THU",
+    "lock_current_operational_cycle": True,
+    "auto_generate_next_cycle_at": "Wednesday 23:55 America/New_York",
     "protect_ft_minimums": True,
     "allow_reserve_relief": True,
     "preserve_existing_assignments": True,
@@ -36,6 +40,9 @@ DEFAULT_POLICY = {
 }
 
 WEEKDAY_CODES = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+WEEKDAY_INDEX = {code: index for index, code in enumerate(WEEKDAY_CODES)}
+OPERATIONAL_TIMEZONE = "America/New_York"
+DEFAULT_OPERATIONAL_CYCLE_START = "THU"
 
 
 # ============================================================
@@ -77,6 +84,62 @@ def upper_str(value: Any) -> str:
 
 def lower_str(value: Any) -> str:
     return str(value or "").strip().lower()
+
+
+def nth_weekday_of_month(year: int, month: int, weekday: int, occurrence: int) -> Any:
+    day = datetime(year, month, 1).date()
+    day += timedelta(days=(weekday - day.weekday()) % 7)
+    return day + timedelta(days=7 * (occurrence - 1))
+
+
+def fallback_eastern_today() -> Any:
+    now_utc = datetime.now(UTC)
+    dst_start_day = nth_weekday_of_month(now_utc.year, 3, 6, 2)
+    dst_end_day = nth_weekday_of_month(now_utc.year, 11, 6, 1)
+    dst_start_utc = datetime(now_utc.year, 3, dst_start_day.day, 7, 0, tzinfo=UTC)
+    dst_end_utc = datetime(now_utc.year, 11, dst_end_day.day, 6, 0, tzinfo=UTC)
+    offset_hours = -4 if dst_start_utc <= now_utc < dst_end_utc else -5
+    return (now_utc + timedelta(hours=offset_hours)).date()
+
+
+def local_operational_today() -> Any:
+    try:
+        return datetime.now(ZoneInfo(OPERATIONAL_TIMEZONE)).date()
+    except ZoneInfoNotFoundError:
+        return fallback_eastern_today()
+
+
+def operational_cycle_weekday(policy: Optional[Dict[str, Any]] = None) -> int:
+    raw = upper_str((policy or {}).get("operational_cycle_start_weekday") or DEFAULT_OPERATIONAL_CYCLE_START)
+    return WEEKDAY_INDEX.get(raw, WEEKDAY_INDEX[DEFAULT_OPERATIONAL_CYCLE_START])
+
+
+def operational_cycle_start_for(day: Any, policy: Optional[Dict[str, Any]] = None) -> Any:
+    cycle_weekday = operational_cycle_weekday(policy)
+    return day - timedelta(days=(day.weekday() - cycle_weekday) % 7)
+
+
+def next_operational_cycle_start_for(day: Any, policy: Optional[Dict[str, Any]] = None) -> Any:
+    return operational_cycle_start_for(day, policy) + timedelta(days=7)
+
+
+def parse_context_today(data: Dict[str, Any]) -> Any:
+    candidates = [
+        data.get("today") if isinstance(data, dict) else None,
+        deep_get(data, ["build", "today"]),
+        deep_get(data, ["build", "operational_today"]),
+        deep_get(data, ["settings", "today"]),
+        deep_get(data, ["settings", "operational_today"]),
+    ]
+    for candidate in candidates:
+        raw = str(candidate or "").strip()
+        if not raw:
+            continue
+        try:
+            return datetime.fromisoformat(raw[:10]).date()
+        except ValueError:
+            continue
+    return local_operational_today()
 
 
 def normalize_status(value: Any) -> str:
@@ -439,14 +502,14 @@ def compute_lock_status(shift: Dict[str, Any], seat: Dict[str, Any], ctx: Dict[s
         return True, "explicit_locked", "explicit", explicit_entry
 
     shift_date = get_shift_date(shift)
-    today = ctx["today"]
     policy = ctx["policy"]
-    visible_weeks = as_int(policy.get("visible_weeks"), 3) or 3
-    lock_buffer_weeks = as_int(policy.get("lock_buffer_weeks"), 1) or 1
-    lock_window_days = (visible_weeks + lock_buffer_weeks) * 7
-    if shift_date and shift_date <= today + timedelta(days=lock_window_days):
-        return True, "auto_window", "time_window", None
-    return False, None, "time_window", None
+    if (
+        policy.get("lock_current_operational_cycle", True)
+        and shift_date
+        and shift_date < ctx["next_operational_cycle_start"]
+    ):
+        return True, "active_operational_cycle", "operational_cycle", None
+    return False, None, "operational_cycle", None
 
 
 def get_week_key(shift_date) -> str:
@@ -1539,21 +1602,24 @@ def commit_assignment(
 def initialize_shift_state(shift: Dict[str, Any], ctx: Dict[str, Any]) -> bool:
     shift_date = get_shift_date(shift)
 
-    visible_weeks = as_int(ctx["policy"].get("visible_weeks"), 3) or 3
-    lock_buffer_weeks = as_int(ctx["policy"].get("lock_buffer_weeks"), 1) or 1
-    lock_window_days = (visible_weeks + lock_buffer_weeks) * 7
-    lock_cutoff_date = ctx["today"] + timedelta(days=lock_window_days)
+    assignment_start_date = ctx["next_operational_cycle_start"]
+    lock_window_days = max(0, (assignment_start_date - ctx["today"]).days - 1)
+    lock_cutoff_date = assignment_start_date - timedelta(days=1)
 
     explicit_entries_used = 0
     shift["resolver"] = {
         "locked": False,
         "lock_reason": None,
-        "lock_source": "time_window",
+        "lock_source": "operational_cycle",
         "notes": [],
         "pattern_key": get_pattern_key_from_shift(shift),
         "week_key": get_week_key(shift_date),
         "generated_at": ctx["build_generated_at"],
         "today": ctx["today"].isoformat(),
+        "operational_timezone": OPERATIONAL_TIMEZONE,
+        "operational_cycle_start": ctx["operational_cycle_start"].isoformat(),
+        "next_operational_cycle_start": assignment_start_date.isoformat(),
+        "assignment_start_date": assignment_start_date.isoformat(),
         "lock_window_days": lock_window_days,
         "lock_cutoff_date": lock_cutoff_date.isoformat(),
         "shift_date": shift_date.isoformat() if shift_date else None,
@@ -1602,6 +1668,10 @@ def initialize_shift_state(shift: Dict[str, Any], ctx: Dict[str, Any]) -> bool:
             "locked": locked,
             "lock_reason": lock_reason,
             "lock_source": lock_source,
+            "operational_timezone": OPERATIONAL_TIMEZONE,
+            "operational_cycle_start": ctx["operational_cycle_start"].isoformat(),
+            "next_operational_cycle_start": assignment_start_date.isoformat(),
+            "assignment_start_date": assignment_start_date.isoformat(),
             "lock_window_days": lock_window_days,
             "lock_cutoff_date": lock_cutoff_date.isoformat(),
         }
@@ -1625,7 +1695,7 @@ def initialize_shift_state(shift: Dict[str, Any], ctx: Dict[str, Any]) -> bool:
         shift["resolver"]["lock_reason"] = "explicit_locked"
     shift["resolver"]["locked"] = shift_locked
     if shift_locked and shift["resolver"]["lock_source"] != "explicit":
-        shift["resolver"]["lock_reason"] = "auto_window"
+        shift["resolver"]["lock_reason"] = "active_operational_cycle"
     return shift_locked
 
 
@@ -1898,7 +1968,7 @@ def run_shift_passes(shift: Dict[str, Any], ctx: Dict[str, Any], decision_stage:
             seat["fallback_reason"] = None
             seat["display_open_alert"] = True
             seat["pass_sequence"].append({"stage": decision_stage, "pass": "locked_unfilled"})
-            shift["resolver"]["notes"].append(f"{role}: locked and unfilled under current lock model")
+            shift["resolver"]["notes"].append(f"{role}: current operational cycle left open for manual staffing")
             continue
         if seat.get("locked") and seat.get("assigned") in (None, "") and seat.get("assigned_name"):
             seat["decision_stage"] = "preserve_existing"
@@ -2003,12 +2073,18 @@ def build_context(data: Dict[str, Any]) -> Dict[str, Any]:
 
     member_name_index = build_member_name_index(usable_members)
     explicit_lock_index, explicit_lock_assumptions = build_explicit_lock_index(schedule_locked, member_name_index)
+    today = parse_context_today(data)
+    operational_cycle_start = operational_cycle_start_for(today, policy)
+    next_operational_cycle_start = next_operational_cycle_start_for(today, policy)
 
     ctx = {
         "raw": data,
         "settings": settings,
         "policy": policy,
-        "today": datetime.now(UTC).date(),
+        "today": today,
+        "operational_timezone": OPERATIONAL_TIMEZONE,
+        "operational_cycle_start": operational_cycle_start,
+        "next_operational_cycle_start": next_operational_cycle_start,
         "members": usable_members,
         "member_index": member_index,
         "weekly_hours": weekly_hours,
@@ -2462,12 +2538,19 @@ def summarize_fill_stats(ctx: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def build_output(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    visible_weeks = as_int(ctx["policy"].get("visible_weeks"), 3) or 3
-    lock_buffer_weeks = as_int(ctx["policy"].get("lock_buffer_weeks"), 1) or 1
+    assignment_start_date = ctx["next_operational_cycle_start"]
+    lock_window_days = max(0, (assignment_start_date - ctx["today"]).days - 1)
     build = {
         "generated_at": ctx["build_generated_at"],
         "resolver_version": "v1.0-stable",
-        "lock_window_days": (visible_weeks + lock_buffer_weeks) * 7,
+        "operational_timezone": ctx["operational_timezone"],
+        "operational_cycle_start_weekday": upper_str(ctx["policy"].get("operational_cycle_start_weekday") or DEFAULT_OPERATIONAL_CYCLE_START),
+        "operational_today": ctx["today"].isoformat(),
+        "active_operational_cycle_start": ctx["operational_cycle_start"].isoformat(),
+        "next_operational_cycle_start": assignment_start_date.isoformat(),
+        "assignment_start_date": assignment_start_date.isoformat(),
+        "auto_generate_next_cycle_at": ctx["policy"].get("auto_generate_next_cycle_at"),
+        "lock_window_days": lock_window_days,
         "summary": summarize_fill_stats(ctx),
     }
     if ctx.get("debug_write_error"):
