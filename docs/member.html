@@ -279,6 +279,7 @@
       schedule: {},
       currentWeekOffset: DEFAULT_EDITABLE_WEEK_OFFSET,
       dirtyAvailability: false,
+      dirtyAvailabilityKeys: new Set(),
       lastSavedAt: "",
       quickTestMode: false,
       selectedMemberId: "",
@@ -363,6 +364,7 @@
       appState.availability.months[monthKey(dateIso)][getMemberId()][dateIso] ||= {};
       appState.availability.months[monthKey(dateIso)][getMemberId()][dateIso][shift] = value;
       appState.dirtyAvailability = true;
+      appState.dirtyAvailabilityKeys.add(`${dateIso}|${shift}`);
       renderSaveState();
     }
     function currentWindowStart(){ const today = new Date(); const start = startOfWeek(today); start.setDate(start.getDate() + (appState.currentWeekOffset * 7)); return start; }
@@ -710,6 +712,7 @@
       appState.schedule = context.data.schedule || {};
       appState.contextReady = true;
       appState.dirtyAvailability = false;
+      appState.dirtyAvailabilityKeys.clear();
       appState.lastSavedAt = "";
       renderSummary();
       renderAssignments();
@@ -813,11 +816,31 @@
 
     async function saveAvailability(){
       try{
+        const memberId = getMemberId();
+        const months = {};
+        for(const key of appState.dirtyAvailabilityKeys){
+          const [dateIso, shift] = key.split("|");
+          if(!dateIso || !shift || editLocked(dateIso)) continue;
+          const month = monthKey(dateIso);
+          const value = appState.availability?.months?.[month]?.[memberId]?.[dateIso]?.[shift] || "";
+          months[month] ||= {};
+          months[month][memberId] ||= {};
+          months[month][memberId][dateIso] ||= {};
+          months[month][memberId][dateIso][shift] = value;
+        }
+        if(!Object.keys(months).length){
+          appState.dirtyAvailability = false;
+          appState.dirtyAvailabilityKeys.clear();
+          renderSaveState();
+          showFlash("No editable changes to save.");
+          return;
+        }
         await apiPost(apiPath("/api/member/availability"), {
-          ...appState.availability,
-          member_id: getMemberId(),
+          member_id: memberId,
+          months,
         });
         appState.dirtyAvailability = false;
+        appState.dirtyAvailabilityKeys.clear();
         appState.lastSavedAt = new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
         renderSaveState();
         showFlash("Availability saved.");
