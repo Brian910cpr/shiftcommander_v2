@@ -5,12 +5,23 @@ import hashlib
 import hmac
 import secrets
 import shutil
+import sys
 import time
 from datetime import datetime, timedelta, UTC
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
 
+SERVER_IMPORT_STARTED = time.perf_counter()
+
+
+def startup_log(message):
+    elapsed_ms = (time.perf_counter() - SERVER_IMPORT_STARTED) * 1000
+    print(f"[shiftcommander-startup] {elapsed_ms:.1f}ms {message}", file=sys.stderr, flush=True)
+
+
+startup_log("server import started")
 app = Flask(__name__)
+startup_log("Flask app created")
 app.secret_key = os.environ.get("SECRET_KEY") or "shiftcommander-local-dev-secret-key"
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -1764,17 +1775,31 @@ def get_schedule_api():
 # HEALTH CHECK
 # =========================
 
+def health_payload():
+    return {
+        "status": "ok",
+        "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "build_code": BUILD_CODE,
+        "quick_test_mode": SC_QUICK_TEST_MODE,
+    }
+
+
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify({
-        "status": "ok",
-        "time": now_iso(),
-        "build_code": BUILD_CODE,
-        "quick_test_mode": quick_test_mode_enabled(),
-        "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
-        "public_base_url": current_public_base_url(),
-        "allowed_origins": SC_ALLOWED_ORIGINS,
+    return jsonify(health_payload())
+
+
+@app.route("/ api / health", methods=["GET"])
+def health_malformed_render_path():
+    response = jsonify({
+        **health_payload(),
+        "warning": "Render health check path contains spaces. Set Health Check Path to /api/health.",
     })
+    response.headers["X-ShiftCommander-Health-Path-Warning"] = "Set Render Health Check Path to /api/health"
+    return response
+
+
+startup_log("routes registered; startup complete")
 
 
 # =========================

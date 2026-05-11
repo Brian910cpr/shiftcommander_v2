@@ -115,6 +115,21 @@ class AppSmokeTests(unittest.TestCase):
             if temp_path.exists():
                 shutil.move(str(temp_path), str(schedule_path))
 
+    def test_health_check_is_lightweight_and_render_compatible(self):
+        response = self.client.get("/api/health")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload.get("status"), "ok")
+        self.assertIn("build_code", payload)
+        response.close()
+
+        response = self.client.get("/%20api%20/%20health")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload.get("status"), "ok")
+        self.assertIn("Health Check Path", payload.get("warning", ""))
+        response.close()
+
     def test_generate_writes_schedule_and_debug_outputs(self):
         self.login_supervisor()
         debug_dir = ROOT / "debug"
