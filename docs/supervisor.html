@@ -108,6 +108,14 @@
     .startup-issues h3{margin:0 0 8px}
     .startup-issues ul{margin:0;padding-left:18px}
     .startup-issues li{margin:6px 0}
+    .action-diagnostics{display:grid;gap:8px;padding:14px 16px;border-radius:var(--radius);border:1px solid rgba(105,184,255,.28);background:rgba(105,184,255,.07)}
+    .action-diagnostics h3{margin:0}
+    .action-diagnostics .diag-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .action-diagnostics .diag-item{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.14)}
+    .action-diagnostics .diag-item strong{display:block;margin-bottom:4px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+    .action-diagnostics .diag-item span{word-break:break-word}
+    .action-diagnostics.fail{border-color:rgba(255,123,123,.4);background:rgba(255,123,123,.08)}
+    .action-diagnostics.ok{border-color:rgba(82,239,127,.35);background:rgba(82,239,127,.06)}
     .empty.error{border:1px solid rgba(255,123,123,.35);background:rgba(255,123,123,.08);color:#ffd2d2}
     .error-detail{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word}
     .legend{display:grid;gap:8px}
@@ -141,6 +149,17 @@
 
     <div class="flash" id="flash"></div>
     <section class="startup-issues" id="startupIssues"></section>
+    <section class="action-diagnostics" id="actionDiagnostics">
+      <h3>Supervisor action status</h3>
+      <div class="diag-grid">
+        <div class="diag-item"><strong>API base</strong><span id="diagApiBase">--</span></div>
+        <div class="diag-item"><strong>Selected week</strong><span id="diagWeek">--</span></div>
+        <div class="diag-item"><strong>Session</strong><span id="diagSession">--</span></div>
+        <div class="diag-item"><strong>Attempted endpoint</strong><span id="diagEndpoint">None yet</span></div>
+        <div class="diag-item"><strong>HTTP status</strong><span id="diagStatus">--</span></div>
+        <div class="diag-item"><strong>Message</strong><span id="diagMessage">Click a workflow button to run an action.</span></div>
+      </div>
+    </section>
 
     <div class="layout">
       <aside class="card">
@@ -280,6 +299,12 @@
       selectedWeek: null,
       session: null,
       health: null,
+      lastAction: {
+        endpoint: "None yet",
+        status: "--",
+        message: "Click a workflow button to run an action.",
+        ok: null,
+      },
     };
 
     function apiUrl(path){
@@ -317,14 +342,48 @@
     }
 
     async function apiPost(url, payload){
+      updateActionDiagnostics({
+        endpoint: apiUrl(url),
+        status: "loading",
+        message: "Waiting for backend response...",
+        ok: null,
+      });
       const response = await fetch(apiUrl(url), {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload || {})
       });
-      const data = await response.json().catch(() => ({}));
-      if(!response.ok) throw new Error(data.error || `${url} failed`);
+      const text = await response.text();
+      let data = {};
+      try{
+        data = text ? JSON.parse(text) : {};
+      }catch{
+        data = {};
+      }
+      if(!response.ok){
+        const message = data.error || text || `${url} failed`;
+        updateActionDiagnostics({
+          endpoint: apiUrl(url),
+          status: response.status,
+          message,
+          ok: false,
+        });
+        const error = new Error(message);
+        error.url = apiUrl(url);
+        error.path = url;
+        error.status = response.status;
+        error.statusText = response.statusText;
+        error.responseText = text;
+        error.responseJson = data;
+        throw error;
+      }
+      updateActionDiagnostics({
+        endpoint: apiUrl(url),
+        status: response.status,
+        message: data.status || "ok",
+        ok: true,
+      });
       return data;
     }
 
@@ -355,6 +414,45 @@
       document.getElementById("apiBasePill").innerHTML = `<strong>API Base</strong> ${esc(API_BASE || "(same origin)")}`;
       document.getElementById("authModePill").innerHTML = `<strong>Auth Mode</strong> ${esc(state.health?.quick_test_mode ? "Quick Test Available" : "Real Login")}`;
       document.getElementById("healthPill").innerHTML = `<strong>Health</strong> ${esc(state.health?.status || "unreachable")}`;
+      updateActionDiagnostics();
+    }
+
+    function updateActionDiagnostics(next={}){
+      state.lastAction = { ...state.lastAction, ...next };
+      const node = document.getElementById("actionDiagnostics");
+      if(node){
+        node.className = `action-diagnostics ${state.lastAction.ok === true ? "ok" : state.lastAction.ok === false ? "fail" : ""}`.trim();
+      }
+      const sessionLabel = state.session
+        ? `${state.session.authenticated ? "authenticated" : "not authenticated"} · ${state.session.role || state.session.auth_mode || "unknown"}`
+        : "unknown";
+      const values = {
+        diagApiBase: API_BASE || "(same origin)",
+        diagWeek: state.selectedWeek || "(none selected)",
+        diagSession: sessionLabel,
+        diagEndpoint: state.lastAction.endpoint,
+        diagStatus: String(state.lastAction.status),
+        diagMessage: state.lastAction.message,
+      };
+      for(const [id, value] of Object.entries(values)){
+        const item = document.getElementById(id);
+        if(item) item.textContent = value;
+      }
+    }
+
+    function setWorkflowButtonsLoading(isLoading, activeId=""){
+      for(const id of ["buildShiftsBtn", "dryRunBtn", "resolveBtn", "publishBtn"]){
+        const button = document.getElementById(id);
+        if(!button) continue;
+        button.disabled = isLoading;
+        if(isLoading && id === activeId){
+          button.dataset.originalText ||= button.textContent;
+          button.textContent = "Working...";
+        }else if(!isLoading && button.dataset.originalText){
+          button.textContent = button.dataset.originalText;
+          delete button.dataset.originalText;
+        }
+      }
     }
 
     function asArray(value){
@@ -773,6 +871,7 @@
       state.schedule = schedule || {};
       state.supervisorState = supervisorState || { entries: [] };
       document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(sessionInfo?.member_id || sessionInfo?.role || "unknown")}`;
+      updateActionDiagnostics();
 
       const shiftList = asArray(state.schedule?.shifts);
       if(!shiftList.length){
@@ -810,12 +909,29 @@
         await loadAll();
         showFlash(successMessage, "success");
       }catch(error){
-        showFlash(error.message || "Action failed", "error");
+        showFlash(`Action failed: ${error.message || "unknown error"}`, "error");
       }
     }
 
     async function handleWeekAction(type){
-      if(!state.selectedWeek) return;
+      const actionMap = {
+        build: { id: "buildShiftsBtn", path: "/api/build_shifts", payload: {} },
+        dry: { id: "dryRunBtn", path: "/api/supervisor/resolve_week", payload: { week_start: state.selectedWeek, dry_run: true } },
+        resolve: { id: "resolveBtn", path: "/api/supervisor/resolve_week", payload: { week_start: state.selectedWeek, dry_run: false } },
+        publish: { id: "publishBtn", path: "/api/supervisor/publish_week", payload: { week_start: state.selectedWeek } },
+      };
+      const action = actionMap[type] || {};
+      if(type !== "build" && !state.selectedWeek){
+        updateActionDiagnostics({
+          endpoint: action.path ? apiUrl(action.path) : "none",
+          status: "blocked",
+          message: "No week is selected. Build shift skeletons first, then choose a week.",
+          ok: false,
+        });
+        showFlash("No week is selected. Build shift skeletons first.", "error");
+        return;
+      }
+      setWorkflowButtonsLoading(true, action.id);
       try{
         if(type === "build"){
           await apiPost("/api/build_shifts", {});
@@ -841,7 +957,11 @@
           showFlash("Week published. Current assigned seats are now displayed/frozen; unfilled seats remain OPEN.");
         }
       }catch(error){
-        showFlash(error.message || "Action failed", "error");
+        const statusText = error.status ? `HTTP ${error.status}` : "request failed";
+        showFlash(`${statusText}: ${error.message || "Action failed"}`, "error");
+      }finally{
+        setWorkflowButtonsLoading(false);
+        updateActionDiagnostics();
       }
     }
 
