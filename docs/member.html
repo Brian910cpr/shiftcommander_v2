@@ -61,6 +61,11 @@
     .calendar-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
     .calendar-note{margin:0 0 14px;color:var(--muted);line-height:1.45}
     .calendar-legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .repeat-tools{display:grid;gap:10px;margin:0 0 14px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.025)}
+    .repeat-tools-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+    .repeat-title{font-weight:950}
+    .repeat-fields{display:grid;grid-template-columns:2fr 1.4fr 1fr auto;gap:10px;align-items:end}
+    .repeat-preview{font-size:12px;color:var(--muted);line-height:1.35}
     .legend-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 10px;background:rgba(255,255,255,.03);font-size:12px;font-weight:850;color:var(--muted)}
     .legend-dot{width:10px;height:10px;border-radius:999px;background:var(--gray)}
     .legend-dot.preferred{background:var(--green)}
@@ -73,6 +78,9 @@
     .dow{padding:0 6px;text-align:center;font-size:12px;color:var(--muted);font-weight:900;letter-spacing:.05em;text-transform:uppercase}
     .day-card{padding:14px;display:grid;gap:12px;min-height:216px;box-shadow:none;background:rgba(255,255,255,.035);border-radius:16px}
     .day-card.locked{opacity:.6;background:rgba(255,255,255,.018)}
+    .day-card.active-cycle{border-color:rgba(255,209,102,.28)}
+    .day-card.future-cycle{border-color:rgba(82,239,127,.22)}
+    .day-card.frozen-cycle{border-color:rgba(105,184,255,.3)}
     .day-top{display:flex;justify-content:space-between;align-items:start}
     .day-num{font-size:34px;font-weight:950;line-height:1}
     .day-date{font-size:12px;color:var(--muted);font-weight:850;text-align:right}
@@ -101,10 +109,10 @@
     .diag-entry.ok{border-color:rgba(82,239,127,.35)}
     .diag-entry.fail{border-color:rgba(255,143,143,.35)}
     .diag-preview{color:var(--muted);font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-word}
-    @media (max-width:1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}}
+    @media (max-width:1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}.repeat-fields{grid-template-columns:1fr 1fr}}
     @media (max-width:1100px){.calendar-head,.calendar-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     @media (max-width:900px){.calendar-head{display:none}.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media (max-width:640px){.calendar-head,.calendar-grid,.summary-grid,.intro-banner{grid-template-columns:1fr}.intro-banner .btn{width:100%}}
+    @media (max-width:640px){.calendar-head,.calendar-grid,.summary-grid,.intro-banner,.repeat-fields{grid-template-columns:1fr}.intro-banner .btn{width:100%}}
   </style>
 </head>
 <body>
@@ -236,16 +244,50 @@
             <h2>Availability Calendar</h2>
             <span class="save-status" id="saveStatus">No changes yet</span>
           </div>
-          <p class="calendar-note">We start on editable future weeks so you can correct the system's assumptions. Locked shifts are dimmed because they are already close to the schedule.</p>
+          <p class="calendar-note">This view starts with the current Thursday cycle, then shows future cycles where you can correct the system's assumptions. Locked shifts are dimmed because they are already close to the schedule.</p>
           <div class="calendar-legend">
             <span class="legend-chip" title="I especially want this shift."><span class="legend-dot preferred"></span>Preferred</span>
             <span class="legend-chip" title="I can work this if needed."><span class="legend-dot available"></span>Available</span>
             <span class="legend-chip" title="I cannot work this shift."><span class="legend-dot do_not_schedule"></span>Cannot work</span>
             <span class="legend-chip" title="No answer yet."><span class="legend-dot blank"></span>Blank</span>
           </div>
+          <div class="repeat-tools" id="repeatTools">
+            <div class="repeat-tools-head">
+              <div>
+                <div class="repeat-title">Copy availability forward</div>
+                <div class="mini">Use this when your work, school, or home pattern repeats.</div>
+              </div>
+            </div>
+            <div class="repeat-fields">
+              <div class="field">
+                <label for="repeatSourceCycle">Copy from</label>
+                <select id="repeatSourceCycle"></select>
+              </div>
+              <div class="field">
+                <label for="repeatWhat">What to copy</label>
+                <select id="repeatWhat">
+                  <option value="cycle">Whole Thursday cycle</option>
+                  <option value="am">AM shifts only</option>
+                  <option value="pm">PM shifts only</option>
+                  <option value="thursday">Thursday shifts</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="repeatCycles">How far</label>
+                <select id="repeatCycles">
+                  <option value="6">6 cycles</option>
+                  <option value="4">4 cycles</option>
+                  <option value="8">8 cycles</option>
+                  <option value="2">2 cycles</option>
+                </select>
+              </div>
+              <button class="btn primary" id="applyRepeatBtn" type="button">Copy Forward</button>
+            </div>
+            <div class="repeat-preview" id="repeatPreview">Choose a cycle to copy forward.</div>
+          </div>
           <div class="calendar-controls">
             <button class="btn" id="prevBtn">← Earlier</button>
-            <button class="btn" id="todayBtn">Next Editable Weeks</button>
+            <button class="btn" id="todayBtn">Current Cycle</button>
             <button class="btn" id="nextBtn">Later →</button>
             <button class="btn primary" id="saveAvailabilityBtn">Save Availability</button>
           </div>
@@ -260,7 +302,10 @@
   <script>
     const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
     const PUBLIC_API_BASE = "https://shiftcommander-v2.onrender.com";
-    const DEFAULT_EDITABLE_WEEK_OFFSET = 3;
+    const DEFAULT_EDITABLE_WEEK_OFFSET = 0;
+    const VISIBLE_OPERATIONAL_CYCLES = 8;
+    const DAYS_PER_OPERATIONAL_CYCLE = 7;
+    const OPERATIONAL_CYCLE_START_DAY = 4; // Thursday
     function defaultApiBase(){
       const host = window.location.hostname;
       return host === "adr-fr.org" || host === "www.adr-fr.org" ? PUBLIC_API_BASE : "";
@@ -306,7 +351,16 @@
     function asArray(value){ return Array.isArray(value) ? value : []; }
     function isoToDate(iso){ return new Date(`${iso}T00:00:00`); }
     function formatDate(date){ return date.toISOString().slice(0,10); }
-    function startOfWeek(date){ const d = new Date(date); const offset = (d.getDay()+6)%7; d.setDate(d.getDate()-offset); return d; }
+    function addDays(date, days){ const d = new Date(date); d.setDate(d.getDate()+days); return d; }
+    function operationalCycleStart(date){
+      const d = new Date(date);
+      d.setHours(0,0,0,0);
+      const offset = (d.getDay() - OPERATIONAL_CYCLE_START_DAY + 7) % 7;
+      d.setDate(d.getDate() - offset);
+      return d;
+    }
+    function nextOperationalCycleStart(date){ return addDays(operationalCycleStart(date), DAYS_PER_OPERATIONAL_CYCLE); }
+    function shortDate(date){ return date.toLocaleDateString(undefined,{month:"short",day:"numeric"}); }
     function monthKey(iso){ return String(iso||"").slice(0,7); }
     function getMemberId(){ return String(appState.selectedMemberId || appState.member?.member_id || appState.member?.id || appState.session?.member_id || ""); }
     function patternKey(dateIso, shift){
@@ -367,9 +421,25 @@
       appState.dirtyAvailabilityKeys.add(`${dateIso}|${shift}`);
       renderSaveState();
     }
-    function currentWindowStart(){ const today = new Date(); const start = startOfWeek(today); start.setDate(start.getDate() + (appState.currentWeekOffset * 7)); return start; }
-    function visibleDates(){ const start = currentWindowStart(); return Array.from({length:14}, (_,i) => { const d = new Date(start); d.setDate(start.getDate()+i); return d; }); }
-    function editLocked(dateIso){ const date = isoToDate(dateIso); const cutoff = new Date(); cutoff.setHours(0,0,0,0); cutoff.setDate(cutoff.getDate()+14); return date < cutoff; }
+    function currentWindowStart(){
+      const start = operationalCycleStart(new Date());
+      start.setDate(start.getDate() + (appState.currentWeekOffset * DAYS_PER_OPERATIONAL_CYCLE));
+      return start;
+    }
+    function visibleDates(){
+      const start = currentWindowStart();
+      return Array.from({length: VISIBLE_OPERATIONAL_CYCLES * DAYS_PER_OPERATIONAL_CYCLE}, (_,i) => addDays(start, i));
+    }
+    function editLocked(dateIso){
+      const date = isoToDate(dateIso);
+      return date < nextOperationalCycleStart(new Date());
+    }
+    function cycleClass(dateIso){
+      const date = isoToDate(dateIso);
+      const nextStart = nextOperationalCycleStart(new Date());
+      if(date < nextStart) return "active-cycle";
+      return "future-cycle";
+    }
     function selectedMemberName(){
       return appState.member?.name || appState.session?.member_name || appState.roster.find((member) => String(member.member_id || member.id) === getMemberId())?.name || "Member";
     }
@@ -435,7 +505,8 @@
       const ids = [
         "logoutBtn","saveProfileBtn","changePasswordBtn","saveAvailabilityBtn",
         "desiredHours","ampmPreference","shift24Preference","swapPreference",
-        "currentPassword","newPassword","confirmPassword","prevBtn","todayBtn","nextBtn","quickTestMemberSelect"
+        "currentPassword","newPassword","confirmPassword","prevBtn","todayBtn","nextBtn","quickTestMemberSelect",
+        "repeatSourceCycle","repeatWhat","repeatCycles","applyRepeatBtn"
       ];
       ids.forEach((id) => {
         const node = document.getElementById(id);
@@ -608,6 +679,87 @@
       `).join("") : `<div class="empty">No assigned shifts were found for this member in the current resolved schedule.</div>`;
     }
 
+    function visibleCycleStarts(){
+      const start = currentWindowStart();
+      return Array.from({length: VISIBLE_OPERATIONAL_CYCLES}, (_, index) => addDays(start, index * DAYS_PER_OPERATIONAL_CYCLE));
+    }
+
+    function sourceOffsetsForRepeat(kind){
+      if(kind === "am") return Array.from({length: 7}, (_, day) => ({ day, shifts:["AM"] }));
+      if(kind === "pm") return Array.from({length: 7}, (_, day) => ({ day, shifts:["PM"] }));
+      if(kind === "thursday") return [{ day:0, shifts:["AM","PM"] }];
+      return Array.from({length: 7}, (_, day) => ({ day, shifts:["AM","PM"] }));
+    }
+
+    function repeatKindLabel(kind){
+      if(kind === "am") return "AM shifts";
+      if(kind === "pm") return "PM shifts";
+      if(kind === "thursday") return "Thursday shifts";
+      return "AM and PM";
+    }
+
+    function renderRepeatTools(){
+      const sourceSelect = document.getElementById("repeatSourceCycle");
+      const kindSelect = document.getElementById("repeatWhat");
+      const cyclesSelect = document.getElementById("repeatCycles");
+      const preview = document.getElementById("repeatPreview");
+      if(!sourceSelect || !kindSelect || !cyclesSelect || !preview) return;
+
+      const previous = sourceSelect.value;
+      const nextStart = nextOperationalCycleStart(new Date());
+      const cycles = visibleCycleStarts().filter((start) => start >= nextStart);
+      sourceSelect.innerHTML = cycles.map((start) => {
+        const end = addDays(start, 6);
+        return `<option value="${formatDate(start)}">${shortDate(start)} - ${shortDate(end)}</option>`;
+      }).join("");
+      if(previous && [...sourceSelect.options].some((option) => option.value === previous)){
+        sourceSelect.value = previous;
+      }
+      if(!sourceSelect.value && sourceSelect.options.length){
+        sourceSelect.value = sourceSelect.options[0].value;
+      }
+
+      if(!sourceSelect.value){
+        preview.textContent = "No editable future cycle is visible. Go later to copy availability forward.";
+        return;
+      }
+      const sourceStart = isoToDate(sourceSelect.value);
+      const sourceEnd = addDays(sourceStart, 6);
+      const count = Number(cyclesSelect.value || 6);
+      preview.textContent = `Will copy ${repeatKindLabel(kindSelect.value)} from ${shortDate(sourceStart)} - ${shortDate(sourceEnd)} into the next ${count} operational cycles.`;
+    }
+
+    function applyRepeatForward(){
+      if(!appState.contextReady){
+        showFlash("Member context is still loading.", "error");
+        return;
+      }
+      const sourceSelect = document.getElementById("repeatSourceCycle");
+      const kindSelect = document.getElementById("repeatWhat");
+      const cyclesSelect = document.getElementById("repeatCycles");
+      if(!sourceSelect?.value) {
+        showFlash("Choose a future cycle to copy from.", "error");
+        return;
+      }
+      const sourceStart = isoToDate(sourceSelect.value);
+      const offsets = sourceOffsetsForRepeat(kindSelect.value);
+      const cycles = Number(cyclesSelect.value || 6);
+      let changed = 0;
+      for(let cycle = 1; cycle <= cycles; cycle += 1){
+        offsets.forEach(({ day, shifts }) => {
+          const sourceDate = formatDate(addDays(sourceStart, day));
+          const targetDate = formatDate(addDays(sourceStart, (cycle * DAYS_PER_OPERATIONAL_CYCLE) + day));
+          if(editLocked(targetDate)) return;
+          shifts.forEach((shift) => {
+            setStatus(targetDate, shift, getStatus(sourceDate, shift));
+            changed += 1;
+          });
+        });
+      }
+      renderCalendar();
+      showFlash(changed ? `Copied availability to ${changed} future shifts. Save when ready.` : "No editable future shifts were changed.", changed ? "success" : "error");
+    }
+
     function renderCalendar(){
       if(!appState.member){
         setCalendarFallback("Availability calendar cannot render because member context is unavailable.");
@@ -615,14 +767,15 @@
       }
       clearCalendarFallback();
       const dates = visibleDates();
-      document.getElementById("calendarHead").innerHTML = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun"].slice(0, dates.length).map((dow) => `<div class="dow">${dow}</div>`).join("");
+      document.getElementById("calendarHead").innerHTML = dates.slice(0, 7).map((date) => `<div class="dow">${date.toLocaleDateString(undefined,{weekday:"short"})}</div>`).join("");
       document.getElementById("calendarGrid").innerHTML = dates.map((date) => {
         const iso = formatDate(date);
         const locked = editLocked(iso);
+        const dateCycleClass = cycleClass(iso);
         const rows = ["AM","PM"].map((shift) => {
           const value = getStatus(iso, shift);
           const label = stateLabel(value);
-          const help = locked ? "Locked because this date is close to the schedule." : stateHelp(value);
+          const help = locked ? "Current cycle is handled on the station whiteboard." : stateHelp(value);
           const next = nextState(value);
           const cls = stateClass(value);
           return `
@@ -638,16 +791,17 @@
           `;
         }).join("");
         return `
-          <div class="day-card ${locked ? "locked" : ""}">
+          <div class="day-card ${locked ? "locked" : ""} ${dateCycleClass}">
             <div class="day-top">
               <div class="day-num">${date.getDate()}</div>
               <div class="day-date">${date.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</div>
             </div>
             <div class="state-grid">${rows}</div>
-            <div class="day-note">${locked ? "Locked because this date is close to the schedule." : "Tap AM or PM to change your answer."}</div>
+            <div class="day-note">${locked ? "Current cycle: station whiteboard/manual." : "Future cycle: tap AM or PM to change your answer."}</div>
           </div>
         `;
       }).join("");
+      renderRepeatTools();
       renderSaveState();
     }
 
@@ -889,6 +1043,11 @@
     document.getElementById("todayBtn").addEventListener("click", () => { appState.currentWeekOffset = DEFAULT_EDITABLE_WEEK_OFFSET; renderCalendar(); });
     document.getElementById("prevBtn").addEventListener("click", () => { appState.currentWeekOffset -= 1; renderCalendar(); });
     document.getElementById("nextBtn").addEventListener("click", () => { appState.currentWeekOffset += 1; renderCalendar(); });
+    document.getElementById("applyRepeatBtn").addEventListener("click", applyRepeatForward);
+    ["repeatSourceCycle","repeatWhat","repeatCycles"].forEach((id) => {
+      const node = document.getElementById(id);
+      if(node) node.addEventListener("change", renderRepeatTools);
+    });
     document.getElementById("quickTestMemberSelect").addEventListener("change", async (event) => {
       if(!appState.quickTestMode) return;
       setQuickTestSelectedMember(event.target.value);

@@ -139,7 +139,11 @@ class DebugContractTests(unittest.TestCase):
         self.assertIn('apiPath("/api/member/availability")', member)
         self.assertIn("dirtyAvailabilityKeys", member)
         self.assertIn("No editable changes to save.", member)
-        self.assertIn("DEFAULT_EDITABLE_WEEK_OFFSET = 3", member)
+        self.assertIn("DEFAULT_EDITABLE_WEEK_OFFSET = 0", member)
+        self.assertIn("VISIBLE_OPERATIONAL_CYCLES = 8", member)
+        self.assertIn("OPERATIONAL_CYCLE_START_DAY = 4", member)
+        self.assertIn("Copy availability forward", member)
+        self.assertIn("applyRepeatForward", member)
         self.assertNotIn("./data/", member)
         self.assertIn("Assigned Shifts", member)
 
