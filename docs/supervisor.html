@@ -47,6 +47,8 @@
     .badge.draft{color:var(--muted)}
     .badge.live,.step-badge.live{color:var(--als);border-color:rgba(82,239,127,.35)}
     .badge.planned,.step-badge.planned{color:var(--warn);border-color:rgba(255,209,102,.35)}
+    .badge.demo{color:#ffe8a8;border-color:rgba(255,209,102,.55);background:rgba(255,209,102,.12)}
+    .hidden{display:none!important}
     .btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 14px;border-radius:14px;cursor:pointer;font-weight:850}
     .btn.primary{background:rgba(143,125,255,.18);border-color:rgba(143,125,255,.5)}
     .btn.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.4)}
@@ -140,6 +142,7 @@
         </div>
       </div>
       <div class="hero-actions">
+        <span class="badge demo hidden" id="quickTestSupervisorBadge">Quick Test Supervisor Mode</span>
         <span class="badge live">Live actions write backend files</span>
         <span class="badge planned">Availability is member-editable only outside the next 2 weeks</span>
         <button class="btn" id="refreshBtn">Refresh</button>
@@ -414,6 +417,7 @@
       document.getElementById("apiBasePill").innerHTML = `<strong>API Base</strong> ${esc(API_BASE || "(same origin)")}`;
       document.getElementById("authModePill").innerHTML = `<strong>Auth Mode</strong> ${esc(state.health?.quick_test_mode ? "Quick Test Available" : "Real Login")}`;
       document.getElementById("healthPill").innerHTML = `<strong>Health</strong> ${esc(state.health?.status || "unreachable")}`;
+      document.getElementById("quickTestSupervisorBadge").classList.toggle("hidden", !state.health?.quick_test_mode);
       updateActionDiagnostics();
     }
 

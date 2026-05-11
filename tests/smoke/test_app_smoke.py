@@ -130,6 +130,32 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("Health Check Path", payload.get("warning", ""))
         response.close()
 
+    def test_quick_test_supervisor_api_bypass_is_demo_only(self):
+        original = self.server.SC_QUICK_TEST_MODE
+        try:
+            with self.client.session_transaction() as session:
+                session.clear()
+            self.server.SC_QUICK_TEST_MODE = False
+            response = self.client.post("/api/build_shifts", headers={"Origin": "https://adr-fr.org"})
+            self.assertEqual(response.status_code, 401)
+            response.close()
+
+            self.server.SC_QUICK_TEST_MODE = True
+            response = self.client.post("/api/build_shifts", headers={"Origin": "https://adr-fr.org"})
+            self.assertEqual(response.status_code, 200)
+            payload = response.get_json()
+            self.assertEqual(payload.get("status"), "ok")
+            self.assertIn("shift_count", payload)
+            self.assertIsInstance(payload.get("schedule"), dict)
+            self.assertIsInstance(payload["schedule"].get("shifts"), list)
+            response.close()
+
+            response = self.client.post("/api/build_shifts", headers={"Origin": "https://not-allowed.example"})
+            self.assertEqual(response.status_code, 401)
+            response.close()
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original
+
     def test_generate_writes_schedule_and_debug_outputs(self):
         self.login_supervisor()
         debug_dir = ROOT / "debug"

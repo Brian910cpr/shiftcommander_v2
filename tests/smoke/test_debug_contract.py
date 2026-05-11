@@ -127,6 +127,8 @@ class DebugContractTests(unittest.TestCase):
         self.assertIn('apiPost("/api/supervisor/resolve_week"', supervisor)
         self.assertIn('apiPost("/api/supervisor/publish_week"', supervisor)
         self.assertIn("No week is selected. Build shift skeletons first.", supervisor)
+        self.assertIn('id="quickTestSupervisorBadge"', supervisor)
+        self.assertIn("Quick Test Supervisor Mode", supervisor)
 
         self.assertIn("/api/member/context", member)
         self.assertIn('id="startupLine"', member)
