@@ -353,15 +353,14 @@
     }
 
     .slot {
-      padding: 9px 10px;
-      border-radius: 12px;
+      padding: 14px 16px;
+      border-radius: 14px;
       background: rgba(255,255,255,0.045);
       border: 1px solid rgba(255,255,255,0.07);
-      min-height: 62px;
-      display: grid;
-      grid-template-columns: minmax(76px, 0.42fr) minmax(0, 1fr);
+      min-height: 58px;
+      display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: flex-start;
     }
 
     .slot.duty-seat {
@@ -397,20 +396,11 @@
       100% { box-shadow: 0 0 0 0 rgba(255, 100, 100, 0.03); }
     }
 
-    .seat-role {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 950;
-      letter-spacing: 0.08em;
-      line-height: 1.15;
-      text-transform: uppercase;
-    }
-
     .member {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      font-size: 25px;
+      font-size: 27px;
       font-weight: 900;
       line-height: 1.02;
       word-break: break-word;
@@ -437,15 +427,6 @@
       padding: 0;
       letter-spacing: 0.04em;
     }
-
-    .slot-note {
-      grid-column: 2;
-      margin-top: -6px;
-      color: rgba(238,244,255,0.62);
-      font-size: 11px;
-      font-weight: 800;
-    }
-
 
     .state {
       padding: 40px;
@@ -509,8 +490,7 @@
       .weekday-row, .board { grid-template-columns: 1fr; }
       .title { font-size: 28px; }
       .member { font-size: 22px; text-align: left; }
-      .slot { grid-template-columns: 1fr; gap: 4px; }
-      .slot-note { grid-column: 1; margin-top: 0; }
+      .slot { min-height: 54px; }
     }
   </style>
 </head>
@@ -974,15 +954,10 @@
       const memberClass = hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty");
       const openSeatClass = isFutureOpen ? `open-seat ${openUrgencyClass(shiftDate)}` : "";
       const dutyClass = isDutySeat(seat) ? "duty-seat" : "";
-      const role = seatRoleLabel(seat, options.forceOpenAls);
-      const note = options.forceOpenAls ? "No AEMT assigned" : "";
-      const showRoleLabel = options.forceOpenAls || isDutySeat(seat);
 
       return `
         <div class="slot ${openSeatClass} ${dutyClass}">
-          ${showRoleLabel ? `<div class="seat-role">${escapeHtml(role)}</div>` : ``}
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
-          ${note ? `<div class="slot-note">${escapeHtml(note)}</div>` : ``}
         </div>
       `;
     }
