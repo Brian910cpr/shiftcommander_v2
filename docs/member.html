@@ -372,12 +372,13 @@
     }
     function normalizeStatus(value){
       const raw = String(value || "").trim().toLowerCase();
+      if(raw === "blank" || raw === "no_answer") return "blank";
       if(raw === "preferred") return "preferred";
       if(raw === "available") return "available";
       if(raw === "do_not_schedule" || raw === "unavailable") return "do_not_schedule";
       return "";
     }
-    const AVAILABILITY_STATES = ["", "preferred", "available", "do_not_schedule"];
+    const AVAILABILITY_STATES = ["blank", "preferred", "available", "do_not_schedule"];
     function stateLabel(value){
       const status = normalizeStatus(value);
       if(status === "preferred") return "Preferred";
@@ -398,7 +399,7 @@
     function nextState(value){
       const current = normalizeStatus(value);
       const index = AVAILABILITY_STATES.indexOf(current);
-      return AVAILABILITY_STATES[(index + 1) % AVAILABILITY_STATES.length];
+      return AVAILABILITY_STATES[((index >= 0 ? index : 0) + 1) % AVAILABILITY_STATES.length];
     }
     function getSuggestedStatus(dateIso, shift){
       const memberPatterns = appState.availability?.patterns_by_member?.[getMemberId()] || {};
@@ -410,15 +411,22 @@
       if(asArray(memberPatterns.do_not_schedule_shift_types).map(String).includes(key)) return "do_not_schedule";
       return "";
     }
+    function getExplicitStatus(dateIso, shift){
+      const day = appState.availability?.months?.[monthKey(dateIso)]?.[getMemberId()]?.[dateIso];
+      if(!day || !Object.prototype.hasOwnProperty.call(day, shift)) return null;
+      return normalizeStatus(day[shift]) || "blank";
+    }
     function getStatus(dateIso, shift){
-      return normalizeStatus(appState.availability?.months?.[monthKey(dateIso)]?.[getMemberId()]?.[dateIso]?.[shift]) || getSuggestedStatus(dateIso, shift);
+      const explicit = getExplicitStatus(dateIso, shift);
+      if(explicit !== null) return explicit;
+      return getSuggestedStatus(dateIso, shift) || "blank";
     }
     function setStatus(dateIso, shift, value){
       appState.availability.months ||= {};
       appState.availability.months[monthKey(dateIso)] ||= {};
       appState.availability.months[monthKey(dateIso)][getMemberId()] ||= {};
       appState.availability.months[monthKey(dateIso)][getMemberId()][dateIso] ||= {};
-      appState.availability.months[monthKey(dateIso)][getMemberId()][dateIso][shift] = value;
+      appState.availability.months[monthKey(dateIso)][getMemberId()][dateIso][shift] = normalizeStatus(value) || "blank";
       appState.dirtyAvailability = true;
       appState.dirtyAvailabilityKeys.add(`${dateIso}|${shift}`);
       renderSaveState();
@@ -987,7 +995,7 @@
           const [dateIso, shift] = key.split("|");
           if(!dateIso || !shift || editLocked(dateIso)) continue;
           const month = monthKey(dateIso);
-          const value = appState.availability?.months?.[month]?.[memberId]?.[dateIso]?.[shift] || "";
+          const value = normalizeStatus(appState.availability?.months?.[month]?.[memberId]?.[dateIso]?.[shift]) || "blank";
           months[month] ||= {};
           months[month][memberId] ||= {};
           months[month][memberId][dateIso] ||= {};

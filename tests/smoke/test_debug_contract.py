@@ -147,6 +147,9 @@ class DebugContractTests(unittest.TestCase):
         self.assertIn("availability_edit_start_date", member)
         self.assertIn("data-locked", member)
         self.assertIn("Current Thursday cycle is handled on the station whiteboard.", member)
+        self.assertIn('const AVAILABILITY_STATES = ["blank", "preferred", "available", "do_not_schedule"]', member)
+        self.assertIn("Object.prototype.hasOwnProperty.call(day, shift)", member)
+        self.assertIn('normalizeStatus(value) || "blank"', member)
         self.assertNotIn("./data/", member)
         self.assertIn("Assigned Shifts", member)
 

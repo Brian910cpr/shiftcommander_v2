@@ -246,6 +246,23 @@ class AppSmokeTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             response.close()
 
+            for member_id in ["188", "146"]:
+                response = self.client.post("/api/member/availability", json={
+                    "member_id": member_id,
+                    "months": {
+                        target.strftime("%Y-%m"): {
+                            member_id: {
+                                target.isoformat(): {
+                                    "AM": "blank",
+                                    "PM": "blank",
+                                }
+                            }
+                        }
+                    },
+                })
+                self.assertEqual(response.status_code, 200, member_id)
+                response.close()
+
             response = self.client.post("/api/member/availability", json={
                 "member_id": "188",
                 "months": {
