@@ -979,12 +979,18 @@ def apply_member_profile_update(member, payload):
         scheduler["avoid_with"] = [str(value) for value in payload.get("avoid_with", []) if str(value).strip()]
 
 
+def member_availability_edit_start_date():
+    from engine.resolver import local_operational_today, next_operational_cycle_start_for
+
+    return next_operational_cycle_start_for(local_operational_today())
+
+
 def apply_member_availability_update(member_id, payload):
     if not isinstance(payload, dict) or not isinstance(payload.get("months"), dict):
         raise ValueError("Availability payload must contain a months object")
 
     full_payload = load_availability_payload()
-    cutoff_date = datetime.now(UTC).date() + timedelta(days=14)
+    edit_start_date = member_availability_edit_start_date()
 
     for month_key, month_bucket in payload["months"].items():
         if not isinstance(month_bucket, dict):
@@ -997,8 +1003,8 @@ def apply_member_availability_update(member_id, payload):
                 date_obj = datetime.fromisoformat(str(date_iso)[:10]).date()
             except ValueError:
                 continue
-            if date_obj < cutoff_date:
-                raise ValueError("Availability within the next 2 weeks is locked for member editing")
+            if date_obj < edit_start_date:
+                raise ValueError("Availability in the current Thursday cycle is locked for member editing")
             full_payload.setdefault("months", {}).setdefault(month_key, {}).setdefault(member_id, {})
             if isinstance(day_entry, dict):
                 full_payload["months"][month_key][member_id][date_iso] = day_entry
@@ -1346,7 +1352,7 @@ def get_member_context():
             "roster": member_roster_payload(),
             "availability": extract_member_availability(member_id),
             "schedule": load_json(SCHEDULE_FILE, {}),
-            "editing_lock_days": 14,
+            "availability_edit_start_date": member_availability_edit_start_date().isoformat(),
             "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
             "quick_test_mode": quick_test_mode_enabled(),
             "selected_member_id": member_id,

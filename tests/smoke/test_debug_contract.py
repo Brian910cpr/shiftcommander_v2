@@ -144,6 +144,9 @@ class DebugContractTests(unittest.TestCase):
         self.assertIn("OPERATIONAL_CYCLE_START_DAY = 4", member)
         self.assertIn("Copy availability forward", member)
         self.assertIn("applyRepeatForward", member)
+        self.assertIn("availability_edit_start_date", member)
+        self.assertIn("data-locked", member)
+        self.assertIn("Current Thursday cycle is handled on the station whiteboard.", member)
         self.assertNotIn("./data/", member)
         self.assertIn("Assigned Shifts", member)
 

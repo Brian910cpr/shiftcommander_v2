@@ -95,8 +95,9 @@
     .state-btn.available{background:rgba(113,82,12,.74);border-color:#ffbd4d}
     .state-btn.do_not_schedule{background:rgba(105,31,39,.76);border-color:#ff6f6f}
     .state-btn.blank{background:#1d3049;border-color:#587091}
-    .state-btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.05)}
+    .state-btn:hover:not(:disabled):not(.locked-state){transform:translateY(-1px);filter:brightness(1.05)}
     .state-btn:disabled{opacity:.45;cursor:not-allowed}
+    .state-btn.locked-state{opacity:.45;cursor:not-allowed}
     .day-note{font-size:12px;color:var(--muted);line-height:1.35}
     .empty{padding:18px;color:var(--muted)}
     .mini{font-size:12px;color:var(--muted)}
@@ -322,6 +323,7 @@
       roster: [],
       availability: { months: {} },
       schedule: {},
+      availabilityEditStartDate: "",
       currentWeekOffset: DEFAULT_EDITABLE_WEEK_OFFSET,
       dirtyAvailability: false,
       dirtyAvailabilityKeys: new Set(),
@@ -430,13 +432,20 @@
       const start = currentWindowStart();
       return Array.from({length: VISIBLE_OPERATIONAL_CYCLES * DAYS_PER_OPERATIONAL_CYCLE}, (_,i) => addDays(start, i));
     }
+    function memberEditStartDate(){
+      return appState.availabilityEditStartDate ? isoToDate(appState.availabilityEditStartDate) : nextOperationalCycleStart(new Date());
+    }
     function editLocked(dateIso){
       const date = isoToDate(dateIso);
-      return date < nextOperationalCycleStart(new Date());
+      return date < memberEditStartDate();
+    }
+    function lockReason(dateIso){
+      if(!editLocked(dateIso)) return "";
+      return "Current Thursday cycle is handled on the station whiteboard.";
     }
     function cycleClass(dateIso){
       const date = isoToDate(dateIso);
-      const nextStart = nextOperationalCycleStart(new Date());
+      const nextStart = memberEditStartDate();
       if(date < nextStart) return "active-cycle";
       return "future-cycle";
     }
@@ -706,7 +715,7 @@
       if(!sourceSelect || !kindSelect || !cyclesSelect || !preview) return;
 
       const previous = sourceSelect.value;
-      const nextStart = nextOperationalCycleStart(new Date());
+      const nextStart = memberEditStartDate();
       const cycles = visibleCycleStarts().filter((start) => start >= nextStart);
       sourceSelect.innerHTML = cycles.map((start) => {
         const end = addDays(start, 6);
@@ -772,17 +781,18 @@
         const iso = formatDate(date);
         const locked = editLocked(iso);
         const dateCycleClass = cycleClass(iso);
+        const lockedReason = lockReason(iso);
         const rows = ["AM","PM"].map((shift) => {
           const value = getStatus(iso, shift);
           const label = stateLabel(value);
-          const help = locked ? "Current cycle is handled on the station whiteboard." : stateHelp(value);
+          const help = locked ? lockedReason : stateHelp(value);
           const next = nextState(value);
           const cls = stateClass(value);
           return `
             <div class="shift-row">
               <div class="shift-label">${shift}</div>
               <div class="state-btns">
-                <button class="state-btn ${cls}" title="${esc(help)}" data-date="${iso}" data-shift="${shift}" data-value="${esc(next)}" ${locked ? "disabled" : ""}>
+                <button class="state-btn ${cls} ${locked ? "locked-state" : ""}" type="button" title="${esc(help)}" aria-disabled="${locked ? "true" : "false"}" data-date="${iso}" data-shift="${shift}" data-value="${esc(next)}" data-locked="${locked ? "true" : "false"}" data-lock-reason="${esc(lockedReason)}">
                   <span class="state-main">${esc(label)}</span>
                   <span class="state-help">${esc(help)}</span>
                 </button>
@@ -864,6 +874,7 @@
       appState.member = context.data.member;
       appState.availability = context.data.availability || { months:{} };
       appState.schedule = context.data.schedule || {};
+      appState.availabilityEditStartDate = context.data.availability_edit_start_date || "";
       appState.contextReady = true;
       appState.dirtyAvailability = false;
       appState.dirtyAvailabilityKeys.clear();
@@ -1069,6 +1080,10 @@
     document.body.addEventListener("click", (event) => {
       const button = event.target.closest(".state-btn");
       if(!button || !appState.contextReady) return;
+      if(button.dataset.locked === "true"){
+        showFlash(button.dataset.lockReason || "This shift is locked for member editing.", "error");
+        return;
+      }
       setStatus(button.dataset.date, button.dataset.shift, button.dataset.value);
       renderCalendar();
     });

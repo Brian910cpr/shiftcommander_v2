@@ -3,7 +3,7 @@ import json
 import shutil
 import sys
 import unittest
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 
@@ -38,6 +38,7 @@ class AppSmokeTests(unittest.TestCase):
         cls.paths_to_preserve = [
             ROOT / "data" / "shifts.json",
             ROOT / "data" / "schedule.json",
+            ROOT / "data" / "availability.json",
             ROOT / "debug" / "latest_run_summary.json",
             ROOT / "debug" / "latest_run_supervisor_cards.json",
             ROOT / "debug" / "latest_run_full_audit.json",
@@ -218,6 +219,50 @@ class AppSmokeTests(unittest.TestCase):
 
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         self.assertIn("seat_count", summary)
+
+    def test_member_188_future_weekday_am_and_pm_are_editable(self):
+        original = self.server.SC_QUICK_TEST_MODE
+        try:
+            self.server.SC_QUICK_TEST_MODE = True
+            edit_start = self.server.member_availability_edit_start_date()
+            target = edit_start
+            while target.weekday() != 1:
+                target += timedelta(days=1)
+            locked_date = edit_start - timedelta(days=1)
+
+            response = self.client.post("/api/member/availability", json={
+                "member_id": "188",
+                "months": {
+                    target.strftime("%Y-%m"): {
+                        "188": {
+                            target.isoformat(): {
+                                "AM": "available",
+                                "PM": "preferred",
+                            }
+                        }
+                    }
+                },
+            })
+            self.assertEqual(response.status_code, 200)
+            response.close()
+
+            response = self.client.post("/api/member/availability", json={
+                "member_id": "188",
+                "months": {
+                    locked_date.strftime("%Y-%m"): {
+                        "188": {
+                            locked_date.isoformat(): {
+                                "AM": "available",
+                            }
+                        }
+                    }
+                },
+            })
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("current Thursday cycle", response.get_data(as_text=True))
+            response.close()
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original
 
     def test_debug_endpoints_serve_after_generation(self):
         self.login_supervisor()
