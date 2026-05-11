@@ -545,6 +545,7 @@
     let currentWeekOffset = 0;
     let lastLoadedData = null;
     let idleTimer = null;
+    let autoFocusedAssignedWeek = false;
 
     function apiUrl(path) {
       return `${API_BASE}${path}`;
@@ -701,6 +702,38 @@
       }
 
       return dates;
+    }
+
+    function seatHasAssignedMember(seat) {
+      return !!String(seat?.assigned_name || seat?.assigned || "").trim();
+    }
+
+    function shiftHasAssignedMember(shift) {
+      return (shift?.seats || []).some(seat => seat?.active !== false && seatHasAssignedMember(seat));
+    }
+
+    function weekOffsetForIsoDate(isoDate) {
+      const target = parseIsoDate(isoDate);
+      if (Number.isNaN(target.getTime())) return null;
+      const thisWeekStart = startOfWeekSunday(getTodayDate());
+      const targetWeekStart = startOfWeekSunday(target);
+      return Math.round((targetWeekStart - thisWeekStart) / (7 * 86400000));
+    }
+
+    function firstVisibleWeekHasAssignedMember(shifts, weekOffset) {
+      const visible = new Set(buildVisibleDates(weekOffset).slice(0, 7).map(day => day.iso));
+      return (shifts || []).some(shift => visible.has(String(shift?.date || shift?.shift_date || "").slice(0, 10)) && shiftHasAssignedMember(shift));
+    }
+
+    function firstFutureAssignedWeekOffset(shifts) {
+      const todayIso = getTodayIso();
+      const dates = (shifts || [])
+        .filter(shift => shiftHasAssignedMember(shift))
+        .map(shift => String(shift?.date || shift?.shift_date || "").slice(0, 10))
+        .filter(date => date && date >= todayIso)
+        .sort();
+      if (!dates.length) return null;
+      return weekOffsetForIsoDate(dates[0]);
     }
 
     function formatDayParts(iso) {
@@ -1080,6 +1113,11 @@
       const daysMap = normalizeShiftsToDays(data);
       const shifts = Array.isArray(data?.shifts) ? data.shifts : [];
       const todayIso = getTodayIso();
+      if (!autoFocusedAssignedWeek && currentWeekOffset === 0 && shifts.length && !firstVisibleWeekHasAssignedMember(shifts, 0)) {
+        const assignedOffset = firstFutureAssignedWeekOffset(shifts);
+        if (assignedOffset !== null && assignedOffset > 0) currentWeekOffset = assignedOffset;
+        autoFocusedAssignedWeek = true;
+      }
       const visibleDates = buildVisibleDates(currentWeekOffset);
       const offsetLabel = currentWeekOffset === 0 ? "Today focus" : `${currentWeekOffset > 0 ? "+" : ""}${currentWeekOffset} week`;
 
@@ -1105,6 +1143,7 @@
       idleTimer = setTimeout(() => {
         if (currentWeekOffset !== 0) {
           currentWeekOffset = 0;
+          autoFocusedAssignedWeek = true;
           rerender();
         }
       }, IDLE_RESET_MS);
@@ -1123,6 +1162,7 @@
 
       document.getElementById("todayBtn").addEventListener("click", () => {
         currentWeekOffset = 0;
+        autoFocusedAssignedWeek = true;
         rerender();
         resetIdleTimer();
       });
