@@ -184,7 +184,7 @@ class AppSmokeTests(unittest.TestCase):
         self.assertTrue(
             all(
                 [seat.get("role") for seat in shift.get("seats", []) if seat.get("active") is not False]
-                == ["ATTENDANT", "DRIVER"]
+                in (["ATTENDANT", "DRIVER"], ["ATTENDANT"])
                 for shift in shifts[:10]
             )
         )

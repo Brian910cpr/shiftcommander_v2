@@ -114,7 +114,33 @@ class OperationalStabilizationTests(unittest.TestCase):
         attendant = next(seat for seat in result["shifts"][0]["seats"] if seat["role"] == "ATTENDANT")
         driver = next(seat for seat in result["shifts"][0]["seats"] if seat["role"] == "DRIVER")
         self.assertIsNone(attendant.get("assigned"))
-        self.assertEqual(driver.get("assigned"), "emt_driver")
+        self.assertIsNone(driver.get("assigned"))
+        self.assertFalse(driver.get("active"))
+        self.assertTrue(driver.get("externally_satisfied"))
+        self.assertFalse(driver.get("display_open_alert"))
+        self.assertEqual(result["build"]["summary"]["total_active_seats"], 1)
+        self.assertEqual(result["build"]["summary"]["unfilled_active_seats"], 1)
+
+    def test_shift_builder_marks_weekend_duty_support_as_externally_satisfied(self):
+        members = [{"member_id": "m1", "active": True}]
+        target = datetime.now(UTC).date()
+        while target.strftime("%a") != "Sat":
+            target += timedelta(days=1)
+        settings = {
+            "default_unit": "120",
+            "day_rules": {"Sat": {"AM": "ALS", "PM": "ALS"}},
+        }
+        availability = {
+            "months": {},
+            "patterns_by_member": {
+                "m1": {"statuses": {"SAT_AM": "PREFERRED"}}
+            },
+        }
+        shifts = build_shift_skeletons(members, settings, availability)
+        saturday_am = next(shift for shift in shifts if shift["date"] == target.isoformat() and shift["label"] == "AM")
+        driver = next(seat for seat in saturday_am["seats"] if seat["role"] == "DRIVER")
+        self.assertTrue(driver.get("externally_satisfied"))
+        self.assertEqual(driver.get("external_coverage_type"), "DUTY_FIRE")
 
 
 if __name__ == "__main__":

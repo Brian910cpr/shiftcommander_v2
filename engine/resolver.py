@@ -551,6 +551,22 @@ def get_day_rule_info(shift: Dict[str, Any], ctx: Dict[str, Any]) -> Tuple[str, 
     return upper_str(day_rule), assumptions
 
 
+def is_weekend_duty_support_period(shift: Dict[str, Any]) -> bool:
+    shift_date = get_shift_date(shift)
+    label = get_shift_label(shift)
+    if shift_date is None or label not in {"AM", "PM"}:
+        return False
+    return f"{WEEKDAY_CODES[shift_date.weekday()]}_{label}" in {"SAT_AM", "SAT_PM", "SUN_AM"}
+
+
+def support_seat_externally_satisfied(shift: Dict[str, Any], seat: Dict[str, Any]) -> bool:
+    if get_seat_role(seat) != "DRIVER":
+        return False
+    if seat.get("externally_satisfied") is True:
+        return True
+    return is_weekend_duty_support_period(shift)
+
+
 # ============================================================
 # AVAILABILITY
 # ============================================================
@@ -1676,7 +1692,18 @@ def initialize_shift_state(shift: Dict[str, Any], ctx: Dict[str, Any]) -> bool:
             "lock_cutoff_date": lock_cutoff_date.isoformat(),
         }
         # Default: all non-3rd seats are active and visible.
-        if get_seat_role(seat) == "3RD_RIDER":
+        if support_seat_externally_satisfied(shift, seat):
+            seat["active"] = False
+            seat["externally_satisfied"] = True
+            seat["external_coverage_type"] = seat.get("external_coverage_type") or "DUTY_FIRE"
+            seat["external_coverage_label"] = seat.get("external_coverage_label") or "Duty Shift Coverage"
+            seat["display_on_board"] = False
+            seat["display_open_alert"] = False
+            seat["assignment_status"] = "EXTERNALLY_SATISFIED"
+            seat["short_explanation"] = "Support coverage satisfied by Duty Shift Coverage"
+            seat["pass_sequence"].append({"stage": "external_coverage", "pass": "duty_fire_support"})
+            shift["resolver"]["notes"].append("DRIVER: support coverage satisfied by Duty Shift Coverage")
+        elif get_seat_role(seat) == "3RD_RIDER":
             seat["active"] = False
             seat["training_eligible"] = False
             seat["display_on_board"] = False

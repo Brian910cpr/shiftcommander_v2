@@ -3,6 +3,7 @@ from datetime import date, timedelta
 
 PLANNING_HORIZON_DAYS = 84
 SHIFT_LABELS = ("AM", "PM")
+DUTY_COVERED_SUPPORT_PATTERNS = {"SAT_AM", "SAT_PM", "SUN_AM"}
 
 
 def as_float(value, default=None):
@@ -55,15 +56,28 @@ def get_pattern_key(day_obj, shift_label):
     return f"{day_obj.strftime('%a').upper()}_{shift_label}"
 
 
-def seats_for_pattern(pattern, shift_label, settings):
+def duty_covered_support_for(day_obj, shift_label):
+    return get_pattern_key(day_obj, shift_label) in DUTY_COVERED_SUPPORT_PATTERNS
+
+
+def seats_for_pattern(pattern, shift_label, settings, day_obj=None):
     pattern = str(pattern or "ALS+EMT").strip().upper()
     hours = get_shift_hours(settings, shift_label)
 
     # ShiftCommander v1 answers "who is working" with one ALS seat and one
     # support/driver seat. Extra riders should be explicitly configured later.
+    driver_seat = {"role": "DRIVER", "hours": hours}
+    if day_obj is not None and duty_covered_support_for(day_obj, shift_label):
+        driver_seat.update({
+            "externally_satisfied": True,
+            "external_coverage_type": "DUTY_FIRE",
+            "external_coverage_label": "Duty Shift Coverage",
+            "display_on_board": False,
+            "display_open_alert": False,
+        })
     return [
         {"role": "ATTENDANT", "hours": hours},
-        {"role": "DRIVER", "hours": hours},
+        driver_seat,
     ]
 
 
@@ -168,7 +182,7 @@ def build_shift_skeletons(members, settings, availability_payload):
                 continue
 
             pattern = get_day_rule(settings, day_name, shift_label)
-            seats = seats_for_pattern(pattern, shift_label, settings)
+            seats = seats_for_pattern(pattern, shift_label, settings, cursor)
 
             shifts.append({
                 "date": day_iso,
