@@ -59,16 +59,11 @@ def seats_for_pattern(pattern, shift_label, settings):
     pattern = str(pattern or "ALS+EMT").strip().upper()
     hours = get_shift_hours(settings, shift_label)
 
-    if pattern == "ALS":
-        return [
-            {"role": "DRIVER", "hours": hours},
-            {"role": "ATTENDANT", "hours": hours},
-        ]
-
+    # ShiftCommander v1 answers "who is working" with one ALS seat and one
+    # support/driver seat. Extra riders should be explicitly configured later.
     return [
-        {"role": "DRIVER", "hours": hours},
         {"role": "ATTENDANT", "hours": hours},
-        {"role": "3RD_RIDER", "hours": hours},
+        {"role": "DRIVER", "hours": hours},
     ]
 
 

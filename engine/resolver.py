@@ -119,9 +119,13 @@ def get_member_name(member: Dict[str, Any]) -> str:
 def get_member_cert(member: Dict[str, Any]) -> str:
     cert = upper_str(member.get("cert"))
     if cert:
+        if cert in {"PARAMEDIC", "AEMT", "ALS"}:
+            return "ALS"
         return cert
     ops_cert = upper_str(member.get("ops_cert"))
     if ops_cert:
+        if ops_cert in {"PARAMEDIC", "AEMT", "ALS"}:
+            return "ALS"
         return ops_cert
     raw = upper_str(member.get("raw_cert"))
     if raw in {"PARAMEDIC", "AEMT", "ALS"}:
@@ -501,7 +505,7 @@ def load_availability_index(availability_data):
         if not key:
             return
         status = normalize_status(raw_status)
-        if not status:
+        if not status or status in {"BLANK", "NO_ANSWER"}:
             return
         rank = {"DO_NOT_SCHEDULE": 0, "AVAILABLE": 1, "PREFERRED": 2}
         existing = member_map.get(key)
@@ -513,7 +517,7 @@ def load_availability_index(availability_data):
         if label_norm not in {"AM", "PM"}:
             return
         status = normalize_status(raw_status)
-        if not status:
+        if not status or status in {"BLANK", "NO_ANSWER"}:
             return
         day_key = str(date_iso)[:10]
         if len(day_key) != 10:

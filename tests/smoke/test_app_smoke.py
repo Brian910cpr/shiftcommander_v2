@@ -171,6 +171,21 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIsInstance(payload, dict)
         self.assertIn("shifts", payload)
         self.assertIn("build_stats", payload)
+        shifts = payload.get("shifts", [])
+        active_seats = [
+            seat
+            for shift in shifts
+            for seat in shift.get("seats", [])
+            if seat.get("active") is not False
+        ]
+        self.assertGreater(sum(1 for seat in active_seats if seat.get("assigned")), 0)
+        self.assertTrue(
+            all(
+                [seat.get("role") for seat in shift.get("seats", []) if seat.get("active") is not False]
+                == ["ATTENDANT", "DRIVER"]
+                for shift in shifts[:10]
+            )
+        )
 
         self.assertTrue(debug_dir.exists(), str(debug_dir))
         self.assertTrue(shifts_path.exists(), str(shifts_path))

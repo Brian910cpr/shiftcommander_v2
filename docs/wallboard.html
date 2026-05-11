@@ -976,10 +976,11 @@
       const dutyClass = isDutySeat(seat) ? "duty-seat" : "";
       const role = seatRoleLabel(seat, options.forceOpenAls);
       const note = options.forceOpenAls ? "No AEMT assigned" : "";
+      const showRoleLabel = options.forceOpenAls || isDutySeat(seat);
 
       return `
         <div class="slot ${openSeatClass} ${dutyClass}">
-          <div class="seat-role">${escapeHtml(role)}</div>
+          ${showRoleLabel ? `<div class="seat-role">${escapeHtml(role)}</div>` : ``}
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
           ${note ? `<div class="slot-note">${escapeHtml(note)}</div>` : ``}
         </div>
@@ -1000,6 +1001,9 @@
         ...(showOpenAls ? [renderSlot({ role: "ATTENDANT", display_role: "ALS Attendant", display_open_alert: true }, shift.date, memberLookup, { forceOpenAls: true })] : []),
         ...orderedSeats.map(seat => {
           if (showOpenAls && isAttendantSeat(seat) && seatCertValue(seat, memberLookup) !== "ALS") {
+            const assignedId = String(seat?.assigned || "").trim();
+            const assignedName = String(seat?.assigned_name || memberLookup?.byId?.get(assignedId)?.name || "").trim();
+            if (!assignedName && (seat?.display_open_alert === true || !assignedId)) return "";
             return renderSlot({ ...seat, role: "SUPPORT", display_role: "Support" }, shift.date, memberLookup);
           }
           return renderSlot(seat, shift.date, memberLookup);
