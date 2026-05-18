@@ -22,9 +22,11 @@
     .stack{display:grid;gap:12px}
     .field{display:grid;gap:8px}
     .field label{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
-    .field input{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:0 12px}
+    .field input,.field select{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:0 12px}
     .btn{height:46px;border-radius:12px;border:1px solid rgba(105,184,255,.45);background:rgba(105,184,255,.18);color:var(--text);font-weight:900;cursor:pointer}
+    .btn.secondary{border-color:rgba(82,239,127,.45);background:rgba(82,239,127,.14)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
+    .divider{height:1px;background:var(--line);opacity:.75}
     .status{min-height:20px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);display:none}
     .status.show{display:block}
     .status.error{border-color:rgba(255,143,143,.35);color:#ffd0d0}
@@ -44,7 +46,20 @@
       </div>
     </div>
 
+    <section id="testingLogin" class="stack" style="display:none">
+      <div class="divider"></div>
+      <p>For local testing, choose a member and continue.</p>
+      <div class="field">
+        <label for="memberSelect">Member</label>
+        <select id="memberSelect">
+          <option value="">Loading members...</option>
+        </select>
+      </div>
+      <button class="btn secondary" id="testingLoginBtn" type="button">Continue as Selected Member</button>
+    </section>
+
     <form id="loginForm" class="stack">
+      <div class="divider"></div>
       <div class="field">
         <label for="username">Username / Email</label>
         <input id="username" name="username" autocomplete="username" required />
@@ -65,7 +80,7 @@
       <div><strong>Backend Health:</strong> <span id="backendHealth">unknown</span></div>
       <div><strong>Auth Mode:</strong> <span id="authMode">unknown</span></div>
       <div><strong>Next:</strong> <span id="nextPath"></span></div>
-      <div class="mini">Test credentials currently enabled: <code>test / test</code></div>
+      <div class="mini">Local testing dropdown is available only from localhost. Password login remains available below.</div>
     </div>
   </main>
 
@@ -123,6 +138,25 @@
       }
     }
 
+    async function loadTestingMembers(){
+      try{
+        const result = await fetchJson(apiUrl("/api/testing/members"));
+        if(!result.ok || !Array.isArray(result.data?.members)){
+          document.getElementById("testingLogin").style.display = "none";
+          return;
+        }
+        const select = document.getElementById("memberSelect");
+        select.innerHTML = result.data.members.map((member) => {
+          const status = member.active ? "" : " inactive";
+          const cert = member.cert ? ` - ${member.cert}` : "";
+          return `<option value="${esc(member.member_id)}">${esc(member.name)} (${esc(member.member_id)}${esc(cert)}${esc(status)})</option>`;
+        }).join("");
+        document.getElementById("testingLogin").style.display = "grid";
+      }catch(error){
+        document.getElementById("testingLogin").style.display = "none";
+      }
+    }
+
     async function checkExistingSession(){
       try{
         const result = await fetchJson(apiUrl("/api/auth/session"));
@@ -134,6 +168,36 @@
         }
       }catch(error){
         setStatus(error.message || "Could not verify existing session.");
+      }
+    }
+
+    async function testingLogin(){
+      const button = document.getElementById("testingLoginBtn");
+      const memberId = document.getElementById("memberSelect").value;
+      if(!memberId){
+        setStatus("Choose a member first.");
+        return;
+      }
+      button.disabled = true;
+      setStatus("Opening test session...", "success");
+      try{
+        const result = await fetchJson(apiUrl("/api/testing/login_as_member"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ member_id: memberId, next: nextPath() }),
+        });
+        if(!result.ok){
+          throw new Error(result.data?.error || `Testing login failed (${result.status})`);
+        }
+        localStorage.setItem(STORAGE_TOKEN_KEY, result.data?.session_token || "");
+        localStorage.setItem(STORAGE_USER_KEY, result.data?.member_id || "");
+        setSessionState(`Logged in as ${result.data?.member_name || result.data?.member_id || "member"}`);
+        setStatus(`Opened test session for ${result.data?.member_name || result.data?.member_id || "member"}.`, "success");
+        window.location.replace(result.data?.redirect || "/member");
+      }catch(error){
+        setStatus(error.message || "Testing login failed.");
+      }finally{
+        button.disabled = false;
       }
     }
 
@@ -175,7 +239,9 @@
     document.getElementById("apiBase").textContent = API_BASE || "(same origin)";
     document.getElementById("nextPath").textContent = nextPath();
     document.getElementById("loginForm").addEventListener("submit", onSubmit);
+    document.getElementById("testingLoginBtn").addEventListener("click", testingLogin);
     loadHealth();
+    loadTestingMembers();
     checkExistingSession();
   </script>
 </body>

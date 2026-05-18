@@ -65,6 +65,42 @@
     "rotation_overrides_ot": true,
     "strict_pairing": true
   },
+  "resolver_rules": {
+    "interest_window_days": 14,
+    "late_fill_window_days": 14,
+    "interest_cycle_days": 3,
+    "additional_ot_unlock_days": 2,
+    "allow_additional_ot": true,
+    "emt_anchor_window_days": 14,
+    "show_als_appreciated_for_basic_crew": true,
+    "expected_rotation_ot_allowance": 12,
+    "additional_ot_escalation_policy": "late_fill_only",
+    "unset_gets_open_shift_notices": true,
+    "do_not_suppresses_notices": true,
+    "additional_ot_blocked_until_escalation": true,
+    "preserve_published_assignments": true,
+    "preserve_locked_assignments": true,
+    "duty_crew_patterns": [
+      "SAT_AM",
+      "SAT_PM",
+      "SUN_AM"
+    ],
+    "duty_crew_label": "DUTY CREW"
+  },
+  "security": {
+    "google_login_required": true,
+    "trusted_device_duration_days": 30,
+    "session_timeout_minutes": 720
+  },
+  "notification_templates": {
+    "open_shift_notice": "Open shift: {{date}} {{shift}} {{seat_type}}",
+    "upcoming_selection_notice": "Selection run coming up: {{date}} {{shift}}",
+    "selection_result": "Selection result: {{date}} {{shift}}",
+    "schedule_published": "Schedule published: {{week}}",
+    "schedule_changed": "Schedule changed: {{date}} {{shift}}",
+    "rotation_opportunity": "Rotation opportunity: {{date}} {{shift}}",
+    "duty_crew_opening": "Duty crew opening: {{date}} {{shift}}"
+  },
   "shift_definitions": {
     "AM": {
       "hours": 12

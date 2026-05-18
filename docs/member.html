@@ -121,10 +121,10 @@
     <section class="hero">
       <div>
         <div class="title">ShiftCommander Member</div>
-        <div class="subtitle">Review suggested availability and make corrections for future weeks. Near-term shifts are locked after supervisors start using them.</div>
+        <div class="subtitle">Tell us what you want, what you can do, and what you do not want. Near-term shifts are handled by supervisors.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
           <span class="pill" id="sessionPill"><strong>Session</strong> Loading…</span>
-          <span class="badge warn">Self-service only. You cannot edit other members.</span>
+          <span class="badge warn">Your availability only</span>
           <span class="badge warn" id="quickTestBanner" style="display:none">QUICK TEST MODE ACTIVE - AUTH DISABLED</span>
           <span class="badge">Build <span id="buildPill">SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span></span>
         </div>
@@ -139,8 +139,8 @@
 
     <section class="intro-banner" id="memberIntroBanner" aria-live="polite">
       <div class="intro-copy">
-        <strong>Some availability may already be filled in based on shifts you have worked before. This is only a starting guess, not a final schedule. Please correct anything that is wrong and save your changes.</strong>
-        <span>Treat this like the station whiteboard: update your own availability, don't change someone else's.</span>
+        <strong>Choose the shifts you would like, the shifts you can work if needed, and the shifts you do not want.</strong>
+        <span>PRN members may leave shifts blank if they do not want to commit as Available but still want open-shift notices.</span>
       </div>
       <button class="btn primary" id="memberIntroDismiss" type="button">Got it</button>
     </section>
@@ -185,35 +185,35 @@
         </section>
 
         <section class="card">
-          <div class="section-title"><h2>Allowed Preferences</h2></div>
+          <div class="section-title"><h2>General Preferences</h2></div>
           <div class="stack">
             <div class="field">
               <label for="desiredHours">Desired hours / week</label>
               <input id="desiredHours" type="number" min="0" step="1" />
             </div>
             <div class="field">
-              <label for="ampmPreference">AM / PM preference</label>
+              <label for="ampmPreference">Day / night preference</label>
               <select id="ampmPreference">
-                <option value="no_preference">No Preference</option>
-                <option value="prefer_am">Prefer AM</option>
-                <option value="prefer_pm">Prefer PM</option>
+                <option value="no_preference">I am willing to work either</option>
+                <option value="prefer_am">I prefer day shifts</option>
+                <option value="prefer_pm">I prefer night shifts</option>
               </select>
             </div>
             <div class="field">
               <label for="shift24Preference">24-hour preference</label>
               <select id="shift24Preference">
-                <option value="no_preference">No Preference</option>
-                <option value="prefer">Prefer 24</option>
-                <option value="avoid">Avoid 24</option>
+                <option value="no_preference">I prefer 12-hour shifts</option>
+                <option value="prefer">I am willing to work 24-hour blocks</option>
+                <option value="avoid">Only consider 24-hour blocks if I select them</option>
               </select>
             </div>
             <div class="field">
-              <label for="swapPreference">Swap flexibility</label>
+              <label for="swapPreference">Open-shift notices</label>
               <select id="swapPreference">
-                <option value="allow">Allow</option>
-                <option value="same_style_only">Same Style</option>
-                <option value="same_rotation_only">Same 2-2-3</option>
-                <option value="supervisor_only">Supervisor Only</option>
+                <option value="allow">I want open-shift notices</option>
+                <option value="supervisor_only">I do not want open-shift notices</option>
+                <option value="same_style_only">Tell me about similar shifts only</option>
+                <option value="same_rotation_only">Tell me about rotation opportunities only</option>
               </select>
             </div>
             <button class="btn primary" id="saveProfileBtn">Save Preferences</button>
@@ -245,12 +245,12 @@
             <h2>Availability Calendar</h2>
             <span class="save-status" id="saveStatus">No changes yet</span>
           </div>
-          <p class="calendar-note">This view starts with the current Thursday cycle, then shows future cycles where you can correct the system's assumptions. Locked shifts are dimmed because they are already close to the schedule.</p>
+          <p class="calendar-note">Preferred: I would like this shift. Available: I can work this shift if needed. Do Not: Do not schedule me for this shift and do not notify me if it opens. Blank: No selection made. You will not be automatically scheduled, but may still receive open-shift notices.</p>
           <div class="calendar-legend">
-            <span class="legend-chip" title="I especially want this shift."><span class="legend-dot preferred"></span>Preferred</span>
-            <span class="legend-chip" title="I can work this if needed."><span class="legend-dot available"></span>Available</span>
-            <span class="legend-chip" title="I cannot work this shift."><span class="legend-dot do_not_schedule"></span>Cannot work</span>
-            <span class="legend-chip" title="No answer yet."><span class="legend-dot blank"></span>Blank</span>
+            <span class="legend-chip" title="I would like this shift."><span class="legend-dot preferred"></span>Preferred</span>
+            <span class="legend-chip" title="I can work this shift if needed."><span class="legend-dot available"></span>Available</span>
+            <span class="legend-chip" title="Do not schedule me for this shift and do not notify me if it opens."><span class="legend-dot do_not_schedule"></span>Do Not</span>
+            <span class="legend-chip" title="No selection made. You will not be automatically scheduled, but may still receive open-shift notices."><span class="legend-dot blank"></span>Blank</span>
           </div>
           <div class="repeat-tools" id="repeatTools">
             <div class="repeat-tools-head">
@@ -383,15 +383,15 @@
       const status = normalizeStatus(value);
       if(status === "preferred") return "Preferred";
       if(status === "available") return "Available";
-      if(status === "do_not_schedule") return "Cannot work";
+      if(status === "do_not_schedule") return "Do Not";
       return "Blank";
     }
     function stateHelp(value){
       const status = normalizeStatus(value);
-      if(status === "preferred") return "I especially want this shift.";
-      if(status === "available") return "I can work this if needed.";
-      if(status === "do_not_schedule") return "I cannot work this shift.";
-      return "No answer yet.";
+      if(status === "preferred") return "I would like this shift.";
+      if(status === "available") return "I can work this shift if needed.";
+      if(status === "do_not_schedule") return "Do not schedule me for this shift and do not notify me if it opens.";
+      return "No selection made. You will not be automatically scheduled, but may still receive open-shift notices.";
     }
     function stateClass(value){
       return normalizeStatus(value) || "blank";

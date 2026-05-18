@@ -16,6 +16,9 @@
       --green-bg: rgba(18, 54, 31, 0.76);
       --green-bd: #2d8a4b;
 
+      --yellow-bg: rgba(88, 68, 16, 0.78);
+      --yellow-bd: #d1a23b;
+
       --red-bg: rgba(92, 20, 24, 0.88);
       --red-bd: #ff5b5b;
 
@@ -115,6 +118,8 @@
       justify-content: flex-end;
     }
 
+    .legend.collapsed { display: none; }
+
     .legend-chip {
       display: inline-flex;
       align-items: center;
@@ -135,10 +140,11 @@
       background: var(--name-default);
     }
 
-    .legend-dot.als { background: var(--name-blue); }
-    .legend-dot.emt { background: var(--name-green); }
+    .legend-dot.als { background: var(--name-green); }
+    .legend-dot.emt { background: var(--name-blue); }
     .legend-dot.open { background: var(--name-red); }
-    .legend-dot.ncld { background: var(--name-pink); }
+    .legend-dot.emr { background: var(--name-pink); }
+    .legend-dot.ncld { background: var(--name-red); }
     .legend-dot.duty { background: #101722; border: 1px solid #526071; }
 
     .nav-btn {
@@ -309,11 +315,16 @@
       overflow: hidden;
     }
 
-    .shift-card.green,
+    .shift-card.green {
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)), var(--green-bg);
+      border-color: var(--green-bd);
+      box-shadow: inset 0 0 0 1px rgba(82, 239, 127, 0.10);
+    }
+
     .shift-card.gray {
-      background: var(--panel2);
-      border-color: var(--border);
-      box-shadow: none;
+      background: var(--gray-bg);
+      border-color: var(--gray-bd);
+      box-shadow: inset 0 0 0 1px rgba(167, 184, 216, 0.08);
     }
 
     .shift-card.red {
@@ -322,12 +333,37 @@
       box-shadow: inset 0 0 0 1px rgba(255, 91, 91, 0.12);
     }
 
+    .shift-card.yellow {
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)), var(--yellow-bg);
+      border-color: var(--yellow-bd);
+      box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.10);
+    }
+
+    .shift-card.urgency-interest::after,
+    .shift-card.urgency-cycle::after,
+    .shift-card.urgency-ot::after,
+    .shift-card.urgency-now::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shift-card.urgency-interest::after { box-shadow: inset 0 0 0 2px rgba(255, 209, 102, 0.22), 0 0 16px rgba(255, 209, 102, 0.18); }
+    .shift-card.urgency-cycle::after { box-shadow: inset 0 0 0 2px rgba(255, 176, 55, 0.34), 0 0 24px rgba(255, 176, 55, 0.28); }
+    .shift-card.urgency-ot::after { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.55), 0 0 24px rgba(255, 100, 100, 0.20); }
+    .shift-card.urgency-now::after { animation: slowPulseRed 2.2s ease-in-out infinite; }
+
     .shift-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
       min-height: 22px;
+      position: relative;
+      z-index: 1;
     }
 
     .shift-name {
@@ -350,6 +386,8 @@
     .slots {
       display: grid;
       gap: 8px;
+      position: relative;
+      z-index: 1;
     }
 
     .slot {
@@ -373,27 +411,15 @@
       background: rgba(118, 22, 27, 0.52);
     }
 
-    .slot.open-calm {
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
-    }
-
-    .slot.open-soon {
-      animation: slowPulseRed 3.8s ease-in-out infinite;
-    }
-
-    .slot.open-near {
-      animation: slowPulseRed 2.7s ease-in-out infinite;
-    }
-
-    .slot.open-now {
-      background: rgba(155, 28, 34, 0.74);
-      animation: slowPulseRed 1.9s ease-in-out infinite;
+    .slot.volunteer-seat {
+      border-color: rgba(255, 209, 102, 0.42);
+      background: rgba(88, 68, 16, 0.38);
     }
 
     @keyframes slowPulseRed {
-      0% { box-shadow: 0 0 0 0 rgba(255, 100, 100, 0.03); }
-      50% { box-shadow: 0 0 20px 4px var(--open-seat-glow); }
-      100% { box-shadow: 0 0 0 0 rgba(255, 100, 100, 0.03); }
+      0% { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.44), 0 0 0 0 rgba(255, 100, 100, 0.03); }
+      50% { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.72), 0 0 20px 4px var(--open-seat-glow); }
+      100% { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.44), 0 0 0 0 rgba(255, 100, 100, 0.03); }
     }
 
     .member {
@@ -505,17 +531,23 @@
         <button class="nav-btn" id="prevWeekBtn">← Prev Week</button>
         <button class="nav-btn" id="todayBtn">Today</button>
         <button class="nav-btn" id="nextWeekBtn">Next Week →</button>
+        <button class="nav-btn" id="legendToggleBtn">Show legend</button>
       </div>
-      <div class="legend" aria-label="Wallboard colors">
-        <span class="legend-chip"><span class="legend-dot als"></span>AEMT / ALS</span>
-        <span class="legend-chip"><span class="legend-dot emt"></span>EMT</span>
-        <span class="legend-chip"><span class="legend-dot open"></span>OPEN</span>
-        <span class="legend-chip"><span class="legend-dot ncld"></span>NCLD</span>
-        <span class="legend-chip"><span class="legend-dot duty"></span>Duty / Fire</span>
+      <div class="legend collapsed" id="legendPanel" aria-label="Wallboard colors">
+        <span class="legend-chip"><span class="legend-dot als"></span>ALS/AEMT name</span>
+        <span class="legend-chip"><span class="legend-dot emt"></span>EMT name</span>
+        <span class="legend-chip"><span class="legend-dot emr"></span>EMR name</span>
+        <span class="legend-chip"><span class="legend-dot ncld"></span>NCLD name</span>
+        <span class="legend-chip"><span class="legend-dot open"></span>real open problem</span>
+        <span class="legend-chip">Green: complete</span>
+        <span class="legend-chip">Yellow: can run, still improvable</span>
+        <span class="legend-chip">Red: cannot run or needs review</span>
+        <span class="legend-chip">Glow: active rule window</span>
       </div>
       <div class="meta-row">
         <div class="meta-pill quiet" id="metaWindow">Showing: --</div>
         <div class="meta-pill quiet" id="metaUpdated">Updated: --</div>
+        <div class="meta-pill quiet">Build <span id="metaBuild">SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span></div>
       </div>
     </div>
   </div>
@@ -534,6 +566,8 @@
     const API_BASE = window.SC_API_BASE_URL || defaultApiBase() || localStorage.getItem("sc_api_base_url") || "";
     const SCHEDULE_URL = "/api/schedule";
     const MEMBERS_URL = "/api/wallboard_members";
+    const SETTINGS_URL = "/api/wallboard_settings";
+    const LEGEND_STORAGE_KEY = "sc_wallboard_legend_open";
     const REFRESH_MS = 60000;
     const SCHEDULE_TIMEOUT_MS = 15000;
     const MEMBERS_TIMEOUT_MS = 8000;
@@ -637,6 +671,25 @@
 
     function renderRuntimeMeta() {
       document.body.dataset.apiBase = API_BASE || "same-origin";
+      const build = document.getElementById("metaBuild");
+      if (build) build.textContent = BUILD_CODE;
+    }
+
+    function setLegend(open) {
+      const panel = document.getElementById("legendPanel");
+      const button = document.getElementById("legendToggleBtn");
+      if (!panel || !button) return;
+      panel.classList.toggle("collapsed", !open);
+      button.textContent = open ? "Hide legend" : "Show legend";
+      localStorage.setItem(LEGEND_STORAGE_KEY, open ? "true" : "false");
+    }
+
+    function initLegend() {
+      setLegend(localStorage.getItem(LEGEND_STORAGE_KEY) === "true");
+      document.getElementById("legendToggleBtn")?.addEventListener("click", () => {
+        const open = document.getElementById("legendPanel")?.classList.contains("collapsed");
+        setLegend(!!open);
+      });
     }
 
     function renderWeekdayRow() {
@@ -705,7 +758,8 @@
     }
 
     function seatHasAssignedMember(seat) {
-      return !!String(seat?.assigned_name || seat?.assigned || "").trim();
+      const name = String(seat?.assigned_name || "").trim();
+      return !!String(seat?.assigned || "").trim() || (name && !isOpenName(name));
     }
 
     function shiftHasAssignedMember(shift) {
@@ -775,7 +829,7 @@
 
     function isOpenName(value) {
       const raw = String(value || "").trim().toUpperCase();
-      return !raw || raw === "OPEN" || raw === "UNFILLED";
+      return !raw || raw === "OPEN" || raw === "UNFILLED" || raw.startsWith("OPEN ") || raw === "VOLUNTEER CREW DRIVER";
     }
 
     function isAttendantSeat(seat) {
@@ -785,7 +839,7 @@
 
     function isDutySeat(seat) {
       const role = `${seat?.role || ""} ${seat?.display_role || ""}`.toUpperCase();
-      return role.includes("DUTY") || role.includes("FIRE");
+      return seat?.duty_crew === true || role.includes("DUTY") || role.includes("FIRE");
     }
 
     function isDriverSeat(seat) {
@@ -850,9 +904,10 @@
       const cert = normalizeCertValue(fromId?.cert || fromName?.cert || "");
 
       if (isDutySeat(seat)) return "dark";
-      if (cert === "ALS") return "blue";
-      if (cert === "EMT") return "green";
-      if (cert === "NCLD") return "pink";
+      if (cert === "ALS") return "green";
+      if (cert === "EMT") return "blue";
+      if (cert === "EMR") return "pink";
+      if (cert === "NCLD") return "red";
       return "default";
     }
 
@@ -888,17 +943,52 @@
       return Math.round((d - getTodayDate()) / 86400000);
     }
 
-    function openUrgencyClass(isoDate) {
+    function ruleSettings() {
+      return lastLoadedData?.settings?.resolver_rules || {};
+    }
+
+    function numberSetting(name, fallback) {
+      const value = Number(ruleSettings()?.[name]);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function allowAdditionalOt() {
+      const value = String(ruleSettings()?.allow_additional_ot ?? "true").toLowerCase();
+      return !(value === "false" || value === "never" || value === "0" || value === "no");
+    }
+
+    function urgencyClass(isoDate, unresolvedProblem) {
+      if (!unresolvedProblem) return "";
       const days = daysUntil(isoDate);
-      if (days <= 1) return "open-now";
-      if (days <= 3) return "open-near";
-      if (days <= 7) return "open-soon";
-      return "open-calm";
+      const interestDays = numberSetting("interest_window_days", numberSetting("late_fill_window_days", 14));
+      const cycleDays = numberSetting("interest_cycle_days", 3);
+      const otDays = numberSetting("additional_ot_unlock_days", 2);
+      if (!allowAdditionalOt() && days <= otDays) return "urgency-ot";
+      if (days < 2) return "urgency-now";
+      if (allowAdditionalOt() && days <= otDays) return "urgency-ot";
+      if (days <= cycleDays) return "urgency-cycle";
+      if (days <= interestDays) return "urgency-interest";
+      return "";
+    }
+
+    function interestWindowActive(isoDate) {
+      const days = daysUntil(isoDate);
+      const interestDays = numberSetting("interest_window_days", numberSetting("late_fill_window_days", 14));
+      return days >= 0 && days <= interestDays;
+    }
+
+    function isBasicCrewCertPair(attendantCert, driverCert) {
+      return attendantCert === "EMT" && ["EMT", "EMR", "NCLD"].includes(driverCert);
+    }
+
+    function basicCrewKind(attendantCert, driverCert) {
+      if (!isBasicCrewCertPair(attendantCert, driverCert)) return "";
+      return driverCert === "EMT" ? "emt_emt" : "emt_support";
     }
 
     function seatRoleLabel(seat, forceAlsOpen = false) {
       if (forceAlsOpen || isAttendantSeat(seat)) return "ALS";
-      if (isDutySeat(seat)) return "Duty / Fire";
+      if (isDutySeat(seat)) return "Duty Crew";
       if (isDriverSeat(seat)) return "Driver";
       return "Support";
     }
@@ -914,19 +1004,48 @@
     function shouldShowOpenAls(seats, memberLookup, shiftDate) {
       if (isPastDate(shiftDate)) return false;
       const hasAttendant = (seats || []).some(seat => isAttendantSeat(seat));
-      return hasAttendant && !hasActualAlsAssigned(seats, memberLookup);
+      const show = ruleSettings()?.show_als_appreciated_for_basic_crew;
+      return show !== false && show !== "false" && hasAttendant && !hasActualAlsAssigned(seats, memberLookup);
     }
 
-
-    function pillClassForShift(shift) {
-      const seats = Array.isArray(shift?.seats) ? shift.seats : [];
-      const hasOpen = seats.some(seat => !seat?.assigned_name || String(seat.assigned_name).trim().toUpperCase() === "OPEN");
-      if (hasOpen || shift?.openAls) return "red";
-      if (!seats.length) return "gray";
-      return "green";
+    function assignedSeats(seats) {
+      return (seats || []).filter(seat => {
+        const name = String(seat?.assigned_name || "").trim();
+        return !!String(seat?.assigned || "").trim() || (name && !isOpenName(name));
+      });
     }
 
-    function normalizeShiftsToDays(raw) {
+    function shiftReadiness(shift, memberLookup) {
+      const seats = shift?.seats || [];
+      const attendant = seats.find(isAttendantSeat);
+      const driver = seats.find(isDriverSeat);
+      const attendantAssigned = attendant && assignedSeats([attendant]).length > 0;
+      const driverAssigned = driver && assignedSeats([driver]).length > 0;
+      const attendantCert = attendantAssigned ? seatCertValue(attendant, memberLookup) : "";
+      const driverCert = driverAssigned ? seatCertValue(driver, memberLookup) : "";
+      const review = seats.some(seat => seat?.supervisor_review || String(seat?.assignment_status || "").toUpperCase() === "SUPERVISOR_REVIEW") || String(shift?.crew_status || "").toUpperCase().includes("REVIEW");
+      const days = daysUntil(shift?.date);
+
+      if (review) return { color: "red", status: "Needs Supervisor Review", problem: true };
+      if (!attendantAssigned) return { color: days > numberSetting("interest_window_days", 14) ? "gray" : "red", status: "Attendant Needed", problem: true };
+      if (!driverAssigned) return { color: days < 2 ? "red" : "yellow", status: "Driver Needed", problem: true };
+      if (attendantCert === "ALS" && driverCert === "EMT") return { color: "green", status: "Complete", problem: false };
+      if (isBasicCrewCertPair(attendantCert, driverCert)) {
+        const kind = basicCrewKind(attendantCert, driverCert);
+        const activeInterest = interestWindowActive(shift?.date);
+        if (activeInterest) {
+          return { color: "yellow", status: "Volunteer ALS Response Appreciated", problem: false, basicCrewKind: kind, basicCrewInterestActive: true };
+        }
+        return { color: "green", status: "Basic Crew Finalized", problem: false, basicCrewKind: kind, basicCrewInterestActive: false };
+      }
+      return { color: "yellow", status: "Complete", problem: false };
+    }
+
+    function pillClassForShift(shift, memberLookup) {
+      return shiftReadiness(shift, memberLookup).color;
+    }
+
+    function normalizeShiftsToDays(raw, memberLookup) {
       const inputShifts = Array.isArray(raw?.shifts) ? raw.shifts : [];
       const days = {};
 
@@ -949,7 +1068,8 @@
         days[date].push({
           date,
           label: shortShiftLabel(label),
-          pillClass: pillClassForShift({ ...shift, seats: visibleSeats }),
+          pillClass: pillClassForShift({ ...shift, seats: visibleSeats }, memberLookup),
+          readiness: shiftReadiness({ ...shift, seats: visibleSeats }, memberLookup),
           seats: visibleSeats
         });
       }
@@ -965,6 +1085,52 @@
       return days;
     }
 
+    function availabilityCopy(value) {
+      const raw = String(value || "").toUpperCase();
+      if (raw.includes("PREFER")) return "selected Preferred";
+      if (raw.includes("AVAILABLE")) return "selected Available";
+      if (raw.includes("DO_NOT")) return "selected Do Not and should not be notified";
+      if (raw.includes("UNSET")) return "left the shift blank";
+      return "met the seat rules";
+    }
+
+    function basicCrewTooltip(readiness) {
+      if (readiness?.basicCrewKind === "emt_emt" && readiness?.basicCrewInterestActive) {
+        return "Two EMTs are assigned, so this is a legal basic crew path. ALS response is still appreciated during the open interest window.";
+      }
+      if (readiness?.basicCrewKind === "emt_emt") {
+        return "This shift is staffed as a legal EMT + EMT basic crew. ALS response is still appreciated, but the shift is no longer considered open.";
+      }
+      if (readiness?.basicCrewKind === "emt_support") {
+        return "This shift is operating as a legal basic crew. ALS response is still appreciated but not required.";
+      }
+      return "";
+    }
+
+    function tooltipForSeat(seat, shiftDate, memberLookup, options = {}) {
+      if (options.tooltip) return options.tooltip;
+      if (options.volunteerAls) {
+        return "This crew is legally operational, but ALS participation is still welcome if available.";
+      }
+      if (options.volunteerDriver) {
+        return "Volunteer Crew Driver: this weekend duty crew driver seat is open for volunteer coverage.";
+      }
+      const assignedId = String(seat?.assigned || "").trim();
+      const member = resolveMemberEntry(seat, memberLookup);
+      const name = String(seat?.assigned_name || member?.name || assignedId || "").trim();
+      if (name && !isOpenName(name)) {
+        const role = isAttendantSeat(seat) ? "Attendant" : isDriverSeat(seat) ? "Driver" : "seat";
+        const factors = Array.isArray(seat?.selection_factors) ? seat.selection_factors.join(", ") : "";
+        if (seat?.solo_emt_anchor_applied) {
+          return `${name} is listed as ${role} because the shift is inside the Solo EMT Anchor window and no ALS provider selected Preferred or Available.`;
+        }
+        return `${name} is listed as ${role} because they ${availabilityCopy(factors)} and passed the rule checks for this seat.`;
+      }
+      if (isAttendantSeat(seat)) return "Attendant Needed: no eligible attendant has been assigned for this shift.";
+      if (isDriverSeat(seat)) return "Driver Needed: no eligible driver has been assigned for this shift.";
+      return "Open seat.";
+    }
+
     function renderSlot(seat, shiftDate, memberLookup, options = {}) {
       const assignedId = String(seat?.assigned || "").trim();
       const rawName = String(
@@ -977,19 +1143,23 @@
 
       if (!rawName && !showOpenAlert) return "";
 
-      const displayName = rawName
-        ? displayAssignedName(shiftDate, rawName)
-        : (pastDate ? "—" : (options.forceOpenAls ? "OPEN ALS" : "OPEN"));
+      const displayName = options.displayLabel || (
+        rawName
+          ? displayAssignedName(shiftDate, rawName)
+          : (pastDate ? "—" : "OPEN")
+      );
 
       const normalizedName = String(displayName || "").trim().toUpperCase();
-      const isFutureOpen = !pastDate && (options.forceOpenAls || normalizedName === "OPEN" || normalizedName === "OPEN ALS" || (!rawName && showOpenAlert));
-      const hasMember = !!rawName && rawName.toUpperCase() !== "OPEN";
+      const isFutureOpen = !pastDate && !options.volunteer && (normalizedName === "OPEN" || normalizedName.startsWith("OPEN ") || (!rawName && showOpenAlert));
+      const hasMember = !!rawName && !isOpenName(rawName);
       const memberClass = hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty");
-      const openSeatClass = isFutureOpen ? `open-seat ${openUrgencyClass(shiftDate)}` : "";
+      const openSeatClass = isFutureOpen ? "open-seat" : "";
+      const volunteerClass = options.volunteer ? "volunteer-seat" : "";
       const dutyClass = isDutySeat(seat) ? "duty-seat" : "";
+      const title = escapeHtml(tooltipForSeat(seat, shiftDate, memberLookup, options));
 
       return `
-        <div class="slot ${openSeatClass} ${dutyClass}">
+        <div class="slot ${openSeatClass} ${volunteerClass} ${dutyClass}" title="${title}">
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
         </div>
       `;
@@ -997,6 +1167,9 @@
 
     function renderShiftCard(shift, memberLookup) {
       const showOpenAls = shouldShowOpenAls(shift.seats || [], memberLookup, shift.date);
+      const readiness = shift.readiness || shiftReadiness(shift, memberLookup);
+      const urgency = urgencyClass(shift.date, readiness.problem);
+      const shiftTooltip = basicCrewTooltip(readiness) || readiness.status;
       const orderedSeats = (shift.seats || [])
         .slice()
         .sort((left, right) => {
@@ -1006,9 +1179,21 @@
         });
 
       const renderedSlots = [
-        ...(showOpenAls ? [renderSlot({ role: "ATTENDANT", display_role: "ALS Attendant", display_open_alert: true }, shift.date, memberLookup, { forceOpenAls: true })] : []),
+        ...(showOpenAls && !readiness.problem ? [renderSlot({ role: "ATTENDANT", display_role: "ALS Attendant", display_open_alert: true }, shift.date, memberLookup, {
+          displayLabel: "Volunteer ALS Response Appreciated",
+          volunteer: true,
+          volunteerAls: true,
+          tooltip: basicCrewTooltip(readiness) || "This crew is legally operational, but ALS participation is still welcome if available."
+        })] : []),
         ...orderedSeats.map(seat => {
-          if (showOpenAls && isAttendantSeat(seat) && seatCertValue(seat, memberLookup) !== "ALS") {
+          if (seat?.duty_crew && isDriverSeat(seat) && !String(seat?.assigned || "").trim()) {
+            return renderSlot(seat, shift.date, memberLookup, {
+              displayLabel: "Volunteer Crew Driver",
+              volunteer: !readiness.problem,
+              volunteerDriver: true
+            });
+          }
+          if (showOpenAls && !readiness.problem && isAttendantSeat(seat) && seatCertValue(seat, memberLookup) !== "ALS") {
             const assignedId = String(seat?.assigned || "").trim();
             const assignedName = String(seat?.assigned_name || memberLookup?.byId?.get(assignedId)?.name || "").trim();
             if (!assignedName && (seat?.display_open_alert === true || !assignedId)) return "";
@@ -1028,10 +1213,10 @@
         `;
 
       return `
-        <div class="shift-card ${showOpenAls ? "red" : shift.pillClass}">
+        <div class="shift-card ${readiness.color || shift.pillClass || "gray"} ${urgency}" title="${escapeHtml(shiftTooltip)}">
           <div class="shift-top">
             <div class="shift-name">${escapeHtml(shift.label)}</div>
-            <div class="shift-status">${showOpenAls ? "Open ALS" : "Staffed"}</div>
+            <div class="shift-status">${escapeHtml(readiness.status)}</div>
           </div>
           <div class="slots">${slotsHtml}</div>
         </div>
@@ -1110,7 +1295,7 @@
       const metaWindow = document.getElementById("metaWindow");
       const metaUpdated = document.getElementById("metaUpdated");
 
-      const daysMap = normalizeShiftsToDays(data);
+      const daysMap = normalizeShiftsToDays(data, data?.memberLookup);
       const shifts = Array.isArray(data?.shifts) ? data.shifts : [];
       const todayIso = getTodayIso();
       if (!autoFocusedAssignedWeek && currentWeekOffset === 0 && shifts.length && !firstVisibleWeekHasAssignedMember(shifts, 0)) {
@@ -1188,10 +1373,18 @@
         } catch (error) {
           console.warn("Wallboard member list did not load. Names from the schedule will still be shown.", error);
         }
+        let settingsData = {};
+        try {
+          const settingsResponse = await fetchJson(SETTINGS_URL, MEMBERS_TIMEOUT_MS);
+          settingsData = settingsResponse.data || {};
+        } catch (error) {
+          console.warn("Wallboard settings did not load. Default rule windows will be used.", error);
+        }
 
         lastLoadedData = {
           ...scheduleData,
-          memberLookup: buildMemberLookup(membersData)
+          memberLookup: buildMemberLookup(membersData),
+          settings: settingsData
         };
 
         renderWeekdayRow();
@@ -1204,6 +1397,7 @@
 
     renderWeekdayRow();
     renderRuntimeMeta();
+    initLegend();
     registerInteractionHandlers();
     resetIdleTimer();
     loadSchedule();

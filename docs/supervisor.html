@@ -129,7 +129,7 @@
     <section class="hero">
       <div>
         <div class="title">ShiftCommander Supervisor</div>
-        <div class="subtitle">Choose a week, build draft shifts, preview best matches, fill open seats, review holes, and publish only the assignments you want displayed.</div>
+        <div class="subtitle">Choose a week, preview legal crews, review open seats and audit reasons, then commit only the assignments you want displayed.</div>
         <div class="status-row" style="margin-top:12px">
           <span class="pill"><strong>Live routes</strong> /api/health · /api/build_shifts · /api/generate · /api/schedule</span>
           <span class="pill"><strong>Display state</strong> /api/supervisor/state · /api/supervisor/publish_week · /api/supervisor/open_seat</span>
@@ -175,16 +175,16 @@
         <div class="step-list" style="margin-top:14px">
           <div class="step">
             <div class="step-badge live">Live</div>
-            <h3>1. Configure units and seats</h3>
-            <p>Build fresh shift skeletons from current members, settings, and availability.</p>
+            <h3>1. Refresh shift list</h3>
+            <p>Rebuild the upcoming shift list from current members, settings, and availability.</p>
             <div class="step-actions">
-              <button class="btn" id="buildShiftsBtn">Build Shift Skeletons</button>
+              <button class="btn" id="buildShiftsBtn">Refresh Shift List</button>
             </div>
           </div>
           <div class="step">
             <div class="step-badge planned">Safe preview</div>
-            <h3>2. Preview best matches</h3>
-            <p>Preview suggested staffing without changing the saved schedule.</p>
+            <h3>2. Preview legal crews</h3>
+            <p>Preview proposed staffing and audit reasons without changing the saved schedule.</p>
             <div class="step-actions">
               <button class="btn warn" id="dryRunBtn">Preview Week</button>
             </div>
@@ -208,10 +208,10 @@
           <div class="step">
             <div class="step-badge planned">Policy</div>
             <h3>5. Member behavior</h3>
-            <p>Member preference for an open shift is a signal only. The system suggests; supervisors still review and approve.</p>
+            <p>Member interest is considered during open-shift selection. Supervisors can still review, override, and record the reason.</p>
           </div>
           <div class="step">
-            <div class="step-badge live">Resolver test</div>
+            <div class="step-badge live">Availability</div>
             <h3>6. Clear future availability</h3>
             <p>Erase declared future AM/PM availability after today, preserve past history, and create a backup before changing files.</p>
             <div class="step-actions">
@@ -625,9 +625,9 @@
 
     function renderNoShiftsBuilt(){
       document.getElementById("weekSummary").innerHTML = "";
-      document.getElementById("boardMeta").textContent = "No shifts built";
-      document.getElementById("openSeatsPanel").innerHTML = `<div class="empty">No shifts built yet. Click Build Shift Skeletons.</div>`;
-      document.getElementById("board").innerHTML = `<div class="empty">No shifts built yet. Click Build Shift Skeletons.</div>`;
+      document.getElementById("boardMeta").textContent = "No shifts available";
+      document.getElementById("openSeatsPanel").innerHTML = `<div class="empty">No shifts are available yet. Refresh the shift list.</div>`;
+      document.getElementById("board").innerHTML = `<div class="empty">No shifts are available yet. Refresh the shift list.</div>`;
     }
 
     function renderOpenSeats(){
@@ -701,7 +701,7 @@
       const supervisorIndex = indexedSupervisorState();
       const groups = groupedWeekShifts();
       if(!groups.length){
-        document.getElementById("board").innerHTML = `<div class="empty">No resolved shifts available for this week yet. Build shifts or run the resolver first.</div>`;
+        document.getElementById("board").innerHTML = `<div class="empty">No resolved shifts available for this week yet. Refresh the shift list or resolve the week.</div>`;
         return;
       }
 
@@ -726,7 +726,7 @@
                   <div class="shift-block">
                     <div class="header-row">
                       <h3>${esc(shift.label)} · ${esc(shift.unit || "Unit")}</h3>
-                      <span class="mini">${asArray(shift.resolver?.notes).length ? `${shift.resolver.notes.length} resolver notes` : "No resolver notes"}</span>
+                      <span class="mini">${esc(shift.crew_status || "Schedule status")}</span>
                     </div>
                     <div class="seats">
                       ${asArray(shift.seats).filter((seat) => seat?.active !== false || seat?.display_on_board !== false).map((seat, index) => {
@@ -762,7 +762,7 @@
                                 ${
                                   seatState === "OPEN" || seatState === "DROPPED"
                                     ? `<div class="reason-list">${openReasonSummary(seat).map((reason) => `<span class="reason-chip">${esc(reason)}</span>`).join("")}</div>`
-                                    : `<div class="reason-list">${contenders.map((item) => `<span class="reason-chip">${esc(item.member_name || item.member_id || "candidate")}: ${esc(item.why_not_selected || "lower overall score")}</span>`).join("")}</div>`
+                                    : `<div class="reason-list">${contenders.map((item) => `<span class="reason-chip">${esc(item.member_name || item.member_id || "candidate")}: ${esc(item.why_not_selected || "lower tie-break priority")}</span>`).join("")}</div>`
                                 }
                               </div>
                             ` : ``}
@@ -880,7 +880,7 @@
       const shiftList = asArray(state.schedule?.shifts);
       if(!shiftList.length){
         console.error("Supervisor startup: /api/schedule succeeded but returned no shifts", state.schedule);
-        document.getElementById("weekSelect").innerHTML = `<option value="">No shifts built yet</option>`;
+        document.getElementById("weekSelect").innerHTML = `<option value="">No shifts available yet</option>`;
         state.selectedWeek = null;
         renderNoShiftsBuilt();
         setStartupIssues(issues);
@@ -929,10 +929,10 @@
         updateActionDiagnostics({
           endpoint: action.path ? apiUrl(action.path) : "none",
           status: "blocked",
-          message: "No week is selected. Build shift skeletons first, then choose a week.",
+          message: "No week is selected. Refresh the shift list first, then choose a week.",
           ok: false,
         });
-        showFlash("No week is selected. Build shift skeletons first.", "error");
+        showFlash("No week is selected. Refresh the shift list first.", "error");
         return;
       }
       setWorkflowButtonsLoading(true, action.id);

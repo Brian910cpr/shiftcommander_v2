@@ -132,6 +132,30 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("Health Check Path", payload.get("warning", ""))
         response.close()
 
+    def test_local_testing_member_dropdown_login_starts_member_session(self):
+        response = self.client.get("/api/testing/members", base_url="http://127.0.0.1:5000")
+        self.assertEqual(response.status_code, 200)
+        members = response.get_json().get("members", [])
+        self.assertGreater(len(members), 0)
+        member_id = members[0]["member_id"]
+        response.close()
+
+        response = self.client.post(
+            "/api/testing/login_as_member",
+            json={"member_id": member_id, "next": "/member"},
+            base_url="http://127.0.0.1:5000",
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload.get("member_id"), member_id)
+        self.assertEqual(payload.get("auth_mode"), "local_testing_dropdown")
+        response.close()
+
+        response = self.client.get("/docs/member.html")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Assigned Shifts", response.get_data(as_text=True))
+        response.close()
+
     def test_quick_test_supervisor_api_bypass_is_demo_only(self):
         original = self.server.SC_QUICK_TEST_MODE
         try:

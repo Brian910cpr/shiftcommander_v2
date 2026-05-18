@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander Admin</title>
+  <style>
+    :root{--bg:#08111f;--panel:#0f1b2d;--panel2:#16243a;--line:#243754;--text:#eef4ff;--muted:#a7b8d8;--good:#52ef7f;--warn:#ffd166;--bad:#ff8f8f}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding:16px}
+    button,input,select,textarea{font:inherit}
+    .page{display:grid;gap:14px;max-width:1180px;margin:0 auto}
+    .hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+    .hero{display:flex;justify-content:space-between;gap:12px;align-items:start;flex-wrap:wrap}
+    h1,h2{margin:0}
+    .sub,.mini{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .field{display:grid;gap:7px;margin-top:12px}
+    .field label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800}
+    .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:10px}
+    .field textarea{min-height:84px;resize:vertical}
+    .btn{border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);font-weight:850;padding:10px 14px;cursor:pointer}
+    .btn.primary{border-color:rgba(82,239,127,.45);background:rgba(82,239,127,.12)}
+    .pill{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-weight:800}
+    .flash{display:none;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;background:rgba(255,255,255,.04)}
+    .flash.show{display:block}.flash.good{border-color:rgba(82,239,127,.35);color:#ccffe1}.flash.bad{border-color:rgba(255,143,143,.35);color:#ffd0d0}
+    @media(max-width:800px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>ShiftCommander Admin</h1>
+        <div class="sub">Control staffing rules, duty crew patterns, security settings, and notification templates.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pill" id="statusPill">Loading</span>
+        <button class="btn" id="reloadBtn">Reload</button>
+        <button class="btn primary" id="saveBtn">Save Settings</button>
+      </div>
+    </section>
+    <div class="flash" id="flash"></div>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Resolver Rules</h2>
+        <div class="field"><label for="interestWindow">Begin open-shift interest collection this many days before the shift</label><input id="interestWindow" type="number" min="1" step="1" /></div>
+        <div class="field"><label for="interestCycle">Run selection cycles this many days apart</label><input id="interestCycle" type="number" min="1" step="1" /></div>
+        <div class="field"><label for="otUnlock">Additional OT may unlock this many days before the shift</label><input id="otUnlock" type="number" min="0" step="1" /></div>
+        <div class="field"><label for="allowOt">Additional OT policy</label><select id="allowOt"><option value="true">Additional OT may unlock late</option><option value="never">Additional OT never unlocks automatically</option></select></div>
+        <div class="field"><label for="emtAnchorWindow">EMT Solo Anchor window days</label><input id="emtAnchorWindow" type="number" min="1" step="1" /></div>
+        <div class="field"><label for="showAlsAppreciated">Basic crew ALS volunteer label</label><select id="showAlsAppreciated"><option value="true">Show Volunteer ALS Response Appreciated</option><option value="false">Hide once basic crew is finalized</option></select></div>
+        <div class="field"><label for="rotationOt">Expected rotation OT allowance</label><input id="rotationOt" type="number" min="0" step="1" /></div>
+        <div class="field"><label for="unsetNotices">Blank shift notices</label><select id="unsetNotices"><option value="true">Blank receives open-shift notices</option><option value="false">Blank does not receive notices</option></select></div>
+        <div class="field"><label for="doNotNotices">Do Not notices</label><select id="doNotNotices"><option value="true">Do Not suppresses notices</option><option value="false">Do Not may receive notices</option></select></div>
+      </div>
+
+      <div class="card">
+        <h2>Duty Crew</h2>
+        <div class="mini">Use pattern keys such as SAT_AM, SAT_PM, SUN_AM.</div>
+        <div class="field"><label for="dutyPatterns">Duty crew driver patterns</label><textarea id="dutyPatterns"></textarea></div>
+        <div class="field"><label for="dutyLabel">Duty crew label</label><input id="dutyLabel" /></div>
+      </div>
+
+      <div class="card">
+        <h2>Security</h2>
+        <div class="field"><label for="googleLogin">Google login required</label><select id="googleLogin"><option value="true">Required</option><option value="false">Not required</option></select></div>
+        <div class="field"><label for="trustedDuration">Trusted-device duration days</label><input id="trustedDuration" type="number" min="0" step="1" /></div>
+        <div class="field"><label for="sessionTimeout">Session timeout minutes</label><input id="sessionTimeout" type="number" min="5" step="5" /></div>
+      </div>
+
+      <div class="card">
+        <h2>Notification Templates</h2>
+        <div class="mini">Templates are saved only. Email sending remains disabled until configured.</div>
+        <div class="field"><label for="openShiftTemplate">Open shift notice</label><textarea id="openShiftTemplate"></textarea></div>
+        <div class="field"><label for="selectionTemplate">Selection result</label><textarea id="selectionTemplate"></textarea></div>
+        <div class="field"><label for="rotationTemplate">Rotation opportunity</label><textarea id="rotationTemplate"></textarea></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || "";
+    let settings = {};
+    function api(path){ return `${API_BASE}${path}`; }
+    function show(message, ok=true){
+      const node = document.getElementById("flash");
+      node.className = `flash show ${ok ? "good" : "bad"}`;
+      node.textContent = message;
+    }
+    function lines(value){ return String(value || "").split(/\r?\n|,/).map((item) => item.trim().toUpperCase()).filter(Boolean); }
+    function boolValue(id){ return document.getElementById(id).value === "true"; }
+    function setValue(id, value){ document.getElementById(id).value = value ?? ""; }
+    function rules(){ settings.resolver_rules ||= {}; return settings.resolver_rules; }
+    function security(){ settings.security ||= {}; return settings.security; }
+    function templates(){ settings.notification_templates ||= {}; return settings.notification_templates; }
+    function render(){
+      const r = rules(), s = security(), t = templates();
+      setValue("interestWindow", r.interest_window_days ?? r.late_fill_window_days ?? 14);
+      setValue("interestCycle", r.interest_cycle_days ?? 3);
+      setValue("otUnlock", r.additional_ot_unlock_days ?? 2);
+      setValue("allowOt", String(r.allow_additional_ot ?? true));
+      setValue("emtAnchorWindow", r.emt_anchor_window_days ?? 14);
+      setValue("showAlsAppreciated", String(r.show_als_appreciated_for_basic_crew ?? true));
+      setValue("rotationOt", r.expected_rotation_ot_allowance ?? 12);
+      setValue("unsetNotices", String(r.unset_gets_open_shift_notices ?? true));
+      setValue("doNotNotices", String(r.do_not_suppresses_notices ?? true));
+      setValue("dutyPatterns", (r.duty_crew_patterns || ["SAT_AM","SAT_PM","SUN_AM"]).join("\n"));
+      setValue("dutyLabel", r.duty_crew_label || "DUTY CREW");
+      setValue("googleLogin", String(s.google_login_required ?? true));
+      setValue("trustedDuration", s.trusted_device_duration_days ?? 30);
+      setValue("sessionTimeout", s.session_timeout_minutes ?? 720);
+      setValue("openShiftTemplate", t.open_shift_notice || "Open shift: {{date}} {{shift}} {{seat_type}}");
+      setValue("selectionTemplate", t.selection_result || "Selection result: {{date}} {{shift}}");
+      setValue("rotationTemplate", t.rotation_opportunity || "Rotation opportunity: {{date}} {{shift}}");
+      document.getElementById("statusPill").textContent = "Settings loaded";
+    }
+    async function load(){
+      const response = await fetch(api("/api/settings"), { credentials:"include" });
+      if(!response.ok) throw new Error(`Settings load failed (${response.status})`);
+      settings = await response.json();
+      render();
+    }
+    async function save(){
+      const r = rules(), s = security(), t = templates();
+      r.interest_window_days = Number(document.getElementById("interestWindow").value || 14);
+      r.late_fill_window_days = r.interest_window_days;
+      r.interest_cycle_days = Number(document.getElementById("interestCycle").value || 3);
+      r.additional_ot_unlock_days = Number(document.getElementById("otUnlock").value || 2);
+      r.allow_additional_ot = document.getElementById("allowOt").value === "never" ? "never" : true;
+      r.emt_anchor_window_days = Number(document.getElementById("emtAnchorWindow").value || 14);
+      r.show_als_appreciated_for_basic_crew = boolValue("showAlsAppreciated");
+      r.expected_rotation_ot_allowance = Number(document.getElementById("rotationOt").value || 12);
+      r.unset_gets_open_shift_notices = boolValue("unsetNotices");
+      r.do_not_suppresses_notices = boolValue("doNotNotices");
+      r.duty_crew_patterns = lines(document.getElementById("dutyPatterns").value);
+      r.duty_crew_label = document.getElementById("dutyLabel").value || "DUTY CREW";
+      s.google_login_required = boolValue("googleLogin");
+      s.trusted_device_duration_days = Number(document.getElementById("trustedDuration").value || 30);
+      s.session_timeout_minutes = Number(document.getElementById("sessionTimeout").value || 720);
+      t.open_shift_notice = document.getElementById("openShiftTemplate").value;
+      t.selection_result = document.getElementById("selectionTemplate").value;
+      t.rotation_opportunity = document.getElementById("rotationTemplate").value;
+      const response = await fetch(api("/api/settings"), { method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(settings) });
+      if(!response.ok) throw new Error(`Settings save failed (${response.status})`);
+      show("Settings saved.");
+      document.getElementById("statusPill").textContent = "Saved";
+    }
+    document.getElementById("reloadBtn").addEventListener("click", () => load().catch((error) => show(error.message, false)));
+    document.getElementById("saveBtn").addEventListener("click", () => save().catch((error) => show(error.message, false)));
+    load().catch((error) => show(error.message, false));
+  </script>
+</body>
+</html>

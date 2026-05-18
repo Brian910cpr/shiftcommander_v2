@@ -35,6 +35,7 @@ DEBUG_DIR = os.path.join(BASE_DIR, "debug")
 MEMBERS_FILE = os.path.join(DATA_DIR, "members.json")
 SHIFTS_FILE = os.path.join(DATA_DIR, "shifts.json")
 SCHEDULE_FILE = os.path.join(DATA_DIR, "schedule.json")
+PUBLIC_SCHEDULE_FILE = os.path.join(DOCS_DIR, "data", "schedule.json")
 SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
 AVAILABILITY_FILE = os.path.join(DATA_DIR, "availability.json")
 INFERRED_PREFERENCES_FILE = os.path.join(DATA_DIR, "inferred_preferences.json")
@@ -123,6 +124,19 @@ def save_json(path, data):
     with open(temp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     os.replace(temp_path, path)
+
+
+def save_live_schedule(schedule):
+    save_json(SCHEDULE_FILE, schedule)
+    save_json(PUBLIC_SCHEDULE_FILE, schedule)
+
+
+def load_live_schedule_shifts():
+    schedule = load_json(SCHEDULE_FILE, {})
+    shifts = schedule.get("shifts") if isinstance(schedule, dict) else None
+    if isinstance(shifts, list) and shifts:
+        return shifts
+    return load_shifts()
 
 
 def fast_json_file_response(path, empty_payload=EMPTY_SCHEDULE_BYTES):
@@ -260,6 +274,12 @@ def quick_test_supervisor_allowed():
         return False
     origin = str(request.headers.get("Origin") or "").strip().rstrip("/")
     return not origin or allowed_request_origin() is not None
+
+
+def local_testing_login_allowed():
+    host = str(request.host or "").split(":", 1)[0].strip().lower()
+    remote = str(request.remote_addr or "").strip()
+    return host in {"127.0.0.1", "localhost", "::1"} or remote in {"127.0.0.1", "::1"}
 
 
 def login_redirect(role_name):
@@ -1036,6 +1056,8 @@ def serve_docs(path):
     lowered = str(path or "").lower()
     if lowered == "supervisor.html" and current_auth()["role"] != "supervisor":
         return login_redirect("supervisor")
+    if lowered == "admin.html" and current_auth()["role"] != "supervisor":
+        return login_redirect("supervisor")
     if lowered == "member.html" and not quick_test_mode_enabled() and current_auth()["role"] not in {"member", "supervisor"}:
         return login_redirect("member")
     return send_from_directory(DOCS_DIR, path)
@@ -1056,6 +1078,13 @@ def supervisor_shortcut():
     if current_auth()["role"] != "supervisor":
         return login_redirect("supervisor")
     return redirect("/docs/supervisor.html")
+
+
+@app.route("/admin")
+def admin_shortcut():
+    if current_auth()["role"] != "supervisor":
+        return login_redirect("supervisor")
+    return redirect("/docs/admin.html")
 
 
 @app.route("/member")
@@ -1108,6 +1137,41 @@ def auth_session():
         if member:
             payload["member_name"] = member.get("name") or f"Member {auth['member_id']}"
     return jsonify(payload)
+
+
+@app.route("/api/testing/members", methods=["GET"])
+def testing_members():
+    if not local_testing_login_allowed():
+        return auth_json_error("Testing login is only available on localhost", 404)
+    members = []
+    for member in load_members():
+        member_id = str(member.get("member_id", member.get("id")) or "").strip()
+        if not member_id:
+            continue
+        members.append({
+            "member_id": member_id,
+            "name": member.get("name") or f"Member {member_id}",
+            "cert": member.get("ops_cert") or member.get("cert") or member.get("raw_cert") or "",
+            "active": member.get("active", True) is not False,
+        })
+    members.sort(key=lambda row: (not row["active"], row["name"].lower(), row["member_id"]))
+    return jsonify({"members": members, "testing_login": True})
+
+
+@app.route("/api/testing/login_as_member", methods=["POST"])
+def testing_login_as_member():
+    if not local_testing_login_allowed():
+        return auth_json_error("Testing login is only available on localhost", 404)
+    payload = request.get_json(silent=True) or request.form or {}
+    member_id = str(payload.get("member_id") or payload.get("selected_member_id") or "").strip()
+    member = member_record_by_id(member_id)
+    if not member:
+        return auth_json_error("Member record not found", 404)
+    start_member_session(member_id)
+    response = member_login_success_payload(member_id, str(payload.get("next") or "/member"))
+    response["auth_mode"] = "local_testing_dropdown"
+    response["quick_test_mode"] = quick_test_mode_enabled()
+    return jsonify(response)
 
 
 @app.route("/api/login", methods=["POST"])
@@ -1463,6 +1527,14 @@ def get_settings():
     return jsonify(load_settings())
 
 
+@app.route("/api/wallboard_settings", methods=["GET"])
+def get_wallboard_settings():
+    settings = load_settings()
+    return jsonify({
+        "resolver_rules": settings.get("resolver_rules", {}) if isinstance(settings, dict) else {}
+    })
+
+
 @app.route("/api/settings", methods=["POST"])
 @require_role("supervisor")
 def save_settings():
@@ -1554,11 +1626,11 @@ def preview_shift_builder():
 # RESOLVER
 # =========================
 
-def run_resolver():
-    from engine.resolver import resolve
+def run_resolver(shifts_override=None):
+    from engine.rule_based_resolver import resolve_rule_based
 
     members = load_members()
-    shifts = load_shifts()
+    shifts = shifts_override if isinstance(shifts_override, list) else load_live_schedule_shifts()
     settings = load_settings()
     availability = load_availability_payload()
     schedule_locked = load_json(SCHEDULE_LOCKED_FILE, {})
@@ -1576,15 +1648,15 @@ def run_resolver():
         }
     }
 
-    result = resolve(ctx)
-    save_json(SCHEDULE_FILE, result)
+    result = resolve_rule_based(ctx)
+    save_live_schedule(result)
     return result
 
 
 def preview_resolver(shifts_override=None):
-    from engine.resolver import resolve
+    from engine.rule_based_resolver import resolve_rule_based
 
-    shifts = shifts_override if isinstance(shifts_override, list) else load_shifts()
+    shifts = shifts_override if isinstance(shifts_override, list) else load_live_schedule_shifts()
     ctx = {
         "members": load_members(),
         "shifts": shifts,
@@ -1596,7 +1668,7 @@ def preview_resolver(shifts_override=None):
             "generated_at": now_iso()
         }
     }
-    return resolve(ctx)
+    return resolve_rule_based(ctx)
 
 
 # =========================
@@ -1607,7 +1679,7 @@ def preview_resolver(shifts_override=None):
 @require_role("supervisor")
 def generate_schedule():
     built_shifts = run_shift_builder()
-    result = run_resolver()
+    result = run_resolver(built_shifts)
 
     shift_count = len(built_shifts) if isinstance(built_shifts, list) else 0
 
@@ -1743,7 +1815,7 @@ def supervisor_drop_seat():
         },
     )
     clear_schedule_seat(schedule_payload, seat_key)
-    save_json(SCHEDULE_FILE, schedule_payload)
+    save_live_schedule(schedule_payload)
     save_supervisor_state(state)
     persist_schedule_locked_from_state(schedule_payload, state)
     return jsonify({"status": "ok", "seat_key": seat_key, "state": "DROPPED"})
@@ -1774,7 +1846,7 @@ def supervisor_open_seat():
         },
     )
     clear_schedule_seat(schedule_payload, seat_key)
-    save_json(SCHEDULE_FILE, schedule_payload)
+    save_live_schedule(schedule_payload)
     save_supervisor_state(state)
     persist_schedule_locked_from_state(schedule_payload, state)
     return jsonify({"status": "ok", "seat_key": seat_key, "state": "OPEN"})
@@ -1815,9 +1887,8 @@ def supervisor_resolve_week():
     payload = request.get_json(silent=True) or {}
     dry_run = bool(payload.get("dry_run", False))
 
-    built_shifts = preview_shift_builder() if dry_run else run_shift_builder()
-    result = preview_resolver(built_shifts) if dry_run else run_resolver()
-    shift_count = len(built_shifts) if isinstance(built_shifts, list) else 0
+    result = preview_resolver() if dry_run else run_resolver()
+    shift_count = len(result.get("shifts", [])) if isinstance(result, dict) else 0
 
     return jsonify({
         "status": "ok",
