@@ -1,0 +1,294 @@
+{
+  "build": {
+    "source": "physical_may_wallboard_rollout_import",
+    "board_month": "2026-05",
+    "import_scope": "approved_future_cells_only",
+    "first_included_date": "2026-05-20",
+    "notes": [
+      "Visible May future assignments are sticky for initial rollout.",
+      "Visible OPEN spots remain open for interest collection.",
+      "Blank or unreadable future spots are unresolved and are not converted to DO_NOT.",
+      "Diagonal black marks on the physical board are elapsed-day marks, not cancellations."
+    ]
+  },
+  "may_sticky_assignments": [
+    {
+      "date": "2026-05-20",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "186",
+      "assigned_name": "Lynnsey Benson",
+      "board_name": "Lynnsey",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-20",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "186",
+      "assigned_name": "Lynnsey Benson",
+      "board_name": "Lynnsey",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-21",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "182",
+      "assigned_name": "Nikki Meeks",
+      "board_name": "Nikki",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-21",
+      "label": "AM",
+      "role": "DRIVER",
+      "member_id": "188",
+      "assigned_name": "Brian Ennis",
+      "board_name": "Brian",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-21",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "182",
+      "assigned_name": "Nikki Meeks",
+      "board_name": "Nikki",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-21",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "189",
+      "assigned_name": "Collin Harrison",
+      "board_name": "Collin",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-22",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "190",
+      "assigned_name": "Barbara",
+      "board_name": "Barbara",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-22",
+      "label": "AM",
+      "role": "DRIVER",
+      "member_id": "189",
+      "assigned_name": "Collin Harrison",
+      "board_name": "Collin",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-22",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "190",
+      "assigned_name": "Barbara",
+      "board_name": "Barbara",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-22",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "185",
+      "assigned_name": "Sidney DuBois",
+      "board_name": "Sidney",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-26",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "190",
+      "assigned_name": "Barbara",
+      "board_name": "Barbara",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-26",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "190",
+      "assigned_name": "Barbara",
+      "board_name": "Barbara",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-26",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "185",
+      "assigned_name": "Sidney DuBois",
+      "board_name": "Sidney",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-27",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "180",
+      "assigned_name": "Sophia Williams",
+      "board_name": "Sophie",
+      "confidence": "high"
+    },
+    {
+      "date": "2026-05-27",
+      "label": "AM",
+      "role": "DRIVER",
+      "member_id": "188",
+      "assigned_name": "Brian Ennis",
+      "board_name": "Brian",
+      "confidence": "high"
+    },
+    {
+      "date": "2026-05-27",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "180",
+      "assigned_name": "Sophia Williams",
+      "board_name": "Sophie",
+      "confidence": "high"
+    },
+    {
+      "date": "2026-05-27",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "188",
+      "assigned_name": "Brian Ennis",
+      "board_name": "Brian",
+      "confidence": "high"
+    },
+    {
+      "date": "2026-05-28",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "186",
+      "assigned_name": "Lynnsey Benson",
+      "board_name": "Lynnsey",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-28",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "186",
+      "assigned_name": "Lynnsey Benson",
+      "board_name": "Lynnsey",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-28",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "189",
+      "assigned_name": "Collin Harrison",
+      "board_name": "Collin",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-29",
+      "label": "AM",
+      "role": "DRIVER",
+      "member_id": "189",
+      "assigned_name": "Collin Harrison",
+      "board_name": "Collin",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-29",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "189",
+      "assigned_name": "Collin Harrison",
+      "board_name": "Collin",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-30",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "190",
+      "assigned_name": "Barbara",
+      "board_name": "Barbara",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-30",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "190",
+      "assigned_name": "Barbara",
+      "board_name": "Barbara",
+      "confidence": "medium"
+    }
+  ],
+  "may_open_seats": [
+    {
+      "date": "2026-05-20",
+      "label": "AM",
+      "role": "DRIVER",
+      "board_label": "open",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-20",
+      "label": "PM",
+      "role": "DRIVER",
+      "board_label": "open",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-26",
+      "label": "AM",
+      "role": "DRIVER",
+      "board_label": "open",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-28",
+      "label": "AM",
+      "role": "DRIVER",
+      "board_label": "open",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-29",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "board_label": "open",
+      "confidence": "medium"
+    },
+    {
+      "date": "2026-05-29",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "board_label": "open",
+      "confidence": "medium"
+    }
+  ],
+  "unresolved_rows_skipped": [
+    {
+      "date": "2026-05-23",
+      "reason": "low_confidence_or_partially_obscured"
+    },
+    {
+      "date": "2026-05-24",
+      "reason": "low_confidence_or_partially_obscured"
+    },
+    {
+      "date": "2026-05-25",
+      "reason": "low_confidence_or_partially_obscured"
+    },
+    {
+      "date": "2026-05-31",
+      "reason": "low_confidence_or_partially_obscured"
+    }
+  ]
+}

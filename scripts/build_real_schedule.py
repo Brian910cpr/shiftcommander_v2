@@ -31,6 +31,32 @@ def write_json(path: Path, payload) -> None:
     temp.replace(path)
 
 
+def unresolved_resolver_shift_templates(shifts):
+    cleaned = []
+    for shift in shifts if isinstance(shifts, list) else []:
+        if not isinstance(shift, dict):
+            continue
+        next_shift = dict(shift)
+        next_shift.pop("crew_status", None)
+        next_shift.pop("readiness", None)
+        next_shift.pop("readiness_state", None)
+        next_shift.pop("urgency_state", None)
+        next_shift.pop("audit", None)
+        seats = []
+        for seat in next_shift.get("seats", []):
+            if not isinstance(seat, dict):
+                continue
+            next_seat = {
+                key: value
+                for key, value in seat.items()
+                if key in {"role", "hours", "seat_id", "seat_code", "display_role", "external_coverage_label", "duty_crew", "active", "externally_satisfied", "external_coverage_type"}
+            }
+            seats.append(next_seat)
+        next_shift["seats"] = seats
+        cleaned.append(next_shift)
+    return cleaned
+
+
 def main() -> int:
     schedule = load_json(DATA / "schedule.json", {})
     shifts = schedule.get("shifts") if isinstance(schedule, dict) else None
@@ -44,8 +70,9 @@ def main() -> int:
         "settings": load_json(DATA / "settings.json", {}),
         "availability": load_json(DATA / "availability.json", {"months": {}}),
         "schedule_locked": load_json(DATA / "schedule_locked.json", {}),
+        "rollout_import": load_json(DATA / "rollout_import.json", {}),
         "rotation_templates": load_json(DATA / "rotation_templates.json", {}),
-        "shifts": shifts,
+        "shifts": unresolved_resolver_shift_templates(shifts),
         "build": {"generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z")},
     }
     result = resolve_rule_based(ctx)
@@ -64,4 +91,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

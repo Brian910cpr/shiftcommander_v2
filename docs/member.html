@@ -60,11 +60,16 @@
     .assignment .meta{margin-top:4px;color:var(--muted);font-size:13px}
     .calendar-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
     .calendar-note{margin:0 0 14px;color:var(--muted);line-height:1.45}
+    .brief-help{display:none;margin:0 0 14px;color:var(--muted);line-height:1.45}
+    .mode-toggle{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .mode-toggle .btn.active{border-color:rgba(82,239,127,.55);background:rgba(82,239,127,.14)}
     .calendar-legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
     .repeat-tools{display:grid;gap:10px;margin:0 0 14px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.025)}
     .repeat-tools-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
     .repeat-title{font-weight:950}
-    .repeat-fields{display:grid;grid-template-columns:2fr 1.4fr 1fr auto;gap:10px;align-items:end}
+    .repeat-fields{display:grid;grid-template-columns:2fr 1.4fr 1.2fr 1fr auto;gap:10px;align-items:end}
+    .custom-range{display:none}
+    .custom-range.show{display:grid}
     .repeat-preview{font-size:12px;color:var(--muted);line-height:1.35}
     .legend-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 10px;background:rgba(255,255,255,.03);font-size:12px;font-weight:850;color:var(--muted)}
     .legend-dot{width:10px;height:10px;border-radius:999px;background:var(--gray)}
@@ -95,6 +100,23 @@
     .state-btn.available{background:rgba(113,82,12,.74);border-color:#ffbd4d}
     .state-btn.do_not_schedule{background:rgba(105,31,39,.76);border-color:#ff6f6f}
     .state-btn.blank{background:#1d3049;border-color:#587091}
+    .brief-mode .layout{grid-template-columns:300px 1fr}
+    .brief-mode .calendar-note{display:none}
+    .brief-mode .brief-help{display:block}
+    .brief-mode .calendar-grid{gap:8px}
+    .brief-mode .day-card{min-height:132px;padding:10px;gap:8px}
+    .brief-mode .day-num{font-size:26px}
+    .brief-mode .day-date{font-size:11px}
+    .brief-mode .state-grid{gap:7px}
+    .brief-mode .shift-row{grid-template-columns:34px 1fr;align-items:center;gap:6px}
+    .brief-mode .shift-label{font-size:11px}
+    .brief-mode .state-btn{min-height:42px;border-radius:12px;padding:8px 10px;text-align:center}
+    .brief-mode .state-btn .state-main{font-size:13px}
+    .brief-mode .state-btn .state-help,.brief-mode .day-note{display:none}
+    .brief-mode .state-btn.preferred{background:rgba(20,130,67,.94)}
+    .brief-mode .state-btn.available{background:rgba(70,104,74,.82);border-color:rgba(116,214,137,.65)}
+    .brief-mode .state-btn.do_not_schedule{background:rgba(83,75,86,.82);border-color:rgba(255,143,143,.42)}
+    .brief-mode .state-btn.blank{background:rgba(18,31,49,.48);border-color:rgba(88,112,145,.62)}
     .state-btn:hover:not(:disabled):not(.locked-state){transform:translateY(-1px);filter:brightness(1.05)}
     .state-btn:disabled{opacity:.45;cursor:not-allowed}
     .state-btn.locked-state{opacity:.45;cursor:not-allowed}
@@ -110,7 +132,7 @@
     .diag-entry.ok{border-color:rgba(82,239,127,.35)}
     .diag-entry.fail{border-color:rgba(255,143,143,.35)}
     .diag-preview{color:var(--muted);font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-word}
-    @media (max-width:1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}.repeat-fields{grid-template-columns:1fr 1fr}}
+    @media (max-width:1200px){.layout,.brief-mode .layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}.repeat-fields{grid-template-columns:1fr 1fr}}
     @media (max-width:1100px){.calendar-head,.calendar-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     @media (max-width:900px){.calendar-head{display:none}.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:640px){.calendar-head,.calendar-grid,.summary-grid,.intro-banner,.repeat-fields{grid-template-columns:1fr}.intro-banner .btn{width:100%}}
@@ -243,14 +265,48 @@
         <section class="card">
           <div class="section-title">
             <h2>Availability Calendar</h2>
-            <span class="save-status" id="saveStatus">No changes yet</span>
+            <div class="mode-toggle" aria-label="Availability view mode">
+              <button class="btn" id="briefModeBtn" type="button">Brief Mode</button>
+              <button class="btn" id="verboseModeBtn" type="button">Verbose Mode</button>
+              <span class="save-status" id="saveStatus">No changes yet</span>
+            </div>
           </div>
           <p class="calendar-note">Preferred: I would like this shift. Available: I can work this shift if needed. Do Not: Do not schedule me for this shift and do not notify me if it opens. Blank: No selection made. You will not be automatically scheduled, but may still receive open-shift notices.</p>
+          <p class="brief-help">Tap a shift to cycle choices. Preferred: want it. Available: can work it. Do Not: no schedule and no notices. Blank: no automatic scheduling, but open-shift notices may still be sent.</p>
           <div class="calendar-legend">
             <span class="legend-chip" title="I would like this shift."><span class="legend-dot preferred"></span>Preferred</span>
             <span class="legend-chip" title="I can work this shift if needed."><span class="legend-dot available"></span>Available</span>
             <span class="legend-chip" title="Do not schedule me for this shift and do not notify me if it opens."><span class="legend-dot do_not_schedule"></span>Do Not</span>
             <span class="legend-chip" title="No selection made. You will not be automatically scheduled, but may still receive open-shift notices."><span class="legend-dot blank"></span>Blank</span>
+          </div>
+          <div class="repeat-tools" id="rangeTools">
+            <div class="repeat-tools-head">
+              <div>
+                <div class="repeat-title">Calendar range</div>
+                <div class="mini" id="rangeLimitText">Availability can be submitted forward without a small fixed limit.</div>
+              </div>
+              <button class="btn warn" id="clearForwardBtn" type="button">Clear from this week forward</button>
+            </div>
+            <div class="repeat-fields">
+              <div class="field">
+                <label for="forwardRange">Show and edit forward</label>
+                <select id="forwardRange">
+                  <option value="2">2 weeks</option>
+                  <option value="4">4 weeks</option>
+                  <option value="8" selected>8 weeks</option>
+                  <option value="12">12 weeks</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="field custom-range" id="customWeeksField">
+                <label for="customWeeks">Custom weeks forward</label>
+                <input id="customWeeks" type="number" min="1" step="1" value="12" />
+              </div>
+              <div class="field custom-range" id="customEndField">
+                <label for="customEndDate">Or end date</label>
+                <input id="customEndDate" type="date" />
+              </div>
+            </div>
           </div>
           <div class="repeat-tools" id="repeatTools">
             <div class="repeat-tools-head">
@@ -274,15 +330,24 @@
                 </select>
               </div>
               <div class="field">
-                <label for="repeatCycles">How far</label>
-                <select id="repeatCycles">
-                  <option value="6">6 cycles</option>
-                  <option value="4">4 cycles</option>
-                  <option value="8">8 cycles</option>
-                  <option value="2">2 cycles</option>
+                <label for="repeatRange">Target range</label>
+                <select id="repeatRange">
+                  <option value="2">2 weeks</option>
+                  <option value="4" selected>4 weeks</option>
+                  <option value="8">8 weeks</option>
+                  <option value="12">12 weeks</option>
+                  <option value="custom">Custom</option>
                 </select>
               </div>
+              <div class="field custom-range" id="repeatCustomWeeksField">
+                <label for="repeatCustomWeeks">Custom weeks</label>
+                <input id="repeatCustomWeeks" type="number" min="1" step="1" value="12" />
+              </div>
               <button class="btn primary" id="applyRepeatBtn" type="button">Copy Forward</button>
+            </div>
+            <div class="field custom-range" id="repeatThroughDateField">
+              <label for="repeatThroughDate">Apply this week's selections forward through</label>
+              <input id="repeatThroughDate" type="date" />
             </div>
             <div class="repeat-preview" id="repeatPreview">Choose a cycle to copy forward.</div>
           </div>
@@ -304,7 +369,6 @@
     const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
     const PUBLIC_API_BASE = "https://shiftcommander-v2.onrender.com";
     const DEFAULT_EDITABLE_WEEK_OFFSET = 0;
-    const VISIBLE_OPERATIONAL_CYCLES = 8;
     const DAYS_PER_OPERATIONAL_CYCLE = 7;
     const OPERATIONAL_CYCLE_START_DAY = 4; // Thursday
     function defaultApiBase(){
@@ -316,6 +380,8 @@
     const STORAGE_USER_KEY = "sc_member_user_id";
     const STORAGE_QT_MEMBER_KEY = "sc_quick_test_member_id";
     const STORAGE_INTRO_KEY = "sc_member_intro_v1_dismissed";
+    const STORAGE_VIEW_MODE_KEY = "sc_member_availability_view_mode";
+    const STORAGE_FORWARD_RANGE_KEY = "sc_member_forward_range";
     const FETCH_TIMEOUT_MS = 12000;
     const appState = {
       session: null,
@@ -325,6 +391,9 @@
       schedule: {},
       availabilityEditStartDate: "",
       currentWeekOffset: DEFAULT_EDITABLE_WEEK_OFFSET,
+      viewMode: "",
+      forwardWeeks: 8,
+      adminMaxForwardWeeks: null,
       dirtyAvailability: false,
       dirtyAvailabilityKeys: new Set(),
       lastSavedAt: "",
@@ -438,7 +507,8 @@
     }
     function visibleDates(){
       const start = currentWindowStart();
-      return Array.from({length: VISIBLE_OPERATIONAL_CYCLES * DAYS_PER_OPERATIONAL_CYCLE}, (_,i) => addDays(start, i));
+      appState.forwardWeeks = selectedForwardWeeks();
+      return Array.from({length: appState.forwardWeeks * DAYS_PER_OPERATIONAL_CYCLE}, (_,i) => addDays(start, i));
     }
     function memberEditStartDate(){
       return appState.availabilityEditStartDate ? isoToDate(appState.availabilityEditStartDate) : nextOperationalCycleStart(new Date());
@@ -459,6 +529,87 @@
     }
     function selectedMemberName(){
       return appState.member?.name || appState.session?.member_name || appState.roster.find((member) => String(member.member_id || member.id) === getMemberId())?.name || "Member";
+    }
+
+    function initialViewMode(){
+      const stored = localStorage.getItem(STORAGE_VIEW_MODE_KEY);
+      if(stored === "brief" || stored === "verbose") return stored;
+      return window.matchMedia?.("(max-width: 760px)")?.matches ? "brief" : "verbose";
+    }
+
+    function setViewMode(mode, persist=true){
+      appState.viewMode = mode === "brief" ? "brief" : "verbose";
+      document.body.classList.toggle("brief-mode", appState.viewMode === "brief");
+      document.getElementById("briefModeBtn")?.classList.toggle("active", appState.viewMode === "brief");
+      document.getElementById("verboseModeBtn")?.classList.toggle("active", appState.viewMode === "verbose");
+      if(persist) localStorage.setItem(STORAGE_VIEW_MODE_KEY, appState.viewMode);
+    }
+
+    function positiveInteger(value, fallback){
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed > 0 ? Math.ceil(parsed) : fallback;
+    }
+
+    function getAdminMaxForwardWeeks(){
+      return positiveInteger(appState.adminMaxForwardWeeks, null);
+    }
+
+    function clampForwardWeeks(weeks){
+      const max = getAdminMaxForwardWeeks();
+      const value = positiveInteger(weeks, 8);
+      return max ? Math.min(value, max) : value;
+    }
+
+    function selectedForwardWeeks(){
+      const select = document.getElementById("forwardRange");
+      const customWeeks = document.getElementById("customWeeks");
+      const customEndDate = document.getElementById("customEndDate");
+      if(select?.value === "custom"){
+        const start = currentWindowStart();
+        const endValue = customEndDate?.value || "";
+        if(endValue){
+          const end = isoToDate(endValue);
+          const weeks = Math.ceil(((end - start) / 86400000 + 1) / DAYS_PER_OPERATIONAL_CYCLE);
+          return clampForwardWeeks(weeks);
+        }
+        return clampForwardWeeks(customWeeks?.value || 12);
+      }
+      return clampForwardWeeks(select?.value || appState.forwardWeeks || 8);
+    }
+
+    function updateCustomRangeVisibility(){
+      const isCustom = document.getElementById("forwardRange")?.value === "custom";
+      document.getElementById("customWeeksField")?.classList.toggle("show", isCustom);
+      document.getElementById("customEndField")?.classList.toggle("show", isCustom);
+      const repeatCustom = document.getElementById("repeatRange")?.value === "custom";
+      document.getElementById("repeatCustomWeeksField")?.classList.toggle("show", repeatCustom);
+      document.getElementById("repeatThroughDateField")?.classList.toggle("show", repeatCustom);
+    }
+
+    function updateRangeLimitText(){
+      const node = document.getElementById("rangeLimitText");
+      if(!node) return;
+      const max = getAdminMaxForwardWeeks();
+      node.textContent = max ? `Availability can currently be submitted up to ${max} weeks ahead.` : "Availability can be submitted forward without a small fixed limit.";
+    }
+
+    function configureForwardRange(){
+      const stored = localStorage.getItem(STORAGE_FORWARD_RANGE_KEY);
+      const select = document.getElementById("forwardRange");
+      if(select && ["2","4","8","12","custom"].includes(stored || "")) select.value = stored;
+      appState.forwardWeeks = selectedForwardWeeks();
+      updateCustomRangeVisibility();
+      updateRangeLimitText();
+    }
+
+    function repeatEndDate(sourceStart){
+      const range = document.getElementById("repeatRange")?.value || "2";
+      if(range === "custom"){
+        const through = document.getElementById("repeatThroughDate")?.value || "";
+        if(through) return isoToDate(through);
+        return addDays(sourceStart, (clampForwardWeeks(document.getElementById("repeatCustomWeeks")?.value || 12) * DAYS_PER_OPERATIONAL_CYCLE) - 1);
+      }
+      return addDays(sourceStart, (clampForwardWeeks(range) * DAYS_PER_OPERATIONAL_CYCLE) - 1);
     }
 
     function renderSaveState(){
@@ -523,7 +674,8 @@
         "logoutBtn","saveProfileBtn","changePasswordBtn","saveAvailabilityBtn",
         "desiredHours","ampmPreference","shift24Preference","swapPreference",
         "currentPassword","newPassword","confirmPassword","prevBtn","todayBtn","nextBtn","quickTestMemberSelect",
-        "repeatSourceCycle","repeatWhat","repeatCycles","applyRepeatBtn"
+        "repeatSourceCycle","repeatWhat","repeatRange","repeatCustomWeeks","repeatThroughDate","applyRepeatBtn",
+        "forwardRange","customWeeks","customEndDate","clearForwardBtn","briefModeBtn","verboseModeBtn"
       ];
       ids.forEach((id) => {
         const node = document.getElementById(id);
@@ -698,7 +850,7 @@
 
     function visibleCycleStarts(){
       const start = currentWindowStart();
-      return Array.from({length: VISIBLE_OPERATIONAL_CYCLES}, (_, index) => addDays(start, index * DAYS_PER_OPERATIONAL_CYCLE));
+      return Array.from({length: selectedForwardWeeks()}, (_, index) => addDays(start, index * DAYS_PER_OPERATIONAL_CYCLE));
     }
 
     function sourceOffsetsForRepeat(kind){
@@ -718,9 +870,9 @@
     function renderRepeatTools(){
       const sourceSelect = document.getElementById("repeatSourceCycle");
       const kindSelect = document.getElementById("repeatWhat");
-      const cyclesSelect = document.getElementById("repeatCycles");
+      const rangeSelect = document.getElementById("repeatRange");
       const preview = document.getElementById("repeatPreview");
-      if(!sourceSelect || !kindSelect || !cyclesSelect || !preview) return;
+      if(!sourceSelect || !kindSelect || !rangeSelect || !preview) return;
 
       const previous = sourceSelect.value;
       const nextStart = memberEditStartDate();
@@ -740,10 +892,11 @@
         preview.textContent = "No editable future cycle is visible. Go later to copy availability forward.";
         return;
       }
+      updateCustomRangeVisibility();
       const sourceStart = isoToDate(sourceSelect.value);
       const sourceEnd = addDays(sourceStart, 6);
-      const count = Number(cyclesSelect.value || 6);
-      preview.textContent = `Will copy ${repeatKindLabel(kindSelect.value)} from ${shortDate(sourceStart)} - ${shortDate(sourceEnd)} into the next ${count} operational cycles.`;
+      const end = repeatEndDate(sourceStart);
+      preview.textContent = `Apply this week's selections forward through ${shortDate(end)}. BLANK remains BLANK; it is not converted to Do Not. Source: ${repeatKindLabel(kindSelect.value)} from ${shortDate(sourceStart)} - ${shortDate(sourceEnd)}.`;
     }
 
     function applyRepeatForward(){
@@ -753,19 +906,20 @@
       }
       const sourceSelect = document.getElementById("repeatSourceCycle");
       const kindSelect = document.getElementById("repeatWhat");
-      const cyclesSelect = document.getElementById("repeatCycles");
       if(!sourceSelect?.value) {
         showFlash("Choose a future cycle to copy from.", "error");
         return;
       }
       const sourceStart = isoToDate(sourceSelect.value);
+      const endDate = repeatEndDate(sourceStart);
       const offsets = sourceOffsetsForRepeat(kindSelect.value);
-      const cycles = Number(cyclesSelect.value || 6);
       let changed = 0;
-      for(let cycle = 1; cycle <= cycles; cycle += 1){
+      for(let cycleStart = addDays(sourceStart, DAYS_PER_OPERATIONAL_CYCLE); cycleStart <= endDate; cycleStart = addDays(cycleStart, DAYS_PER_OPERATIONAL_CYCLE)){
         offsets.forEach(({ day, shifts }) => {
           const sourceDate = formatDate(addDays(sourceStart, day));
-          const targetDate = formatDate(addDays(sourceStart, (cycle * DAYS_PER_OPERATIONAL_CYCLE) + day));
+          const targetDateObj = addDays(cycleStart, day);
+          if(targetDateObj > endDate) return;
+          const targetDate = formatDate(targetDateObj);
           if(editLocked(targetDate)) return;
           shifts.forEach((shift) => {
             setStatus(targetDate, shift, getStatus(sourceDate, shift));
@@ -777,12 +931,36 @@
       showFlash(changed ? `Copied availability to ${changed} future shifts. Save when ready.` : "No editable future shifts were changed.", changed ? "success" : "error");
     }
 
+    function clearFromSelectedWeekForward(){
+      if(!appState.contextReady){
+        showFlash("Member context is still loading.", "error");
+        return;
+      }
+      const confirmed = window.confirm("Clear all selections from this week forward? Blank shifts will not be automatically scheduled, but may still receive open-shift notices.");
+      if(!confirmed) return;
+      const start = currentWindowStart();
+      const end = addDays(start, (selectedForwardWeeks() * DAYS_PER_OPERATIONAL_CYCLE) - 1);
+      let changed = 0;
+      for(let day = new Date(start); day <= end; day = addDays(day, 1)){
+        const dateIso = formatDate(day);
+        if(editLocked(dateIso)) continue;
+        ["AM","PM"].forEach((shift) => {
+          setStatus(dateIso, shift, "blank");
+          changed += 1;
+        });
+      }
+      renderCalendar();
+      showFlash(changed ? `Cleared ${changed} future selections to Blank. Save when ready.` : "No editable future selections were cleared.", changed ? "success" : "error");
+    }
+
     function renderCalendar(){
       if(!appState.member){
         setCalendarFallback("Availability calendar cannot render because member context is unavailable.");
         return;
       }
       clearCalendarFallback();
+      updateCustomRangeVisibility();
+      updateRangeLimitText();
       const dates = visibleDates();
       document.getElementById("calendarHead").innerHTML = dates.slice(0, 7).map((date) => `<div class="dow">${date.toLocaleDateString(undefined,{weekday:"short"})}</div>`).join("");
       document.getElementById("calendarGrid").innerHTML = dates.map((date) => {
@@ -883,6 +1061,7 @@
       appState.availability = context.data.availability || { months:{} };
       appState.schedule = context.data.schedule || {};
       appState.availabilityEditStartDate = context.data.availability_edit_start_date || "";
+      appState.adminMaxForwardWeeks = context.data.member_page_settings?.availability_max_forward_weeks || null;
       appState.contextReady = true;
       appState.dirtyAvailability = false;
       appState.dirtyAvailabilityKeys.clear();
@@ -1062,10 +1241,20 @@
     document.getElementById("todayBtn").addEventListener("click", () => { appState.currentWeekOffset = DEFAULT_EDITABLE_WEEK_OFFSET; renderCalendar(); });
     document.getElementById("prevBtn").addEventListener("click", () => { appState.currentWeekOffset -= 1; renderCalendar(); });
     document.getElementById("nextBtn").addEventListener("click", () => { appState.currentWeekOffset += 1; renderCalendar(); });
+    document.getElementById("briefModeBtn").addEventListener("click", () => setViewMode("brief"));
+    document.getElementById("verboseModeBtn").addEventListener("click", () => setViewMode("verbose"));
+    document.getElementById("clearForwardBtn").addEventListener("click", clearFromSelectedWeekForward);
     document.getElementById("applyRepeatBtn").addEventListener("click", applyRepeatForward);
-    ["repeatSourceCycle","repeatWhat","repeatCycles"].forEach((id) => {
+    ["repeatSourceCycle","repeatWhat","repeatRange","repeatCustomWeeks","repeatThroughDate"].forEach((id) => {
       const node = document.getElementById(id);
       if(node) node.addEventListener("change", renderRepeatTools);
+    });
+    ["forwardRange","customWeeks","customEndDate"].forEach((id) => {
+      const node = document.getElementById(id);
+      if(node) node.addEventListener("change", () => {
+        if(id === "forwardRange") localStorage.setItem(STORAGE_FORWARD_RANGE_KEY, node.value);
+        renderCalendar();
+      });
     });
     document.getElementById("quickTestMemberSelect").addEventListener("change", async (event) => {
       if(!appState.quickTestMode) return;
@@ -1097,6 +1286,8 @@
     });
 
     setInteractiveEnabled(false);
+    setViewMode(initialViewMode(), false);
+    configureForwardRange();
     initIntroBanner();
     applyModeUi();
     loadContext().catch((error) => {

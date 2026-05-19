@@ -79,7 +79,9 @@
     .date-side{display:grid;gap:2px}
     .date-side .dow{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:900}
     .date-side .month{font-size:14px;color:var(--text);font-weight:800}
-    .cake{font-size:18px}
+    .date-markers{display:flex;gap:4px;align-items:center;max-width:92px;overflow:hidden}
+    .date-marker{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:16px;line-height:1}
+    .date-marker img{max-width:22px;max-height:22px;object-fit:contain}
     .shift-list{display:grid;gap:12px;padding:14px 16px 16px}
     .shift-block{border:1px solid rgba(255,255,255,.06);border-radius:16px;background:rgba(255,255,255,.02);overflow:hidden}
     .header-row{justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
@@ -129,13 +131,9 @@
     <section class="hero">
       <div>
         <div class="title">ShiftCommander Supervisor</div>
-        <div class="subtitle">Choose a week, preview legal crews, review open seats and audit reasons, then commit only the assignments you want displayed.</div>
+        <div class="subtitle">Operational staffing command center: preview crews, fill open seats, publish schedules, and review staffing explanations.</div>
         <div class="status-row" style="margin-top:12px">
-          <span class="pill"><strong>Live routes</strong> /api/health · /api/build_shifts · /api/generate · /api/schedule</span>
-          <span class="pill"><strong>Display state</strong> /api/supervisor/state · /api/supervisor/publish_week · /api/supervisor/open_seat</span>
           <span class="pill" id="sessionPill"><strong>Session</strong> Supervisor</span>
-          <span class="pill" id="originPill"><strong>Origin</strong> --</span>
-          <span class="pill" id="apiBasePill"><strong>API Base</strong> --</span>
           <span class="pill" id="authModePill"><strong>Auth Mode</strong> --</span>
           <span class="pill" id="healthPill"><strong>Health</strong> --</span>
           <span class="pill">Build SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001</span>
@@ -143,8 +141,8 @@
       </div>
       <div class="hero-actions">
         <span class="badge demo hidden" id="quickTestSupervisorBadge">Quick Test Supervisor Mode</span>
-        <span class="badge live">Live actions write backend files</span>
-        <span class="badge planned">Availability is member-editable only outside the next 2 weeks</span>
+        <button class="btn" id="manageMembersBtn">Manage Members</button>
+        <button class="btn" id="adminBtn">Admin Settings</button>
         <button class="btn" id="refreshBtn">Refresh</button>
         <button class="btn" id="logoutBtn">Logout</button>
       </div>
@@ -152,8 +150,8 @@
 
     <div class="flash" id="flash"></div>
     <section class="startup-issues" id="startupIssues"></section>
-    <section class="action-diagnostics" id="actionDiagnostics">
-      <h3>Supervisor action status</h3>
+    <section class="action-diagnostics hidden" id="actionDiagnostics">
+      <h3>Action details</h3>
       <div class="diag-grid">
         <div class="diag-item"><strong>API base</strong><span id="diagApiBase">--</span></div>
         <div class="diag-item"><strong>Selected week</strong><span id="diagWeek">--</span></div>
@@ -176,7 +174,7 @@
           <div class="step">
             <div class="step-badge live">Live</div>
             <h3>1. Refresh shift list</h3>
-            <p>Rebuild the upcoming shift list from current members, settings, and availability.</p>
+            <p>Update upcoming shifts from current roster, settings, and availability.</p>
             <div class="step-actions">
               <button class="btn" id="buildShiftsBtn">Refresh Shift List</button>
             </div>
@@ -184,7 +182,7 @@
           <div class="step">
             <div class="step-badge planned">Safe preview</div>
             <h3>2. Preview legal crews</h3>
-            <p>Preview proposed staffing and audit reasons without changing the saved schedule.</p>
+            <p>Preview proposed staffing without changing the saved schedule.</p>
             <div class="step-actions">
               <button class="btn warn" id="dryRunBtn">Preview Week</button>
             </div>
@@ -192,7 +190,7 @@
           <div class="step">
             <div class="step-badge live">Live</div>
             <h3>3. Fill only unresolved open seats</h3>
-            <p>Displayed or supervisor-locked seats stay preserved. OPEN and dropped seats remain eligible for re-resolution.</p>
+            <p>Fill open staffing holes while preserving displayed or locked seats.</p>
             <div class="step-actions">
               <button class="btn primary" id="resolveBtn" title="Searches for the best available people to fill open shifts.">Fill Open Seats</button>
             </div>
@@ -200,22 +198,9 @@
           <div class="step">
             <div class="step-badge live">Live</div>
             <h3>4. Publish / display / freeze</h3>
-            <p>Freeze the currently assigned seats for this week. Unfilled seats stay OPEN and are not hard-locked.</p>
+            <p>Display this week for operations. Unfilled seats stay open.</p>
             <div class="step-actions">
               <button class="btn" id="publishBtn">Publish And Freeze Week</button>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-badge planned">Policy</div>
-            <h3>5. Member behavior</h3>
-            <p>Member interest is considered during open-shift selection. Supervisors can still review, override, and record the reason.</p>
-          </div>
-          <div class="step">
-            <div class="step-badge live">Availability</div>
-            <h3>6. Clear future availability</h3>
-            <p>Erase declared future AM/PM availability after today, preserve past history, and create a backup before changing files.</p>
-            <div class="step-actions">
-              <button class="btn danger" id="clearFutureAvailabilityBtn">Clear Future Availability Intent</button>
             </div>
           </div>
         </div>
@@ -226,51 +211,23 @@
           <span class="badge locked">Supervisor Locked</span>
           <span class="badge draft">Draft</span>
         </div>
-        <div class="step-list" style="margin-top:16px">
-          <div class="step">
-            <div class="step-badge live">Security</div>
-            <h3>Member password reset</h3>
-            <div class="field">
-              <label for="resetMemberId">Member ID</label>
-              <input id="resetMemberId" placeholder="102" />
-            </div>
-            <div class="field">
-              <label for="resetPassword">Temporary password</label>
-              <input id="resetPassword" type="password" placeholder="At least 8 characters" />
-            </div>
-            <div class="step-actions">
-              <button class="btn" id="resetPasswordBtn">Reset Member Password</button>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-badge live">Security</div>
-            <h3>Change supervisor password</h3>
-            <div class="field">
-              <label for="currentPassword">Current password</label>
-              <input id="currentPassword" type="password" />
-            </div>
-            <div class="field">
-              <label for="newPassword">New password</label>
-              <input id="newPassword" type="password" />
-            </div>
-            <div class="field">
-              <label for="confirmPassword">Confirm password</label>
-              <input id="confirmPassword" type="password" />
-            </div>
-            <div class="step-actions">
-              <button class="btn" id="changePasswordBtn">Change Password</button>
-            </div>
-          </div>
-        </div>
       </aside>
 
       <main class="main">
-        <section class="card">
+        <section class="card hidden" id="adrZipperCard">
           <div class="section-title">
             <h2>Open Seats</h2>
             <span class="mini">Visible unresolved seats and why they remain open</span>
           </div>
           <div id="openSeatsPanel"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>ADR Zipper Simulation</h2>
+            <span class="mini">EMT continuity audit only</span>
+          </div>
+          <div id="adrZipperPanel"></div>
         </section>
 
         <section class="card">
@@ -296,6 +253,7 @@
       members: [],
       memberById: new Map(),
       settings: {},
+      calendarMarkers: { markers: [] },
       shifts: [],
       schedule: {},
       supervisorState: { entries: [] },
@@ -413,8 +371,6 @@
     }
 
     function renderRuntimePills(){
-      document.getElementById("originPill").innerHTML = `<strong>Origin</strong> ${esc(window.location.origin || "file://")}`;
-      document.getElementById("apiBasePill").innerHTML = `<strong>API Base</strong> ${esc(API_BASE || "(same origin)")}`;
       document.getElementById("authModePill").innerHTML = `<strong>Auth Mode</strong> ${esc(state.health?.quick_test_mode ? "Quick Test Available" : "Real Login")}`;
       document.getElementById("healthPill").innerHTML = `<strong>Health</strong> ${esc(state.health?.status || "unreachable")}`;
       document.getElementById("quickTestSupervisorBadge").classList.toggle("hidden", !state.health?.quick_test_mode);
@@ -425,7 +381,8 @@
       state.lastAction = { ...state.lastAction, ...next };
       const node = document.getElementById("actionDiagnostics");
       if(node){
-        node.className = `action-diagnostics ${state.lastAction.ok === true ? "ok" : state.lastAction.ok === false ? "fail" : ""}`.trim();
+        const visible = state.lastAction.ok === false;
+        node.className = `action-diagnostics ${visible ? "" : "hidden"} ${state.lastAction.ok === true ? "ok" : state.lastAction.ok === false ? "fail" : ""}`.trim();
       }
       const sessionLabel = state.session
         ? `${state.session.authenticated ? "authenticated" : "not authenticated"} · ${state.session.role || state.session.auth_mode || "unknown"}`
@@ -513,6 +470,50 @@
         }
       }
       return "";
+    }
+
+    const MARKER_ICON_SYMBOLS = {
+      pink_birthday_cake: "🎂",
+      blue_birthday_cake: "🎂",
+      christmas_tree: "🎄",
+      christmas_tree_animated: "🎄",
+      jack_o_lantern: "🎃",
+      firework_burst: "🎆",
+      firework_burst_animated: "🎆",
+      star_of_life: "✚",
+      maltese_cross: "✠",
+      star_of_life_mourning: "✚",
+      maltese_cross_mourning: "✠",
+      columbus_party_hat: "🥳",
+      turkey: "🦃",
+      military_branches_scramble: "★",
+      flag_half_staff: "⚑",
+      flag_full_staff: "⚐",
+      custom: "●"
+    };
+
+    function activeMarkersForDate(dateIso, target){
+      return asArray(state.calendarMarkers?.markers)
+        .filter((marker) => marker?.active !== false && String(marker?.date || "").slice(0,10) === dateIso)
+        .filter((marker) => target === "supervisor" ? marker.show_supervisor !== false : marker.show_wallboard !== false)
+        .sort((a,b) => Number(b.priority || 0) - Number(a.priority || 0));
+    }
+
+    function renderDateMarkers(dateIso, dayShifts){
+      const markers = activeMarkersForDate(dateIso, "supervisor");
+      const cake = birthdayCakeForDate(dayShifts);
+      if(cake) markers.unshift({ short_title:"Birthday", hover_text:"Birthday on this date", icon:"pink_birthday_cake" });
+      const visible = markers.slice(0, 3);
+      const overflow = markers.length - visible.length;
+      const title = markers.map((marker) => `${marker.short_title || "Marker"}: ${marker.hover_text || marker.short_title || ""}`).join("\n");
+      const icons = visible.map((marker) => {
+        const customUrl = marker.custom_icon_url || marker.custom_animated_icon_url;
+        if(marker.icon === "custom" && customUrl){
+          return `<span class="date-marker" title="${esc(marker.hover_text || marker.short_title || "")}"><img src="${esc(customUrl)}" alt="${esc(marker.short_title || "marker")}" /></span>`;
+        }
+        return `<span class="date-marker" title="${esc(marker.hover_text || marker.short_title || "")}">${esc(MARKER_ICON_SYMBOLS[marker.icon] || "●")}</span>`;
+      }).join("");
+      return `<div class="date-markers" title="${esc(title)}">${icons}${overflow > 0 ? `<span class="date-marker">+${overflow}</span>` : ""}</div>`;
     }
 
     function certClass(member, seat){
@@ -627,6 +628,7 @@
       document.getElementById("weekSummary").innerHTML = "";
       document.getElementById("boardMeta").textContent = "No shifts available";
       document.getElementById("openSeatsPanel").innerHTML = `<div class="empty">No shifts are available yet. Refresh the shift list.</div>`;
+      document.getElementById("adrZipperPanel").innerHTML = `<div class="empty">ADR Zipper simulation will appear after a schedule is available.</div>`;
       document.getElementById("board").innerHTML = `<div class="empty">No shifts are available yet. Refresh the shift list.</div>`;
     }
 
@@ -663,6 +665,38 @@
         }
       }
       document.getElementById("openSeatsPanel").innerHTML = cards.length ? cards.join("") : `<div class="empty">No OPEN or DROPPED seats in this week.</div>`;
+    }
+
+    function renderAdrZipper(){
+      const adr = state.schedule?.adr_zipper || {};
+      const card = document.getElementById("adrZipperCard");
+      const panel = document.getElementById("adrZipperPanel");
+      if(!adr.enabled){
+        card.classList.add("hidden");
+        panel.innerHTML = "";
+        return;
+      }
+      card.classList.remove("hidden");
+      const ledger = asArray(adr.fairness_ledger).slice(0, 8);
+      const candidates = asArray(adr.compression_candidates).slice(0, 8);
+      panel.innerHTML = `
+        <div class="reason-box">
+          <strong>${esc(adr.message || "ADR Zipper EMT simulation is enabled for audit only.")}</strong>
+          <div class="seat-sub" style="margin-top:6px;">Fairness basis: ${esc(adr.fairness_basis || "oldest last 24-hour compression awarded date")}. Production assignments are not changed by this panel.</div>
+        </div>
+        <div class="reason-box">
+          <strong>Fairness ledger</strong>
+          <div class="reason-list" style="margin-top:8px;">
+            ${ledger.length ? ledger.map((row) => `<span class="reason-chip">#${esc(row.fairness_rank)} ${esc(row.member_name || row.member_id)} · last ${esc(row.last_24_compression_awarded_at || "not set")}${row.initialized_from_hire_date ? " · from hire date" : ""}${row.ledger_initialization_needed ? " · needs ledger date" : ""}</span>`).join("") : `<span class="reason-chip">No EMT ledger entries found.</span>`}
+          </div>
+        </div>
+        <div class="reason-box">
+          <strong>Possible voluntary 24-hour compressions</strong>
+          <div class="reason-list" style="margin-top:8px;">
+            ${candidates.length ? candidates.map((row) => `<span class="reason-chip">#${esc(row.fairness_rank)} ${esc(row.member_name || row.member_id)} · ${esc(asArray(row.source_blocks).map((block) => block.shift_key).join(" + "))}</span>`).join("") : `<span class="reason-chip">No eligible adjacent 12-hour compression candidates in this schedule.</span>`}
+          </div>
+        </div>
+      `;
     }
 
     function seatBadges(seatState, member, seat){
@@ -708,7 +742,7 @@
       document.getElementById("board").innerHTML = `<div class="day-grid">${
         groups.map(([dateIso, shifts]) => {
           const date = isoToDate(dateIso);
-          const cake = birthdayCakeForDate(shifts);
+          const dateMarkers = renderDateMarkers(dateIso, shifts);
           return `
             <section class="day-card">
               <div class="date-head">
@@ -719,7 +753,7 @@
                     <div class="month">${date.toLocaleDateString(undefined, { month:"long", day:"numeric" })}</div>
                   </div>
                 </div>
-                ${cake ? `<div class="cake" title="Birthday on this date">${cake}</div>` : `<div></div>`}
+                ${dateMarkers}
               </div>
               <div class="shift-list">
                 ${shifts.map((shift) => `
@@ -815,6 +849,7 @@
       let sessionInfo = null;
       let members = null;
       let settings = null;
+      let calendarMarkers = { markers: [] };
       let schedule = null;
       let supervisorState = { entries: [] };
 
@@ -837,6 +872,13 @@
       }catch(error){
         console.error("Supervisor startup: failed to load /api/settings", error);
         issues.push(`/api/settings failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
+      }
+
+      try{
+        calendarMarkers = (await apiGetDetailed("/api/calendar_markers")).data || { markers: [] };
+      }catch(error){
+        console.warn("Supervisor startup: calendar markers unavailable", error);
+        calendarMarkers = { markers: [] };
       }
 
       try{
@@ -872,6 +914,7 @@
       }));
       state.memberById = new Map(state.members.map((member) => [String(member.member_id || member.id), member]));
       state.settings = settings || {};
+      state.calendarMarkers = calendarMarkers || { markers: [] };
       state.schedule = schedule || {};
       state.supervisorState = supervisorState || { entries: [] };
       document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(sessionInfo?.member_id || sessionInfo?.role || "unknown")}`;
@@ -891,11 +934,13 @@
         populateWeekSelect();
         renderWeekSummary();
         renderOpenSeats();
+        renderAdrZipper();
         renderBoard();
         if(!groupedWeekShifts().length){
           document.getElementById("boardMeta").textContent = `Week of ${state.selectedWeek} · no resolved shifts in selected week`;
           document.getElementById("board").innerHTML = `<div class="empty">No resolved shifts found for the selected week.</div>`;
           document.getElementById("openSeatsPanel").innerHTML = `<div class="empty">No open or dropped seats found for the selected week.</div>`;
+          document.getElementById("adrZipperPanel").innerHTML = `<div class="empty">No ADR Zipper simulation entries found for the selected week.</div>`;
         }
       }catch(error){
         console.error("Supervisor startup: render failure", error);
@@ -970,6 +1015,9 @@
     }
 
     function bindEvents(){
+      const openAdminMembers = () => { window.location.href = "/admin/members"; };
+      document.getElementById("manageMembersBtn").addEventListener("click", openAdminMembers);
+      document.getElementById("adminBtn").addEventListener("click", () => { window.location.href = "/admin"; });
       document.getElementById("refreshBtn").addEventListener("click", loadAll);
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await apiPost("/api/auth/logout", {});
@@ -985,43 +1033,6 @@
       document.getElementById("dryRunBtn").addEventListener("click", () => handleWeekAction("dry"));
       document.getElementById("resolveBtn").addEventListener("click", () => handleWeekAction("resolve"));
       document.getElementById("publishBtn").addEventListener("click", () => handleWeekAction("publish"));
-      document.getElementById("clearFutureAvailabilityBtn").addEventListener("click", async () => {
-        const confirmed = window.confirm("Clear all declared future availability intent after today for every member? Past history will remain, and a backup file will be created first.");
-        if(!confirmed) return;
-        try{
-          const result = await apiPost("/api/admin/availability/clear_future", {});
-          await loadAll();
-          const remainingMonths = result?.remaining?.future_month_entries_with_declared_intent ?? 0;
-          const remainingPatterns = result?.remaining?.pattern_entries_with_declared_intent ?? 0;
-          showFlash(
-            `Future availability cleared. Dates: ${result?.future_dates_cleared ?? 0}, entries: ${result?.future_month_entries_cleared ?? 0}, pattern entries: ${result?.pattern_entries_cleared ?? 0}, members affected: ${result?.members_affected ?? 0}, remaining month intent: ${remainingMonths}, remaining pattern intent: ${remainingPatterns}. Backup: ${result?.backup_file || "created"}.`,
-            remainingMonths || remainingPatterns ? "error" : "success"
-          );
-        }catch(error){
-          showFlash(error.message || "Failed to clear future availability intent", "error");
-        }
-      });
-      document.getElementById("resetPasswordBtn").addEventListener("click", async () => {
-        const memberId = document.getElementById("resetMemberId").value.trim();
-        const newPassword = document.getElementById("resetPassword").value;
-        if(!memberId || !newPassword) return showFlash("Member ID and temporary password are required.", "error");
-        return doLiveAction("/api/auth/reset_member_password", { member_id: memberId, new_password: newPassword }, `Password reset for member ${memberId}.`);
-      });
-      document.getElementById("changePasswordBtn").addEventListener("click", async () => {
-        try{
-          await apiPost("/api/auth/change_password", {
-            current_password: document.getElementById("currentPassword").value,
-            new_password: document.getElementById("newPassword").value,
-            confirm_password: document.getElementById("confirmPassword").value,
-          });
-          document.getElementById("currentPassword").value = "";
-          document.getElementById("newPassword").value = "";
-          document.getElementById("confirmPassword").value = "";
-          showFlash("Supervisor password changed.");
-        }catch(error){
-          showFlash(error.message || "Password change failed", "error");
-        }
-      });
       document.body.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-action]");
         if(!button) return;

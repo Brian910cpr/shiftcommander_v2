@@ -85,7 +85,10 @@
       "SAT_PM",
       "SUN_AM"
     ],
-    "duty_crew_label": "DUTY CREW"
+    "duty_crew_label": "DUTY CREW",
+    "adr_zipper_enabled": false,
+    "adr_zipper_simulation_only": true,
+    "adr_zipper_allow_24_compression": false
   },
   "security": {
     "google_login_required": true,
@@ -101,6 +104,28 @@
     "rotation_opportunity": "Rotation opportunity: {{date}} {{shift}}",
     "duty_crew_opening": "Duty crew opening: {{date}} {{shift}}"
   },
+  "staffing_systems": [
+    {
+      "id": "adr_emt_zipper",
+      "label": "ADR EMT Zipper",
+      "active": true
+    },
+    {
+      "id": "standard_12_hour",
+      "label": "12-Hour Standard",
+      "active": true
+    },
+    {
+      "id": "aemt_abcd_rotation",
+      "label": "A/B/C/D AEMT Rotation",
+      "active": true
+    },
+    {
+      "id": "legacy_rotation",
+      "label": "Legacy Rotation",
+      "active": false
+    }
+  ],
   "shift_definitions": {
     "AM": {
       "hours": 12

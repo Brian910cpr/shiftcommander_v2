@@ -34,6 +34,9 @@ DEFAULT_RULE_SETTINGS = {
     "preserve_locked_assignments": True,
     "duty_crew_patterns": ["SAT_AM", "SAT_PM", "SUN_AM"],
     "operational_cycle_start_weekday": "THU",
+    "adr_zipper_enabled": False,
+    "adr_zipper_simulation_only": True,
+    "adr_zipper_allow_24_compression": False,
 }
 
 WEEKDAY_INDEX = {"MON": 0, "TUE": 1, "WED": 2, "THU": 3, "FRI": 4, "SAT": 5, "SUN": 6}
@@ -85,6 +88,78 @@ def employment(member: Dict[str, Any]) -> str:
     raw = upper(raw)
     aliases = {"FULL_TIME": "FT", "PART_TIME": "PT", "VOLUNTEER": "PRN", "PER_DIEM": "PRN"}
     return aliases.get(raw, raw or "PRN")
+
+
+def nested_value(source: Dict[str, Any], *path: str) -> Any:
+    value: Any = source
+    for key in path:
+        if not isinstance(value, dict):
+            return None
+        value = value.get(key)
+    return value
+
+
+def truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return lower(value) in {"1", "true", "yes", "y", "allow", "allowed", "prefer", "preferred", "opt_in", "opted_in"}
+
+
+def member_hire_date(member: Dict[str, Any]) -> Optional[str]:
+    for raw in (
+        member.get("hire_date"),
+        member.get("start_date"),
+        nested_value(member, "employment", "hire_date"),
+        nested_value(member, "employment", "start_date"),
+    ):
+        parsed = parse_day(raw)
+        if parsed:
+            return parsed.isoformat()
+    return None
+
+
+def member_allows_24_compression(member: Dict[str, Any]) -> bool:
+    preferences = member.get("preferences") if isinstance(member.get("preferences"), dict) else {}
+    for raw in (
+        preferences.get("allows_24h"),
+        preferences.get("prefers_24h"),
+        preferences.get("allows_24_compression"),
+        nested_value(member, "emt_zipper", "allows_24_compression"),
+    ):
+        if truthy(raw):
+            return True
+    return lower(preferences.get("shift24")) in {"allow", "prefer", "preferred", "yes", "true"}
+
+
+def member_staffing_system(member: Dict[str, Any]) -> str:
+    explicit = (
+        nested_value(member, "staffing_system", "active_system")
+        or member.get("shift_system_assignment")
+        or nested_value(member, "preferences", "shift_preference", "staffing_system")
+    )
+    if explicit:
+        return lower(explicit)
+    member_cert = cert(member)
+    if member_cert == "EMT":
+        return "adr_emt_zipper"
+    if member_cert == "AEMT":
+        return "aemt_abcd_rotation"
+    return "standard_12_hour"
+
+
+def member_last_24_compression_awarded_at(member: Dict[str, Any]) -> Tuple[str, bool]:
+    for raw in (
+        member.get("last_24_compression_awarded_at"),
+        nested_value(member, "emt_zipper", "last_24_compression_awarded_at"),
+        nested_value(member, "fairness", "last_24_compression_awarded_at"),
+    ):
+        parsed = parse_day(raw)
+        if parsed:
+            return parsed.isoformat(), False
+    hire = member_hire_date(member)
+    if hire:
+        return hire, True
+    return "9999-12-31", True
 
 
 def is_active(member: Dict[str, Any]) -> bool:
@@ -286,6 +361,33 @@ def normalize_interest(data: Dict[str, Any]) -> Dict[Tuple[str, str, str], Dict[
     return out
 
 
+def rollout_import_rows(data: Dict[str, Any], key: str) -> List[Dict[str, Any]]:
+    rollout = data.get("rollout_import") or data.get("physical_board_rollout_import") or {}
+    if not isinstance(rollout, dict):
+        return []
+    value = rollout.get(key, [])
+    if isinstance(value, dict):
+        value = value.values()
+    if not isinstance(value, Iterable):
+        return []
+    return [row for row in value if isinstance(row, dict)]
+
+
+def normalize_rollout_seat_row(row: Dict[str, Any], default_reason: str) -> Optional[Dict[str, Any]]:
+    date_key = str(row.get("date") or row.get("shift_date") or "")[:10]
+    label = upper(row.get("label") or row.get("shift") or row.get("period"))
+    role = upper(row.get("seat_type") or row.get("role"))
+    if not date_key or not label or not role:
+        return None
+    normalized = dict(row)
+    normalized["date"] = date_key
+    normalized["label"] = label
+    normalized["role"] = role
+    normalized.setdefault("source", "physical_wallboard_rollout_import")
+    normalized.setdefault("preservation_reason", default_reason)
+    return normalized
+
+
 def normalize_assignments(data: Dict[str, Any]) -> Dict[Tuple[str, str, str], Dict[str, Any]]:
     out: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
     rows = []
@@ -301,6 +403,21 @@ def normalize_assignments(data: Dict[str, Any]) -> Dict[Tuple[str, str, str], Di
                     rows.append(row)
         elif isinstance(value, list):
             rows.extend(value)
+    for row in rollout_import_rows(data, "may_sticky_assignments"):
+        normalized = normalize_rollout_seat_row(row, "Preserved from physical May wallboard rollout import.")
+        if normalized:
+            normalized["rollout_sticky"] = True
+            normalized["locked"] = True
+            normalized["published"] = True
+            rows.append(normalized)
+    for row in rollout_import_rows(data, "may_open_seats"):
+        normalized = normalize_rollout_seat_row(row, "Open on physical May wallboard, available for interest collection.")
+        if normalized:
+            normalized["rollout_open"] = True
+            normalized["locked"] = True
+            normalized["published"] = True
+            normalized.setdefault("open_reason", "Open on physical May wallboard, available for interest collection.")
+            rows.append(normalized)
     for row in rows:
         if not isinstance(row, dict):
             continue
@@ -326,6 +443,20 @@ def normalize_locks(data: Dict[str, Any]) -> Dict[Tuple[str, str, str], Dict[str
                     row.setdefault("date", shift.get("date"))
                     row.setdefault("label", shift.get("label"))
                     rows.append(row)
+    for key, default_reason in (
+        ("may_sticky_assignments", "Preserved from physical May wallboard rollout import."),
+        ("may_open_seats", "Open on physical May wallboard, available for interest collection."),
+    ):
+        for row in rollout_import_rows(data, key):
+            normalized = normalize_rollout_seat_row(row, default_reason)
+            if normalized:
+                normalized["locked"] = True
+                normalized["published"] = True
+                normalized["rollout_sticky"] = key == "may_sticky_assignments"
+                normalized["rollout_open"] = key == "may_open_seats"
+                if key == "may_open_seats":
+                    normalized.setdefault("open_reason", default_reason)
+                rows.append(normalized)
     if isinstance(rows, dict):
         rows = rows.values()
     if not isinstance(rows, Iterable):
@@ -384,7 +515,10 @@ class RuleBasedResolver:
         self.rules = load_rule_settings(self.settings)
         self.today = parse_today(self.data)
         self.assignment_start = next_operational_cycle_start(self.today, self.rules)
-        self.members = [m for m in self.data.get("members", []) if isinstance(m, dict) and is_active(m)]
+        raw_members = self.data.get("members", [])
+        if isinstance(raw_members, dict):
+            raw_members = raw_members.get("members", [])
+        self.members = [m for m in raw_members if isinstance(m, dict) and is_active(m)]
         self.member_index = {member_id(m): m for m in self.members if member_id(m)}
         self.rotation_auth = normalize_authorizations(self.data)
         self.rotation_claims = normalize_claims(self.data)
@@ -410,7 +544,11 @@ class RuleBasedResolver:
             self._phase4_drivers(shift)
             self._phase5_publish_open(shift)
 
+        adr_zipper = self._adr_zipper_simulation(shifts)
         summary = self._summary(shifts)
+        summary["adr_zipper_enabled"] = bool(adr_zipper.get("enabled"))
+        summary["adr_zipper_simulation_only"] = bool(adr_zipper.get("simulation_only"))
+        summary["adr_zipper_24_compression_candidates"] = len(adr_zipper.get("compression_candidates", []))
         output = {
             "build": {
                 "generated_at": self.data.get("build", {}).get("generated_at") if isinstance(self.data.get("build"), dict) else datetime.now(UTC).isoformat(),
@@ -427,6 +565,7 @@ class RuleBasedResolver:
             "notification_eligibility": self.notification_eligibility,
             "supervisor_review_flags": self.supervisor_review_flags,
             "audit_trace": self.audit,
+            "adr_zipper": adr_zipper,
             "extension_points": ["swaps", "partial_shift_coverage", "split_shifts", "member_trade_requests", "supervisor_approval_workflows", "advanced_fairness_reports", "payroll_export"],
         }
         self._write_debug(output)
@@ -475,12 +614,37 @@ class RuleBasedResolver:
             if not mid and assigned_name:
                 mid = self._find_member_by_name(assigned_name) or ""
             if not mid:
-                seat.update({"locked": locked, "published": published, "assignment_status": "OPEN", "preserved_existing_assignment": True})
+                open_reason = str(
+                    preserved.get("open_reason")
+                    or preserved.get("preservation_reason")
+                    or "Open preserved from published schedule state."
+                )
+                seat.update({
+                    "locked": locked,
+                    "published": published,
+                    "assignment_status": "OPEN",
+                    "preserved_existing_assignment": True,
+                    "rollout_open": bool(preserved.get("rollout_open")),
+                    "assignment_reason": open_reason,
+                })
+                self._mark_open(shift, seat, open_reason)
                 continue
             member = self.member_index.get(mid)
             valid, reason = self._candidate_valid_for_seat(member, shift, seat, allow_unset=True, allow_additional_ot=True, phase="PHASE_0", bucket="preserved")
             if valid:
-                self._assign(shift, seat, member, "PHASE_0", "preserved_locked" if locked else "preserved_published", OT_NONE, preserved=True, locked=locked, published=published)
+                self._assign(
+                    shift,
+                    seat,
+                    member,
+                    "PHASE_0",
+                    "preserved_rollout_import" if preserved.get("rollout_sticky") else ("preserved_locked" if locked else "preserved_published"),
+                    OT_NONE,
+                    preserved=True,
+                    locked=locked,
+                    published=published,
+                    assignment_reason=str(preserved.get("preservation_reason") or "Preserved from published schedule state."),
+                    rollout_sticky=bool(preserved.get("rollout_sticky")),
+                )
             else:
                 seat.update({
                     "locked": locked,
@@ -489,6 +653,8 @@ class RuleBasedResolver:
                     "supervisor_review": True,
                     "review_reason": f"preserved_assignment_now_illegal:{reason}",
                     "preserved_existing_assignment": True,
+                    "rollout_sticky": bool(preserved.get("rollout_sticky")),
+                    "assignment_reason": str(preserved.get("preservation_reason") or "Preserved assignment requires review."),
                 })
                 self._review(shift, seat, f"preserved assignment now illegal: {reason}")
 
@@ -544,6 +710,10 @@ class RuleBasedResolver:
             source_seat, member = assigned_emts[0]
             att = self._first_seat(shift, ATTENDANT)
             drv = self._first_seat(shift, DRIVER)
+            if att and att.get("rollout_open"):
+                shift["resolver"]["notes"].append("Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import")
+                self._try_aemt_reclaim(shift)
+                return
             if att and source_seat is not att:
                 self._clear(source_seat)
                 self._assign(shift, att, member, "PHASE_3", "solo_emt_anchor", OT_NONE)
@@ -742,6 +912,8 @@ class RuleBasedResolver:
         preserved: bool = False,
         locked: bool = False,
         published: bool = False,
+        assignment_reason: Optional[str] = None,
+        rollout_sticky: bool = False,
     ) -> None:
         mid = member_id(member)
         seat.update({
@@ -755,7 +927,9 @@ class RuleBasedResolver:
             "preserved_existing_assignment": preserved,
             "locked": locked or bool(seat.get("locked")),
             "published": published or bool(seat.get("published")),
-            "selection_statement": f"Selected {member_name(member)} for {seat_role(seat)} by {bucket}.",
+            "rollout_sticky": rollout_sticky or bool(seat.get("rollout_sticky")),
+            "assignment_reason": assignment_reason,
+            "selection_statement": assignment_reason or f"Selected {member_name(member)} for {seat_role(seat)} by {bucket}.",
             "selection_factors": [phase, bucket, self._effective_availability(shift, seat, member), cert(member), ot_classification],
             "display_open_alert": False,
             "display_on_board": True,
@@ -777,6 +951,8 @@ class RuleBasedResolver:
 
     def _mark_open(self, shift: Dict[str, Any], seat: Dict[str, Any], reason: str) -> None:
         role = seat_role(seat)
+        if seat.get("rollout_open") and seat.get("open_reason"):
+            reason = str(seat.get("open_reason"))
         label = "Volunteer Crew Driver" if seat.get("duty_crew") and role == DRIVER else f"OPEN {role}"
         seat.update({
             "assigned": None,
@@ -910,6 +1086,11 @@ class RuleBasedResolver:
             "ot_classification": seat.get("ot_classification", OT_NONE),
             "preserved": bool(seat.get("preserved_existing_assignment")),
             "locked": bool(seat.get("locked")),
+            "published": bool(seat.get("published")),
+            "rollout_sticky": bool(seat.get("rollout_sticky")),
+            "rollout_open": bool(seat.get("rollout_open")),
+            "assignment_reason": seat.get("assignment_reason"),
+            "open_reason": seat.get("open_reason"),
             "solo_emt_anchor_applied": bool(seat.get("solo_emt_anchor_applied")),
             "aemt_reclaim_attempted": bool(seat.get("aemt_reclaim_attempted")),
             "committed": bool(seat.get("assigned")),
@@ -936,6 +1117,109 @@ class RuleBasedResolver:
                 "next_selection_run": seat.get("next_selection_run"),
             })
         return windows
+
+    def _adr_zipper_fairness_ledger(self) -> List[Dict[str, Any]]:
+        ledger = []
+        for member in self.members:
+            if cert(member) != "EMT":
+                continue
+            awarded_at, initialized_from_hire = member_last_24_compression_awarded_at(member)
+            ledger.append({
+                "member_id": member_id(member),
+                "member_name": member_name(member),
+                "employment_type": employment(member),
+                "staffing_system": member_staffing_system(member),
+                "allows_24_compression": member_allows_24_compression(member),
+                "hire_date": member_hire_date(member),
+                "last_24_compression_awarded_at": awarded_at,
+                "initialized_from_hire_date": initialized_from_hire,
+                "ledger_initialization_needed": awarded_at == "9999-12-31",
+            })
+        ledger.sort(key=lambda row: (row["last_24_compression_awarded_at"], row["member_id"]))
+        for index, row in enumerate(ledger, start=1):
+            row["fairness_rank"] = index
+        return ledger
+
+    def _shift_sequence_rank(self, shift: Dict[str, Any]) -> int:
+        label = shift_label(shift)
+        ranks = {"AM": 0, "DAY": 0, "PM": 1, "NIGHT": 1}
+        return ranks.get(label, 99)
+
+    def _adjacent_12_hour_shift_pairs(self, shifts: List[Dict[str, Any]]) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
+        for shift in shifts:
+            day = shift_date(shift)
+            if not day:
+                continue
+            if float(shift.get("hours") or 12) != 12:
+                continue
+            grouped.setdefault(day.isoformat(), []).append(shift)
+        pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+        for day_shifts in grouped.values():
+            ordered = sorted(day_shifts, key=self._shift_sequence_rank)
+            for first, second in zip(ordered, ordered[1:]):
+                if self._shift_sequence_rank(second) - self._shift_sequence_rank(first) == 1:
+                    pairs.append((first, second))
+        return pairs
+
+    def _emt_assigned_or_available_for_shift(self, member: Dict[str, Any], shift: Dict[str, Any]) -> bool:
+        mid = member_id(member)
+        if any(seat.get("assigned") == mid for seat in shift.get("seats", []) if seat_role(seat) in {ATTENDANT, DRIVER}):
+            return True
+        availability = normalize_availability(availability_for(self.data, shift, member))
+        return availability in {PREFER, AVAILABLE}
+
+    def _adr_zipper_simulation(self, shifts: List[Dict[str, Any]]) -> Dict[str, Any]:
+        enabled = bool(self.rules.get("adr_zipper_enabled"))
+        simulation_only = self.rules.get("adr_zipper_simulation_only", True) is not False
+        allow_24 = bool(self.rules.get("adr_zipper_allow_24_compression"))
+        ledger = self._adr_zipper_fairness_ledger()
+        result = {
+            "enabled": enabled,
+            "simulation_only": simulation_only,
+            "production_override": False,
+            "allow_24_compression": allow_24,
+            "message": "ADR Zipper EMT simulation is disabled by Admin. Production resolver output is unchanged.",
+            "fairness_basis": "oldest last_24_compression_awarded_at",
+            "fairness_ledger": ledger,
+            "compression_candidates": [],
+        }
+        if not enabled:
+            return result
+        result["message"] = "ADR Zipper EMT simulation is enabled for audit only. Production resolver output is unchanged."
+        if not allow_24:
+            result["message"] = "ADR Zipper EMT simulation is enabled, but optional EMT 24-hour compression is not being identified."
+            return result
+
+        candidates = []
+        ledger_by_member = {row["member_id"]: row for row in ledger}
+        for first, second in self._adjacent_12_hour_shift_pairs(shifts):
+            for row in ledger:
+                member = self.member_index.get(row["member_id"])
+                if not member or not row["allows_24_compression"]:
+                    continue
+                if row.get("staffing_system") != "adr_emt_zipper":
+                    continue
+                if not self._emt_assigned_or_available_for_shift(member, first):
+                    continue
+                if not self._emt_assigned_or_available_for_shift(member, second):
+                    continue
+                candidates.append({
+                    "member_id": row["member_id"],
+                    "member_name": row["member_name"],
+                    "fairness_rank": row["fairness_rank"],
+                    "last_24_compression_awarded_at": row["last_24_compression_awarded_at"],
+                    "source_blocks": [
+                        {"shift_key": shift_key(first), "date": shift_date(first).isoformat() if shift_date(first) else None, "label": shift_label(first)},
+                        {"shift_key": shift_key(second), "date": shift_date(second).isoformat() if shift_date(second) else None, "label": shift_label(second)},
+                    ],
+                    "simulation_only": True,
+                    "would_modify_schedule": False,
+                    "reason": "adjacent_12_hour_blocks_and_member_opted_into_24_compression",
+                })
+        candidates.sort(key=lambda row: (row["last_24_compression_awarded_at"], ledger_by_member.get(row["member_id"], {}).get("fairness_rank", 9999)))
+        result["compression_candidates"] = candidates
+        return result
 
     def _summary(self, shifts: List[Dict[str, Any]]) -> Dict[str, Any]:
         values = {

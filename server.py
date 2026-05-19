@@ -40,9 +40,12 @@ SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
 AVAILABILITY_FILE = os.path.join(DATA_DIR, "availability.json")
 INFERRED_PREFERENCES_FILE = os.path.join(DATA_DIR, "inferred_preferences.json")
 SCHEDULE_LOCKED_FILE = os.path.join(DATA_DIR, "schedule_locked.json")
+ROLLOUT_IMPORT_FILE = os.path.join(DATA_DIR, "rollout_import.json")
 ROTATION_TEMPLATES_FILE = os.path.join(DATA_DIR, "rotation_templates.json")
 SUPERVISOR_STATE_FILE = os.path.join(DATA_DIR, "supervisor_state.json")
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
+CALENDAR_MARKERS_FILE = os.path.join(DATA_DIR, "calendar_markers.json")
+PUBLIC_CALENDAR_MARKERS_FILE = os.path.join(DOCS_DIR, "data", "calendar_markers.json")
 TEST_MEMBER_LOGIN = {
     "username": "test",
     "password": "test",
@@ -702,6 +705,63 @@ def normalize_members_payload(payload):
 def save_members_payload(payload):
     payload = normalize_members_payload(payload)
     save_json(MEMBERS_FILE, payload)
+
+
+def normalize_calendar_markers_payload(payload):
+    if isinstance(payload, list):
+        payload = {"markers": payload}
+    elif not isinstance(payload, dict):
+        payload = {"markers": []}
+    markers = payload.get("markers", [])
+    if not isinstance(markers, list):
+        markers = []
+    cleaned = []
+    for index, marker in enumerate(markers):
+        if not isinstance(marker, dict):
+            continue
+        date_value = str(marker.get("date") or "").strip()[:10]
+        title = str(marker.get("short_title") or marker.get("title") or "").strip()
+        if not date_value or not title:
+            continue
+        marker_id = str(marker.get("id") or f"{date_value}-{title.lower().replace(' ', '-')}-{index}").strip()
+        cleaned.append({
+            "id": marker_id,
+            "date": date_value,
+            "short_title": title,
+            "hover_text": str(marker.get("hover_text") or marker.get("description") or title).strip(),
+            "icon": str(marker.get("icon") or "star_of_life").strip(),
+            "custom_icon_url": marker.get("custom_icon_url") or None,
+            "custom_animated_icon_url": marker.get("custom_animated_icon_url") or None,
+            "active": marker.get("active", True) is not False,
+            "show_wallboard": marker.get("show_wallboard", True) is not False,
+            "show_supervisor": marker.get("show_supervisor", True) is not False,
+            "priority": int(marker.get("priority") or 0),
+            "flag_status": marker.get("flag_status") if isinstance(marker.get("flag_status"), dict) else {},
+        })
+    payload["markers"] = cleaned
+    payload.setdefault("flag_status_sources", {
+        "manual_override_enabled": True,
+        "automatic_check_enabled": False,
+        "state": "NC",
+        "scope": "state_and_federal",
+        "current_status": "full_staff",
+        "current_label": "FULL STAFF",
+        "source_level": "manual",
+        "source_url": "https://ncadmin.nc.gov/news/flag-alerts",
+    })
+    return payload
+
+
+def load_calendar_markers_payload():
+    return normalize_calendar_markers_payload(load_json(CALENDAR_MARKERS_FILE, {"markers": []}))
+
+
+def save_calendar_markers_payload(payload):
+    payload = normalize_calendar_markers_payload(payload)
+    save_json(CALENDAR_MARKERS_FILE, payload)
+    os.makedirs(os.path.dirname(PUBLIC_CALENDAR_MARKERS_FILE), exist_ok=True)
+    save_json(PUBLIC_CALENDAR_MARKERS_FILE, payload)
+    return payload
     sync_auth_members()
 
 
@@ -1056,7 +1116,7 @@ def serve_docs(path):
     lowered = str(path or "").lower()
     if lowered == "supervisor.html" and current_auth()["role"] != "supervisor":
         return login_redirect("supervisor")
-    if lowered == "admin.html" and current_auth()["role"] != "supervisor":
+    if lowered in {"admin.html", "admin_members.html"} and current_auth()["role"] != "supervisor":
         return login_redirect("supervisor")
     if lowered == "member.html" and not quick_test_mode_enabled() and current_auth()["role"] not in {"member", "supervisor"}:
         return login_redirect("member")
@@ -1085,6 +1145,13 @@ def admin_shortcut():
     if current_auth()["role"] != "supervisor":
         return login_redirect("supervisor")
     return redirect("/docs/admin.html")
+
+
+@app.route("/admin/members")
+def admin_members_shortcut():
+    if current_auth()["role"] != "supervisor":
+        return login_redirect("supervisor")
+    return redirect("/docs/admin_members.html")
 
 
 @app.route("/member")
@@ -1164,11 +1231,24 @@ def testing_login_as_member():
         return auth_json_error("Testing login is only available on localhost", 404)
     payload = request.get_json(silent=True) or request.form or {}
     member_id = str(payload.get("member_id") or payload.get("selected_member_id") or "").strip()
+    next_url = str(payload.get("next") or "/member").strip() or "/member"
+    requested_role = str(payload.get("role") or "").strip().lower()
     member = member_record_by_id(member_id)
     if not member:
         return auth_json_error("Member record not found", 404)
+    if requested_role == "supervisor" or next_url.startswith(("/supervisor", "/admin", "/docs/supervisor", "/docs/admin")):
+        start_supervisor_session()
+        return jsonify({
+            "status": "ok",
+            "role": "supervisor",
+            "member_id": member_id,
+            "member_name": member.get("name") or f"Member {member_id}",
+            "redirect": next_url,
+            "auth_mode": "local_testing_dropdown",
+            "quick_test_mode": quick_test_mode_enabled(),
+        })
     start_member_session(member_id)
-    response = member_login_success_payload(member_id, str(payload.get("next") or "/member"))
+    response = member_login_success_payload(member_id, next_url)
     response["auth_mode"] = "local_testing_dropdown"
     response["quick_test_mode"] = quick_test_mode_enabled()
     return jsonify(response)
@@ -1337,6 +1417,21 @@ def get_wallboard_members():
     return jsonify(member_roster_payload())
 
 
+@app.route("/api/calendar_markers", methods=["GET"])
+def get_calendar_markers():
+    return jsonify(load_calendar_markers_payload())
+
+
+@app.route("/api/calendar_markers", methods=["POST"])
+@require_role("supervisor")
+def save_calendar_markers():
+    incoming = request.get_json(silent=True)
+    if incoming is None:
+        return jsonify({"error": "No JSON body provided"}), 400
+    payload = save_calendar_markers_payload(incoming)
+    return jsonify({"status": "ok", "count": len(payload.get("markers", []))})
+
+
 @app.route("/api/members", methods=["POST"])
 @require_role("supervisor")
 def save_members():
@@ -1410,6 +1505,8 @@ def get_member_context():
     member_id, member, error = resolve_member_request_member()
     if error:
         return error
+    settings = load_settings()
+    member_page_settings = settings.get("member_page", {}) if isinstance(settings.get("member_page"), dict) else {}
     return jsonify(
         {
             "member": member,
@@ -1417,6 +1514,9 @@ def get_member_context():
             "availability": extract_member_availability(member_id),
             "schedule": load_json(SCHEDULE_FILE, {}),
             "availability_edit_start_date": member_availability_edit_start_date().isoformat(),
+            "member_page_settings": {
+                "availability_max_forward_weeks": member_page_settings.get("availability_max_forward_weeks")
+            },
             "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
             "quick_test_mode": quick_test_mode_enabled(),
             "selected_member_id": member_id,
@@ -1634,6 +1734,7 @@ def run_resolver(shifts_override=None):
     settings = load_settings()
     availability = load_availability_payload()
     schedule_locked = load_json(SCHEDULE_LOCKED_FILE, {})
+    rollout_import = load_json(ROLLOUT_IMPORT_FILE, {})
     rotation_templates = load_json(ROTATION_TEMPLATES_FILE, {})
 
     ctx = {
@@ -1642,6 +1743,7 @@ def run_resolver(shifts_override=None):
         "settings": settings,
         "availability": availability,
         "schedule_locked": schedule_locked,
+        "rollout_import": rollout_import,
         "rotation_templates": rotation_templates,
         "build": {
             "generated_at": now_iso()
@@ -1663,6 +1765,7 @@ def preview_resolver(shifts_override=None):
         "settings": load_settings(),
         "availability": load_availability_payload(),
         "schedule_locked": load_json(SCHEDULE_LOCKED_FILE, {}),
+        "rollout_import": load_json(ROLLOUT_IMPORT_FILE, {}),
         "rotation_templates": load_json(ROTATION_TEMPLATES_FILE, {}),
         "build": {
             "generated_at": now_iso()

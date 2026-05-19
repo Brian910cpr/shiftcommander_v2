@@ -81,6 +81,16 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001", response.get_data(as_text=True))
         response.close()
 
+        response = self.client.get("/admin/members")
+        self.assertEqual(response.status_code, 302, "/admin/members")
+        self.assertIn("/docs/admin_members.html", response.headers.get("Location", ""))
+        response.close()
+
+        response = self.client.get("/docs/admin_members.html")
+        self.assertEqual(response.status_code, 200, "/docs/admin_members.html")
+        self.assertIn("Admin Member Management", response.get_data(as_text=True))
+        response.close()
+
         self.login_member()
         response = self.client.get("/docs/member.html")
         self.assertEqual(response.status_code, 200, "/docs/member.html")
@@ -116,6 +126,29 @@ class AppSmokeTests(unittest.TestCase):
         finally:
             if temp_path.exists():
                 shutil.move(str(temp_path), str(schedule_path))
+
+    def test_calendar_markers_api_loads_and_missing_file_is_safe(self):
+        response = self.client.get("/api/calendar_markers")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertIsInstance(payload.get("markers"), list)
+        self.assertIn("flag_status_sources", payload)
+        self.assertIn("current_status", payload["flag_status_sources"])
+        response.close()
+
+        marker_path = ROOT / "data" / "calendar_markers.json"
+        temp_path = ROOT / "data" / "calendar_markers.json.smoke_tmp"
+        if marker_path.exists():
+            shutil.move(str(marker_path), str(temp_path))
+        try:
+            response = self.client.get("/api/calendar_markers")
+            self.assertEqual(response.status_code, 200)
+            payload = response.get_json()
+            self.assertEqual(payload.get("markers"), [])
+            response.close()
+        finally:
+            if temp_path.exists():
+                shutil.move(str(temp_path), str(marker_path))
 
     def test_health_check_is_lightweight_and_render_compatible(self):
         response = self.client.get("/api/health")
@@ -154,6 +187,28 @@ class AppSmokeTests(unittest.TestCase):
         response = self.client.get("/docs/member.html")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Assigned Shifts", response.get_data(as_text=True))
+        response.close()
+
+    def test_local_testing_dropdown_can_open_supervisor_pages_for_testing(self):
+        response = self.client.get("/api/testing/members", base_url="http://127.0.0.1:5000")
+        self.assertEqual(response.status_code, 200)
+        member_id = response.get_json()["members"][0]["member_id"]
+        response.close()
+
+        response = self.client.post(
+            "/api/testing/login_as_member",
+            json={"member_id": member_id, "next": "/admin/members"},
+            base_url="http://127.0.0.1:5000",
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload.get("role"), "supervisor")
+        self.assertEqual(payload.get("auth_mode"), "local_testing_dropdown")
+        response.close()
+
+        response = self.client.get("/docs/admin_members.html")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Admin Member Management", response.get_data(as_text=True))
         response.close()
 
     def test_quick_test_supervisor_api_bypass_is_demo_only(self):
@@ -216,9 +271,14 @@ class AppSmokeTests(unittest.TestCase):
         assigned_shift_dates = [
             date.fromisoformat(str(shift.get("date")))
             for shift in shifts
-            if any(seat.get("assigned") for seat in shift.get("seats", []) if seat.get("active") is not False)
+            if any(
+                seat.get("assigned") and not seat.get("rollout_sticky")
+                for seat in shift.get("seats", [])
+                if seat.get("active") is not False
+            )
         ]
-        self.assertGreaterEqual(min(assigned_shift_dates), assignment_start)
+        if assigned_shift_dates:
+            self.assertGreaterEqual(min(assigned_shift_dates), assignment_start)
         active_cycle_shifts = [
             shift
             for shift in shifts
@@ -226,7 +286,7 @@ class AppSmokeTests(unittest.TestCase):
         ]
         self.assertGreater(len(active_cycle_shifts), 0)
         self.assertFalse(any(
-            seat.get("assigned")
+            seat.get("assigned") and not seat.get("rollout_sticky")
             for shift in active_cycle_shifts
             for seat in shift.get("seats", [])
             if seat.get("active") is not False

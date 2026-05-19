@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander Admin Members</title>
+  <style>
+    :root{--bg:#08111f;--panel:#0f1b2d;--panel2:#16243a;--line:#243754;--text:#eef4ff;--muted:#a7b8d8;--good:#52ef7f;--warn:#ffd166;--bad:#ff8f8f;--focus:#8f7dff}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding:16px}
+    button,input,select,textarea{font:inherit}
+    .page{display:grid;gap:14px;max-width:1800px;margin:0 auto}
+    .hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+    .hero{display:flex;justify-content:space-between;gap:12px;align-items:start;flex-wrap:wrap}
+    h1,h2,h3{margin:0}
+    .sub,.mini{color:var(--muted);line-height:1.4}
+    .actions,.chips,.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn{border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);font-weight:850;padding:10px 14px;cursor:pointer}
+    .btn.primary{border-color:rgba(82,239,127,.45);background:rgba(82,239,127,.12)}
+    .btn.warn{border-color:rgba(255,209,102,.45);background:rgba(255,209,102,.12)}
+    .pill,.tag{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-weight:800}
+    .tag{font-size:12px;padding:4px 8px}
+    .flash{display:none;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;background:rgba(255,255,255,.04)}
+    .flash.show{display:block}.flash.good{border-color:rgba(82,239,127,.35);color:#ccffe1}.flash.bad{border-color:rgba(255,143,143,.35);color:#ffd0d0}
+    .field{display:grid;gap:6px}
+    .field label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800}
+    .field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:10px}
+    .filters{display:grid;grid-template-columns:1.5fr repeat(4,minmax(150px,1fr));gap:10px;align-items:end}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.12);max-height:72vh}
+    table{width:100%;min-width:1780px;border-collapse:separate;border-spacing:0}
+    th,td{border-bottom:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.06);padding:7px;vertical-align:middle}
+    th{position:sticky;top:0;background:#13213a;z-index:2;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;text-align:left}
+    tbody tr.inactive{opacity:.62}
+    tbody tr.dirty{outline:1px solid rgba(255,209,102,.55);outline-offset:-1px}
+    td input,td select{width:100%;min-width:84px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:var(--panel2);color:var(--text);padding:7px}
+    td input[type="number"]{min-width:76px}
+    .name-cell input{min-width:180px;font-weight:800}
+    .small-cell select{min-width:78px}
+    .wide-cell select{min-width:160px}
+    .toggle{display:flex;align-items:center;justify-content:center}
+    .toggle input{width:18px;height:18px;accent-color:var(--good)}
+    .row-actions{display:flex;gap:6px}
+    .summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+    .summary-card{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(255,255,255,.035)}
+    .summary-card .k{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase}
+    .summary-card .v{display:block;font-size:24px;font-weight:900;margin-top:4px}
+    .help{display:grid;gap:8px}
+    .help p{margin:0;color:var(--muted)}
+    @media(max-width:1100px){.filters,.summary{grid-template-columns:1fr 1fr}.table-wrap{max-height:none}}
+    @media(max-width:700px){.filters,.summary{grid-template-columns:1fr}.hero{display:grid}.actions .btn{flex:1}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Admin Member Management</h1>
+        <div class="sub">Roster configuration for certifications, employment, permissions, staffing system assignment, and scheduling preferences.</div>
+      </div>
+      <div class="actions">
+        <span class="pill" id="statusPill">Loading</span>
+        <button class="btn" id="settingsBtn">Admin Settings</button>
+        <button class="btn" id="supervisorBtn">Supervisor</button>
+        <button class="btn" id="reloadBtn">Reload</button>
+        <button class="btn primary" id="saveBtn">Save Members</button>
+      </div>
+    </section>
+    <div class="flash" id="flash"></div>
+
+    <section class="card">
+      <div class="summary" id="summary"></div>
+    </section>
+
+    <section class="card">
+      <div class="toolbar" style="justify-content:space-between;margin-bottom:12px">
+        <div>
+          <h2>Multi-Member Editor</h2>
+          <div class="mini">Edit cells directly. Changes stay in draft until Save Members.</div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="addMemberBtn">Add Member</button>
+          <button class="btn warn" id="duplicateBtn">Duplicate Selected</button>
+          <button class="btn" id="toggleInactiveBtn">Show inactive systems</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="field"><label for="searchBox">Find member</label><input id="searchBox" placeholder="Name, ID, certification, email, system" /></div>
+        <div class="field"><label for="activeFilter">Status</label><select id="activeFilter"><option value="all">All members</option><option value="active">Active only</option><option value="inactive">Inactive only</option></select></div>
+        <div class="field"><label for="certFilter">Certification</label><select id="certFilter"><option value="all">All certifications</option><option value="ALS">ALS / AEMT</option><option value="EMT">EMT</option><option value="EMR">EMR</option><option value="NCLD">NCLD</option></select></div>
+        <div class="field"><label for="systemFilter">Staffing system</label><select id="systemFilter"><option value="all">All systems</option></select></div>
+        <div class="field"><label for="dirtyFilter">Draft state</label><select id="dirtyFilter"><option value="all">All rows</option><option value="dirty">Edited rows</option></select></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pick</th>
+              <th>Name</th>
+              <th>Active</th>
+              <th>Hire Date</th>
+              <th>Employment</th>
+              <th>Pay</th>
+              <th>Certification</th>
+              <th>Driver</th>
+              <th>Special</th>
+              <th>Shift System Assignment</th>
+              <th>Preferred Hrs</th>
+              <th>Max Hrs</th>
+              <th>24s</th>
+              <th>Day</th>
+              <th>Night</th>
+              <th>Weekend</th>
+              <th>Notices</th>
+              <th>OT</th>
+              <th>Addl OT</th>
+              <th>Rotation</th>
+              <th>Duty Crew</th>
+              <th>Last 24 Award</th>
+            </tr>
+          </thead>
+          <tbody id="memberRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card help">
+      <h2>Field Notes</h2>
+      <p><strong>Shift System Assignment</strong> controls which active staffing doctrine a member belongs to. Inactive or experimental systems stay hidden unless you turn on Show inactive systems.</p>
+      <p><strong>Blank hour limits</strong> mean no specific admin value has been entered yet. Resolver OT rules still apply.</p>
+      <p><strong>Last 24 Award</strong> is the fairness ledger for optional EMT 24-hour compression. New hires default to their hire date.</p>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || "";
+    const DEFAULT_SHIFT_SYSTEMS = [
+      { id:"adr_emt_zipper", label:"ADR EMT Zipper", active:true },
+      { id:"standard_12_hour", label:"12-Hour Standard", active:true },
+      { id:"aemt_abcd_rotation", label:"A/B/C/D AEMT Rotation", active:true },
+      { id:"legacy_rotation", label:"Legacy Rotation", active:false },
+    ];
+    let payload = { members: [] };
+    let settings = {};
+    let selectedIndex = -1;
+    let showInactiveSystems = false;
+    const dirtyRows = new Set();
+
+    function api(path){ return `${API_BASE}${path}`; }
+    function esc(value){ return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[char])); }
+    function show(message, ok=true){ const node=document.getElementById("flash"); node.className=`flash show ${ok ? "good" : "bad"}`; node.textContent=message; }
+    function memberId(member){ return String(member?.member_id ?? member?.id ?? "").trim(); }
+    function memberName(member){ return member?.name || [member?.first_name, member?.last_name].filter(Boolean).join(" ") || `Member ${memberId(member)}`; }
+    function getEmployment(member){ return member?.employment && typeof member.employment === "object" ? member.employment : {}; }
+    function getPrefs(member){ member.preferences ||= {}; return member.preferences; }
+    function getNotice(member){ member.notification_preferences ||= {}; return member.notification_preferences; }
+    function getPerms(member){ member.permissions ||= {}; return member.permissions; }
+    function getDrive(member){ member.drive ||= {}; return member.drive; }
+    function getSystem(member){ return member.staffing_system?.active_system || member.shift_system_assignment || member.preferences?.shift_preference?.staffing_system || defaultSystemFor(member); }
+    function activeSystems(){
+      const configured = settings?.staffing_systems;
+      const systems = Array.isArray(configured) && configured.length ? configured : DEFAULT_SHIFT_SYSTEMS;
+      return systems.filter((system) => showInactiveSystems || system.active !== false);
+    }
+    function systemLabel(id){
+      const systems = [...DEFAULT_SHIFT_SYSTEMS, ...(Array.isArray(settings?.staffing_systems) ? settings.staffing_systems : [])];
+      return systems.find((system) => system.id === id)?.label || id || "Unassigned";
+    }
+    function defaultSystemFor(member){
+      const c = String(member?.ops_cert || member?.cert || member?.raw_cert || "").toUpperCase();
+      if(c === "EMT") return "adr_emt_zipper";
+      if(c === "ALS" || c === "AEMT" || c === "PARAMEDIC") return "aemt_abcd_rotation";
+      return "standard_12_hour";
+    }
+    function rowsForDisplay(){
+      const query = document.getElementById("searchBox").value.trim().toLowerCase();
+      const activeFilter = document.getElementById("activeFilter").value;
+      const certFilter = document.getElementById("certFilter").value;
+      const systemFilter = document.getElementById("systemFilter").value;
+      const dirtyFilter = document.getElementById("dirtyFilter").value;
+      return payload.members.map((member, index) => ({ member, index })).filter(({ member, index }) => {
+        const cert = String(member.ops_cert || member.cert || member.raw_cert || "").toUpperCase();
+        const system = getSystem(member);
+        const text = [memberId(member), memberName(member), member.email, member.phone, cert, getEmployment(member).status, systemLabel(system)].join(" ").toLowerCase();
+        if(query && !text.includes(query)) return false;
+        if(activeFilter === "active" && member.active === false) return false;
+        if(activeFilter === "inactive" && member.active !== false) return false;
+        if(certFilter !== "all" && certFilter !== cert && !(certFilter === "ALS" && ["AEMT","PARAMEDIC"].includes(cert))) return false;
+        if(systemFilter !== "all" && systemFilter !== system) return false;
+        if(dirtyFilter === "dirty" && !dirtyRows.has(index)) return false;
+        return true;
+      });
+    }
+    function optionList(options, selected){
+      return options.map((option) => {
+        const value = typeof option === "string" ? option : option.value;
+        const label = typeof option === "string" ? option : option.label;
+        return `<option value="${esc(value)}" ${String(value) === String(selected) ? "selected" : ""}>${esc(label)}</option>`;
+      }).join("");
+    }
+    function renderSystemFilters(){
+      const systems = activeSystems();
+      document.getElementById("systemFilter").innerHTML = `<option value="all">All systems</option>` + systems.map((system) => `<option value="${esc(system.id)}">${esc(system.label)}</option>`).join("");
+    }
+    function renderSummary(){
+      const members = payload.members;
+      const active = members.filter((member) => member.active !== false);
+      const systems = new Set(active.map(getSystem).filter(Boolean));
+      document.getElementById("summary").innerHTML = `
+        <div class="summary-card"><span class="k">Members</span><span class="v">${members.length}</span></div>
+        <div class="summary-card"><span class="k">Active</span><span class="v">${active.length}</span></div>
+        <div class="summary-card"><span class="k">Systems Used</span><span class="v">${systems.size}</span></div>
+        <div class="summary-card"><span class="k">Edited Rows</span><span class="v">${dirtyRows.size}</span></div>
+        <div class="summary-card"><span class="k">Visible Rows</span><span class="v">${rowsForDisplay().length}</span></div>
+      `;
+      document.getElementById("statusPill").textContent = `${members.length} members`;
+    }
+    function renderRows(){
+      const systems = activeSystems();
+      const rows = rowsForDisplay();
+      const certOptions = [{value:"ALS",label:"ALS / AEMT"},{value:"EMT",label:"EMT"},{value:"EMR",label:"EMR"},{value:"NCLD",label:"NCLD"}];
+      const shiftOptions = [{value:"either",label:"Either"},{value:"prefer",label:"Prefer"},{value:"allow",label:"Allow"},{value:"do_not_allow",label:"Do not allow"}];
+      document.getElementById("memberRows").innerHTML = rows.map(({ member, index }) => {
+        const emp = getEmployment(member);
+        const prefs = getPrefs(member);
+        const notices = getNotice(member);
+        const perms = getPerms(member);
+        const drive = getDrive(member);
+        const system = getSystem(member);
+        const selectedSystem = systems.some((item) => item.id === system) ? system : defaultSystemFor(member);
+        return `
+          <tr class="${member.active === false ? "inactive" : ""} ${dirtyRows.has(index) ? "dirty" : ""}" data-index="${index}">
+            <td class="toggle"><input type="radio" name="selectedMember" ${index === selectedIndex ? "checked" : ""} data-field="select" /></td>
+            <td class="name-cell"><input data-field="name" value="${esc(memberName(member))}" /></td>
+            <td class="small-cell"><select data-field="active">${optionList([{value:"true",label:"Active"},{value:"false",label:"Inactive"}], String(member.active !== false))}</select></td>
+            <td><input type="date" data-field="hire_date" value="${esc(member.hire_date || emp.hire_date || "")}" /></td>
+            <td class="small-cell"><select data-field="employment_status">${optionList(["FT","PT","PRN","VOLUNTEER"], emp.status || "PT")}</select></td>
+            <td class="small-cell"><select data-field="pay_type">${optionList([{value:"hourly",label:"Hourly"},{value:"salaried",label:"Salaried"},{value:"volunteer",label:"Volunteer"}], emp.pay_type || "hourly")}</select></td>
+            <td class="small-cell"><select data-field="cert">${optionList(certOptions, member.ops_cert || member.cert || "EMT")}</select></td>
+            <td class="small-cell"><select data-field="driver">${optionList([{value:"true",label:"Yes"},{value:"false",label:"No"}], String(drive["120"] !== false && member.can_drive !== false))}</select></td>
+            <td><input data-field="special_permissions" placeholder="QRV, FTO" value="${esc((Array.isArray(member.special_permissions) ? member.special_permissions : []).join(", "))}" /></td>
+            <td class="wide-cell"><select data-field="staffing_system">${optionList(systems.map((system) => ({ value:system.id, label:system.label })), selectedSystem)}</select></td>
+            <td><input type="number" min="0" step="1" data-field="preferred_hours" value="${esc(emp.preferred_weekly_hour_cap ?? prefs.preferred_hours_per_week ?? "")}" /></td>
+            <td><input type="number" min="0" step="1" data-field="max_hours" value="${esc(emp.hard_weekly_hour_cap ?? prefs.max_allowed_hours_per_week ?? "")}" /></td>
+            <td class="small-cell"><select data-field="shift24">${optionList(shiftOptions, prefs.shift24 || (prefs.allows_24h ? "allow" : "either"))}</select></td>
+            <td class="small-cell"><select data-field="prefers_day">${optionList([{value:"false",label:"No"},{value:"true",label:"Yes"}], String(prefs.prefers_day === true))}</select></td>
+            <td class="small-cell"><select data-field="prefers_night">${optionList([{value:"false",label:"No"},{value:"true",label:"Yes"}], String(prefs.prefers_night === true))}</select></td>
+            <td class="small-cell"><select data-field="prefers_weekend">${optionList([{value:"false",label:"No"},{value:"true",label:"Yes"}], String(prefs.prefers_weekend === true))}</select></td>
+            <td class="small-cell"><select data-field="notices">${optionList([{value:"true",label:"Yes"},{value:"false",label:"No"}], String(notices.wants_open_shift_notices !== false))}</select></td>
+            <td class="small-cell"><select data-field="allow_ot">${optionList([{value:"false",label:"No"},{value:"true",label:"Yes"}], String(emp.overtime_eligible === true || prefs.allow_ot === true))}</select></td>
+            <td class="small-cell"><select data-field="allow_additional_ot">${optionList([{value:"false",label:"No"},{value:"true",label:"Yes"}], String(prefs.allow_additional_ot === true))}</select></td>
+            <td class="small-cell"><select data-field="rotation_authorized">${optionList([{value:"none",label:"No"},{value:"approved",label:"Yes"}], member.rotation_authorization?.status === "approved" ? "approved" : "none")}</select></td>
+            <td class="small-cell"><select data-field="duty_crew_eligible">${optionList([{value:"false",label:"No"},{value:"true",label:"Yes"}], String(member.duty_crew_eligible === true))}</select></td>
+            <td><input type="date" data-field="last_24_compression_awarded_at" value="${esc(member.last_24_compression_awarded_at || member.emt_zipper?.last_24_compression_awarded_at || member.hire_date || emp.hire_date || "")}" /></td>
+          </tr>
+        `;
+      }).join("") || `<tr><td colspan="22"><div class="mini">No members match the current filters.</div></td></tr>`;
+      renderSummary();
+    }
+    function renderAll(){ renderSystemFilters(); renderRows(); }
+    function markDirty(index){ dirtyRows.add(index); renderSummary(); }
+    function splitName(name){
+      const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+      if(parts.length < 2) return { first_name: parts[0] || "", last_name: "" };
+      return { first_name: parts.slice(0, -1).join(" "), last_name: parts[parts.length - 1] };
+    }
+    function updateMember(index, field, value){
+      const member = payload.members[index];
+      if(!member) return;
+      const emp = getEmployment(member);
+      const prefs = getPrefs(member);
+      const notices = getNotice(member);
+      const perms = getPerms(member);
+      if(field === "select"){ selectedIndex = index; return renderRows(); }
+      if(field === "name"){ const names = splitName(value); member.name = value.trim(); member.first_name = names.first_name; member.last_name = names.last_name; }
+      if(field === "active") member.active = value === "true";
+      if(field === "hire_date"){ member.hire_date = value; emp.hire_date = value; if(!member.last_24_compression_awarded_at) member.last_24_compression_awarded_at = value; }
+      if(field === "employment_status") emp.status = value;
+      if(field === "pay_type") emp.pay_type = value;
+      if(field === "cert"){ member.cert = value; member.ops_cert = value; member.raw_cert = value === "ALS" ? "AEMT" : value; }
+      if(field === "driver"){ getDrive(member)["120"] = value === "true"; member.can_drive = value === "true"; }
+      if(field === "special_permissions") member.special_permissions = value.split(",").map((item) => item.trim()).filter(Boolean);
+      if(field === "staffing_system"){
+        member.shift_system_assignment = value;
+        member.staffing_system = { ...(member.staffing_system || {}), active_system: value };
+        prefs.shift_preference = { ...(prefs.shift_preference || {}), staffing_system: value };
+      }
+      if(field === "preferred_hours"){ emp.preferred_weekly_hour_cap = value === "" ? null : Number(value); prefs.preferred_hours_per_week = emp.preferred_weekly_hour_cap; }
+      if(field === "max_hours"){ emp.hard_weekly_hour_cap = value === "" ? null : Number(value); prefs.max_allowed_hours_per_week = emp.hard_weekly_hour_cap; }
+      if(field === "shift24"){ prefs.shift24 = value; prefs.allows_24h = ["allow","prefer"].includes(value); prefs.prefers_24h = value === "prefer"; prefs.do_not_allow_24h = value === "do_not_allow"; }
+      if(field === "prefers_day") prefs.prefers_day = value === "true";
+      if(field === "prefers_night") prefs.prefers_night = value === "true";
+      if(field === "prefers_weekend") prefs.prefers_weekend = value === "true";
+      if(field === "notices") notices.wants_open_shift_notices = value === "true";
+      if(field === "allow_ot"){ emp.overtime_eligible = value === "true"; prefs.allow_ot = value === "true"; }
+      if(field === "allow_additional_ot") prefs.allow_additional_ot = value === "true";
+      if(field === "rotation_authorized") member.rotation_authorization = value === "approved" ? { status:"approved" } : { status:"none" };
+      if(field === "duty_crew_eligible") member.duty_crew_eligible = value === "true";
+      if(field === "last_24_compression_awarded_at"){
+        member.last_24_compression_awarded_at = value;
+        member.emt_zipper = { ...(member.emt_zipper || {}), allows_24_compression: prefs.allows_24h === true, last_24_compression_awarded_at: value };
+      }
+      member.employment = emp;
+      member.preferences = prefs;
+      member.notification_preferences = notices;
+      member.permissions = perms;
+      const qualifications = new Set(Array.isArray(member.qualifications) ? member.qualifications : []);
+      qualifications.add(member.raw_cert || member.cert);
+      if(member.can_drive !== false && getDrive(member)["120"] !== false) qualifications.add("DRIVER");
+      if((member.special_permissions || []).includes("QRV")) qualifications.add("QRV");
+      member.qualifications = [...qualifications].filter(Boolean);
+      markDirty(index);
+    }
+    function newMember(){
+      const nextId = String(Math.max(0, ...payload.members.map((member) => Number(memberId(member))).filter(Number.isFinite)) + 1);
+      const today = new Date().toISOString().slice(0, 10);
+      payload.members.push({
+        member_id: nextId,
+        id: nextId,
+        name: `New Member ${nextId}`,
+        active: true,
+        hire_date: today,
+        cert: "EMT",
+        ops_cert: "EMT",
+        raw_cert: "EMT",
+        employment: { status:"PT", pay_type:"hourly", hire_date: today, preferred_weekly_hour_cap: null, hard_weekly_hour_cap: null, overtime_eligible: false },
+        drive: { "120": true },
+        can_attend: true,
+        can_drive: true,
+        shift_system_assignment: "adr_emt_zipper",
+        staffing_system: { active_system:"adr_emt_zipper" },
+        preferences: { shift24:"either", allows_24h:false, prefers_24h:false, prefers_day:false, prefers_night:false, prefers_weekend:false, allow_ot:false, allow_additional_ot:false },
+        last_24_compression_awarded_at: today,
+        emt_zipper: { allows_24_compression:false, last_24_compression_awarded_at: today },
+        duty_crew_eligible: false,
+        notification_preferences: { wants_open_shift_notices:true },
+      });
+      selectedIndex = payload.members.length - 1;
+      dirtyRows.add(selectedIndex);
+      renderRows();
+      show("New member added in draft. Use Save Members to persist.");
+    }
+    async function load(){
+      const [membersResponse, settingsResponse] = await Promise.all([
+        fetch(api("/api/members"), { credentials:"include" }),
+        fetch(api("/api/settings"), { credentials:"include" }),
+      ]);
+      if(!membersResponse.ok) throw new Error(`Member load failed (${membersResponse.status})`);
+      if(settingsResponse.ok) settings = await settingsResponse.json();
+      payload = await membersResponse.json();
+      if(!Array.isArray(payload.members)) payload = { members: [] };
+      selectedIndex = payload.members.length ? 0 : -1;
+      dirtyRows.clear();
+      renderAll();
+    }
+    async function save(){
+      const response = await fetch(api("/api/members"), { method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(payload) });
+      if(!response.ok) throw new Error(`Member save failed (${response.status})`);
+      show("Member records saved.");
+      await load();
+    }
+    document.getElementById("memberRows").addEventListener("change", (event) => {
+      const control = event.target.closest("[data-field]");
+      const row = event.target.closest("tr[data-index]");
+      if(!control || !row) return;
+      updateMember(Number(row.dataset.index), control.dataset.field, control.value);
+    });
+    document.getElementById("memberRows").addEventListener("input", (event) => {
+      const control = event.target.closest("input[data-field]");
+      const row = event.target.closest("tr[data-index]");
+      if(!control || !row || control.type === "radio") return;
+      updateMember(Number(row.dataset.index), control.dataset.field, control.value);
+    });
+    for(const id of ["searchBox","activeFilter","certFilter","systemFilter","dirtyFilter"]){
+      document.getElementById(id).addEventListener("input", renderRows);
+      document.getElementById(id).addEventListener("change", renderRows);
+    }
+    document.getElementById("toggleInactiveBtn").addEventListener("click", () => {
+      showInactiveSystems = !showInactiveSystems;
+      document.getElementById("toggleInactiveBtn").textContent = showInactiveSystems ? "Hide inactive systems" : "Show inactive systems";
+      renderAll();
+    });
+    document.getElementById("addMemberBtn").addEventListener("click", newMember);
+    document.getElementById("duplicateBtn").addEventListener("click", () => {
+      const source = payload.members[selectedIndex];
+      if(!source) return show("Select a member first.", false);
+      const copy = JSON.parse(JSON.stringify(source));
+      copy.member_id = "";
+      copy.id = "";
+      copy.name = `${memberName(source)} Copy`;
+      payload.members.push(copy);
+      selectedIndex = payload.members.length - 1;
+      dirtyRows.add(selectedIndex);
+      renderRows();
+    });
+    document.getElementById("saveBtn").addEventListener("click", () => save().catch((error) => show(error.message, false)));
+    document.getElementById("reloadBtn").addEventListener("click", () => load().catch((error) => show(error.message, false)));
+    document.getElementById("settingsBtn").addEventListener("click", () => { window.location.href = "/admin"; });
+    document.getElementById("supervisorBtn").addEventListener("click", () => { window.location.href = "/supervisor"; });
+    load().catch((error) => show(error.message, false));
+  </script>
+</body>
+</html>

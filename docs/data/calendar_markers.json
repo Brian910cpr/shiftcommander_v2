@@ -1,0 +1,40 @@
+{
+  "markers": [
+    {
+      "id": "2026-12-25-christmas",
+      "date": "2026-12-25",
+      "short_title": "Christmas",
+      "hover_text": "Christmas Day",
+      "icon": "christmas_tree",
+      "custom_icon_url": null,
+      "active": true,
+      "show_wallboard": true,
+      "show_supervisor": true,
+      "priority": 10,
+      "flag_status": {}
+    },
+    {
+      "id": "2026-07-04-fireworks",
+      "date": "2026-07-04",
+      "short_title": "Independence Day",
+      "hover_text": "Independence Day",
+      "icon": "firework_burst",
+      "custom_icon_url": null,
+      "active": true,
+      "show_wallboard": true,
+      "show_supervisor": true,
+      "priority": 10,
+      "flag_status": {}
+    }
+  ],
+  "flag_status_sources": {
+    "manual_override_enabled": true,
+    "automatic_check_enabled": false,
+    "state": "NC",
+    "scope": "state_and_federal",
+    "current_status": "full_staff",
+    "current_label": "FULL STAFF",
+    "source_level": "manual",
+    "source_url": "https://ncadmin.nc.gov/news/flag-alerts"
+  }
+}

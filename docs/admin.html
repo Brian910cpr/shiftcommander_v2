@@ -19,6 +19,14 @@
     .field label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800}
     .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:10px}
     .field textarea{min-height:84px;resize:vertical}
+    .marker-list{display:grid;gap:10px;margin-top:12px}
+    .marker-row{display:grid;grid-template-columns:130px 1fr 1fr 190px 1fr 74px;gap:8px;align-items:end;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;background:rgba(255,255,255,.035)}
+    .marker-row .checks{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:800}
+    .marker-row .checks label{display:flex;gap:6px;align-items:center}
+    .marker-row input,.marker-row select{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:9px}
+    .inline-help{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.35}
+    .upload-box{margin-top:12px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.035);padding:12px}
+    .marker-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
     .btn{border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);font-weight:850;padding:10px 14px;cursor:pointer}
     .btn.primary{border-color:rgba(82,239,127,.45);background:rgba(82,239,127,.12)}
     .pill{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-weight:800}
@@ -32,10 +40,11 @@
     <section class="hero">
       <div>
         <h1>ShiftCommander Admin</h1>
-        <div class="sub">Control staffing rules, duty crew patterns, security settings, and notification templates.</div>
+        <div class="sub">Manage system structure, staffing policy, member records, duty crew setup, security, and notification templates.</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <span class="pill" id="statusPill">Loading</span>
+        <button class="btn" id="membersBtn">Manage Members</button>
         <button class="btn" id="reloadBtn">Reload</button>
         <button class="btn primary" id="saveBtn">Save Settings</button>
       </div>
@@ -64,6 +73,14 @@
       </div>
 
       <div class="card">
+        <h2>ADR Zipper EMT Simulation</h2>
+        <div class="mini">Optional EMT continuity planning is audit-only until Admin explicitly changes production policy.</div>
+        <div class="field"><label for="adrZipperEnabled">EMT continuity simulation</label><select id="adrZipperEnabled"><option value="false">Disabled</option><option value="true">Enabled for simulation only</option></select></div>
+        <div class="field"><label for="adrZipperCompression">Optional EMT 24-hour compression review</label><select id="adrZipperCompression"><option value="false">Do not identify 24-hour compression</option><option value="true">Identify possible voluntary EMT 24-hour compression</option></select></div>
+        <div class="mini">Compression fairness uses the oldest last 24-hour compression awarded date, with hire date used when the ledger is new.</div>
+      </div>
+
+      <div class="card">
         <h2>Security</h2>
         <div class="field"><label for="googleLogin">Google login required</label><select id="googleLogin"><option value="true">Required</option><option value="false">Not required</option></select></div>
         <div class="field"><label for="trustedDuration">Trusted-device duration days</label><input id="trustedDuration" type="number" min="0" step="1" /></div>
@@ -77,12 +94,55 @@
         <div class="field"><label for="selectionTemplate">Selection result</label><textarea id="selectionTemplate"></textarea></div>
         <div class="field"><label for="rotationTemplate">Rotation opportunity</label><textarea id="rotationTemplate"></textarea></div>
       </div>
+
+      <div class="card" style="grid-column:1/-1">
+        <h2>Calendar Markers</h2>
+        <div class="mini">Small contextual icons for Wallboard and Supervisor date headers. These do not affect staffing rules.</div>
+        <div class="marker-actions">
+          <button class="btn" id="addMarkerBtn" type="button">Add Marker</button>
+          <button class="btn" type="button" disabled title="Upload storage is not configured yet. Use URL/path fields for now.">Upload Icon</button>
+          <span class="pill" id="markerCount">0 markers</span>
+        </div>
+        <div class="upload-box">
+          <strong>Recommended icon specs:</strong>
+          <div class="inline-help">64 x 64 px preferred; 96 x 96 px maximum recommended; PNG, SVG, WebP, or GIF; transparent background preferred; square aspect ratio preferred; animated GIF/WebP under 250 KB recommended; displayed around 20-28 px on wallboard. Large images may reduce wallboard performance. If animated, keep subtle, avoid rapid flashing, and avoid distracting motion.</div>
+        </div>
+        <div class="marker-list" id="markerList"></div>
+        <div class="field"><label for="flagCurrentStatus">Current flag status</label><select id="flagCurrentStatus"><option value="full_staff">Full Staff</option><option value="half_staff">Half Staff</option><option value="half_staff_federal">Half Staff, Federal</option><option value="half_staff_nc">Half Staff, North Carolina</option><option value="mourning_band">Mourning Band</option></select></div>
+        <div class="field"><label for="flagCurrentLabel">Header label override</label><input id="flagCurrentLabel" placeholder="FULL STAFF" /></div>
+        <div class="field"><label for="flagState">Flag status state</label><input id="flagState" placeholder="NC" /></div>
+        <div class="field"><label for="flagScope">Flag status scope</label><select id="flagScope"><option value="state_and_federal">State + federal</option><option value="federal_only">Federal only</option></select></div>
+        <div class="field"><label for="flagSourceLevel">Flag status source</label><select id="flagSourceLevel"><option value="manual">Manual override</option><option value="federal">Federal</option><option value="state">State</option><option value="local">Local/manual</option></select></div>
+        <div class="field"><label for="flagSourceUrl">Advisory flag source URL</label><input id="flagSourceUrl" placeholder="https://ncadmin.nc.gov/news/flag-alerts" /></div>
+        <div class="field"><label for="flagAutoCheck">Automatic flag check</label><select id="flagAutoCheck"><option value="false">Manual markers only</option><option value="true">Advisory automatic source enabled</option></select></div>
+        <div class="mini">For North Carolina, prefer NC DOA Flag Alerts as the human-verifiable source. Manual override is always available.</div>
+      </div>
     </section>
   </main>
 
   <script>
     const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || "";
+    const ICON_OPTIONS = [
+      ["pink_birthday_cake","Pink Birthday Cake"],
+      ["blue_birthday_cake","Blue Birthday Cake"],
+      ["christmas_tree","Christmas Tree"],
+      ["christmas_tree_animated","Christmas Tree Animated"],
+      ["jack_o_lantern","Jack-o-Lantern"],
+      ["firework_burst","Firework Burst"],
+      ["firework_burst_animated","Firework Burst Animated"],
+      ["star_of_life","Star of Life"],
+      ["maltese_cross","Maltese Cross"],
+      ["star_of_life_mourning","Star of Life with Mourning Band"],
+      ["maltese_cross_mourning","Maltese Cross with Mourning Band"],
+      ["columbus_party_hat","Columbus Day / Chris Columbus Party Hat"],
+      ["turkey","Turkey"],
+      ["military_branches_scramble","Military Branches Scramble"],
+      ["flag_half_staff","Flag Half-Staff"],
+      ["flag_full_staff","Flag Full-Staff"],
+      ["custom","Custom"],
+    ];
     let settings = {};
+    let markerPayload = { markers: [], flag_status_sources: {} };
     function api(path){ return `${API_BASE}${path}`; }
     function show(message, ok=true){
       const node = document.getElementById("flash");
@@ -92,6 +152,7 @@
     function lines(value){ return String(value || "").split(/\r?\n|,/).map((item) => item.trim().toUpperCase()).filter(Boolean); }
     function boolValue(id){ return document.getElementById(id).value === "true"; }
     function setValue(id, value){ document.getElementById(id).value = value ?? ""; }
+    function esc(value){ return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[char])); }
     function rules(){ settings.resolver_rules ||= {}; return settings.resolver_rules; }
     function security(){ settings.security ||= {}; return settings.security; }
     function templates(){ settings.notification_templates ||= {}; return settings.notification_templates; }
@@ -108,18 +169,83 @@
       setValue("doNotNotices", String(r.do_not_suppresses_notices ?? true));
       setValue("dutyPatterns", (r.duty_crew_patterns || ["SAT_AM","SAT_PM","SUN_AM"]).join("\n"));
       setValue("dutyLabel", r.duty_crew_label || "DUTY CREW");
+      setValue("adrZipperEnabled", String(r.adr_zipper_enabled ?? false));
+      setValue("adrZipperCompression", String(r.adr_zipper_allow_24_compression ?? false));
       setValue("googleLogin", String(s.google_login_required ?? true));
       setValue("trustedDuration", s.trusted_device_duration_days ?? 30);
       setValue("sessionTimeout", s.session_timeout_minutes ?? 720);
       setValue("openShiftTemplate", t.open_shift_notice || "Open shift: {{date}} {{shift}} {{seat_type}}");
       setValue("selectionTemplate", t.selection_result || "Selection result: {{date}} {{shift}}");
       setValue("rotationTemplate", t.rotation_opportunity || "Rotation opportunity: {{date}} {{shift}}");
+      renderMarkers();
       document.getElementById("statusPill").textContent = "Settings loaded";
     }
+    function markerIconOptions(selected){
+      return ICON_OPTIONS.map(([value, label]) => `<option value="${esc(value)}" ${value === selected ? "selected" : ""}>${esc(label)}</option>`).join("");
+    }
+    function renderMarkers(){
+      markerPayload.markers ||= [];
+      const flags = markerPayload.flag_status_sources ||= {};
+      document.getElementById("markerCount").textContent = `${markerPayload.markers.length} markers`;
+      document.getElementById("markerList").innerHTML = markerPayload.markers.map((marker, index) => `
+        <div class="marker-row" data-index="${index}">
+          <input type="date" data-field="date" value="${esc(marker.date || "")}" />
+          <input data-field="short_title" placeholder="Short title" value="${esc(marker.short_title || "")}" />
+          <input data-field="hover_text" placeholder="Hover text / description" value="${esc(marker.hover_text || "")}" />
+          <select data-field="icon">${markerIconOptions(marker.icon || "star_of_life")}</select>
+          <div>
+            <input data-field="custom_icon_url" placeholder="Custom icon URL/path" value="${esc(marker.custom_icon_url || "")}" title="Recommended icon size is 64 x 64 px. Large images may slow the wallboard." />
+            <div class="inline-help">Recommended icon specs: 64 x 64 px preferred; 96 x 96 px max; PNG, SVG, WebP, or GIF; transparent square image preferred; displayed around 20-28 px.</div>
+          </div>
+          <div>
+            <input data-field="custom_animated_icon_url" placeholder="GIF/WebP icon URL/path" value="${esc(marker.custom_animated_icon_url || "")}" title="Animated GIF/WebP under 250 KB recommended." />
+            <div class="inline-help">Animated GIF/WebP under 250 KB recommended. Keep motion subtle; avoid rapid flashing or distracting animation.</div>
+          </div>
+          <input type="number" data-field="priority" value="${esc(marker.priority ?? 0)}" title="Priority/order" />
+          <div class="checks">
+            <label><input type="checkbox" data-field="active" ${marker.active !== false ? "checked" : ""} /> Active</label>
+            <label><input type="checkbox" data-field="show_wallboard" ${marker.show_wallboard !== false ? "checked" : ""} /> Wallboard</label>
+            <label><input type="checkbox" data-field="show_supervisor" ${marker.show_supervisor !== false ? "checked" : ""} /> Supervisor</label>
+          </div>
+          <select data-field="flag_status_state">
+            <option value="">No flag marker</option>
+            <option value="full_staff" ${marker.flag_status?.state === "full_staff" ? "selected" : ""}>Full Staff</option>
+            <option value="half_staff" ${marker.flag_status?.state === "half_staff" ? "selected" : ""}>Half Staff</option>
+            <option value="half_staff_federal" ${marker.flag_status?.state === "half_staff_federal" ? "selected" : ""}>Half Staff, Federal</option>
+            <option value="half_staff_nc" ${marker.flag_status?.state === "half_staff_nc" ? "selected" : ""}>Half Staff, North Carolina</option>
+            <option value="mourning_band" ${marker.flag_status?.state === "mourning_band" ? "selected" : ""}>Mourning Band</option>
+          </select>
+          <button class="btn" type="button" data-action="delete-marker">Remove</button>
+        </div>
+      `).join("") || `<div class="mini">No markers yet.</div>`;
+      setValue("flagState", flags.state || "NC");
+      setValue("flagScope", flags.scope || "state_and_federal");
+      setValue("flagCurrentStatus", flags.current_status || "full_staff");
+      setValue("flagCurrentLabel", flags.current_label || statusLabel(flags.current_status || "full_staff"));
+      setValue("flagSourceLevel", flags.source_level || "manual");
+      setValue("flagSourceUrl", flags.source_url || "https://ncadmin.nc.gov/news/flag-alerts");
+      setValue("flagAutoCheck", String(flags.automatic_check_enabled === true));
+    }
+    function statusLabel(status){
+      return ({ full_staff:"FULL STAFF", half_staff:"HALF STAFF", half_staff_federal:"HALF STAFF 🇺🇸", half_staff_nc:"NC HALF STAFF", mourning_band:"MOURNING BAND" })[status] || "FULL STAFF";
+    }
+    function updateMarker(index, field, value, checked=false){
+      const marker = markerPayload.markers[index];
+      if(!marker) return;
+      if(["active","show_wallboard","show_supervisor"].includes(field)) marker[field] = checked;
+      else if(field === "priority") marker.priority = Number(value || 0);
+      else if(field === "flag_status_state") marker.flag_status = value ? { ...(marker.flag_status || {}), state:value } : {};
+      else marker[field] = value;
+      if(["custom_icon_url","custom_animated_icon_url"].includes(field) && value) show("Recommended icon size is 64 x 64 px. Large images may slow the wallboard.");
+    }
     async function load(){
-      const response = await fetch(api("/api/settings"), { credentials:"include" });
-      if(!response.ok) throw new Error(`Settings load failed (${response.status})`);
-      settings = await response.json();
+      const [settingsResponse, markersResponse] = await Promise.all([
+        fetch(api("/api/settings"), { credentials:"include" }),
+        fetch(api("/api/calendar_markers"), { credentials:"include" }),
+      ]);
+      if(!settingsResponse.ok) throw new Error(`Settings load failed (${settingsResponse.status})`);
+      settings = await settingsResponse.json();
+      markerPayload = markersResponse.ok ? await markersResponse.json() : { markers: [], flag_status_sources: {} };
       render();
     }
     async function save(){
@@ -136,17 +262,61 @@
       r.do_not_suppresses_notices = boolValue("doNotNotices");
       r.duty_crew_patterns = lines(document.getElementById("dutyPatterns").value);
       r.duty_crew_label = document.getElementById("dutyLabel").value || "DUTY CREW";
+      r.adr_zipper_enabled = boolValue("adrZipperEnabled");
+      r.adr_zipper_simulation_only = true;
+      r.adr_zipper_allow_24_compression = boolValue("adrZipperCompression");
       s.google_login_required = boolValue("googleLogin");
       s.trusted_device_duration_days = Number(document.getElementById("trustedDuration").value || 30);
       s.session_timeout_minutes = Number(document.getElementById("sessionTimeout").value || 720);
       t.open_shift_notice = document.getElementById("openShiftTemplate").value;
       t.selection_result = document.getElementById("selectionTemplate").value;
       t.rotation_opportunity = document.getElementById("rotationTemplate").value;
+      markerPayload.flag_status_sources = {
+        ...(markerPayload.flag_status_sources || {}),
+        manual_override_enabled: true,
+        automatic_check_enabled: boolValue("flagAutoCheck"),
+        state: document.getElementById("flagState").value || "NC",
+        scope: document.getElementById("flagScope").value || "state_and_federal",
+        current_status: document.getElementById("flagCurrentStatus").value || "full_staff",
+        current_label: document.getElementById("flagCurrentLabel").value || statusLabel(document.getElementById("flagCurrentStatus").value || "full_staff"),
+        source_level: document.getElementById("flagSourceLevel").value || "manual",
+        source_url: document.getElementById("flagSourceUrl").value || "https://ncadmin.nc.gov/news/flag-alerts",
+      };
       const response = await fetch(api("/api/settings"), { method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(settings) });
       if(!response.ok) throw new Error(`Settings save failed (${response.status})`);
+      const markerResponse = await fetch(api("/api/calendar_markers"), { method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(markerPayload) });
+      if(!markerResponse.ok) throw new Error(`Calendar marker save failed (${markerResponse.status})`);
       show("Settings saved.");
       document.getElementById("statusPill").textContent = "Saved";
     }
+    document.getElementById("markerList").addEventListener("input", (event) => {
+      const row = event.target.closest("[data-index]");
+      const field = event.target.dataset.field;
+      if(!row || !field) return;
+      updateMarker(Number(row.dataset.index), field, event.target.value, event.target.checked);
+    });
+    document.getElementById("markerList").addEventListener("change", (event) => {
+      const row = event.target.closest("[data-index]");
+      const field = event.target.dataset.field;
+      if(!row || !field) return;
+      updateMarker(Number(row.dataset.index), field, event.target.value, event.target.checked);
+    });
+    document.getElementById("markerList").addEventListener("click", (event) => {
+      if(!event.target.closest("[data-action='delete-marker']")) return;
+      const row = event.target.closest("[data-index]");
+      markerPayload.markers.splice(Number(row.dataset.index), 1);
+      renderMarkers();
+    });
+    document.getElementById("addMarkerBtn").addEventListener("click", () => {
+      const date = new Date().toISOString().slice(0, 10);
+      markerPayload.markers ||= [];
+      markerPayload.markers.push({ id:`${date}-marker-${Date.now()}`, date, short_title:"New Marker", hover_text:"Calendar marker", icon:"star_of_life", custom_icon_url:null, custom_animated_icon_url:null, active:true, show_wallboard:true, show_supervisor:true, priority:0, flag_status:{} });
+      renderMarkers();
+    });
+    document.getElementById("flagCurrentStatus").addEventListener("change", (event) => {
+      if(!document.getElementById("flagCurrentLabel").value) setValue("flagCurrentLabel", statusLabel(event.target.value));
+    });
+    document.getElementById("membersBtn").addEventListener("click", () => { window.location.href = "/admin/members"; });
     document.getElementById("reloadBtn").addEventListener("click", () => load().catch((error) => show(error.message, false)));
     document.getElementById("saveBtn").addEventListener("click", () => save().catch((error) => show(error.message, false)));
     load().catch((error) => show(error.message, false));

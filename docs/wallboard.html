@@ -111,6 +111,21 @@
       color: var(--muted);
     }
 
+    .flag-status-pill {
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--text);
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    .flag-status-pill.hidden { display: none; }
+    .flag-status-pill.caution { border-color: rgba(255,209,102,0.32); background: rgba(255,209,102,0.08); }
+
     .legend {
       display: flex;
       gap: 8px;
@@ -281,12 +296,34 @@
       text-transform: uppercase;
     }
 
-    .birthday-indicator {
+    .date-markers {
       justify-self: end;
       align-self: start;
-      font-size: 18px;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      max-width: 84px;
+      overflow: hidden;
+    }
+
+    .date-marker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 17px;
       line-height: 1;
       opacity: 0.96;
+    }
+
+    .date-marker img {
+      max-width: 22px;
+      max-height: 22px;
+      object-fit: contain;
     }
 
     .day-number {
@@ -528,6 +565,7 @@
     </div>
     <div class="meta">
       <div class="meta-row">
+        <div class="flag-status-pill hidden" id="flagStatusPill">FULL STAFF</div>
         <button class="nav-btn" id="prevWeekBtn">← Prev Week</button>
         <button class="nav-btn" id="todayBtn">Today</button>
         <button class="nav-btn" id="nextWeekBtn">Next Week →</button>
@@ -567,6 +605,7 @@
     const SCHEDULE_URL = "/api/schedule";
     const MEMBERS_URL = "/api/wallboard_members";
     const SETTINGS_URL = "/api/wallboard_settings";
+    const MARKERS_URL = "/api/calendar_markers";
     const LEGEND_STORAGE_KEY = "sc_wallboard_legend_open";
     const REFRESH_MS = 60000;
     const SCHEDULE_TIMEOUT_MS = 15000;
@@ -578,6 +617,7 @@
 
     let currentWeekOffset = 0;
     let lastLoadedData = null;
+    let calendarMarkers = { markers: [] };
     let idleTimer = null;
     let autoFocusedAssignedWeek = false;
 
@@ -675,6 +715,29 @@
       if (build) build.textContent = BUILD_CODE;
     }
 
+    function flagStatusLabel(status, source) {
+      if (source?.current_label) return source.current_label;
+      return ({
+        full_staff: "FULL STAFF",
+        half_staff: "HALF STAFF 🇺🇸",
+        half_staff_federal: "HALF STAFF 🇺🇸",
+        half_staff_nc: "NC HALF STAFF",
+        mourning_band: "MOURNING BAND"
+      })[status] || "";
+    }
+
+    function renderFlagStatus() {
+      const node = document.getElementById("flagStatusPill");
+      const source = calendarMarkers?.flag_status_sources || {};
+      const status = source.current_status || "";
+      const label = flagStatusLabel(status, source);
+      if (!node || !label) return;
+      node.textContent = label;
+      node.title = `Flag status: ${label}${source.source_level ? ` (${source.source_level})` : ""}${source.source_url ? `\nSource: ${source.source_url}` : ""}`;
+      node.classList.toggle("hidden", false);
+      node.classList.toggle("caution", ["half_staff", "half_staff_federal", "half_staff_nc", "mourning_band"].includes(status));
+    }
+
     function setLegend(open) {
       const panel = document.getElementById("legendPanel");
       const button = document.getElementById("legendToggleBtn");
@@ -713,6 +776,51 @@
       const d = new Date(value);
       if (Number.isNaN(d.getTime())) return value;
       return d.toLocaleString();
+    }
+
+    const MARKER_ICON_SYMBOLS = {
+      pink_birthday_cake: "🎂",
+      blue_birthday_cake: "🎂",
+      christmas_tree: "🎄",
+      christmas_tree_animated: "🎄",
+      jack_o_lantern: "🎃",
+      firework_burst: "🎆",
+      firework_burst_animated: "🎆",
+      star_of_life: "✚",
+      maltese_cross: "✠",
+      star_of_life_mourning: "✚",
+      maltese_cross_mourning: "✠",
+      columbus_party_hat: "🥳",
+      turkey: "🦃",
+      military_branches_scramble: "★",
+      flag_half_staff: "⚑",
+      flag_full_staff: "⚐",
+      custom: "●"
+    };
+
+    function activeMarkersForDate(dateIso, target) {
+      return (calendarMarkers?.markers || [])
+        .filter(marker => marker?.active !== false && String(marker?.date || "").slice(0, 10) === dateIso)
+        .filter(marker => target === "wallboard" ? marker.show_wallboard !== false : marker.show_supervisor !== false)
+        .sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0));
+    }
+
+    function renderDateMarkers(dateIso, dayShifts, memberLookup) {
+      const markers = activeMarkersForDate(dateIso, "wallboard");
+      if (hasBirthdayAssignmentForDate(dateIso, dayShifts, memberLookup)) {
+        markers.unshift({ short_title: "Birthday", hover_text: "Birthday on this date", icon: "pink_birthday_cake", active: true });
+      }
+      const visible = markers.slice(0, 3);
+      const overflow = markers.length - visible.length;
+      const title = markers.map(marker => `${marker.short_title || "Marker"}: ${marker.hover_text || marker.short_title || ""}`).join("\n");
+      const icons = visible.map(marker => {
+        const customUrl = marker.custom_icon_url || marker.custom_animated_icon_url;
+        if (marker.icon === "custom" && customUrl) {
+          return `<span class="date-marker" title="${escapeHtml(marker.hover_text || marker.short_title || "")}"><img src="${escapeHtml(customUrl)}" alt="${escapeHtml(marker.short_title || "marker")}" /></span>`;
+        }
+        return `<span class="date-marker" title="${escapeHtml(marker.hover_text || marker.short_title || "")}">${escapeHtml(MARKER_ICON_SYMBOLS[marker.icon] || "●")}</span>`;
+      }).join("");
+      return `<div class="date-markers" title="${escapeHtml(title)}">${icons}${overflow > 0 ? `<span class="date-marker">+${overflow}</span>` : ""}</div>`;
     }
 
     function getTodayDate() {
@@ -1260,7 +1368,7 @@
 
       const monthClasses = monthBoundaryClasses(visibleDates, index);
       const shiftsHtml = dayShifts.length ? dayShifts.map(shift => renderShiftCard(shift, memberLookup)).join("") : "";
-      const birthdayIndicator = hasBirthdayAssignmentForDate(iso, dayShifts, memberLookup) ? "🎂" : "";
+      const dateMarkers = renderDateMarkers(iso, dayShifts, memberLookup);
 
       return `
         <section class="day-card ${dayClass} ${monthClasses}">
@@ -1270,7 +1378,7 @@
               <div class="day-title">${escapeHtml(dayFmt.weekday)}</div>
               <div class="day-subtitle">${escapeHtml(dayFmt.monthLabel)}</div>
             </div>
-            <div class="birthday-indicator">${birthdayIndicator}</div>
+            ${dateMarkers}
           </div>
           <div class="shift-list">${shiftsHtml}</div>
         </section>
@@ -1380,6 +1488,14 @@
         } catch (error) {
           console.warn("Wallboard settings did not load. Default rule windows will be used.", error);
         }
+        try {
+          const markersResponse = await fetchJson(MARKERS_URL, MEMBERS_TIMEOUT_MS);
+          calendarMarkers = markersResponse.data || { markers: [] };
+        } catch (error) {
+          calendarMarkers = { markers: [] };
+          console.warn("Wallboard calendar markers did not load. Continuing without markers.", error);
+        }
+        renderFlagStatus();
 
         lastLoadedData = {
           ...scheduleData,

@@ -146,6 +146,129 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         self.assertNotEqual(attendant["assigned"], "aemt_unset")
         self.assertIn("aemt_unset", attendant["candidate_list_considered"])
 
+    def test_may_rollout_sticky_assignment_survives_resolver_run(self):
+        data = base_payload()
+        data["members"] = [member("may_visible", "AEMT", "PT"), member("other_aemt", "AEMT", "PT")]
+        set_availability(data, "other_aemt", FAR, "AM", "PREFER")
+        data["rollout_import"] = {
+            "may_sticky_assignments": [
+                {
+                    "date": FAR,
+                    "label": "AM",
+                    "role": "ATTENDANT",
+                    "member_id": "may_visible",
+                }
+            ]
+        }
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        attendant = first_seat(result, "ATTENDANT")
+        self.assertEqual(attendant["assigned"], "may_visible")
+        self.assertTrue(attendant["preserved_existing_assignment"])
+        self.assertTrue(attendant["rollout_sticky"])
+        self.assertEqual(attendant["resolver_bucket"], "preserved_rollout_import")
+        self.assertEqual(attendant["assignment_reason"], "Preserved from physical May wallboard rollout import.")
+        self.assertNotEqual(attendant["assigned"], "other_aemt")
+
+    def test_may_rollout_open_seat_stays_open_for_interest_collection(self):
+        data = base_payload(date_iso=NEAR)
+        data["members"] = [member("emt_pickup", "EMT", "PT")]
+        set_availability(data, "emt_pickup", NEAR, "AM", "PREFER")
+        data["rollout_import"] = {
+            "may_open_seats": [
+                {
+                    "date": NEAR,
+                    "label": "AM",
+                    "role": "DRIVER",
+                }
+            ]
+        }
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertFalse(driver.get("assigned"))
+        self.assertTrue(driver["locked"])
+        self.assertTrue(driver["rollout_open"])
+        self.assertEqual(driver["open_reason"], "Open on physical May wallboard, available for interest collection.")
+        self.assertTrue(driver["interest_collecting"])
+        self.assertIn("DRIVER", {row["seat_type"] for row in result["open_seats"]})
+
+    def test_adr_zipper_is_disabled_and_simulation_only_by_default(self):
+        data = base_payload()
+        data["members"] = [member("emt_anchor", "EMT", "PT"), member("emt_driver", "EMT", "PT")]
+        set_availability(data, "emt_anchor", FAR, "AM", "PREFER")
+        set_availability(data, "emt_driver", FAR, "AM", "AVAILABLE")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        self.assertFalse(result["adr_zipper"]["enabled"])
+        self.assertTrue(result["adr_zipper"]["simulation_only"])
+        self.assertFalse(result["adr_zipper"]["production_override"])
+        self.assertEqual(result["build"]["summary"]["adr_zipper_24_compression_candidates"], 0)
+        self.assertEqual(first_seat(result, "ATTENDANT")["assigned"], "emt_anchor")
+        self.assertEqual(first_seat(result, "DRIVER")["assigned"], "emt_driver")
+
+    def test_adr_zipper_fairness_uses_oldest_last_24_compression_date_not_member_order(self):
+        data = base_payload()
+        data["settings"]["resolver_rules"].update({
+            "adr_zipper_enabled": True,
+            "adr_zipper_simulation_only": True,
+            "adr_zipper_allow_24_compression": True,
+        })
+        data["shifts"] = [
+            {"date": FAR, "label": "AM", "unit": "120", "hours": 12, "seats": [{"role": "ATTENDANT", "hours": 12}, {"role": "DRIVER", "hours": 12}]},
+            {"date": FAR, "label": "PM", "unit": "120", "hours": 12, "seats": [{"role": "ATTENDANT", "hours": 12}, {"role": "DRIVER", "hours": 12}]},
+        ]
+        newer = member("newer_emt", "EMT", "PT")
+        older = member("older_emt", "EMT", "PT")
+        newer.update({"hire_date": "2026-01-01", "last_24_compression_awarded_at": "2026-05-01", "preferences": {"allows_24h": True}})
+        older.update({"hire_date": "2025-01-01", "last_24_compression_awarded_at": "2026-01-01", "preferences": {"allows_24h": True}})
+        data["members"] = [newer, older]
+        for mid in ["newer_emt", "older_emt"]:
+            set_availability(data, mid, FAR, "AM", "PREFER")
+            set_availability(data, mid, FAR, "PM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        ledger = result["adr_zipper"]["fairness_ledger"]
+        self.assertEqual(ledger[0]["member_id"], "older_emt")
+        self.assertEqual(ledger[0]["last_24_compression_awarded_at"], "2026-01-01")
+        candidates = result["adr_zipper"]["compression_candidates"]
+        self.assertTrue(candidates)
+        self.assertEqual(candidates[0]["member_id"], "older_emt")
+        self.assertTrue(all(row["simulation_only"] for row in candidates))
+        self.assertTrue(all(row["would_modify_schedule"] is False for row in candidates))
+
+    def test_adr_zipper_simulation_respects_member_staffing_system_assignment(self):
+        data = base_payload()
+        data["settings"]["resolver_rules"].update({
+            "adr_zipper_enabled": True,
+            "adr_zipper_simulation_only": True,
+            "adr_zipper_allow_24_compression": True,
+        })
+        data["shifts"] = [
+            {"date": FAR, "label": "AM", "unit": "120", "hours": 12, "seats": [{"role": "ATTENDANT", "hours": 12}, {"role": "DRIVER", "hours": 12}]},
+            {"date": FAR, "label": "PM", "unit": "120", "hours": 12, "seats": [{"role": "ATTENDANT", "hours": 12}, {"role": "DRIVER", "hours": 12}]},
+        ]
+        zipper_emt = member("zipper_emt", "EMT", "PT")
+        standard_emt = member("standard_emt", "EMT", "PT")
+        zipper_emt.update({"last_24_compression_awarded_at": "2026-03-01", "preferences": {"allows_24h": True}, "staffing_system": {"active_system": "adr_emt_zipper"}})
+        standard_emt.update({"last_24_compression_awarded_at": "2026-01-01", "preferences": {"allows_24h": True}, "staffing_system": {"active_system": "standard_12_hour"}})
+        data["members"] = [standard_emt, zipper_emt]
+        for mid in ["standard_emt", "zipper_emt"]:
+            set_availability(data, mid, FAR, "AM", "PREFER")
+            set_availability(data, mid, FAR, "PM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        candidate_ids = {row["member_id"] for row in result["adr_zipper"]["compression_candidates"]}
+        self.assertIn("zipper_emt", candidate_ids)
+        self.assertNotIn("standard_emt", candidate_ids)
+        ledger = {row["member_id"]: row["staffing_system"] for row in result["adr_zipper"]["fairness_ledger"]}
+        self.assertEqual(ledger["standard_emt"], "standard_12_hour")
+
     def test_solo_emt_anchor_inside_14_days_leaves_driver_open(self):
         data = base_payload(date_iso=NEAR)
         data["members"] = [member("emt_bridge", "EMT", "PT")]
