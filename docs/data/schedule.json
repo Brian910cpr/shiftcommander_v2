@@ -1,6 +1,6 @@
 {
   "build": {
-    "generated_at": "2026-05-19T02:44:23.459864Z",
+    "generated_at": "2026-05-19T02:59:09.192413Z",
     "resolver_version": "rule-based-v1",
     "resolver_engine": "deterministic_rule_based",
     "operational_today": "2026-05-19",
@@ -319,7 +319,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Open Driver"
     },
@@ -390,7 +392,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Open Driver"
     },
@@ -466,7 +470,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -542,7 +548,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -618,7 +626,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -694,7 +704,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -883,12 +895,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-05-23:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -2999,8 +3013,6 @@
           "supervisor_review": true,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-21",
           "interest_collecting": true,
@@ -3009,7 +3021,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Supervisor Review"
     },
@@ -4448,12 +4462,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-05-23:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -6564,8 +6580,6 @@
           "supervisor_review": true,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-21",
           "interest_collecting": true,
@@ -6621,12 +6635,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-05-24:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -8737,8 +8753,6 @@
           "supervisor_review": true,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-19",
           "interest_collecting": true,
@@ -8747,7 +8761,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Supervisor Review"
     },
@@ -8760,460 +8776,6 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-05-24:PM:ATTENDANT:0",
-          "assigned": "188",
-          "assigned_name": "Brian Ennis",
-          "assignment_status": "ASSIGNED",
-          "display_open_alert": false,
-          "display_on_board": true,
-          "ot_classification": "none",
-          "resolver_phase": "PHASE_3",
-          "resolver_bucket": "solo_emt_anchor",
-          "rejected_candidates": [
-            {
-              "member_id": "188",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "186",
-              "reason": "additional_ot_blocked",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "107",
-              "reason": "availability_do_not",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "112",
-              "reason": "availability_do_not",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "145",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "146",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "148",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "149",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "151",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "156",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "159",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "163",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "180",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "183",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "187",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "181",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "185",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "182",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "189",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "190",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "ft_aemt_no_additional_ot"
-            },
-            {
-              "member_id": "188",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "186",
-              "reason": "additional_ot_blocked",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "107",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "112",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "145",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "146",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "148",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "149",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "151",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "156",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "159",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "163",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "180",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "183",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "187",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "181",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "185",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "182",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "189",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "190",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_prefer_no_ot"
-            },
-            {
-              "member_id": "188",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "186",
-              "reason": "additional_ot_blocked",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "107",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "112",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "145",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "146",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "148",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "149",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "151",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "156",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "159",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "163",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "180",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "183",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "187",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "181",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "185",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "182",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "189",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            },
-            {
-              "member_id": "190",
-              "reason": "outside_bucket_rules",
-              "phase": "PHASE_2",
-              "bucket": "pt_aemt_available_no_ot"
-            }
-          ],
-          "candidate_list_considered": [
-            "188",
-            "186",
-            "107",
-            "112",
-            "145",
-            "146",
-            "148",
-            "149",
-            "151",
-            "156",
-            "159",
-            "163",
-            "180",
-            "183",
-            "187",
-            "181",
-            "185",
-            "182",
-            "189",
-            "190",
-            "188",
-            "186",
-            "107",
-            "112",
-            "145",
-            "146",
-            "148",
-            "149",
-            "151",
-            "156",
-            "159",
-            "163",
-            "180",
-            "183",
-            "187",
-            "181",
-            "185",
-            "182",
-            "189",
-            "190",
-            "188",
-            "186",
-            "107",
-            "112",
-            "145",
-            "146",
-            "148",
-            "149",
-            "151",
-            "156",
-            "159",
-            "163",
-            "180",
-            "183",
-            "187",
-            "181",
-            "185",
-            "182",
-            "189",
-            "190"
-          ],
-          "supervisor_review": false,
-          "solo_emt_anchor_applied": true,
-          "aemt_reclaim_attempted": false,
-          "cert": "EMT",
-          "preserved_existing_assignment": false,
-          "locked": false,
-          "published": false,
-          "rollout_sticky": false,
-          "assignment_reason": null,
-          "selection_statement": "Selected Brian Ennis for ATTENDANT by emt_fallback_no_ot.",
-          "selection_factors": [
-            "PHASE_2",
-            "emt_fallback_no_ot",
-            "PREFER",
-            "EMT",
-            "none"
-          ]
-        },
-        {
-          "role": "DRIVER",
-          "hours": 12.0,
-          "seat_id": "2026-05-24:PM:DRIVER:1",
           "assigned": "186",
           "assigned_name": "Lynnsey Benson",
           "assignment_status": "ASSIGNED",
@@ -11196,29 +10758,487 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "open_reason": "solo EMT anchors attendant; driver remains open",
-          "next_selection_run": "2026-05-19",
-          "interest_collecting": true,
-          "selection_statement": "Selected Lynnsey Benson for DRIVER by late_driver_ot_allowed.",
           "cert": "AEMT",
           "preserved_existing_assignment": false,
           "locked": false,
           "published": false,
           "rollout_sticky": false,
-          "assignment_reason": null,
+          "assignment_reason": "ALS/AEMT/Paramedic-qualified member anchors the shift.",
+          "selection_statement": "Selected Lynnsey Benson for DRIVER by late_driver_ot_allowed.",
           "selection_factors": [
             "PHASE_6",
             "late_driver_ot_allowed",
             "PREFER",
             "AEMT",
             "additional_ot"
-          ]
+          ],
+          "open_reason": "solo EMT anchors attendant; driver remains open",
+          "interest_collecting": true,
+          "next_selection_run": "2026-05-19",
+          "display_role": "ATTENDANT"
+        },
+        {
+          "role": "DRIVER",
+          "hours": 12.0,
+          "seat_id": "2026-05-24:PM:DRIVER:1",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
+          "display_on_board": true,
+          "ot_classification": "none",
+          "resolver_phase": "PHASE_3",
+          "resolver_bucket": "solo_emt_anchor",
+          "rejected_candidates": [
+            {
+              "member_id": "188",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "186",
+              "reason": "additional_ot_blocked",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "107",
+              "reason": "availability_do_not",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "112",
+              "reason": "availability_do_not",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "145",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "146",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "148",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "149",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "151",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "156",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "159",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "163",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "180",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "183",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "187",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "181",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "185",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "182",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "189",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "190",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "ft_aemt_no_additional_ot"
+            },
+            {
+              "member_id": "188",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "186",
+              "reason": "additional_ot_blocked",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "107",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "112",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "145",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "146",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "148",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "149",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "151",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "156",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "159",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "163",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "180",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "183",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "187",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "181",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "185",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "182",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "189",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "190",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_prefer_no_ot"
+            },
+            {
+              "member_id": "188",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "186",
+              "reason": "additional_ot_blocked",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "107",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "112",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "145",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "146",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "148",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "149",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "151",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "156",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "159",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "163",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "180",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "183",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "187",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "181",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "185",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "182",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "189",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            },
+            {
+              "member_id": "190",
+              "reason": "outside_bucket_rules",
+              "phase": "PHASE_2",
+              "bucket": "pt_aemt_available_no_ot"
+            }
+          ],
+          "candidate_list_considered": [
+            "188",
+            "186",
+            "107",
+            "112",
+            "145",
+            "146",
+            "148",
+            "149",
+            "151",
+            "156",
+            "159",
+            "163",
+            "180",
+            "183",
+            "187",
+            "181",
+            "185",
+            "182",
+            "189",
+            "190",
+            "188",
+            "186",
+            "107",
+            "112",
+            "145",
+            "146",
+            "148",
+            "149",
+            "151",
+            "156",
+            "159",
+            "163",
+            "180",
+            "183",
+            "187",
+            "181",
+            "185",
+            "182",
+            "189",
+            "190",
+            "188",
+            "186",
+            "107",
+            "112",
+            "145",
+            "146",
+            "148",
+            "149",
+            "151",
+            "156",
+            "159",
+            "163",
+            "180",
+            "183",
+            "187",
+            "181",
+            "185",
+            "182",
+            "189",
+            "190"
+          ],
+          "supervisor_review": false,
+          "solo_emt_anchor_applied": false,
+          "aemt_reclaim_attempted": false,
+          "selection_statement": "Selected Brian Ennis for ATTENDANT by emt_fallback_no_ot.",
+          "cert": "EMT",
+          "preserved_existing_assignment": false,
+          "locked": false,
+          "published": false,
+          "rollout_sticky": false,
+          "assignment_reason": null,
+          "selection_factors": [
+            "PHASE_2",
+            "emt_fallback_no_ot",
+            "PREFER",
+            "EMT",
+            "none"
+          ],
+          "display_role": "DRIVER"
         }
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
-          "Solo EMT Anchor Rule applied"
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule applied",
+          "ALS/AEMT/Paramedic-qualified member normalized to ATTENDANT display order"
         ]
       },
       "crew_status": "Complete"
@@ -17370,6 +17390,9 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule applied",
           "Solo EMT Anchor Rule applied"
         ]
       },
@@ -17442,7 +17465,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Open Driver"
     },
@@ -17518,7 +17543,10 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -17594,7 +17622,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -17670,7 +17700,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -17741,7 +17773,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Open Driver"
     },
@@ -17817,7 +17851,10 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -17889,6 +17926,9 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import"
         ]
       },
@@ -17962,6 +18002,9 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import"
         ]
       },
@@ -18010,12 +18053,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-05-30:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -20126,8 +20171,6 @@
           "supervisor_review": true,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-19",
           "interest_collecting": true,
@@ -20136,7 +20179,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Supervisor Review"
     },
@@ -20183,12 +20228,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-05-30:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -22299,8 +22346,6 @@
           "supervisor_review": true,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-19",
           "interest_collecting": true,
@@ -22309,7 +22354,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Supervisor Review"
     },
@@ -23618,12 +23665,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-05-31:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -25734,8 +25783,6 @@
           "supervisor_review": true,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-20",
           "interest_collecting": true,
@@ -25744,7 +25791,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Supervisor Review"
     },
@@ -29051,7 +29100,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Complete"
     },
@@ -32481,7 +32532,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Supervisor Review"
     },
@@ -35911,7 +35964,9 @@
       ],
       "resolver": {
         "engine": "deterministic_rule_based",
-        "notes": []
+        "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
+        ]
       },
       "crew_status": "Supervisor Review"
     },
@@ -49310,12 +49365,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-06:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -50306,8 +50363,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-23",
           "interest_collecting": false,
@@ -50915,12 +50970,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-06:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -51911,8 +51968,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-23",
           "interest_collecting": false,
@@ -52520,12 +52575,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-07:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -53516,8 +53573,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-24",
           "interest_collecting": false,
@@ -71725,12 +71780,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-13:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -72721,8 +72778,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-30",
           "interest_collecting": false,
@@ -73330,12 +73385,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-13:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -74326,8 +74383,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-30",
           "interest_collecting": false,
@@ -74935,12 +74990,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-14:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -75931,8 +75988,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-05-31",
           "interest_collecting": false,
@@ -94140,12 +94195,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-20:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -95136,8 +95193,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-06",
           "interest_collecting": false,
@@ -95745,12 +95800,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-20:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -96741,8 +96798,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-06",
           "interest_collecting": false,
@@ -97350,12 +97405,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-21:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -98346,8 +98403,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-07",
           "interest_collecting": false,
@@ -116555,12 +116610,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-27:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -117551,8 +117608,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-13",
           "interest_collecting": false,
@@ -118160,12 +118215,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-27:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -119156,8 +119213,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-13",
           "interest_collecting": false,
@@ -119765,12 +119820,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-06-28:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -120761,8 +120818,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-14",
           "interest_collecting": false,
@@ -132570,12 +132625,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": false,
           "seat_id": "2026-07-04:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": "159",
           "assigned_name": "Brett Toney",
           "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": "PHASE_4",
           "resolver_bucket": "emt_prefer_no_ot",
@@ -132584,8 +132641,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "cert": "EMT",
           "preserved_existing_assignment": false,
           "locked": false,
@@ -132793,12 +132848,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-04:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -133789,8 +133846,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-20",
           "interest_collecting": false,
@@ -133988,12 +134043,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-05:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -134984,8 +135041,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-21",
           "interest_collecting": false,
@@ -152250,12 +152305,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-11:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -153246,8 +153303,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-27",
           "interest_collecting": false,
@@ -153855,12 +153910,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-11:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -154851,8 +154908,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-27",
           "interest_collecting": false,
@@ -155460,12 +155515,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-12:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -156456,8 +156513,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-06-28",
           "interest_collecting": false,
@@ -174535,12 +174590,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-18:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -175531,8 +175588,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-04",
           "interest_collecting": false,
@@ -176140,12 +176195,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-18:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -177136,8 +177193,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-04",
           "interest_collecting": false,
@@ -177745,12 +177800,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-19:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -178741,8 +178798,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-05",
           "interest_collecting": false,
@@ -196950,12 +197005,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-25:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -197946,8 +198003,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-11",
           "interest_collecting": false,
@@ -198555,12 +198610,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-25:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -199551,8 +199608,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-11",
           "interest_collecting": false,
@@ -200160,12 +200215,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-07-26:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -201156,8 +201213,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-12",
           "interest_collecting": false,
@@ -219365,12 +219420,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-08-01:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -220361,8 +220418,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-18",
           "interest_collecting": false,
@@ -220970,12 +221025,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-08-01:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -221966,8 +222023,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-18",
           "interest_collecting": false,
@@ -222575,12 +222630,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-08-02:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -223571,8 +223628,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-19",
           "interest_collecting": false,
@@ -241780,12 +241835,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-08-08:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -242776,8 +242833,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-25",
           "interest_collecting": false,
@@ -243385,12 +243440,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-08-08:PM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -244381,8 +244438,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-25",
           "interest_collecting": false,
@@ -244990,12 +245045,14 @@
           "externally_satisfied": true,
           "external_coverage_type": "DUTY_FIRE",
           "external_coverage_label": "DUTY CREW",
-          "display_on_board": true,
-          "display_open_alert": true,
           "seat_id": "2026-08-09:AM:DRIVER:1",
+          "duty_crew": true,
+          "display_role": "DUTY CREW DRIVER",
           "assigned": null,
           "assigned_name": "Volunteer Crew Driver",
           "assignment_status": "OPEN",
+          "display_open_alert": true,
+          "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
           "resolver_bucket": null,
@@ -245986,8 +246043,6 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "duty_crew": true,
-          "display_role": "DUTY CREW DRIVER",
           "open_reason": "Volunteer Crew Driver",
           "next_selection_run": "2026-07-26",
           "interest_collecting": false,

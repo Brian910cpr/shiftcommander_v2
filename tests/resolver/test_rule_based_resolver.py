@@ -281,6 +281,34 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         self.assertFalse(first_seat(result, "DRIVER").get("assigned"))
         self.assertIn("OPEN DRIVER", first_seat(result, "DRIVER")["assigned_name"])
 
+    def test_assigned_als_member_is_normalized_to_attendant_and_blocks_solo_emt_anchor(self):
+        data = base_payload(date_iso=NEAR)
+        data["members"] = [member("als_member", "AEMT", "PT"), member("emt_member", "EMT", "PT")]
+        data["published_schedule_state"] = {
+            "shifts": [
+                {
+                    "date": NEAR,
+                    "label": "AM",
+                    "seats": [
+                        {"role": "ATTENDANT", "assigned": "emt_member", "published": True},
+                        {"role": "DRIVER", "assigned": "als_member", "published": True},
+                    ],
+                }
+            ]
+        }
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        attendant = first_seat(result, "ATTENDANT")
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(attendant["assigned"], "als_member")
+        self.assertEqual(attendant["cert"], "AEMT")
+        self.assertEqual(driver["assigned"], "emt_member")
+        self.assertEqual(driver["cert"], "EMT")
+        self.assertFalse(attendant["solo_emt_anchor_applied"])
+        self.assertFalse(driver["solo_emt_anchor_applied"])
+        self.assertIn("ALS/AEMT/Paramedic-qualified member normalized to ATTENDANT display order", result["shifts"][0]["resolver"]["notes"])
+
     def test_ncld_completes_crew_as_driver_not_attendant(self):
         data = base_payload(date_iso=NEAR)
         data["members"] = [member("emt_bridge", "EMT", "PT"), member("ncld_driver", "NCLD", "PT")]

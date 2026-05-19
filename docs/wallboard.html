@@ -1105,15 +1105,64 @@
       return (seats || []).some(seat => {
         const rawName = String(seat?.assigned_name || "").trim();
         if (isOpenName(rawName)) return false;
-        return isAttendantSeat(seat) && seatCertValue(seat, memberLookup) === "ALS";
+        return assignedSeats([seat]).length > 0 && seatCertValue(seat, memberLookup) === "ALS";
       });
+    }
+
+    function normalizeAlsAttendantSeats(seats, memberLookup) {
+      const cloned = (seats || []).map(seat => ({ ...seat }));
+      const attendantIndex = cloned.findIndex(isAttendantSeat);
+      if (attendantIndex < 0) return cloned;
+      const alsIndex = cloned.findIndex(seat => assignedSeats([seat]).length > 0 && seatCertValue(seat, memberLookup) === "ALS");
+      if (alsIndex < 0 || alsIndex === attendantIndex) return cloned;
+
+      const attendant = cloned[attendantIndex];
+      const alsSeat = cloned[alsIndex];
+      const attendantAssignment = {
+        assigned: attendant.assigned,
+        assigned_name: attendant.assigned_name,
+        cert: attendant.cert,
+        ops_cert: attendant.ops_cert,
+        raw_cert: attendant.raw_cert,
+        assignment_status: attendant.assignment_status,
+        display_open_alert: attendant.display_open_alert
+      };
+      const alsAssignment = {
+        assigned: alsSeat.assigned,
+        assigned_name: alsSeat.assigned_name,
+        cert: alsSeat.cert,
+        ops_cert: alsSeat.ops_cert,
+        raw_cert: alsSeat.raw_cert,
+        assignment_status: alsSeat.assignment_status,
+        display_open_alert: alsSeat.display_open_alert
+      };
+
+      Object.assign(attendant, alsAssignment, {
+        role: "ATTENDANT",
+        display_role: "ATTENDANT",
+        solo_emt_anchor_applied: false
+      });
+      Object.assign(alsSeat, attendantAssignment, {
+        role: "DRIVER",
+        display_role: "DRIVER",
+        solo_emt_anchor_applied: false
+      });
+      return cloned;
     }
 
     function shouldShowOpenAls(seats, memberLookup, shiftDate) {
       if (isPastDate(shiftDate)) return false;
-      const hasAttendant = (seats || []).some(seat => isAttendantSeat(seat));
+      const normalizedSeats = normalizeAlsAttendantSeats(seats, memberLookup);
+      const hasAttendant = normalizedSeats.some(seat => isAttendantSeat(seat));
       const show = ruleSettings()?.show_als_appreciated_for_basic_crew;
-      return show !== false && show !== "false" && hasAttendant && !hasActualAlsAssigned(seats, memberLookup);
+      if (show === false || show === "false" || !hasAttendant || hasActualAlsAssigned(normalizedSeats, memberLookup)) return false;
+      const attendant = normalizedSeats.find(isAttendantSeat);
+      const driver = normalizedSeats.find(isDriverSeat);
+      const attendantAssigned = attendant && assignedSeats([attendant]).length > 0;
+      const driverAssigned = driver && assignedSeats([driver]).length > 0;
+      const attendantCert = attendantAssigned ? seatCertValue(attendant, memberLookup) : "";
+      const driverCert = driverAssigned ? seatCertValue(driver, memberLookup) : "";
+      return isBasicCrewCertPair(attendantCert, driverCert);
     }
 
     function assignedSeats(seats) {
@@ -1124,7 +1173,7 @@
     }
 
     function shiftReadiness(shift, memberLookup) {
-      const seats = shift?.seats || [];
+      const seats = normalizeAlsAttendantSeats(shift?.seats || [], memberLookup);
       const attendant = seats.find(isAttendantSeat);
       const driver = seats.find(isDriverSeat);
       const attendantAssigned = attendant && assignedSeats([attendant]).length > 0;
@@ -1137,7 +1186,7 @@
       if (review) return { color: "red", status: "Needs Supervisor Review", problem: true };
       if (!attendantAssigned) return { color: days > numberSetting("interest_window_days", 14) ? "gray" : "red", status: "Attendant Needed", problem: true };
       if (!driverAssigned) return { color: days < 2 ? "red" : "yellow", status: "Driver Needed", problem: true };
-      if (attendantCert === "ALS" && driverCert === "EMT") return { color: "green", status: "Complete", problem: false };
+      if (attendantCert === "ALS") return { color: "green", status: "Complete", problem: false, alsCapable: true };
       if (isBasicCrewCertPair(attendantCert, driverCert)) {
         const kind = basicCrewKind(attendantCert, driverCert);
         const activeInterest = interestWindowActive(shift?.date);
@@ -1163,7 +1212,7 @@
         if (!days[date]) days[date] = [];
 
         const label = shift?.label || shift?.name || shift?.shift || shift?.unit || "Shift";
-        const seats = Array.isArray(shift?.seats) ? shift.seats : [];
+        const seats = normalizeAlsAttendantSeats(Array.isArray(shift?.seats) ? shift.seats : [], memberLookup);
 
         const visibleSeats = seats.filter(seat => {
           const showOnBoard = seat?.display_on_board === true;
@@ -1274,11 +1323,12 @@
     }
 
     function renderShiftCard(shift, memberLookup) {
-      const showOpenAls = shouldShowOpenAls(shift.seats || [], memberLookup, shift.date);
-      const readiness = shift.readiness || shiftReadiness(shift, memberLookup);
+      const normalizedSeats = normalizeAlsAttendantSeats(shift.seats || [], memberLookup);
+      const showOpenAls = shouldShowOpenAls(normalizedSeats, memberLookup, shift.date);
+      const readiness = shift.readiness || shiftReadiness({ ...shift, seats: normalizedSeats }, memberLookup);
       const urgency = urgencyClass(shift.date, readiness.problem);
       const shiftTooltip = basicCrewTooltip(readiness) || readiness.status;
-      const orderedSeats = (shift.seats || [])
+      const orderedSeats = normalizedSeats
         .slice()
         .sort((left, right) => {
           const priority = seatSortPriority(left, memberLookup) - seatSortPriority(right, memberLookup);
