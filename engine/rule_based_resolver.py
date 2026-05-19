@@ -538,10 +538,12 @@ class RuleBasedResolver:
         for shift in shifts:
             self._initialize_shift(shift)
             self._phase0_preserve(shift)
+            self._normalize_als_attendant(shift)
             self._phase1_rotation(shift)
             self._phase2_attendants(shift)
             self._phase3_solo_emt_anchor(shift)
             self._phase4_drivers(shift)
+            self._normalize_als_attendant(shift)
             self._phase5_publish_open(shift)
 
         adr_zipper = self._adr_zipper_simulation(shifts)
@@ -695,6 +697,10 @@ class RuleBasedResolver:
         if not day or (day - self.today).days >= int(self.rules.get("emt_anchor_window_days", self.rules["late_fill_window_days"])):
             self._try_aemt_reclaim(shift)
             return
+        if self._assigned_als_members(shift):
+            shift["resolver"]["notes"].append("Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned")
+            self._try_aemt_reclaim(shift)
+            return
         assigned_emts = []
         assigned_non_emts = []
         for seat in shift.get("seats", []):
@@ -725,6 +731,57 @@ class RuleBasedResolver:
                 self._mark_open(shift, drv, "solo EMT anchors attendant; driver remains open")
             shift["resolver"]["notes"].append("Solo EMT Anchor Rule applied")
         self._try_aemt_reclaim(shift)
+
+    def _assigned_als_members(self, shift: Dict[str, Any]) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+        assigned = []
+        for seat in shift.get("seats", []):
+            mid = str(seat.get("assigned") or "").strip()
+            member = self.member_index.get(mid)
+            if member and cert(member) == "AEMT":
+                assigned.append((seat, member))
+        return assigned
+
+    def _copy_assignment_fields(self, source: Dict[str, Any], target: Dict[str, Any]) -> None:
+        preserved_keys = {"role", "hours", "seat_id", "seat_code", "_seat_index", "duty_crew", "display_role", "external_coverage_label"}
+        assignment_keys = [
+            key
+            for key in set(source.keys()) | set(target.keys())
+            if key not in preserved_keys
+        ]
+        for key in assignment_keys:
+            if key in source:
+                target[key] = source.get(key)
+            elif key in target:
+                target.pop(key, None)
+
+    def _normalize_als_attendant(self, shift: Dict[str, Any]) -> None:
+        att = self._first_seat(shift, ATTENDANT)
+        if not att:
+            return
+        assigned_als = self._assigned_als_members(shift)
+        if not assigned_als:
+            return
+        als_seat, _member = assigned_als[0]
+        if als_seat is att:
+            for seat in shift.get("seats", []):
+                if seat is not att:
+                    seat["solo_emt_anchor_applied"] = False
+            return
+
+        previous_att = dict(att)
+        previous_als = dict(als_seat)
+        self._copy_assignment_fields(previous_als, att)
+        att["role"] = ATTENDANT
+        att["display_role"] = "ATTENDANT"
+        att["solo_emt_anchor_applied"] = False
+        att.setdefault("selection_statement", f"{att.get('assigned_name')} is listed as ATTENDANT because ALS/AEMT/Paramedic-qualified crew must anchor the shift.")
+        att["assignment_reason"] = att.get("assignment_reason") or "ALS/AEMT/Paramedic-qualified member anchors the shift."
+
+        self._copy_assignment_fields(previous_att, als_seat)
+        als_seat["role"] = DRIVER
+        als_seat["display_role"] = "DRIVER"
+        als_seat["solo_emt_anchor_applied"] = False
+        shift["resolver"]["notes"].append("ALS/AEMT/Paramedic-qualified member normalized to ATTENDANT display order")
 
     def _phase4_drivers(self, shift: Dict[str, Any]) -> None:
         buckets = [
