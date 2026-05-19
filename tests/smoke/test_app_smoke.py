@@ -211,6 +211,52 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("Admin Member Management", response.get_data(as_text=True))
         response.close()
 
+    def test_timecard_period_is_thursday_to_wednesday(self):
+        period = self.server.get_current_timecard_period(date(2026, 5, 19))
+        self.assertEqual(period["period_start"], "2026-05-14")
+        self.assertEqual(period["period_end"], "2026-05-20")
+        self.assertIn("Thursday 05/14/2026 through Wednesday 05/20/2026", period["label"])
+
+    def test_member_timecard_filters_member_shifts_and_totals_hours(self):
+        member_id = str(self.server.load_members()[0].get("member_id"))
+        other_id = str(self.server.load_members()[1].get("member_id"))
+        schedule = {
+            "shifts": [
+                {"date": "2026-05-15", "label": "AM", "unit": "120", "seats": [
+                    {"role": "ATTENDANT", "assigned": member_id, "hours": 12, "assignment_reason": "test assignment"},
+                    {"role": "DRIVER", "assigned": other_id, "hours": 12},
+                    {"role": "DRIVER", "assigned": None, "assigned_name": "OPEN DRIVER", "hours": 12},
+                ]},
+                {"date": "2026-05-16", "label": "PM", "unit": "120", "seats": [
+                    {"role": "DRIVER", "assigned": member_id, "hours": 12},
+                ]},
+                {"date": "2026-05-21", "label": "AM", "unit": "120", "seats": [
+                    {"role": "ATTENDANT", "assigned": member_id, "hours": 12},
+                ]},
+            ]
+        }
+
+        card = self.server.build_member_timecard(member_id, today=date(2026, 5, 19), schedule_payload=schedule)
+
+        self.assertEqual(len(card["rows"]), 2)
+        self.assertEqual(card["summary"]["total_hours"], 24)
+        self.assertEqual(card["summary"]["shifts_worked"], 2)
+        self.assertNotIn(other_id, json.dumps(card))
+        self.assertNotIn("OPEN DRIVER", json.dumps(card))
+
+    def test_member_timecard_printable_route_returns_signature_lines(self):
+        member_id = str(self.server.load_members()[0].get("member_id"))
+        self.login_member(member_id)
+
+        response = self.client.get("/member/timecard")
+
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn("Employee signature", html)
+        self.assertIn("Supervisor signature", html)
+        self.assertIn("Print", html)
+        response.close()
+
     def test_quick_test_supervisor_api_bypass_is_demo_only(self):
         original = self.server.SC_QUICK_TEST_MODE
         try:

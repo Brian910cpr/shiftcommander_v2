@@ -3,7 +3,7 @@
     "source": "physical_may_wallboard_rollout_import",
     "board_month": "2026-05",
     "import_scope": "approved_future_cells_only",
-    "first_included_date": "2026-05-20",
+    "first_included_date": "2026-05-19",
     "notes": [
       "Visible May future assignments are sticky for initial rollout.",
       "Visible OPEN spots remain open for interest collection.",
@@ -13,6 +13,42 @@
   },
   "may_sticky_assignments": [
     {
+      "date": "2026-05-19",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "180",
+      "assigned_name": "Sophia Williams",
+      "board_name": "Sophie",
+      "confidence": "high"
+    },
+    {
+      "date": "2026-05-19",
+      "label": "AM",
+      "role": "DRIVER",
+      "member_id": "188",
+      "assigned_name": "Brian Ennis",
+      "board_name": "Brian",
+      "confidence": "high"
+    },
+    {
+      "date": "2026-05-19",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "180",
+      "assigned_name": "Sophia Williams",
+      "board_name": "Sophie",
+      "confidence": "high"
+    },
+    {
+      "date": "2026-05-19",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "188",
+      "assigned_name": "Brian Ennis",
+      "board_name": "Brian",
+      "confidence": "high"
+    },
+    {
       "date": "2026-05-20",
       "label": "AM",
       "role": "ATTENDANT",
@@ -101,6 +137,51 @@
       "assigned_name": "Sidney DuBois",
       "board_name": "Sidney",
       "confidence": "medium"
+    },
+    {
+      "date": "2026-05-23",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "181",
+      "assigned_name": "Anna Squires",
+      "board_name": "Anna",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-24",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "186",
+      "assigned_name": "Lynnsey Benson",
+      "board_name": "Lynnsey",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-24",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "186",
+      "assigned_name": "Lynnsey Benson",
+      "board_name": "Lynnsey",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-24",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "188",
+      "assigned_name": "Brian Ennis",
+      "board_name": "Brian",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-25",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "185",
+      "assigned_name": "Sidney DuBois",
+      "board_name": "Sidney",
+      "confidence": "confirmed"
     },
     {
       "date": "2026-05-26",
@@ -227,6 +308,33 @@
       "assigned_name": "Barbara",
       "board_name": "Barbara",
       "confidence": "medium"
+    },
+    {
+      "date": "2026-05-31",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "member_id": "180",
+      "assigned_name": "Sophia Williams",
+      "board_name": "Sophie",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-31",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "member_id": "180",
+      "assigned_name": "Sophia Williams",
+      "board_name": "Sophie",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-31",
+      "label": "PM",
+      "role": "DRIVER",
+      "member_id": "188",
+      "assigned_name": "Brian Ennis",
+      "board_name": "Brian",
+      "confidence": "confirmed"
     }
   ],
   "may_open_seats": [
@@ -245,6 +353,34 @@
       "confidence": "medium"
     },
     {
+      "date": "2026-05-23",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "board_label": "open",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-25",
+      "label": "AM",
+      "role": "ATTENDANT",
+      "board_label": "open",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-25",
+      "label": "AM",
+      "role": "DRIVER",
+      "board_label": "open",
+      "confidence": "confirmed"
+    },
+    {
+      "date": "2026-05-25",
+      "label": "PM",
+      "role": "ATTENDANT",
+      "board_label": "open",
+      "confidence": "confirmed"
+    },
+    {
       "date": "2026-05-26",
       "label": "AM",
       "role": "DRIVER",
@@ -273,22 +409,5 @@
       "confidence": "medium"
     }
   ],
-  "unresolved_rows_skipped": [
-    {
-      "date": "2026-05-23",
-      "reason": "low_confidence_or_partially_obscured"
-    },
-    {
-      "date": "2026-05-24",
-      "reason": "low_confidence_or_partially_obscured"
-    },
-    {
-      "date": "2026-05-25",
-      "reason": "low_confidence_or_partially_obscured"
-    },
-    {
-      "date": "2026-05-31",
-      "reason": "low_confidence_or_partially_obscured"
-    }
-  ]
+  "unresolved_rows_skipped": []
 }

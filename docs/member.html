@@ -58,6 +58,7 @@
     .assignment{padding:12px;box-shadow:none;background:rgba(255,255,255,.03)}
     .assignment strong{display:block}
     .assignment .meta{margin-top:4px;color:var(--muted);font-size:13px}
+    .assignment-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
     .calendar-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
     .calendar-note{margin:0 0 14px;color:var(--muted);line-height:1.45}
     .brief-help{display:none;margin:0 0 14px;color:var(--muted);line-height:1.45}
@@ -258,6 +259,10 @@
           <div class="section-title">
             <h2>Assigned Shifts</h2>
             <span class="mini">Read-only from the resolved schedule</span>
+          </div>
+          <div class="assignment-actions">
+            <button class="btn primary" id="printTimeCardBtn" type="button">Print Time Card</button>
+            <span class="mini">Print your Thursday-Wednesday work summary for signature.</span>
           </div>
           <div id="assignmentList"></div>
         </section>
@@ -1221,6 +1226,12 @@
       }
     }
 
+    function openTimeCard(){
+      const memberId = getMemberId();
+      const query = appState.quickTestMode && memberId ? `?member_id=${encodeURIComponent(memberId)}` : "";
+      window.open(`/member/timecard${query}`, "_blank", "noopener");
+    }
+
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       if(appState.quickTestMode){
         clearClientSessionMarker();
@@ -1237,6 +1248,7 @@
     });
     document.getElementById("saveProfileBtn").addEventListener("click", saveProfile);
     document.getElementById("saveAvailabilityBtn").addEventListener("click", saveAvailability);
+    document.getElementById("printTimeCardBtn").addEventListener("click", openTimeCard);
     document.getElementById("changePasswordBtn").addEventListener("click", changePassword);
     document.getElementById("todayBtn").addEventListener("click", () => { appState.currentWeekOffset = DEFAULT_EDITABLE_WEEK_OFFSET; renderCalendar(); });
     document.getElementById("prevBtn").addEventListener("click", () => { appState.currentWeekOffset -= 1; renderCalendar(); });

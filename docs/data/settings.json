@@ -80,6 +80,14 @@
     "additional_ot_blocked_until_escalation": true,
     "preserve_published_assignments": true,
     "preserve_locked_assignments": true,
+    "volunteer_crew_driver_enabled": true,
+    "volunteer_crew_driver_patterns": [
+      "SAT_AM",
+      "SAT_PM",
+      "SUN_AM"
+    ],
+    "volunteer_crew_driver_all_shifts": false,
+    "volunteer_crew_driver_structurally_affixed": false,
     "duty_crew_patterns": [
       "SAT_AM",
       "SAT_PM",
@@ -108,7 +116,9 @@
     {
       "id": "adr_emt_zipper",
       "label": "ADR EMT Zipper",
-      "active": true
+      "active": false,
+      "experimental": true,
+      "description": "Simulation-only EMT continuity option. No built-in EMT OT is authorized by default."
     },
     {
       "id": "standard_12_hour",
@@ -126,6 +136,28 @@
       "active": false
     }
   ],
+  "rotation_systems": {
+    "aemt_abcd_rotation": {
+      "label": "A/B/C/D AEMT Rotation",
+      "admin_configurable": true,
+      "slots": [
+        { "slot": "A", "primary_member_id": null },
+        { "slot": "B", "primary_member_id": null },
+        { "slot": "C", "primary_member_id": null },
+        { "slot": "D", "primary_member_id": null }
+      ],
+      "expected_rotation_ot_requires_admin_approval": true,
+      "allow_unfilled_slots": true
+    },
+    "emt_zipper": {
+      "label": "EMT Zipper",
+      "admin_configurable": true,
+      "active": false,
+      "experimental": true,
+      "built_in_ot_authorized_by_default": false,
+      "implementation_status": "schema_only"
+    }
+  },
   "shift_definitions": {
     "AM": {
       "hours": 12

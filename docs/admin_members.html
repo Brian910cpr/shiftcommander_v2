@@ -138,7 +138,7 @@
   <script>
     const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || "";
     const DEFAULT_SHIFT_SYSTEMS = [
-      { id:"adr_emt_zipper", label:"ADR EMT Zipper", active:true },
+      { id:"adr_emt_zipper", label:"ADR EMT Zipper", active:false, experimental:true },
       { id:"standard_12_hour", label:"12-Hour Standard", active:true },
       { id:"aemt_abcd_rotation", label:"A/B/C/D AEMT Rotation", active:true },
       { id:"legacy_rotation", label:"Legacy Rotation", active:false },
@@ -171,7 +171,6 @@
     }
     function defaultSystemFor(member){
       const c = String(member?.ops_cert || member?.cert || member?.raw_cert || "").toUpperCase();
-      if(c === "EMT") return "adr_emt_zipper";
       if(c === "ALS" || c === "AEMT" || c === "PARAMEDIC") return "aemt_abcd_rotation";
       return "standard_12_hour";
     }
@@ -330,8 +329,8 @@
         drive: { "120": true },
         can_attend: true,
         can_drive: true,
-        shift_system_assignment: "adr_emt_zipper",
-        staffing_system: { active_system:"adr_emt_zipper" },
+        shift_system_assignment: "standard_12_hour",
+        staffing_system: { active_system:"standard_12_hour" },
         preferences: { shift24:"either", allows_24h:false, prefers_24h:false, prefers_day:false, prefers_night:false, prefers_weekend:false, allow_ot:false, allow_additional_ot:false },
         last_24_compression_awarded_at: today,
         emt_zipper: { allows_24_compression:false, last_24_compression_awarded_at: today },

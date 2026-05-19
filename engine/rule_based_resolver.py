@@ -16,6 +16,7 @@ DO_NOT = "DO_NOT"
 OT_NONE = "none"
 OT_EXPECTED_ROTATION = "expected_rotation_ot"
 OT_ADDITIONAL = "additional_ot"
+ROLLOUT_OPEN_REASON = "Preserved open during rollout import; available for open-shift workflow after rollout."
 
 DEFAULT_RULE_SETTINGS = {
     "interest_window_days": 14,
@@ -32,6 +33,10 @@ DEFAULT_RULE_SETTINGS = {
     "additional_ot_blocked_until_escalation": True,
     "preserve_published_assignments": True,
     "preserve_locked_assignments": True,
+    "volunteer_crew_driver_enabled": True,
+    "volunteer_crew_driver_patterns": ["SAT_AM", "SAT_PM", "SUN_AM"],
+    "volunteer_crew_driver_all_shifts": False,
+    "volunteer_crew_driver_structurally_affixed": False,
     "duty_crew_patterns": ["SAT_AM", "SAT_PM", "SUN_AM"],
     "operational_cycle_start_weekday": "THU",
     "adr_zipper_enabled": False,
@@ -308,6 +313,8 @@ def load_rule_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
                 if key in out:
                     out[key] = value
     out["late_fill_window_days"] = out.get("interest_window_days") or out.get("late_fill_window_days") or 14
+    if not out.get("volunteer_crew_driver_patterns"):
+        out["volunteer_crew_driver_patterns"] = out.get("duty_crew_patterns") or DEFAULT_RULE_SETTINGS["volunteer_crew_driver_patterns"]
     return out
 
 
@@ -363,9 +370,19 @@ def normalize_interest(data: Dict[str, Any]) -> Dict[Tuple[str, str, str], Dict[
 
 def rollout_import_rows(data: Dict[str, Any], key: str) -> List[Dict[str, Any]]:
     rollout = data.get("rollout_import") or data.get("physical_board_rollout_import") or {}
-    if not isinstance(rollout, dict):
-        return []
-    value = rollout.get(key, [])
+    june_import = data.get("june_forming_import") or {}
+    sources = []
+    if isinstance(rollout, dict):
+        sources.append(rollout)
+    if isinstance(june_import, dict):
+        sources.append(june_import)
+    value: List[Dict[str, Any]] = []
+    for source in sources:
+        rows = source.get(key, [])
+        if isinstance(rows, dict):
+            rows = rows.values()
+        if isinstance(rows, Iterable):
+            value.extend(row for row in rows if isinstance(row, dict))
     if isinstance(value, dict):
         value = value.values()
     if not isinstance(value, Iterable):
@@ -411,12 +428,30 @@ def normalize_assignments(data: Dict[str, Any]) -> Dict[Tuple[str, str, str], Di
             normalized["published"] = True
             rows.append(normalized)
     for row in rollout_import_rows(data, "may_open_seats"):
-        normalized = normalize_rollout_seat_row(row, "Open on physical May wallboard, available for interest collection.")
+        normalized = normalize_rollout_seat_row(row, ROLLOUT_OPEN_REASON)
         if normalized:
             normalized["rollout_open"] = True
-            normalized["locked"] = True
+            normalized["rollout_import_hold"] = True
+            normalized["locked"] = False
             normalized["published"] = True
-            normalized.setdefault("open_reason", "Open on physical May wallboard, available for interest collection.")
+            normalized.setdefault("open_reason", ROLLOUT_OPEN_REASON)
+            rows.append(normalized)
+    for row in rollout_import_rows(data, "june_future_intent_assignments"):
+        normalized = normalize_rollout_seat_row(row, "Seeded from June forming board as future staffing intent.")
+        if normalized:
+            normalized["june_future_intent"] = True
+            normalized["locked"] = False
+            normalized["published"] = True
+            rows.append(normalized)
+    for row in rollout_import_rows(data, "june_open_seats"):
+        normalized = normalize_rollout_seat_row(row, "Open on June forming board; available for open-shift workflow after import.")
+        if normalized:
+            normalized["rollout_open"] = True
+            normalized["june_future_intent"] = True
+            normalized["rollout_import_hold"] = True
+            normalized["locked"] = False
+            normalized["published"] = True
+            normalized.setdefault("open_reason", "Open on June forming board; available for open-shift workflow after import.")
             rows.append(normalized)
     for row in rows:
         if not isinstance(row, dict):
@@ -425,7 +460,10 @@ def normalize_assignments(data: Dict[str, Any]) -> Dict[Tuple[str, str, str], Di
         label = upper(row.get("label") or row.get("shift") or row.get("period"))
         role = upper(row.get("seat_type") or row.get("role"))
         if date_key and label and role:
-            out[(date_key, label, role)] = row
+            key = (date_key, label, role)
+            if row.get("rollout_open") and key in out and (out[key].get("member_id") or out[key].get("assigned") or out[key].get("assigned_name")):
+                continue
+            out[key] = row
     return out
 
 
@@ -445,17 +483,18 @@ def normalize_locks(data: Dict[str, Any]) -> Dict[Tuple[str, str, str], Dict[str
                     rows.append(row)
     for key, default_reason in (
         ("may_sticky_assignments", "Preserved from physical May wallboard rollout import."),
-        ("may_open_seats", "Open on physical May wallboard, available for interest collection."),
+        ("may_open_seats", ROLLOUT_OPEN_REASON),
+        ("june_future_intent_assignments", "Seeded from June forming board as future staffing intent."),
+        ("june_open_seats", "Open on June forming board; available for open-shift workflow after import."),
     ):
         for row in rollout_import_rows(data, key):
             normalized = normalize_rollout_seat_row(row, default_reason)
             if normalized:
+                if key in {"may_open_seats", "june_open_seats", "june_future_intent_assignments"}:
+                    continue
                 normalized["locked"] = True
                 normalized["published"] = True
                 normalized["rollout_sticky"] = key == "may_sticky_assignments"
-                normalized["rollout_open"] = key == "may_open_seats"
-                if key == "may_open_seats":
-                    normalized.setdefault("open_reason", default_reason)
                 rows.append(normalized)
     if isinstance(rows, dict):
         rows = rows.values()
@@ -575,8 +614,7 @@ class RuleBasedResolver:
 
     def _initialize_shift(self, shift: Dict[str, Any]) -> None:
         shift.setdefault("resolver", {"engine": "deterministic_rule_based", "notes": []})
-        pattern = shift_pattern(shift)
-        duty_patterns = {upper(item) for item in self.rules.get("duty_crew_patterns", [])}
+        volunteer_driver_applies = self._volunteer_crew_driver_applies(shift)
         for index, seat in enumerate(shift.get("seats", [])):
             role = seat_role(seat)
             seat["role"] = role
@@ -594,11 +632,21 @@ class RuleBasedResolver:
             seat["supervisor_review"] = False
             seat["solo_emt_anchor_applied"] = False
             seat["aemt_reclaim_attempted"] = False
-            if role == DRIVER and pattern in duty_patterns:
+            if role == DRIVER and volunteer_driver_applies:
                 seat["duty_crew"] = True
-                seat["display_role"] = "DUTY CREW DRIVER"
-                seat["external_coverage_label"] = "DUTY CREW"
+                seat["volunteer_crew_driver"] = True
+                seat["structural_driver_coverage"] = True
+                seat["display_role"] = "VOLUNTEER CREW DRIVER"
+                seat["external_coverage_label"] = "Volunteer Crew Driver"
         self.trace.append(f"{shift_key(shift)} initialized")
+
+    def _volunteer_crew_driver_applies(self, shift: Dict[str, Any]) -> bool:
+        if self.rules.get("volunteer_crew_driver_enabled") is False or lower(self.rules.get("volunteer_crew_driver_enabled")) in {"false", "0", "no", "never"}:
+            return False
+        if truthy(self.rules.get("volunteer_crew_driver_all_shifts")):
+            return True
+        patterns = self.rules.get("volunteer_crew_driver_patterns") or self.rules.get("duty_crew_patterns") or []
+        return shift_pattern(shift) in {upper(item) for item in patterns}
 
     def _phase0_preserve(self, shift: Dict[str, Any]) -> None:
         for seat in shift.get("seats", []):
@@ -608,6 +656,11 @@ class RuleBasedResolver:
             key = self._key(shift, role)
             preserved = self.locks.get(key) or self.existing.get(key)
             if not preserved:
+                continue
+            if role == DRIVER and seat.get("structural_driver_coverage") and truthy(self.rules.get("volunteer_crew_driver_structurally_affixed")):
+                seat["preserved_existing_assignment"] = bool(preserved.get("member_id") or preserved.get("assigned") or preserved.get("assigned_name"))
+                seat["assignment_reason"] = "Volunteer Crew Driver is structurally affixed to this shift by Admin policy."
+                self._mark_open(shift, seat, seat["assignment_reason"])
                 continue
             mid = str(preserved.get("member_id") or preserved.get("assigned") or "").strip()
             assigned_name = str(preserved.get("assigned_name") or "").strip()
@@ -627,12 +680,17 @@ class RuleBasedResolver:
                     "assignment_status": "OPEN",
                     "preserved_existing_assignment": True,
                     "rollout_open": bool(preserved.get("rollout_open")),
+                    "rollout_import_hold": bool(preserved.get("rollout_import_hold")),
+                    "actionable_open_shift": bool(preserved.get("rollout_open")),
                     "assignment_reason": open_reason,
                 })
                 self._mark_open(shift, seat, open_reason)
                 continue
             member = self.member_index.get(mid)
             valid, reason = self._candidate_valid_for_seat(member, shift, seat, allow_unset=True, allow_additional_ot=True, phase="PHASE_0", bucket="preserved")
+            if preserved.get("rollout_sticky") and member and reason == "availability_do_not":
+                valid = True
+                reason = "rollout_physical_board_overrides_stale_availability"
             if valid:
                 self._assign(
                     shift,
@@ -689,6 +747,10 @@ class RuleBasedResolver:
             ("emt_fallback_no_ot", lambda m, a: cert(m) == "EMT" and a in {PREFER, AVAILABLE} and self._non_ot(m, shift)),
         ]
         for seat in self._seats(shift, ATTENDANT, open_only=True):
+            if seat.get("rollout_open"):
+                if self._rollout_open_released(shift, ATTENDANT):
+                    self._late_fill(shift, seat)
+                continue
             if not self._fill_from_buckets(shift, seat, "PHASE_2", buckets, allow_additional_ot=False):
                 self._handle_open_attendant(shift, seat)
 
@@ -742,7 +804,7 @@ class RuleBasedResolver:
         return assigned
 
     def _copy_assignment_fields(self, source: Dict[str, Any], target: Dict[str, Any]) -> None:
-        preserved_keys = {"role", "hours", "seat_id", "seat_code", "_seat_index", "duty_crew", "display_role", "external_coverage_label"}
+        preserved_keys = {"role", "hours", "seat_id", "seat_code", "_seat_index", "duty_crew", "volunteer_crew_driver", "structural_driver_coverage", "display_role", "external_coverage_label"}
         assignment_keys = [
             key
             for key in set(source.keys()) | set(target.keys())
@@ -795,6 +857,15 @@ class RuleBasedResolver:
         ]
         late = self._inside_late_window(shift)
         for seat in self._seats(shift, DRIVER, open_only=True):
+            if seat.get("structural_driver_coverage") and not seat.get("assigned"):
+                self._mark_open(shift, seat, "Volunteer Crew Driver is attached to this shift by Admin policy.")
+                continue
+            if seat.get("rollout_open"):
+                filled = self._late_fill(shift, seat) if self._rollout_open_released(shift, DRIVER) else False
+                if not filled:
+                    label = "Volunteer Crew Driver" if seat.get("duty_crew") else "OPEN DRIVER"
+                    self._mark_open(shift, seat, label)
+                continue
             filled = self._fill_from_buckets(shift, seat, "PHASE_4", buckets, allow_additional_ot=False)
             if not filled and late:
                 filled = self._late_fill(shift, seat)
@@ -1010,18 +1081,24 @@ class RuleBasedResolver:
         role = seat_role(seat)
         if seat.get("rollout_open") and seat.get("open_reason"):
             reason = str(seat.get("open_reason"))
-        label = "Volunteer Crew Driver" if seat.get("duty_crew") and role == DRIVER else f"OPEN {role}"
+        structural_driver = bool(seat.get("structural_driver_coverage") and role == DRIVER)
+        label = "Volunteer Crew Driver" if structural_driver else f"OPEN {role}"
         seat.update({
             "assigned": None,
             "assigned_name": label,
-            "assignment_status": "OPEN",
+            "assignment_status": "STRUCTURAL_COVERAGE" if structural_driver else "OPEN",
             "open_reason": reason,
-            "display_open_alert": True,
+            "locked": False if seat.get("rollout_open") else bool(seat.get("locked")),
+            "actionable_open_shift": False if structural_driver else (True if seat.get("rollout_open") else bool(seat.get("actionable_open_shift"))),
+            "display_open_alert": False if structural_driver else True,
             "display_on_board": True,
             "next_selection_run": next_selection_date(shift, self.today, self.rules),
-            "interest_collecting": self._inside_late_window(shift),
+            "interest_collecting": False if structural_driver else self._inside_late_window(shift),
             "selection_statement": f"{label}: {reason}.",
         })
+        if structural_driver:
+            self.audit.append(self._seat_audit(shift, seat))
+            return
         open_record = {
             "seat_id": seat.get("seat_id"),
             "seat_type": role,
@@ -1049,7 +1126,7 @@ class RuleBasedResolver:
         self.supervisor_review_flags.append(row)
 
     def _collect_notifications(self, shift: Dict[str, Any]) -> None:
-        if not any(seat_role(seat) in {ATTENDANT, DRIVER} and not seat.get("assigned") for seat in shift.get("seats", [])):
+        if not any(seat_role(seat) in {ATTENDANT, DRIVER} and not seat.get("assigned") and not self._seat_has_structural_coverage(seat) for seat in shift.get("seats", [])):
             return
         for member in self.members:
             avail = availability_for(self.data, shift, member)
@@ -1080,8 +1157,17 @@ class RuleBasedResolver:
             return []
         seats = [seat for seat in shift.get("seats", []) if seat_role(seat) == role]
         if open_only:
-            seats = [seat for seat in seats if not seat.get("assigned") and not seat.get("locked")]
+            seats = [seat for seat in seats if not seat.get("assigned") and not self._seat_blocks_auto_fill(shift, seat)]
         return seats
+
+    def _seat_blocks_auto_fill(self, shift: Dict[str, Any], seat: Dict[str, Any]) -> bool:
+        if seat.get("rollout_open"):
+            return not self._rollout_open_released(shift, seat_role(seat))
+        return bool(seat.get("locked"))
+
+    def _rollout_open_released(self, shift: Dict[str, Any], role: str) -> bool:
+        key = self._key(shift, role)
+        return any(state in {PREFER, AVAILABLE} for state in self.interest.get(key, {}).values())
 
     def _assignment_blocked(self, shift: Dict[str, Any]) -> bool:
         day = shift_date(shift)
@@ -1146,14 +1232,21 @@ class RuleBasedResolver:
             "published": bool(seat.get("published")),
             "rollout_sticky": bool(seat.get("rollout_sticky")),
             "rollout_open": bool(seat.get("rollout_open")),
+            "rollout_import_hold": bool(seat.get("rollout_import_hold")),
+            "actionable_open_shift": bool(seat.get("actionable_open_shift")),
+            "volunteer_crew_driver": bool(seat.get("volunteer_crew_driver")),
+            "structural_driver_coverage": bool(seat.get("structural_driver_coverage")),
             "assignment_reason": seat.get("assignment_reason"),
             "open_reason": seat.get("open_reason"),
             "solo_emt_anchor_applied": bool(seat.get("solo_emt_anchor_applied")),
             "aemt_reclaim_attempted": bool(seat.get("aemt_reclaim_attempted")),
             "committed": bool(seat.get("assigned")),
-            "open": not bool(seat.get("assigned")),
+            "open": not bool(seat.get("assigned")) and not self._seat_has_structural_coverage(seat),
             "supervisor_review": bool(seat.get("supervisor_review")),
         }
+
+    def _seat_has_structural_coverage(self, seat: Dict[str, Any]) -> bool:
+        return bool(seat_role(seat) == DRIVER and seat.get("structural_driver_coverage"))
 
     def _crew_status(self, shift: Dict[str, Any]) -> str:
         seats = [seat for seat in shift.get("seats", []) if seat_role(seat) in {ATTENDANT, DRIVER}]
@@ -1161,7 +1254,7 @@ class RuleBasedResolver:
             return "Supervisor Review"
         if any(seat_role(seat) == ATTENDANT and not seat.get("assigned") for seat in seats):
             return "Open Attendant"
-        if any(seat_role(seat) == DRIVER and not seat.get("assigned") for seat in seats):
+        if any(seat_role(seat) == DRIVER and not seat.get("assigned") and not self._seat_has_structural_coverage(seat) for seat in seats):
             return "Open Driver"
         return "Complete"
 
@@ -1301,12 +1394,13 @@ class RuleBasedResolver:
             for seat in shift.get("seats", []):
                 role = seat_role(seat)
                 assigned = bool(seat.get("assigned"))
+                covered = assigned or self._seat_has_structural_coverage(seat)
                 if role == ATTENDANT:
                     values["filled_attendant_seats" if assigned else "open_attendant_seats"] += 1
                 if role == DRIVER:
-                    values["filled_driver_seats" if assigned else "open_driver_seats"] += 1
+                    values["filled_driver_seats" if covered else "open_driver_seats"] += 1
                 if seat.get("duty_crew"):
-                    values["duty_crew_seats_filled" if assigned else "duty_crew_seats_open"] += 1
+                    values["duty_crew_seats_filled" if covered else "duty_crew_seats_open"] += 1
                 if seat.get("ot_classification") == OT_EXPECTED_ROTATION:
                     values["rotation_authorized_seats_filled"] += 1
                     values["expected_rotation_ot_hours"] += hours_for(shift, seat)

@@ -13,7 +13,7 @@ from engine.rule_based_resolver import resolve_rule_based  # noqa: E402
 
 
 TODAY = "2026-05-18"
-FAR = "2026-06-20"
+FAR = "2026-06-22"
 NEAR = "2026-05-25"
 
 
@@ -171,6 +171,28 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         self.assertEqual(attendant["assignment_reason"], "Preserved from physical May wallboard rollout import.")
         self.assertNotEqual(attendant["assigned"], "other_aemt")
 
+    def test_may_rollout_sticky_assignment_overrides_stale_do_not(self):
+        data = base_payload()
+        data["members"] = [member("visible_driver", "EMT", "PT")]
+        set_availability(data, "visible_driver", FAR, "AM", "DO_NOT")
+        data["rollout_import"] = {
+            "may_sticky_assignments": [
+                {
+                    "date": FAR,
+                    "label": "AM",
+                    "role": "DRIVER",
+                    "member_id": "visible_driver",
+                }
+            ]
+        }
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "visible_driver")
+        self.assertTrue(driver["rollout_sticky"])
+        self.assertFalse(driver["supervisor_review"])
+
     def test_may_rollout_open_seat_stays_open_for_interest_collection(self):
         data = base_payload(date_iso=NEAR)
         data["members"] = [member("emt_pickup", "EMT", "PT")]
@@ -189,11 +211,48 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
 
         driver = first_seat(result, "DRIVER")
         self.assertFalse(driver.get("assigned"))
-        self.assertTrue(driver["locked"])
+        self.assertFalse(driver["locked"])
         self.assertTrue(driver["rollout_open"])
-        self.assertEqual(driver["open_reason"], "Open on physical May wallboard, available for interest collection.")
+        self.assertTrue(driver["actionable_open_shift"])
+        self.assertEqual(driver["open_reason"], "Preserved open during rollout import; available for open-shift workflow after rollout.")
         self.assertTrue(driver["interest_collecting"])
         self.assertIn("DRIVER", {row["seat_type"] for row in result["open_seats"]})
+
+    def test_may_rollout_open_seat_can_fill_after_interest_request(self):
+        data = base_payload(date_iso=NEAR)
+        data["members"] = [member("aemt_anchor", "AEMT", "PT"), member("emt_pickup", "EMT", "PT")]
+        data["published_schedule_state"] = {
+            "shifts": [{"date": NEAR, "label": "AM", "seats": [{"role": "ATTENDANT", "assigned": "aemt_anchor", "published": True}]}]
+        }
+        data["rollout_import"] = {
+            "may_open_seats": [{"date": NEAR, "label": "AM", "role": "DRIVER"}]
+        }
+        data["open_shift_requests"] = [{"member_id": "emt_pickup", "date": NEAR, "label": "AM", "role": "DRIVER", "response": "PREFER"}]
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "emt_pickup")
+        self.assertEqual(driver["resolver_phase"], "PHASE_6")
+        self.assertTrue(driver["rollout_open"])
+
+    def test_supervisor_assignment_can_fill_prior_rollout_open_seat(self):
+        data = base_payload(date_iso=NEAR)
+        data["members"] = [member("aemt_anchor", "AEMT", "PT"), member("emt_override", "EMT", "PT")]
+        data["assignments"] = [
+            {"date": NEAR, "label": "AM", "role": "ATTENDANT", "member_id": "aemt_anchor", "published": True},
+            {"date": NEAR, "label": "AM", "role": "DRIVER", "member_id": "emt_override", "published": True},
+        ]
+        data["rollout_import"] = {
+            "may_open_seats": [{"date": NEAR, "label": "AM", "role": "DRIVER"}]
+        }
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "emt_override")
+        self.assertTrue(driver["preserved_existing_assignment"])
+        self.assertFalse(driver.get("rollout_open", False))
 
     def test_adr_zipper_is_disabled_and_simulation_only_by_default(self):
         data = base_payload()
@@ -356,8 +415,90 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
 
         driver = first_seat(result, "DRIVER")
         self.assertTrue(driver["duty_crew"])
+        self.assertTrue(driver["volunteer_crew_driver"])
+        self.assertTrue(driver["structural_driver_coverage"])
         self.assertEqual(driver["assigned_name"], "Volunteer Crew Driver")
-        self.assertEqual(result["build"]["summary"]["duty_crew_seats_open"], 1)
+        self.assertEqual(driver["assignment_status"], "STRUCTURAL_COVERAGE")
+        self.assertEqual(result["build"]["summary"]["duty_crew_seats_filled"], 1)
+        self.assertEqual(result["build"]["summary"]["duty_crew_seats_open"], 0)
+        self.assertEqual(result["shifts"][0]["crew_status"], "Complete")
+
+    def test_saturday_pm_default_uses_volunteer_crew_driver_coverage(self):
+        data = base_payload(date_iso="2026-06-20", label="PM")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertTrue(driver["structural_driver_coverage"])
+        self.assertEqual(driver["assigned_name"], "Volunteer Crew Driver")
+        self.assertEqual(result["shifts"][0]["crew_status"], "Open Attendant")
+
+    def test_sunday_am_default_uses_volunteer_crew_driver_coverage(self):
+        data = base_payload(date_iso="2026-06-21", label="AM")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertTrue(driver["structural_driver_coverage"])
+        self.assertEqual(driver["assigned_name"], "Volunteer Crew Driver")
+        self.assertEqual(result["build"]["summary"]["open_driver_seats"], 0)
+
+    def test_weekday_solo_emt_anchor_still_shows_open_driver(self):
+        data = base_payload(date_iso=NEAR, label="AM")
+        data["members"] = [member("emt_bridge", "EMT", "PT")]
+        set_availability(data, "emt_bridge", NEAR, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertFalse(driver.get("structural_driver_coverage"))
+        self.assertEqual(first_seat(result, "ATTENDANT")["assigned"], "emt_bridge")
+        self.assertEqual(driver["assigned_name"], "OPEN DRIVER")
+
+    def test_all_shifts_volunteer_crew_driver_toggle_covers_weekday_driver(self):
+        data = base_payload(date_iso="2026-06-22", label="AM")
+        data["settings"]["resolver_rules"]["volunteer_crew_driver_all_shifts"] = True
+        data["members"] = [member("aemt", "AEMT", "PT")]
+        set_availability(data, "aemt", "2026-06-22", "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertTrue(driver["structural_driver_coverage"])
+        self.assertEqual(driver["assigned_name"], "Volunteer Crew Driver")
+        self.assertEqual(result["shifts"][0]["crew_status"], "Complete")
+
+    def test_volunteer_crew_driver_does_not_replace_preserved_named_driver(self):
+        data = base_payload(date_iso="2026-06-20", label="AM")
+        data["members"] = [member("aemt", "AEMT", "PT"), member("emt_driver", "EMT", "PT")]
+        set_availability(data, "aemt", "2026-06-20", "AM", "PREFER")
+        set_availability(data, "emt_driver", "2026-06-20", "AM", "PREFER")
+        data["published_schedule_state"] = {
+            "shifts": [{"date": "2026-06-20", "label": "AM", "seats": [{"role": "DRIVER", "assigned": "emt_driver", "published": True}]}]
+        }
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "emt_driver")
+        self.assertEqual(driver["assigned_name"], "Emt Driver")
+
+    def test_structurally_affixed_volunteer_crew_driver_replaces_named_driver_seat(self):
+        data = base_payload(date_iso="2026-06-20", label="AM")
+        data["settings"]["resolver_rules"]["volunteer_crew_driver_structurally_affixed"] = True
+        data["members"] = [member("aemt", "AEMT", "PT"), member("emt_driver", "EMT", "PT")]
+        set_availability(data, "aemt", "2026-06-20", "AM", "PREFER")
+        set_availability(data, "emt_driver", "2026-06-20", "AM", "PREFER")
+        data["published_schedule_state"] = {
+            "shifts": [{"date": "2026-06-20", "label": "AM", "seats": [{"role": "DRIVER", "assigned": "emt_driver", "published": True}]}]
+        }
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertFalse(driver.get("assigned"))
+        self.assertEqual(driver["assigned_name"], "Volunteer Crew Driver")
+        self.assertEqual(driver["assignment_status"], "STRUCTURAL_COVERAGE")
 
     def test_late_fill_removes_ot_restriction_only_after_non_ot_fails(self):
         data = base_payload(date_iso=NEAR)

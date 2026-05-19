@@ -453,6 +453,13 @@
       background: rgba(88, 68, 16, 0.38);
     }
 
+    .slot.volunteer-driver-pill,
+    .slot.volunteer-driver-pill.duty-seat,
+    .slot.volunteer-driver-pill.volunteer-seat {
+      border-color: rgba(180, 191, 210, 0.26);
+      background: rgba(5, 8, 12, 0.92);
+    }
+
     @keyframes slowPulseRed {
       0% { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.44), 0 0 0 0 rgba(255, 100, 100, 0.03); }
       50% { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.72), 0 0 20px 4px var(--open-seat-glow); }
@@ -955,6 +962,10 @@
       return role.includes("DRIVER") || role.includes("SUPPORT") || isDutySeat(seat);
     }
 
+    function isStructuralDriverCovered(seat) {
+      return isDriverSeat(seat) && (seat?.structural_driver_coverage === true || seat?.volunteer_crew_driver === true || (seat?.duty_crew === true && String(seat?.assigned_name || "").trim().toUpperCase() === "VOLUNTEER CREW DRIVER"));
+    }
+
     function buildMemberLookup(payload) {
       const members = Array.isArray(payload?.members) ? payload.members : (Array.isArray(payload) ? payload : []);
       const byId = new Map();
@@ -1159,9 +1170,9 @@
       const attendant = normalizedSeats.find(isAttendantSeat);
       const driver = normalizedSeats.find(isDriverSeat);
       const attendantAssigned = attendant && assignedSeats([attendant]).length > 0;
-      const driverAssigned = driver && assignedSeats([driver]).length > 0;
+      const driverAssigned = driver && (assignedSeats([driver]).length > 0 || isStructuralDriverCovered(driver));
       const attendantCert = attendantAssigned ? seatCertValue(attendant, memberLookup) : "";
-      const driverCert = driverAssigned ? seatCertValue(driver, memberLookup) : "";
+      const driverCert = driverAssigned ? (isStructuralDriverCovered(driver) ? "EMT" : seatCertValue(driver, memberLookup)) : "";
       return isBasicCrewCertPair(attendantCert, driverCert);
     }
 
@@ -1177,9 +1188,9 @@
       const attendant = seats.find(isAttendantSeat);
       const driver = seats.find(isDriverSeat);
       const attendantAssigned = attendant && assignedSeats([attendant]).length > 0;
-      const driverAssigned = driver && assignedSeats([driver]).length > 0;
+      const driverAssigned = driver && (assignedSeats([driver]).length > 0 || isStructuralDriverCovered(driver));
       const attendantCert = attendantAssigned ? seatCertValue(attendant, memberLookup) : "";
-      const driverCert = driverAssigned ? seatCertValue(driver, memberLookup) : "";
+      const driverCert = driverAssigned ? (isStructuralDriverCovered(driver) ? "EMT" : seatCertValue(driver, memberLookup)) : "";
       const review = seats.some(seat => seat?.supervisor_review || String(seat?.assignment_status || "").toUpperCase() === "SUPERVISOR_REVIEW") || String(shift?.crew_status || "").toUpperCase().includes("REVIEW");
       const days = daysUntil(shift?.date);
 
@@ -1301,7 +1312,9 @@
       if (!rawName && !showOpenAlert) return "";
 
       const displayName = options.displayLabel || (
-        rawName
+        (!pastDate && isAttendantSeat(seat) && isOpenName(rawName))
+          ? "OPEN ALS"
+          : rawName
           ? displayAssignedName(shiftDate, rawName)
           : (pastDate ? "—" : "OPEN")
       );
@@ -1312,11 +1325,12 @@
       const memberClass = hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty");
       const openSeatClass = isFutureOpen ? "open-seat" : "";
       const volunteerClass = options.volunteer ? "volunteer-seat" : "";
+      const volunteerDriverClass = options.volunteerDriver ? "volunteer-driver-pill" : "";
       const dutyClass = isDutySeat(seat) ? "duty-seat" : "";
       const title = escapeHtml(tooltipForSeat(seat, shiftDate, memberLookup, options));
 
       return `
-        <div class="slot ${openSeatClass} ${volunteerClass} ${dutyClass}" title="${title}">
+        <div class="slot ${openSeatClass} ${volunteerClass} ${volunteerDriverClass} ${dutyClass}" title="${title}">
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
         </div>
       `;

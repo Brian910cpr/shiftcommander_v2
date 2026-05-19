@@ -43,7 +43,7 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn("Volunteer ALS Response Appreciated", wallboard)
         self.assertIn("Volunteer Crew Driver", wallboard)
         self.assertIn("Basic Crew Finalized", wallboard)
-        self.assertNotIn("OPEN ALS", wallboard)
+        self.assertIn("OPEN ALS", wallboard)
         self.assertNotIn("OPEN DUTY CREW DRIVER", wallboard)
 
     def test_public_schedule_mirror_uses_current_resolver_output(self):
@@ -52,6 +52,18 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertEqual(mirror.get("build", {}).get("resolver_version"), live.get("build", {}).get("resolver_version"))
         self.assertEqual(len(mirror.get("shifts", [])), len(live.get("shifts", [])))
         self.assertNotIn("OPEN DUTY CREW DRIVER", json.dumps(mirror))
+
+    def test_june_forming_import_is_data_not_resolver_doctrine(self):
+        june = json.loads((ROOT / "data" / "june_forming_import.json").read_text(encoding="utf-8"))
+        self.assertIn("june_future_intent_assignments", june)
+        self.assertGreater(len(june["june_future_intent_assignments"]), 0)
+        self.assertTrue(june["aemt_rotation_memo_reference"]["temporary_import_reference_only"])
+        resolver = (ROOT / "engine" / "rule_based_resolver.py").read_text(encoding="utf-8")
+        for name in ["Sophia Williams", "Lynnsey Benson", "Barbara"]:
+            self.assertNotIn(name, resolver)
+        comparison = json.loads((ROOT / "debug" / "june_import_comparison.json").read_text(encoding="utf-8"))
+        self.assertEqual(comparison["summary"]["mismatches"], 0)
+        self.assertGreaterEqual(comparison["summary"]["needs_review"], 1)
 
     def test_wallboard_readiness_and_urgency_are_separate(self):
         wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
@@ -80,6 +92,21 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn(".shift-card.yellow", wallboard)
         self.assertIn(".shift-card.red", wallboard)
         self.assertIn(".shift-card.gray", wallboard)
+
+    def test_volunteer_crew_driver_has_dedicated_dark_pill_class(self):
+        wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
+        self.assertIn(".slot.volunteer-driver-pill", wallboard)
+        self.assertIn('const volunteerDriverClass = options.volunteerDriver ? "volunteer-driver-pill" : "";', wallboard)
+        self.assertIn("${volunteerDriverClass}", wallboard)
+        forbidden = [
+            'options.volunteerDriver ? "green"',
+            'options.volunteerDriver ? "yellow"',
+            'options.volunteerDriver ? "red"',
+            'options.volunteerDriver ? "open-seat"',
+            'options.volunteerDriver ? "complete"',
+        ]
+        for snippet in forbidden:
+            self.assertNotIn(snippet, wallboard)
 
     def test_hover_copy_and_collapsed_legend_exist(self):
         wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
@@ -207,9 +234,15 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertTrue(rules["do_not_suppresses_notices"])
         systems = settings["staffing_systems"]
         active_labels = {row["label"] for row in systems if row.get("active") is not False}
-        self.assertIn("ADR EMT Zipper", active_labels)
+        all_systems = {row["label"]: row for row in systems}
+        self.assertNotIn("ADR EMT Zipper", active_labels)
+        self.assertTrue(all_systems["ADR EMT Zipper"].get("experimental"))
         self.assertIn("12-Hour Standard", active_labels)
         self.assertIn("A/B/C/D AEMT Rotation", active_labels)
+        rotation = settings["rotation_systems"]["aemt_abcd_rotation"]
+        self.assertEqual([row["slot"] for row in rotation["slots"]], ["A", "B", "C", "D"])
+        self.assertTrue(rotation["allow_unfilled_slots"])
+        self.assertFalse(settings["rotation_systems"]["emt_zipper"]["built_in_ot_authorized_by_default"])
 
 
 if __name__ == "__main__":

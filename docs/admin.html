@@ -67,8 +67,11 @@
 
       <div class="card">
         <h2>Duty Crew</h2>
-        <div class="mini">Use pattern keys such as SAT_AM, SAT_PM, SUN_AM.</div>
-        <div class="field"><label for="dutyPatterns">Duty crew driver patterns</label><textarea id="dutyPatterns"></textarea></div>
+        <div class="mini">Attach Volunteer Crew Driver coverage to selected shifts. Use pattern keys such as SAT_AM, SAT_PM, SUN_AM.</div>
+        <div class="field"><label for="volunteerCrewDriverEnabled">Volunteer Crew Driver attached to selected shifts</label><select id="volunteerCrewDriverEnabled"><option value="true">Enabled for selected shifts</option><option value="false">Disabled</option></select></div>
+        <div class="field"><label for="volunteerCrewDriverAllShifts">Volunteer Crew Driver coverage scope</label><select id="volunteerCrewDriverAllShifts"><option value="false">Only selected shifts</option><option value="true">All shifts have Volunteer Crew Driver</option></select></div>
+        <div class="field"><label for="volunteerCrewDriverAffixed">Named driver handling on covered shifts</label><select id="volunteerCrewDriverAffixed"><option value="false">Keep existing named driver assignments</option><option value="true">Volunteer Crew Driver replaces the driver seat</option></select></div>
+        <div class="field"><label for="dutyPatterns">Selected shifts with Volunteer Crew Driver</label><textarea id="dutyPatterns"></textarea></div>
         <div class="field"><label for="dutyLabel">Duty crew label</label><input id="dutyLabel" /></div>
       </div>
 
@@ -167,7 +170,10 @@
       setValue("rotationOt", r.expected_rotation_ot_allowance ?? 12);
       setValue("unsetNotices", String(r.unset_gets_open_shift_notices ?? true));
       setValue("doNotNotices", String(r.do_not_suppresses_notices ?? true));
-      setValue("dutyPatterns", (r.duty_crew_patterns || ["SAT_AM","SAT_PM","SUN_AM"]).join("\n"));
+      setValue("volunteerCrewDriverEnabled", String(r.volunteer_crew_driver_enabled ?? true));
+      setValue("volunteerCrewDriverAllShifts", String(r.volunteer_crew_driver_all_shifts ?? false));
+      setValue("volunteerCrewDriverAffixed", String(r.volunteer_crew_driver_structurally_affixed ?? false));
+      setValue("dutyPatterns", (r.volunteer_crew_driver_patterns || r.duty_crew_patterns || ["SAT_AM","SAT_PM","SUN_AM"]).join("\n"));
       setValue("dutyLabel", r.duty_crew_label || "DUTY CREW");
       setValue("adrZipperEnabled", String(r.adr_zipper_enabled ?? false));
       setValue("adrZipperCompression", String(r.adr_zipper_allow_24_compression ?? false));
@@ -260,7 +266,11 @@
       r.expected_rotation_ot_allowance = Number(document.getElementById("rotationOt").value || 12);
       r.unset_gets_open_shift_notices = boolValue("unsetNotices");
       r.do_not_suppresses_notices = boolValue("doNotNotices");
-      r.duty_crew_patterns = lines(document.getElementById("dutyPatterns").value);
+      r.volunteer_crew_driver_enabled = boolValue("volunteerCrewDriverEnabled");
+      r.volunteer_crew_driver_all_shifts = boolValue("volunteerCrewDriverAllShifts");
+      r.volunteer_crew_driver_structurally_affixed = boolValue("volunteerCrewDriverAffixed");
+      r.volunteer_crew_driver_patterns = lines(document.getElementById("dutyPatterns").value);
+      r.duty_crew_patterns = r.volunteer_crew_driver_patterns;
       r.duty_crew_label = document.getElementById("dutyLabel").value || "DUTY CREW";
       r.adr_zipper_enabled = boolValue("adrZipperEnabled");
       r.adr_zipper_simulation_only = true;

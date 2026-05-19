@@ -8,7 +8,7 @@ import shutil
 import sys
 import time
 from copy import deepcopy
-from datetime import datetime, timedelta, UTC
+from datetime import date, datetime, timedelta, UTC
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
 
@@ -687,6 +687,19 @@ def normalize_member_rotation(member):
         shift_pref.setdefault("rotation_role", None)
         shift_pref.setdefault("relief_partner_track", None)
 
+    member.setdefault("shift_system", member.get("shift_system_assignment") or shift_pref.get("staffing_system") or None)
+    member.setdefault("shift_system_assignment", member.get("shift_system") or shift_pref.get("staffing_system") or None)
+    member.setdefault("rotation_slot", role if role in ("A", "B", "C", "D") else None)
+    member.setdefault("rotation_authorized", bool((member.get("rotation_authorization") or {}).get("status") == "approved") if isinstance(member.get("rotation_authorization"), dict) else False)
+    member.setdefault("expected_rotation_ot_allowed", False)
+    member.setdefault("zipper_participation", False)
+    member.setdefault("zipper_group", None)
+    emp = member.setdefault("employment", {})
+    if isinstance(emp, dict):
+        member.setdefault("max_hours_allowed", emp.get("hard_weekly_hour_cap"))
+        member.setdefault("preferred_hours", emp.get("preferred_weekly_hour_cap"))
+        member.setdefault("hourly_or_salaried", emp.get("pay_type") or "hourly")
+
     return member
 
 
@@ -806,6 +819,122 @@ def save_availability_payload(payload):
 
 def iso_today():
     return datetime.now(UTC).date()
+
+
+def get_current_timecard_period(today=None):
+    if today is None:
+        today = iso_today()
+    if isinstance(today, str):
+        today = date.fromisoformat(today[:10])
+    start = today - timedelta(days=(today.weekday() - 3) % 7)
+    end = start + timedelta(days=6)
+    return {
+        "period_start": start.isoformat(),
+        "period_end": end.isoformat(),
+        "label": f"Thursday {start.strftime('%m/%d/%Y')} through Wednesday {end.strftime('%m/%d/%Y')}",
+    }
+
+
+def member_display_name(member):
+    if not isinstance(member, dict):
+        return "Member"
+    name = str(member.get("name") or "").strip()
+    if name:
+        return name
+    return " ".join(str(member.get(key) or "").strip() for key in ("first_name", "last_name")).strip() or str(member.get("member_id", member.get("id", "Member")))
+
+
+def shift_time_range(shift, seat, settings):
+    label = str(shift.get("label") or shift.get("shift") or "").strip().upper()
+    definitions = settings.get("shift_definitions", {}) if isinstance(settings, dict) else {}
+    definition = definitions.get(label, {}) if isinstance(definitions, dict) and isinstance(definitions.get(label), dict) else {}
+    start = shift.get("start_time") or seat.get("start_time") or definition.get("start_time") or definition.get("start")
+    end = shift.get("end_time") or seat.get("end_time") or definition.get("end_time") or definition.get("end")
+    if not start:
+        start = "06:00" if label in {"AM", "DAY"} else "18:00" if label in {"PM", "NIGHT"} else ""
+    if not end:
+        end = "18:00" if label in {"AM", "DAY"} else "06:00" if label in {"PM", "NIGHT"} else ""
+    return str(start or ""), str(end or "")
+
+
+def timecard_regular_threshold(member):
+    for value in (
+        member.get("ot_threshold") if isinstance(member, dict) else None,
+        member.get("weekly_non_ot_hours") if isinstance(member, dict) else None,
+        (member.get("employment", {}) or {}).get("weekly_non_ot_hours") if isinstance(member, dict) and isinstance(member.get("employment"), dict) else None,
+    ):
+        try:
+            if value not in (None, ""):
+                return float(value)
+        except (TypeError, ValueError):
+            pass
+    employment = member.get("employment", {}) if isinstance(member, dict) else {}
+    employment_status = str((employment.get("status") if isinstance(employment, dict) else member.get("employment_type")) or "").strip().upper()
+    return 40.0 if employment_status in {"FT", "FULL_TIME"} else None
+
+
+def build_member_timecard(member_id, today=None, schedule_payload=None):
+    member_id = str(member_id or "").strip()
+    member = member_record_by_id(member_id)
+    if member is None:
+        return None
+    period = get_current_timecard_period(today)
+    period_start = date.fromisoformat(period["period_start"])
+    period_end = date.fromisoformat(period["period_end"])
+    schedule = schedule_payload if isinstance(schedule_payload, dict) else load_json(SCHEDULE_FILE, {})
+    settings = load_settings()
+    rows = []
+    for shift in schedule.get("shifts", []) if isinstance(schedule.get("shifts"), list) else []:
+        shift_date_raw = str(shift.get("date") or shift.get("shift_date") or "")[:10]
+        try:
+            shift_day = date.fromisoformat(shift_date_raw)
+        except ValueError:
+            continue
+        if shift_day < period_start or shift_day > period_end:
+            continue
+        for seat in shift.get("seats", []) if isinstance(shift.get("seats"), list) else []:
+            if str(seat.get("assigned") or "").strip() != member_id:
+                continue
+            role = str(seat.get("role") or seat.get("seat_type") or seat.get("display_role") or "Seat").strip()
+            if not role:
+                continue
+            try:
+                hours = float(seat.get("hours") or shift.get("hours") or 12)
+            except (TypeError, ValueError):
+                hours = 12.0
+            start_time, end_time = shift_time_range(shift, seat, settings)
+            rows.append({
+                "date": shift_day.isoformat(),
+                "day": shift_day.strftime("%A"),
+                "shift": str(shift.get("label") or shift.get("shift") or ""),
+                "unit": str(shift.get("unit") or ""),
+                "start_time": start_time,
+                "end_time": end_time,
+                "role": role,
+                "hours": hours,
+                "notes": str(seat.get("assignment_reason") or seat.get("selection_statement") or "").strip(),
+            })
+    rows.sort(key=lambda row: (row["date"], row["shift"], row["role"]))
+    total_hours = round(sum(row["hours"] for row in rows), 2)
+    threshold = timecard_regular_threshold(member)
+    regular_hours = round(min(total_hours, threshold), 2) if threshold is not None else total_hours
+    ot_hours = round(max(0.0, total_hours - threshold), 2) if threshold is not None else 0.0
+    return {
+        "organization_name": settings.get("organization_name") or settings.get("agency_name") or "ShiftCommander",
+        "member": member,
+        "member_id": member_id,
+        "member_name": member_display_name(member),
+        "period": period,
+        "generated_at": datetime.now().strftime("%m/%d/%Y %I:%M %p"),
+        "rows": rows,
+        "summary": {
+            "total_hours": total_hours,
+            "regular_hours": regular_hours,
+            "ot_hours": ot_hours,
+            "shifts_worked": len(rows),
+            "ot_calculable": threshold is not None,
+        },
+    }
 
 
 def parse_iso_date(value):
@@ -1521,6 +1650,143 @@ def get_member_context():
             "quick_test_mode": quick_test_mode_enabled(),
             "selected_member_id": member_id,
         }
+    )
+
+
+@app.route("/api/member/timecard", methods=["GET"])
+def api_member_timecard():
+    member_id, _, error = resolve_member_request_member()
+    if error:
+        return error
+    payload = build_member_timecard(member_id)
+    if payload is None:
+        return auth_json_error("Member record not found", 404)
+    return jsonify(payload)
+
+
+@app.route("/member/timecard", methods=["GET"])
+def member_timecard_page():
+    member_id, _, error = resolve_member_request_member()
+    if error:
+        return login_redirect("member")
+    payload = build_member_timecard(member_id)
+    if payload is None:
+        return auth_json_error("Member record not found", 404)
+    return render_template_string(
+        """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShiftCommander Time Card</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#f3f4f6;color:#111827;font-family:Arial,Helvetica,sans-serif;font-size:13px}
+    .sheet{width:min(8.5in,100%);min-height:11in;margin:0 auto;background:#fff;padding:.45in;box-shadow:0 12px 36px rgba(0,0,0,.14)}
+    .actions{display:flex;gap:10px;justify-content:flex-end;margin-bottom:16px}
+    button,a.button{border:1px solid #1f2937;background:#1f2937;color:#fff;border-radius:6px;padding:9px 12px;text-decoration:none;font-weight:700;cursor:pointer}
+    a.button{background:#fff;color:#1f2937}
+    h1{margin:0;font-size:24px}
+    .muted{color:#4b5563}
+    .header{display:grid;grid-template-columns:1fr auto;gap:18px;border-bottom:2px solid #111827;padding-bottom:14px;margin-bottom:16px}
+    .meta{display:grid;gap:4px;text-align:right}
+    .info{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;margin-bottom:16px}
+    .box{border:1px solid #d1d5db;padding:8px;min-height:36px}
+    table{width:100%;border-collapse:collapse;margin:12px 0 18px}
+    th,td{border:1px solid #9ca3af;padding:7px;text-align:left;vertical-align:top}
+    th{background:#f3f4f6;font-size:12px;text-transform:uppercase}
+    td.num{text-align:right}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px}
+    .signature-grid{display:grid;grid-template-columns:1fr 120px 1fr 120px;gap:12px;align-items:end;margin-top:30px}
+    .line{border-bottom:1px solid #111827;height:32px}
+    .notes{margin-top:20px;border:1px solid #9ca3af;min-height:80px;padding:8px}
+    .template-note{margin-top:18px;font-size:11px;color:#6b7280}
+    @media print{
+      body{background:#fff}
+      .sheet{width:auto;min-height:auto;margin:0;box-shadow:none;padding:.25in}
+      .actions{display:none}
+      @page{size:letter;margin:.35in}
+    }
+  </style>
+</head>
+<body>
+  <main class="sheet">
+    <div class="actions">
+      <a class="button" href="/member">Back to Member Page</a>
+      <button type="button" onclick="window.print()">Print</button>
+    </div>
+
+    <!-- TODO: Replace with official ADR time card template when provided. -->
+    <section class="header">
+      <div>
+        <h1>{{ organization_name }} Time Card</h1>
+        <div class="muted">Thursday-Wednesday work summary for signature</div>
+      </div>
+      <div class="meta">
+        <strong>Generated</strong>
+        <span>{{ generated_at }}</span>
+      </div>
+    </section>
+
+    <section class="info">
+      <div class="box"><strong>Member</strong><br>{{ member_name }}</div>
+      <div class="box"><strong>Member ID</strong><br>{{ member_id }}</div>
+      <div class="box" style="grid-column:1/-1"><strong>Time card period</strong><br>{{ period.label }}</div>
+    </section>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Day</th>
+          <th>Shift</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Role/Seat</th>
+          <th>Hours</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.date }}</td>
+          <td>{{ row.day }}</td>
+          <td>{{ row.shift }}</td>
+          <td>{{ row.start_time }}</td>
+          <td>{{ row.end_time }}</td>
+          <td>{{ row.role }}</td>
+          <td class="num">{{ "%.2f"|format(row.hours) }}</td>
+          <td>{{ row.notes }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="muted">No worked shifts found for this member in the current time card period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <section class="summary">
+      <div class="box"><strong>Total hours</strong><br>{{ "%.2f"|format(summary.total_hours) }}</div>
+      <div class="box"><strong>Regular hours</strong><br>{{ "%.2f"|format(summary.regular_hours) }}</div>
+      <div class="box"><strong>OT hours</strong><br>{{ "%.2f"|format(summary.ot_hours) }}</div>
+      <div class="box"><strong>Shifts worked</strong><br>{{ summary.shifts_worked }}</div>
+    </section>
+
+    <section class="signature-grid">
+      <div><div class="line"></div><strong>Employee signature</strong></div>
+      <div><div class="line"></div><strong>Date</strong></div>
+      <div><div class="line"></div><strong>Supervisor signature</strong></div>
+      <div><div class="line"></div><strong>Date</strong></div>
+    </section>
+
+    <section class="notes"><strong>Notes/comments</strong></section>
+    <div class="template-note">First-pass printable template. Payroll export and electronic signatures are not enabled.</div>
+  </main>
+</body>
+</html>
+        """,
+        **payload,
     )
 
 
