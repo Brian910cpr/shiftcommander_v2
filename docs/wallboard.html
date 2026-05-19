@@ -453,11 +453,26 @@
       background: rgba(88, 68, 16, 0.38);
     }
 
+    .slot.solo-emt-opportunity-seat {
+      border-color: rgba(198, 162, 255, 0.58);
+      background: rgba(74, 55, 108, 0.46);
+    }
+
     .slot.volunteer-driver-pill,
-    .slot.volunteer-driver-pill.duty-seat,
-    .slot.volunteer-driver-pill.volunteer-seat {
-      border-color: rgba(180, 191, 210, 0.26);
-      background: rgba(5, 8, 12, 0.92);
+    .shift-card.green .slot.volunteer-driver-pill,
+    .shift-card.yellow .slot.volunteer-driver-pill,
+    .shift-card.red .slot.volunteer-driver-pill,
+    .shift-card.gray .slot.volunteer-driver-pill {
+      border-color: rgba(180, 191, 210, 0.34) !important;
+      background: #05080c !important;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.035) !important;
+    }
+
+    .slot.volunteer-driver-pill .member {
+      color: #eef4ff !important;
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
     }
 
     @keyframes slowPulseRed {
@@ -583,11 +598,12 @@
         <span class="legend-chip"><span class="legend-dot emt"></span>EMT name</span>
         <span class="legend-chip"><span class="legend-dot emr"></span>EMR name</span>
         <span class="legend-chip"><span class="legend-dot ncld"></span>NCLD name</span>
-        <span class="legend-chip"><span class="legend-dot open"></span>real open problem</span>
-        <span class="legend-chip">Green: complete</span>
-        <span class="legend-chip">Yellow: can run, still improvable</span>
-        <span class="legend-chip">Red: cannot run or needs review</span>
-        <span class="legend-chip">Glow: active rule window</span>
+        <span class="legend-chip"><span class="legend-dot open"></span>open staffing need</span>
+        <span class="legend-chip"><span class="legend-dot duty"></span>Volunteer Crew Driver</span>
+        <span class="legend-chip">Green = fully staffed</span>
+        <span class="legend-chip">Yellow = driver needed</span>
+        <span class="legend-chip">Red = attendant/ALS needed</span>
+        <span class="legend-chip">Glow/pulse = urgency only</span>
       </div>
       <div class="meta-row">
         <div class="meta-pill quiet" id="metaWindow">Showing: --</div>
@@ -944,7 +960,7 @@
 
     function isOpenName(value) {
       const raw = String(value || "").trim().toUpperCase();
-      return !raw || raw === "OPEN" || raw === "UNFILLED" || raw.startsWith("OPEN ") || raw === "VOLUNTEER CREW DRIVER";
+      return !raw || raw === "OPEN" || raw === "UNFILLED" || raw.startsWith("OPEN ") || raw === "VOLUNTEER CREW DRIVER" || raw === "ALS OR DRIVER NEEDED";
     }
 
     function isAttendantSeat(seat) {
@@ -1192,11 +1208,10 @@
       const attendantCert = attendantAssigned ? seatCertValue(attendant, memberLookup) : "";
       const driverCert = driverAssigned ? (isStructuralDriverCovered(driver) ? "EMT" : seatCertValue(driver, memberLookup)) : "";
       const review = seats.some(seat => seat?.supervisor_review || String(seat?.assignment_status || "").toUpperCase() === "SUPERVISOR_REVIEW") || String(shift?.crew_status || "").toUpperCase().includes("REVIEW");
-      const days = daysUntil(shift?.date);
 
       if (review) return { color: "red", status: "Needs Supervisor Review", problem: true };
-      if (!attendantAssigned) return { color: days > numberSetting("interest_window_days", 14) ? "gray" : "red", status: "Attendant Needed", problem: true };
-      if (!driverAssigned) return { color: days < 2 ? "red" : "yellow", status: "Driver Needed", problem: true };
+      if (!attendantAssigned) return { color: "red", status: "Attendant Needed", problem: true, readinessCode: "ATTENDANT_NEEDED" };
+      if (!driverAssigned) return { color: "yellow", status: "Driver Needed", problem: true, readinessCode: "DRIVER_NEEDED" };
       if (attendantCert === "ALS") return { color: "green", status: "Complete", problem: false, alsCapable: true };
       if (isBasicCrewCertPair(attendantCert, driverCert)) {
         const kind = basicCrewKind(attendantCert, driverCert);
@@ -1281,7 +1296,10 @@
         return "This crew is legally operational, but ALS participation is still welcome if available.";
       }
       if (options.volunteerDriver) {
-        return "Volunteer Crew Driver: this weekend duty crew driver seat is open for volunteer coverage.";
+        return "Volunteer Crew Driver is built into this shift.";
+      }
+      if (options.soloEmtOpportunity || seat?.solo_emt_anchor_opportunity) {
+        return "This shift currently has an EMT anchor. ALS may upgrade the attendant seat, or EMT/EMR/NCLD may complete driver coverage.";
       }
       const assignedId = String(seat?.assigned || "").trim();
       const member = resolveMemberEntry(seat, memberLookup);
@@ -1290,13 +1308,13 @@
         const role = isAttendantSeat(seat) ? "Attendant" : isDriverSeat(seat) ? "Driver" : "seat";
         const factors = Array.isArray(seat?.selection_factors) ? seat.selection_factors.join(", ") : "";
         if (seat?.solo_emt_anchor_applied) {
-          return `${name} is listed as ${role} because the shift is inside the Solo EMT Anchor window and no ALS provider selected Preferred or Available.`;
+          return `${name} is listed as ${role} because this shift has a medical crew member assigned and still needs driver coverage.`;
         }
-        return `${name} is listed as ${role} because they ${availabilityCopy(factors)} and passed the rule checks for this seat.`;
+        return `${name} is listed as ${role} because they ${availabilityCopy(factors)} and matched this seat.`;
       }
-      if (isAttendantSeat(seat)) return "Attendant Needed: no eligible attendant has been assigned for this shift.";
-      if (isDriverSeat(seat)) return "Driver Needed: no eligible driver has been assigned for this shift.";
-      return "Open seat.";
+      if (isAttendantSeat(seat)) return "Attendant needed: this shift needs a medical crew member.";
+      if (isDriverSeat(seat)) return "Driver needed: this shift has a medical crew member assigned and needs a driver.";
+      return "This spot is open and available for the normal pickup process.";
     }
 
     function renderSlot(seat, shiftDate, memberLookup, options = {}) {
@@ -1322,15 +1340,16 @@
       const normalizedName = String(displayName || "").trim().toUpperCase();
       const isFutureOpen = !pastDate && !options.volunteer && (normalizedName === "OPEN" || normalizedName.startsWith("OPEN ") || (!rawName && showOpenAlert));
       const hasMember = !!rawName && !isOpenName(rawName);
-      const memberClass = hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty");
-      const openSeatClass = isFutureOpen ? "open-seat" : "";
-      const volunteerClass = options.volunteer ? "volunteer-seat" : "";
+      const memberClass = options.volunteerDriver ? "" : (hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty"));
+      const openSeatClass = !options.volunteerDriver && isFutureOpen ? "open-seat" : "";
+      const volunteerClass = !options.volunteerDriver && options.volunteer ? "volunteer-seat" : "";
       const volunteerDriverClass = options.volunteerDriver ? "volunteer-driver-pill" : "";
-      const dutyClass = isDutySeat(seat) ? "duty-seat" : "";
+      const soloEmtOpportunityClass = options.soloEmtOpportunity ? "solo-emt-opportunity-seat" : "";
+      const dutyClass = !options.volunteerDriver && isDutySeat(seat) ? "duty-seat" : "";
       const title = escapeHtml(tooltipForSeat(seat, shiftDate, memberLookup, options));
 
       return `
-        <div class="slot ${openSeatClass} ${volunteerClass} ${volunteerDriverClass} ${dutyClass}" title="${title}">
+        <div class="slot ${openSeatClass} ${volunteerClass} ${volunteerDriverClass} ${soloEmtOpportunityClass} ${dutyClass}" title="${title}">
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
         </div>
       `;
@@ -1363,6 +1382,13 @@
               displayLabel: "Volunteer Crew Driver",
               volunteer: !readiness.problem,
               volunteerDriver: true
+            });
+          }
+          if (seat?.solo_emt_anchor_opportunity && isDriverSeat(seat) && !String(seat?.assigned || "").trim()) {
+            return renderSlot(seat, shift.date, memberLookup, {
+              displayLabel: "ALS or Driver Needed",
+              soloEmtOpportunity: true,
+              tooltip: "This shift currently has an EMT anchor. ALS may upgrade the attendant seat, or EMT/EMR/NCLD may complete driver coverage."
             });
           }
           if (showOpenAls && !readiness.problem && isAttendantSeat(seat) && seatCertValue(seat, memberLookup) !== "ALS") {

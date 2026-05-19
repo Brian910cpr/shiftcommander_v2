@@ -244,17 +244,44 @@ class AppSmokeTests(unittest.TestCase):
         self.assertNotIn(other_id, json.dumps(card))
         self.assertNotIn("OPEN DRIVER", json.dumps(card))
 
+    def test_member_timecard_accepts_selected_period(self):
+        member_id = str(self.server.load_members()[0].get("member_id"))
+        schedule = {
+            "shifts": [
+                {"date": "2026-05-20", "label": "AM", "unit": "120", "seats": [
+                    {"role": "ATTENDANT", "assigned": member_id, "hours": 12},
+                ]},
+                {"date": "2026-05-21", "label": "AM", "unit": "120", "seats": [
+                    {"role": "ATTENDANT", "assigned": member_id, "hours": 12},
+                ]},
+            ]
+        }
+
+        card = self.server.build_member_timecard(
+            member_id,
+            schedule_payload=schedule,
+            period_start="2026-05-21",
+            period_end="2026-05-27",
+        )
+
+        self.assertEqual(card["period"]["period_start"], "2026-05-21")
+        self.assertEqual(card["period"]["period_end"], "2026-05-27")
+        self.assertEqual(len(card["rows"]), 1)
+        self.assertEqual(card["rows"][0]["date"], "2026-05-21")
+        self.assertEqual(card["summary"]["total_hours"], 12)
+
     def test_member_timecard_printable_route_returns_signature_lines(self):
         member_id = str(self.server.load_members()[0].get("member_id"))
         self.login_member(member_id)
 
-        response = self.client.get("/member/timecard")
+        response = self.client.get("/member/timecard?start=2026-05-21&end=2026-05-27")
 
         self.assertEqual(response.status_code, 200)
         html = response.get_data(as_text=True)
         self.assertIn("Employee signature", html)
         self.assertIn("Supervisor signature", html)
         self.assertIn("Print", html)
+        self.assertIn("Thursday 05/21/2026 through Wednesday 05/27/2026", html)
         response.close()
 
     def test_quick_test_supervisor_api_bypass_is_demo_only(self):

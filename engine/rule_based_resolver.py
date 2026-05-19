@@ -17,6 +17,8 @@ OT_NONE = "none"
 OT_EXPECTED_ROTATION = "expected_rotation_ot"
 OT_ADDITIONAL = "additional_ot"
 ROLLOUT_OPEN_REASON = "Preserved open during rollout import; available for open-shift workflow after rollout."
+SOLO_EMT_OPEN_OPPORTUNITY_LABEL = "ALS or Driver Needed"
+SOLO_EMT_OPEN_OPPORTUNITY_REASON = "This shift currently has an EMT anchor. ALS may upgrade the attendant seat, or EMT/EMR/NCLD may complete driver coverage."
 
 DEFAULT_RULE_SETTINGS = {
     "interest_window_days": 14,
@@ -790,7 +792,8 @@ class RuleBasedResolver:
             if att:
                 att["solo_emt_anchor_applied"] = True
             if drv and not drv.get("assigned"):
-                self._mark_open(shift, drv, "solo EMT anchors attendant; driver remains open")
+                drv["solo_emt_anchor_opportunity"] = True
+                self._mark_open(shift, drv, SOLO_EMT_OPEN_OPPORTUNITY_REASON)
             shift["resolver"]["notes"].append("Solo EMT Anchor Rule applied")
         self._try_aemt_reclaim(shift)
 
@@ -863,14 +866,26 @@ class RuleBasedResolver:
             if seat.get("rollout_open"):
                 filled = self._late_fill(shift, seat) if self._rollout_open_released(shift, DRIVER) else False
                 if not filled:
-                    label = "Volunteer Crew Driver" if seat.get("duty_crew") else "OPEN DRIVER"
+                    label = (
+                        SOLO_EMT_OPEN_OPPORTUNITY_REASON
+                        if seat.get("solo_emt_anchor_opportunity") and not seat.get("rollout_open")
+                        else "Volunteer Crew Driver"
+                        if seat.get("duty_crew")
+                        else "OPEN DRIVER"
+                    )
                     self._mark_open(shift, seat, label)
                 continue
             filled = self._fill_from_buckets(shift, seat, "PHASE_4", buckets, allow_additional_ot=False)
             if not filled and late:
                 filled = self._late_fill(shift, seat)
             if not filled:
-                label = "Volunteer Crew Driver" if seat.get("duty_crew") else "OPEN DRIVER"
+                label = (
+                    SOLO_EMT_OPEN_OPPORTUNITY_REASON
+                    if seat.get("solo_emt_anchor_opportunity")
+                    else "Volunteer Crew Driver"
+                    if seat.get("duty_crew")
+                    else "OPEN DRIVER"
+                )
                 self._mark_open(shift, seat, label)
 
     def _phase5_publish_open(self, shift: Dict[str, Any]) -> None:
@@ -1082,7 +1097,13 @@ class RuleBasedResolver:
         if seat.get("rollout_open") and seat.get("open_reason"):
             reason = str(seat.get("open_reason"))
         structural_driver = bool(seat.get("structural_driver_coverage") and role == DRIVER)
-        label = "Volunteer Crew Driver" if structural_driver else f"OPEN {role}"
+        solo_emt_opportunity = bool(role == DRIVER and seat.get("solo_emt_anchor_opportunity"))
+        if structural_driver:
+            label = "Volunteer Crew Driver"
+        elif solo_emt_opportunity:
+            label = SOLO_EMT_OPEN_OPPORTUNITY_LABEL
+        else:
+            label = f"OPEN {role}"
         seat.update({
             "assigned": None,
             "assigned_name": label,
@@ -1239,6 +1260,7 @@ class RuleBasedResolver:
             "assignment_reason": seat.get("assignment_reason"),
             "open_reason": seat.get("open_reason"),
             "solo_emt_anchor_applied": bool(seat.get("solo_emt_anchor_applied")),
+            "solo_emt_anchor_opportunity": bool(seat.get("solo_emt_anchor_opportunity")),
             "aemt_reclaim_attempted": bool(seat.get("aemt_reclaim_attempted")),
             "committed": bool(seat.get("assigned")),
             "open": not bool(seat.get("assigned")) and not self._seat_has_structural_coverage(seat),

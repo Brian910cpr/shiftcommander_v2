@@ -338,7 +338,9 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         self.assertEqual(first_seat(result, "ATTENDANT")["assigned"], "emt_bridge")
         self.assertTrue(first_seat(result, "ATTENDANT")["solo_emt_anchor_applied"])
         self.assertFalse(first_seat(result, "DRIVER").get("assigned"))
-        self.assertIn("OPEN DRIVER", first_seat(result, "DRIVER")["assigned_name"])
+        self.assertEqual(first_seat(result, "DRIVER")["assigned_name"], "ALS or Driver Needed")
+        self.assertTrue(first_seat(result, "DRIVER")["solo_emt_anchor_opportunity"])
+        self.assertIn("ALS may upgrade", first_seat(result, "DRIVER")["open_reason"])
 
     def test_assigned_als_member_is_normalized_to_attendant_and_blocks_solo_emt_anchor(self):
         data = base_payload(date_iso=NEAR)
@@ -453,7 +455,8 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         driver = first_seat(result, "DRIVER")
         self.assertFalse(driver.get("structural_driver_coverage"))
         self.assertEqual(first_seat(result, "ATTENDANT")["assigned"], "emt_bridge")
-        self.assertEqual(driver["assigned_name"], "OPEN DRIVER")
+        self.assertEqual(driver["assigned_name"], "ALS or Driver Needed")
+        self.assertTrue(driver["solo_emt_anchor_opportunity"])
 
     def test_all_shifts_volunteer_crew_driver_toggle_covers_weekday_driver(self):
         data = base_payload(date_iso="2026-06-22", label="AM")

@@ -59,6 +59,9 @@
     .assignment strong{display:block}
     .assignment .meta{margin-top:4px;color:var(--muted);font-size:13px}
     .assignment-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+    .timecard-picker{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .timecard-picker label{color:var(--muted);font-size:13px;font-weight:900}
+    .timecard-picker select{min-width:210px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:850}
     .calendar-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
     .calendar-note{margin:0 0 14px;color:var(--muted);line-height:1.45}
     .brief-help{display:none;margin:0 0 14px;color:var(--muted);line-height:1.45}
@@ -94,9 +97,16 @@
     .shift-row{display:grid;gap:7px}
     .shift-label{font-size:12px;font-weight:950;color:var(--muted);letter-spacing:.06em}
     .state-btns{display:grid;gap:0}
-    .state-btn{width:100%;min-height:62px;border-radius:16px;border:1px solid #3a5578;background:#17283f;color:#eef4ff;font-size:15px;font-weight:950;cursor:pointer;text-align:left;padding:12px 14px;display:grid;gap:3px;box-shadow:0 8px 18px rgba(0,0,0,.18)}
+    .state-btn{width:100%;min-height:62px;border-radius:16px;border:1px solid #3a5578;background:#17283f;color:#eef4ff;font-size:15px;font-weight:950;cursor:pointer;text-align:left;padding:12px 14px;display:grid;gap:3px;box-shadow:0 8px 18px rgba(0,0,0,.18);position:relative;overflow:hidden}
     .state-btn .state-main{display:block;font-size:16px}
     .state-btn .state-help{display:block;font-size:11px;color:rgba(238,244,255,.72);font-weight:750}
+    .shift-markers{position:absolute;top:6px;right:6px;display:flex;gap:4px;align-items:center;justify-content:flex-end;max-width:74%;pointer-events:none}
+    .shift-marker{min-width:18px;height:18px;border-radius:999px;border:1px solid rgba(255,255,255,.22);display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-size:9px;font-weight:950;line-height:1;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+    .shift-marker.assigned{background:#1f68c4}
+    .shift-marker.als{background:#b82842}
+    .shift-marker.driver{background:#b88412}
+    .shift-marker.upgrade{background:#6d49c8}
+    .shift-marker.pickup{background:#5f4777}
     .state-btn.preferred{background:rgba(20,103,55,.72);border-color:#28d36b}
     .state-btn.available{background:rgba(113,82,12,.74);border-color:#ffbd4d}
     .state-btn.do_not_schedule{background:rgba(105,31,39,.76);border-color:#ff6f6f}
@@ -114,6 +124,8 @@
     .brief-mode .state-btn{min-height:42px;border-radius:12px;padding:8px 10px;text-align:center}
     .brief-mode .state-btn .state-main{font-size:13px}
     .brief-mode .state-btn .state-help,.brief-mode .day-note{display:none}
+    .brief-mode .shift-markers{top:4px;right:4px;gap:3px}
+    .brief-mode .shift-marker{min-width:14px;height:14px;padding:0 3px;font-size:8px}
     .brief-mode .state-btn.preferred{background:rgba(20,130,67,.94)}
     .brief-mode .state-btn.available{background:rgba(70,104,74,.82);border-color:rgba(116,214,137,.65)}
     .brief-mode .state-btn.do_not_schedule{background:rgba(83,75,86,.82);border-color:rgba(255,143,143,.42)}
@@ -261,8 +273,12 @@
             <span class="mini">Read-only from the resolved schedule</span>
           </div>
           <div class="assignment-actions">
+            <div class="timecard-picker">
+              <label for="timecardWeekSelect">Time card week:</label>
+              <select id="timecardWeekSelect"></select>
+            </div>
             <button class="btn primary" id="printTimeCardBtn" type="button">Print Time Card</button>
-            <span class="mini">Print your Thursday-Wednesday work summary for signature.</span>
+            <span class="mini">Assigned shifts below follow the selected Thursday-Wednesday time card week.</span>
           </div>
           <div id="assignmentList"></div>
         </section>
@@ -287,14 +303,14 @@
           <div class="repeat-tools" id="rangeTools">
             <div class="repeat-tools-head">
               <div>
-                <div class="repeat-title">Calendar range</div>
-                <div class="mini" id="rangeLimitText">Availability can be submitted forward without a small fixed limit.</div>
+                <div class="repeat-title">Display week</div>
+                <div class="mini" id="rangeLimitText">This controls what you are looking at. It does not change the time card or copy-forward source.</div>
               </div>
-              <button class="btn warn" id="clearForwardBtn" type="button">Clear from this week forward</button>
+            <button class="btn warn" id="clearForwardBtn" type="button">Clear from displayed week forward</button>
             </div>
             <div class="repeat-fields">
               <div class="field">
-                <label for="forwardRange">Show and edit forward</label>
+                <label for="forwardRange">Display this many weeks</label>
                 <select id="forwardRange">
                   <option value="2">2 weeks</option>
                   <option value="4">4 weeks</option>
@@ -317,12 +333,12 @@
             <div class="repeat-tools-head">
               <div>
                 <div class="repeat-title">Copy availability forward</div>
-                <div class="mini">Use this when your work, school, or home pattern repeats.</div>
+                <div class="mini">Choose a Thursday-Wednesday source cycle and a separate target range.</div>
               </div>
             </div>
             <div class="repeat-fields">
               <div class="field">
-                <label for="repeatSourceCycle">Copy from</label>
+                <label for="repeatSourceCycle">Copy source week</label>
                 <select id="repeatSourceCycle"></select>
               </div>
               <div class="field">
@@ -395,7 +411,8 @@
       availability: { months: {} },
       schedule: {},
       availabilityEditStartDate: "",
-      currentWeekOffset: DEFAULT_EDITABLE_WEEK_OFFSET,
+      displayWeekOffset: DEFAULT_EDITABLE_WEEK_OFFSET,
+      selectedTimecardStart: "",
       viewMode: "",
       forwardWeeks: 8,
       adminMaxForwardWeeks: null,
@@ -437,6 +454,12 @@
     }
     function nextOperationalCycleStart(date){ return addDays(operationalCycleStart(date), DAYS_PER_OPERATIONAL_CYCLE); }
     function shortDate(date){ return date.toLocaleDateString(undefined,{month:"short",day:"numeric"}); }
+    function compactDate(date){
+      const day = date.toLocaleDateString(undefined,{weekday:"short"});
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      return `${day} ${mm}/${dd}`;
+    }
     function monthKey(iso){ return String(iso||"").slice(0,7); }
     function getMemberId(){ return String(appState.selectedMemberId || appState.member?.member_id || appState.member?.id || appState.session?.member_id || ""); }
     function patternKey(dateIso, shift){
@@ -475,6 +498,61 @@
       const index = AVAILABILITY_STATES.indexOf(current);
       return AVAILABILITY_STATES[((index >= 0 ? index : 0) + 1) % AVAILABILITY_STATES.length];
     }
+    function isOpenSeatName(value){
+      const raw = String(value || "").trim().toUpperCase();
+      return !raw || raw === "OPEN" || raw === "UNFILLED" || raw.startsWith("OPEN ") || raw === "ALS OR DRIVER NEEDED" || raw === "VOLUNTEER CREW DRIVER";
+    }
+    function seatRoleText(seat){
+      return `${seat?.role || ""} ${seat?.display_role || ""}`.toUpperCase();
+    }
+    function isAttendantSeat(seat){ return seatRoleText(seat).includes("ATTENDANT") || seatRoleText(seat).includes("ALS"); }
+    function isDriverSeat(seat){ return seatRoleText(seat).includes("DRIVER") || seatRoleText(seat).includes("DUTY") || seatRoleText(seat).includes("SUPPORT"); }
+    function findScheduleShift(dateIso, shiftLabel){
+      return asArray(appState.schedule?.shifts).find((shift) => String(shift?.date || "").slice(0,10) === dateIso && String(shift?.label || "").toUpperCase() === String(shiftLabel || "").toUpperCase());
+    }
+    function memberSeatOnShift(scheduleShift){
+      const memberId = getMemberId();
+      return asArray(scheduleShift?.seats).find((seat) => String(seat?.assigned || "").trim() === memberId);
+    }
+    function isOpenSeat(seat){
+      return !String(seat?.assigned || "").trim() && isOpenSeatName(seat?.assigned_name);
+    }
+    function shiftOpportunityMarkers(dateIso, shiftLabel){
+      const scheduleShift = findScheduleShift(dateIso, shiftLabel);
+      if(!scheduleShift) return [];
+      const seats = asArray(scheduleShift.seats);
+      const markers = [];
+      if(memberSeatOnShift(scheduleShift)){
+        markers.push({ key:"assigned", cls:"assigned", text:"YOU", title:"You are assigned to this shift." });
+      }
+      const soloOpportunity = seats.some((seat) => isDriverSeat(seat) && isOpenSeat(seat) && seat?.solo_emt_anchor_opportunity === true);
+      if(soloOpportunity){
+        markers.push({
+          key:"upgrade",
+          cls:"upgrade",
+          text:"UP",
+          title:"This shift currently has an EMT anchor. ALS may upgrade the attendant seat, or EMT/EMR/NCLD may complete driver coverage."
+        });
+      } else {
+        if(seats.some((seat) => isAttendantSeat(seat) && isOpenSeat(seat))){
+          markers.push({ key:"als", cls:"als", text:"ALS", title:"This shift still needs an attendant." });
+        }
+        if(seats.some((seat) => isDriverSeat(seat) && isOpenSeat(seat) && seat?.structural_driver_coverage !== true)){
+          markers.push({ key:"driver", cls:"driver", text:"DRV", title:"This shift still needs a driver." });
+        }
+      }
+      if(seats.some((seat) => isOpenSeat(seat) && seat?.interest_collecting === true)){
+        markers.push({ key:"pickup", cls:"pickup", text:"PICK", title:"Pickup requests are currently open." });
+      }
+      return markers.filter((marker, index, list) => list.findIndex((item) => item.key === marker.key) === index);
+    }
+    function markerTitle(help, markers){
+      return [help, ...markers.map((marker) => marker.title)].filter(Boolean).join(" ");
+    }
+    function renderShiftMarkers(markers){
+      if(!markers.length) return "";
+      return `<span class="shift-markers">${markers.map((marker) => `<span class="shift-marker ${esc(marker.cls)}" aria-label="${esc(marker.title)}">${esc(marker.text)}</span>`).join("")}</span>`;
+    }
     function getSuggestedStatus(dateIso, shift){
       const memberPatterns = appState.availability?.patterns_by_member?.[getMemberId()] || {};
       const key = patternKey(dateIso, shift);
@@ -505,13 +583,13 @@
       appState.dirtyAvailabilityKeys.add(`${dateIso}|${shift}`);
       renderSaveState();
     }
-    function currentWindowStart(){
+    function displayWeekStart(){
       const start = operationalCycleStart(new Date());
-      start.setDate(start.getDate() + (appState.currentWeekOffset * DAYS_PER_OPERATIONAL_CYCLE));
+      start.setDate(start.getDate() + (appState.displayWeekOffset * DAYS_PER_OPERATIONAL_CYCLE));
       return start;
     }
     function visibleDates(){
-      const start = currentWindowStart();
+      const start = displayWeekStart();
       appState.forwardWeeks = selectedForwardWeeks();
       return Array.from({length: appState.forwardWeeks * DAYS_PER_OPERATIONAL_CYCLE}, (_,i) => addDays(start, i));
     }
@@ -570,7 +648,7 @@
       const customWeeks = document.getElementById("customWeeks");
       const customEndDate = document.getElementById("customEndDate");
       if(select?.value === "custom"){
-        const start = currentWindowStart();
+        const start = displayWeekStart();
         const endValue = customEndDate?.value || "";
         if(endValue){
           const end = isoToDate(endValue);
@@ -580,6 +658,10 @@
         return clampForwardWeeks(customWeeks?.value || 12);
       }
       return clampForwardWeeks(select?.value || appState.forwardWeeks || 8);
+    }
+
+    function copyForwardSourceWeeks(){
+      return clampForwardWeeks(Math.max(12, selectedForwardWeeks()));
     }
 
     function updateCustomRangeVisibility(){
@@ -595,7 +677,9 @@
       const node = document.getElementById("rangeLimitText");
       if(!node) return;
       const max = getAdminMaxForwardWeeks();
-      node.textContent = max ? `Availability can currently be submitted up to ${max} weeks ahead.` : "Availability can be submitted forward without a small fixed limit.";
+      node.textContent = max
+        ? `Display week controls what you are looking at. Availability can currently be submitted up to ${max} weeks ahead.`
+        : "Display week controls what you are looking at. It does not change the time card or copy-forward source.";
     }
 
     function configureForwardRange(){
@@ -679,7 +763,7 @@
         "logoutBtn","saveProfileBtn","changePasswordBtn","saveAvailabilityBtn",
         "desiredHours","ampmPreference","shift24Preference","swapPreference",
         "currentPassword","newPassword","confirmPassword","prevBtn","todayBtn","nextBtn","quickTestMemberSelect",
-        "repeatSourceCycle","repeatWhat","repeatRange","repeatCustomWeeks","repeatThroughDate","applyRepeatBtn",
+        "timecardWeekSelect","printTimeCardBtn","repeatSourceCycle","repeatWhat","repeatRange","repeatCustomWeeks","repeatThroughDate","applyRepeatBtn",
         "forwardRange","customWeeks","customEndDate","clearForwardBtn","briefModeBtn","verboseModeBtn"
       ];
       ids.forEach((id) => {
@@ -835,27 +919,85 @@
       document.getElementById("swapPreference").value = m.preferences?.shift_preference?.swap_strategy || "allow";
     }
 
+    function timecardPeriodFromStart(start){
+      const periodStart = new Date(start);
+      periodStart.setHours(0,0,0,0);
+      const periodEnd = addDays(periodStart, 6);
+      return { start: periodStart, end: periodEnd, startIso: formatDate(periodStart), endIso: formatDate(periodEnd) };
+    }
+
+    function currentTimecardStart(){
+      return operationalCycleStart(new Date());
+    }
+
+    function timecardWeekLabel(period){
+      return `${compactDate(period.start)} - ${compactDate(period.end)}`;
+    }
+
+    function timecardWeekStarts(){
+      const starts = new Set();
+      const current = currentTimecardStart();
+      for(let offset = -4; offset <= 4; offset += 1){
+        starts.add(formatDate(addDays(current, offset * DAYS_PER_OPERATIONAL_CYCLE)));
+      }
+      asArray(appState.schedule?.shifts).forEach((shift) => {
+        const dateIso = String(shift?.date || "").slice(0,10);
+        if(!dateIso) return;
+        const date = isoToDate(dateIso);
+        if(Number.isNaN(date.getTime())) return;
+        starts.add(formatDate(operationalCycleStart(date)));
+      });
+      return [...starts].sort();
+    }
+
+    function selectedTimecardPeriod(){
+      const select = document.getElementById("timecardWeekSelect");
+      const startIso = select?.value || appState.selectedTimecardStart || formatDate(currentTimecardStart());
+      return timecardPeriodFromStart(isoToDate(startIso));
+    }
+
+    function renderTimecardWeekSelect(){
+      const select = document.getElementById("timecardWeekSelect");
+      if(!select) return;
+      const previous = select.value || appState.selectedTimecardStart || formatDate(currentTimecardStart());
+      const starts = timecardWeekStarts();
+      if(!starts.includes(previous)) starts.push(previous);
+      starts.sort();
+      select.innerHTML = starts.map((startIso) => {
+        const period = timecardPeriodFromStart(isoToDate(startIso));
+        return `<option value="${esc(period.startIso)}" data-end="${esc(period.endIso)}">${esc(timecardWeekLabel(period))}</option>`;
+      }).join("");
+      select.value = starts.includes(previous) ? previous : formatDate(currentTimecardStart());
+      appState.selectedTimecardStart = select.value;
+    }
+
     function memberAssignments(){
       const shifts = asArray(appState.schedule?.shifts);
       const memberId = getMemberId();
+      const period = selectedTimecardPeriod();
       return shifts.flatMap((shift) => asArray(shift.seats).map((seat,index) => ({ shift, seat, index })))
         .filter(({seat}) => String(seat?.assigned || "").trim() === memberId)
+        .filter(({shift}) => {
+          const shiftIso = String(shift?.date || "").slice(0,10);
+          return shiftIso >= period.startIso && shiftIso <= period.endIso;
+        })
         .sort((a,b) => `${a.shift.date}${a.shift.label}`.localeCompare(`${b.shift.date}${b.shift.label}`));
     }
 
     function renderAssignments(){
       const rows = memberAssignments();
+      const period = selectedTimecardPeriod();
       document.getElementById("assignmentList").innerHTML = rows.length ? rows.map(({shift, seat}) => `
         <div class="assignment">
           <strong>${esc(shift.date)} · ${esc(shift.label)} · ${esc(shift.unit || "Unit")}</strong>
           <div class="meta">${esc(seat.role || "Seat")} ${seat.locked ? "· Displayed / frozen" : "· Draft or open window"}</div>
         </div>
-      `).join("") : `<div class="empty">No assigned shifts were found for this member in the current resolved schedule.</div>`;
+      `).join("") : `<div class="empty">No assigned shifts were found for ${esc(timecardWeekLabel(period))}.</div>`;
     }
 
-    function visibleCycleStarts(){
-      const start = currentWindowStart();
-      return Array.from({length: selectedForwardWeeks()}, (_, index) => addDays(start, index * DAYS_PER_OPERATIONAL_CYCLE));
+    function copyForwardCycleStarts(){
+      const start = memberEditStartDate();
+      return Array.from({length: copyForwardSourceWeeks()}, (_, index) => addDays(start, index * DAYS_PER_OPERATIONAL_CYCLE));
     }
 
     function sourceOffsetsForRepeat(kind){
@@ -880,8 +1022,7 @@
       if(!sourceSelect || !kindSelect || !rangeSelect || !preview) return;
 
       const previous = sourceSelect.value;
-      const nextStart = memberEditStartDate();
-      const cycles = visibleCycleStarts().filter((start) => start >= nextStart);
+      const cycles = copyForwardCycleStarts();
       sourceSelect.innerHTML = cycles.map((start) => {
         const end = addDays(start, 6);
         return `<option value="${formatDate(start)}">${shortDate(start)} - ${shortDate(end)}</option>`;
@@ -894,14 +1035,14 @@
       }
 
       if(!sourceSelect.value){
-        preview.textContent = "No editable future cycle is visible. Go later to copy availability forward.";
+        preview.textContent = "No editable future cycle is available for copy-forward.";
         return;
       }
       updateCustomRangeVisibility();
       const sourceStart = isoToDate(sourceSelect.value);
       const sourceEnd = addDays(sourceStart, 6);
       const end = repeatEndDate(sourceStart);
-      preview.textContent = `Apply this week's selections forward through ${shortDate(end)}. BLANK remains BLANK; it is not converted to Do Not. Source: ${repeatKindLabel(kindSelect.value)} from ${shortDate(sourceStart)} - ${shortDate(sourceEnd)}.`;
+      preview.textContent = `Copy ${repeatKindLabel(kindSelect.value)} from ${shortDate(sourceStart)} - ${shortDate(sourceEnd)} through ${shortDate(end)}. BLANK remains BLANK; it is not converted to Do Not. Calendar display week does not change this source unless you choose a different source here.`;
     }
 
     function applyRepeatForward(){
@@ -941,9 +1082,9 @@
         showFlash("Member context is still loading.", "error");
         return;
       }
-      const confirmed = window.confirm("Clear all selections from this week forward? Blank shifts will not be automatically scheduled, but may still receive open-shift notices.");
+      const confirmed = window.confirm("Clear all selections from the displayed week forward? Blank shifts will not be automatically scheduled, but may still receive open-shift notices.");
       if(!confirmed) return;
-      const start = currentWindowStart();
+      const start = displayWeekStart();
       const end = addDays(start, (selectedForwardWeeks() * DAYS_PER_OPERATIONAL_CYCLE) - 1);
       let changed = 0;
       for(let day = new Date(start); day <= end; day = addDays(day, 1)){
@@ -979,13 +1120,16 @@
           const help = locked ? lockedReason : stateHelp(value);
           const next = nextState(value);
           const cls = stateClass(value);
+          const markers = shiftOpportunityMarkers(iso, shift);
+          const buttonTitle = markerTitle(help, markers);
           return `
             <div class="shift-row">
               <div class="shift-label">${shift}</div>
               <div class="state-btns">
-                <button class="state-btn ${cls} ${locked ? "locked-state" : ""}" type="button" title="${esc(help)}" aria-disabled="${locked ? "true" : "false"}" data-date="${iso}" data-shift="${shift}" data-value="${esc(next)}" data-locked="${locked ? "true" : "false"}" data-lock-reason="${esc(lockedReason)}">
+                <button class="state-btn ${cls} ${locked ? "locked-state" : ""}" type="button" title="${esc(buttonTitle)}" aria-disabled="${locked ? "true" : "false"}" data-date="${iso}" data-shift="${shift}" data-value="${esc(next)}" data-locked="${locked ? "true" : "false"}" data-lock-reason="${esc(lockedReason)}">
                   <span class="state-main">${esc(label)}</span>
                   <span class="state-help">${esc(help)}</span>
+                  ${renderShiftMarkers(markers)}
                 </button>
               </div>
             </div>
@@ -1071,6 +1215,7 @@
       appState.dirtyAvailability = false;
       appState.dirtyAvailabilityKeys.clear();
       appState.lastSavedAt = "";
+      renderTimecardWeekSelect();
       renderSummary();
       renderAssignments();
       renderCalendar();
@@ -1228,7 +1373,13 @@
 
     function openTimeCard(){
       const memberId = getMemberId();
-      const query = appState.quickTestMode && memberId ? `?member_id=${encodeURIComponent(memberId)}` : "";
+      const period = selectedTimecardPeriod();
+      const params = new URLSearchParams({
+        start: period.startIso,
+        end: period.endIso,
+      });
+      if(appState.quickTestMode && memberId) params.set("member_id", memberId);
+      const query = `?${params.toString()}`;
       window.open(`/member/timecard${query}`, "_blank", "noopener");
     }
 
@@ -1249,10 +1400,14 @@
     document.getElementById("saveProfileBtn").addEventListener("click", saveProfile);
     document.getElementById("saveAvailabilityBtn").addEventListener("click", saveAvailability);
     document.getElementById("printTimeCardBtn").addEventListener("click", openTimeCard);
+    document.getElementById("timecardWeekSelect").addEventListener("change", (event) => {
+      appState.selectedTimecardStart = event.target.value;
+      renderAssignments();
+    });
     document.getElementById("changePasswordBtn").addEventListener("click", changePassword);
-    document.getElementById("todayBtn").addEventListener("click", () => { appState.currentWeekOffset = DEFAULT_EDITABLE_WEEK_OFFSET; renderCalendar(); });
-    document.getElementById("prevBtn").addEventListener("click", () => { appState.currentWeekOffset -= 1; renderCalendar(); });
-    document.getElementById("nextBtn").addEventListener("click", () => { appState.currentWeekOffset += 1; renderCalendar(); });
+    document.getElementById("todayBtn").addEventListener("click", () => { appState.displayWeekOffset = DEFAULT_EDITABLE_WEEK_OFFSET; renderCalendar(); });
+    document.getElementById("prevBtn").addEventListener("click", () => { appState.displayWeekOffset -= 1; renderCalendar(); });
+    document.getElementById("nextBtn").addEventListener("click", () => { appState.displayWeekOffset += 1; renderCalendar(); });
     document.getElementById("briefModeBtn").addEventListener("click", () => setViewMode("brief"));
     document.getElementById("verboseModeBtn").addEventListener("click", () => setViewMode("verbose"));
     document.getElementById("clearForwardBtn").addEventListener("click", clearFromSelectedWeekForward);

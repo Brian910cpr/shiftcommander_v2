@@ -65,6 +65,19 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertEqual(comparison["summary"]["mismatches"], 0)
         self.assertGreaterEqual(comparison["summary"]["needs_review"], 1)
 
+    def test_june_driver_needed_and_attendant_needed_cases_are_distinct(self):
+        schedule = json.loads((ROOT / "data" / "schedule.json").read_text(encoding="utf-8"))
+        def shift(date_value, label):
+            return next(row for row in schedule["shifts"] if row.get("date") == date_value and row.get("label") == label)
+        june17 = shift("2026-06-17", "AM")
+        june18 = shift("2026-06-18", "AM")
+        self.assertEqual(june17["crew_status"], "Open Driver")
+        self.assertTrue(any(seat.get("role") == "ATTENDANT" and seat.get("assigned_name") == "Lynnsey Benson" for seat in june17["seats"]))
+        self.assertTrue(any(seat.get("role") == "DRIVER" and seat.get("assigned_name") == "OPEN DRIVER" for seat in june17["seats"]))
+        self.assertEqual(june18["crew_status"], "Open Attendant")
+        self.assertTrue(any(seat.get("role") == "ATTENDANT" and str(seat.get("assigned_name", "")).startswith("OPEN") for seat in june18["seats"]))
+        self.assertTrue(any(seat.get("role") == "DRIVER" and seat.get("assigned_name") == "OPEN DRIVER" for seat in june18["seats"]))
+
     def test_wallboard_readiness_and_urgency_are_separate(self):
         wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
         self.assertIn("function shiftReadiness", wallboard)
@@ -82,6 +95,20 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn('return { color: "green", status: "Basic Crew Finalized"', wallboard)
         self.assertIn(".shift-card.urgency-interest::after", wallboard)
         self.assertIn(".shift-card.urgency-now::after", wallboard)
+        self.assertIn('if (!attendantAssigned) return { color: "red", status: "Attendant Needed"', wallboard)
+        self.assertIn('if (!driverAssigned) return { color: "yellow", status: "Driver Needed"', wallboard)
+        self.assertNotIn('days > numberSetting("interest_window_days", 14) ? "gray" : "red"', wallboard)
+        self.assertNotIn('days < 2 ? "red" : "yellow"', wallboard)
+
+    def test_solo_emt_anchor_uses_open_opportunity_label(self):
+        resolver = (ROOT / "engine" / "rule_based_resolver.py").read_text(encoding="utf-8")
+        wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
+        self.assertIn('SOLO_EMT_OPEN_OPPORTUNITY_LABEL = "ALS or Driver Needed"', resolver)
+        self.assertIn("solo_emt_anchor_opportunity", resolver)
+        self.assertIn("ALS or Driver Needed", wallboard)
+        self.assertIn("solo-emt-opportunity-seat", wallboard)
+        self.assertIn("ALS may upgrade the attendant seat", wallboard)
+        self.assertIn("raw === \"ALS OR DRIVER NEEDED\"", wallboard)
 
     def test_wallboard_state_classes_do_not_reuse_old_urgency_slots(self):
         wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
@@ -98,6 +125,10 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn(".slot.volunteer-driver-pill", wallboard)
         self.assertIn('const volunteerDriverClass = options.volunteerDriver ? "volunteer-driver-pill" : "";', wallboard)
         self.assertIn("${volunteerDriverClass}", wallboard)
+        self.assertIn("!options.volunteerDriver && isFutureOpen", wallboard)
+        self.assertIn("!options.volunteerDriver && options.volunteer", wallboard)
+        self.assertIn("!options.volunteerDriver && isDutySeat(seat)", wallboard)
+        self.assertIn('const memberClass = options.volunteerDriver ? ""', wallboard)
         forbidden = [
             'options.volunteerDriver ? "green"',
             'options.volunteerDriver ? "yellow"',
@@ -115,6 +146,10 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn('class="legend collapsed"', wallboard)
         self.assertIn("Show legend", wallboard)
         self.assertIn("localStorage", wallboard)
+        self.assertIn("Green = fully staffed", wallboard)
+        self.assertIn("Yellow = driver needed", wallboard)
+        self.assertIn("Red = attendant/ALS needed", wallboard)
+        self.assertIn("Glow/pulse = urgency only", wallboard)
         self.assertIn("Two EMTs are assigned, so this is a legal basic crew path. ALS response is still appreciated during the open interest window.", wallboard)
         self.assertIn("This shift is staffed as a legal EMT + EMT basic crew. ALS response is still appreciated, but the shift is no longer considered open.", wallboard)
         self.assertIn("This shift is operating as a legal basic crew. ALS response is still appreciated but not required.", wallboard)
@@ -216,13 +251,46 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn("Verbose Mode", member)
         self.assertIn("localStorage.setItem(STORAGE_VIEW_MODE_KEY", member)
         self.assertIn(".brief-mode .state-btn.preferred", member)
-        self.assertIn("Clear from this week forward", member)
-        self.assertIn("Clear all selections from this week forward? Blank shifts will not be automatically scheduled, but may still receive open-shift notices.", member)
+        self.assertIn("Clear from displayed week forward", member)
+        self.assertIn("Clear all selections from the displayed week forward? Blank shifts will not be automatically scheduled, but may still receive open-shift notices.", member)
         self.assertIn("setStatus(dateIso, shift, \"blank\")", member)
         self.assertIn("forwardRange", member)
         self.assertIn("customWeeks", member)
         self.assertIn("repeatThroughDate", member)
         self.assertIn("BLANK remains BLANK", member)
+
+    def test_member_work_week_controls_are_separated(self):
+        member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")
+        self.assertIn("displayWeekOffset", member)
+        self.assertIn("function displayWeekStart", member)
+        self.assertIn("function copyForwardCycleStarts", member)
+        self.assertIn("copyForwardSourceWeeks", member)
+        self.assertIn("Calendar display week does not change this source unless you choose a different source here.", member)
+        self.assertIn("Assigned shifts below follow the selected Thursday-Wednesday time card week.", member)
+        self.assertNotIn("currentWeekOffset", member)
+        self.assertNotIn("visibleCycleStarts", member)
+
+    def test_member_timecard_week_selector_controls_print_preview(self):
+        member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")
+        self.assertIn('id="timecardWeekSelect"', member)
+        self.assertIn("Time card week:", member)
+        self.assertIn("function timecardWeekStarts", member)
+        self.assertIn("function selectedTimecardPeriod", member)
+        self.assertIn("renderTimecardWeekSelect", member)
+        self.assertIn("Assigned shifts below follow the selected Thursday-Wednesday time card week.", member)
+        self.assertIn("start: period.startIso", member)
+        self.assertIn("end: period.endIso", member)
+        self.assertIn("appState.selectedTimecardStart = event.target.value", member)
+
+    def test_member_calendar_shows_open_opportunity_markers(self):
+        member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")
+        self.assertIn("function shiftOpportunityMarkers", member)
+        self.assertIn("solo_emt_anchor_opportunity", member)
+        self.assertIn("ALS may upgrade the attendant seat", member)
+        self.assertIn("shift-markers", member)
+        self.assertIn('cls:"assigned"', member)
+        self.assertIn("This shift still needs a driver.", member)
+        self.assertIn("Pickup requests are currently open.", member)
 
     def test_settings_include_visual_rule_windows(self):
         settings = json.loads((ROOT / "data" / "settings.json").read_text(encoding="utf-8"))

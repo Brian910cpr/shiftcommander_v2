@@ -828,6 +828,18 @@ def get_current_timecard_period(today=None):
         today = date.fromisoformat(today[:10])
     start = today - timedelta(days=(today.weekday() - 3) % 7)
     end = start + timedelta(days=6)
+    return build_timecard_period(start, end)
+
+
+def build_timecard_period(start, end=None):
+    if isinstance(start, str):
+        start = date.fromisoformat(start[:10])
+    if end is None:
+        end = start + timedelta(days=6)
+    if isinstance(end, str):
+        end = date.fromisoformat(end[:10])
+    if end < start:
+        end = start + timedelta(days=6)
     return {
         "period_start": start.isoformat(),
         "period_end": end.isoformat(),
@@ -873,12 +885,12 @@ def timecard_regular_threshold(member):
     return 40.0 if employment_status in {"FT", "FULL_TIME"} else None
 
 
-def build_member_timecard(member_id, today=None, schedule_payload=None):
+def build_member_timecard(member_id, today=None, schedule_payload=None, period_start=None, period_end=None):
     member_id = str(member_id or "").strip()
     member = member_record_by_id(member_id)
     if member is None:
         return None
-    period = get_current_timecard_period(today)
+    period = build_timecard_period(period_start, period_end) if period_start else get_current_timecard_period(today)
     period_start = date.fromisoformat(period["period_start"])
     period_end = date.fromisoformat(period["period_end"])
     schedule = schedule_payload if isinstance(schedule_payload, dict) else load_json(SCHEDULE_FILE, {})
@@ -1658,7 +1670,11 @@ def api_member_timecard():
     member_id, _, error = resolve_member_request_member()
     if error:
         return error
-    payload = build_member_timecard(member_id)
+    payload = build_member_timecard(
+        member_id,
+        period_start=request.args.get("start") or request.args.get("period_start"),
+        period_end=request.args.get("end") or request.args.get("period_end"),
+    )
     if payload is None:
         return auth_json_error("Member record not found", 404)
     return jsonify(payload)
@@ -1669,7 +1685,11 @@ def member_timecard_page():
     member_id, _, error = resolve_member_request_member()
     if error:
         return login_redirect("member")
-    payload = build_member_timecard(member_id)
+    payload = build_member_timecard(
+        member_id,
+        period_start=request.args.get("start") or request.args.get("period_start"),
+        period_end=request.args.get("end") or request.args.get("period_end"),
+    )
     if payload is None:
         return auth_json_error("Member record not found", 404)
     return render_template_string(
