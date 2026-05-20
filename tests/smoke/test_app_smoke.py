@@ -222,6 +222,41 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("Admin Member Management", response.get_data(as_text=True))
         response.close()
 
+    def test_demo_supervisor_bypass_opens_supervisor_without_session(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = True
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = True
+            with self.client.session_transaction() as session:
+                session.clear()
+
+            response = self.client.get("/docs/supervisor.html")
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("ShiftCommander Supervisor", response.get_data(as_text=True))
+            response.close()
+
+            response = self.client.get("/api/auth/session")
+            self.assertEqual(response.status_code, 200)
+            payload = response.get_json()
+            self.assertEqual(payload.get("role"), "supervisor")
+            self.assertTrue(payload.get("demo_supervisor_bypass"))
+            response.close()
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
+    def test_quick_test_member_dropdown_is_available_for_demo_hosts(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        try:
+            self.server.SC_QUICK_TEST_MODE = True
+            response = self.client.get("/api/testing/members", base_url="https://shiftcommander-backend.onrender.com")
+            self.assertEqual(response.status_code, 200)
+            self.assertGreater(len(response.get_json().get("members", [])), 0)
+            response.close()
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original_quick
+
     def test_timecard_period_is_thursday_to_wednesday(self):
         period = self.server.get_current_timecard_period(date(2026, 5, 19))
         self.assertEqual(period["period_start"], "2026-05-14")

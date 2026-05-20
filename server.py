@@ -117,6 +117,7 @@ def parse_csv_env(name, default_values):
 
 
 SC_QUICK_TEST_MODE = env_flag("SC_QUICK_TEST_MODE", False)
+SC_DEMO_SUPERVISOR_BYPASS = env_flag("SC_DEMO_SUPERVISOR_BYPASS", False)
 SC_ALLOWED_ORIGINS = parse_csv_env(
     "SC_ALLOWED_ORIGINS",
     [
@@ -280,6 +281,8 @@ def sync_auth_members():
 
 
 def current_auth():
+    if demo_supervisor_bypass_enabled():
+        return {"authenticated": True, "role": "supervisor", "member_id": None}
     role = session.get("auth_role")
     if role == "supervisor":
         return {"authenticated": True, "role": "supervisor", "member_id": None}
@@ -298,6 +301,10 @@ def auth_json_error(message, status_code=401):
 
 def quick_test_mode_enabled():
     return SC_QUICK_TEST_MODE
+
+
+def demo_supervisor_bypass_enabled():
+    return quick_test_mode_enabled() and SC_DEMO_SUPERVISOR_BYPASS
 
 
 def current_public_base_url():
@@ -324,6 +331,8 @@ def quick_test_supervisor_allowed():
 
 
 def local_testing_login_allowed():
+    if quick_test_mode_enabled():
+        return True
     host = str(request.host or "").split(":", 1)[0].strip().lower()
     remote = str(request.remote_addr or "").strip()
     return host in {"127.0.0.1", "localhost", "::1"} or remote in {"127.0.0.1", "::1"}
@@ -1514,6 +1523,7 @@ def auth_session():
         "role": auth["role"],
         "member_id": auth["member_id"],
         "quick_test_mode": quick_test_mode_enabled(),
+        "demo_supervisor_bypass": demo_supervisor_bypass_enabled(),
         "auth_mode": "quick_test" if quick_test_mode_enabled() and not auth["authenticated"] else "real_login",
         "build_code": BUILD_CODE,
         "public_base_url": current_public_base_url(),
@@ -2522,6 +2532,7 @@ def health_payload():
         "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "build_code": BUILD_CODE,
         "quick_test_mode": SC_QUICK_TEST_MODE,
+        "demo_supervisor_bypass": demo_supervisor_bypass_enabled(),
     }
 
 

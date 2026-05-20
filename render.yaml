@@ -10,9 +10,11 @@ services:
     envVars:
       - key: SC_QUICK_TEST_MODE
         value: "true"
+      - key: SC_DEMO_SUPERVISOR_BYPASS
+        value: "true"
       - key: SC_ALLOWED_ORIGINS
-        value: https://adr-fr.org,https://www.adr-fr.org
+        value: https://adr-fr.org,https://www.adr-fr.org,https://shiftcommander-backend.onrender.com,https://shiftcommander-v2.onrender.com
       - key: SC_PUBLIC_BASE_URL
-        value: https://shiftcommander-v2.onrender.com
+        value: https://shiftcommander-backend.onrender.com
       - key: SECRET_KEY
         generateValue: true
