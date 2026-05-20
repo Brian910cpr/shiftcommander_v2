@@ -460,14 +460,13 @@
 
     .sc-career-fire-driver-block {
       display: grid;
-      gap: 4px;
+      gap: 3px;
       align-items: start;
       justify-items: start;
-      padding: 7px 8px;
-      border-radius: 12px;
-      border: 1px solid rgba(180, 191, 210, 0.24);
-      background: rgba(5, 8, 12, 0.72);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
     }
 
     .sc-career-fire-driver-pill,
@@ -490,17 +489,41 @@
     }
 
     .sc-career-fire-driver-pill {
-      padding: 8px 11px;
-      font-size: 13px;
+      display: grid;
+      gap: 2px;
+      width: 100%;
+      min-height: 58px;
+      padding: 10px 14px;
+      border-radius: 14px;
       color: #eef4ff;
-      border-color: rgba(180, 191, 210, 0.36);
+      background: #05080c;
+      border-color: rgba(180, 191, 210, 0.34);
+      align-content: center;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.035);
+    }
+
+    .sc-career-fire-driver-title {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: #eef4ff;
+    }
+
+    .sc-career-fire-driver-time {
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      color: #aeb9c9;
+      letter-spacing: 0.08em;
     }
 
     .sc-transition-watch-pill,
     .sc-member-accommodation-watch-pill {
-      font-size: 11px;
+      font-size: 10px;
       color: #cbd5e4;
       background: #0a0f16;
+      padding: 4px 8px;
+      opacity: 0.92;
     }
 
     .slot.volunteer-driver-pill,
@@ -1072,12 +1095,16 @@
       if (!days.includes(dayCode)) return null;
       const careerStart = minutesFromHHMM(rules.start_time);
       const normalStart = minutesFromHHMM(rules.normal_shift_start);
-      const coverageLabel = `${String(rules.label || "Career Fire Driver").trim()} · ${compactTime(rules.start_time)}-${compactTime(rules.end_time)}`;
+      const coverageName = String(rules.label || "Career Fire Driver").trim();
+      const timeLabel = `${compactTime(rules.start_time)}-${compactTime(rules.end_time)}`;
+      const coverageLabel = `${coverageName} · ${timeLabel}`;
       let watchLabel = "";
       if (rules?.show_transition_watch !== false && careerStart !== null && normalStart !== null && careerStart > normalStart) {
         watchLabel = watchRangeLabel(rules.normal_shift_start, rules.start_time);
       }
       return {
+        coverageName,
+        timeLabel,
         coverageLabel,
         watchLabel,
         title: "Career Fire Driver coverage is shown from settings. This is operational context only, not a resolver assignment, open shift, overtime, or holdover."
@@ -1507,7 +1534,10 @@
       const renderedSlots = [
         ...(careerCoverage ? [`
           <div class="sc-career-fire-driver-block" title="${escapeHtml(careerCoverage.title)}">
-            <div class="sc-career-fire-driver-pill">${escapeHtml(careerCoverage.coverageLabel)}</div>
+            <div class="sc-career-fire-driver-pill">
+              <div class="sc-career-fire-driver-title">${escapeHtml(careerCoverage.coverageName)}</div>
+              <div class="sc-career-fire-driver-time">${escapeHtml(careerCoverage.timeLabel)}</div>
+            </div>
             ${careerCoverage.watchLabel ? `<div class="sc-transition-watch-pill">${escapeHtml(careerCoverage.watchLabel)}</div>` : ""}
           </div>
         `] : []),
