@@ -38,6 +38,7 @@ SHIFTS_FILE = os.path.join(DATA_DIR, "shifts.json")
 SCHEDULE_FILE = os.path.join(DATA_DIR, "schedule.json")
 PUBLIC_SCHEDULE_FILE = os.path.join(DOCS_DIR, "data", "schedule.json")
 SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
+PUBLIC_SETTINGS_FILE = os.path.join(DOCS_DIR, "data", "settings.json")
 AVAILABILITY_FILE = os.path.join(DATA_DIR, "availability.json")
 INFERRED_PREFERENCES_FILE = os.path.join(DATA_DIR, "inferred_preferences.json")
 SCHEDULE_LOCKED_FILE = os.path.join(DATA_DIR, "schedule_locked.json")
@@ -80,6 +81,14 @@ DEFAULT_MEMBER_ACCOMMODATIONS = {
             "creates_holdover_assignment": False,
         }
     ]
+}
+DEFAULT_DISPLAY_HORIZON = {
+    "mode": "temporary_fixed_until_date",
+    "temporary_fixed_end_date": "2026-06-30",
+    "resume_rolling_after_date": "2026-06-30",
+    "rolling_weeks_default": 5,
+    "admin_rolling_weeks": 5,
+    "enabled": True,
 }
 TEST_MEMBER_LOGIN = {
     "username": "test",
@@ -834,7 +843,14 @@ def load_settings():
         data = {}
     data["career_fire_driver"] = normalize_career_fire_driver_rules(data.get("career_fire_driver", {}))
     data["member_accommodations"] = normalize_member_accommodations(data.get("member_accommodations", {}))
+    data["display_horizon"] = normalize_display_horizon(data.get("display_horizon", {}))
     return data
+
+
+def save_settings_payload(settings):
+    save_json(SETTINGS_FILE, settings)
+    os.makedirs(os.path.dirname(PUBLIC_SETTINGS_FILE), exist_ok=True)
+    save_json(PUBLIC_SETTINGS_FILE, settings)
 
 
 def normalize_career_fire_driver_rules(raw):
@@ -887,6 +903,38 @@ def validate_career_fire_driver_rules(payload):
     merged["counts_toward_emt_coverage"] = True
     merged["counts_as_named_member_assignment"] = False
     return merged, None
+
+
+def normalize_display_horizon(raw):
+    horizon = deepcopy(DEFAULT_DISPLAY_HORIZON)
+    if isinstance(raw, dict):
+        horizon.update(raw)
+    horizon["enabled"] = bool(horizon.get("enabled"))
+    mode = str(horizon.get("mode") or DEFAULT_DISPLAY_HORIZON["mode"]).strip()
+    horizon["mode"] = mode if mode in {"temporary_fixed_until_date", "rolling"} else DEFAULT_DISPLAY_HORIZON["mode"]
+    for key in ["temporary_fixed_end_date", "resume_rolling_after_date"]:
+        parsed = None
+        try:
+            parsed = datetime.fromisoformat(str(horizon.get(key) or "")[:10]).date()
+        except ValueError:
+            parsed = datetime.fromisoformat(DEFAULT_DISPLAY_HORIZON[key]).date()
+        horizon[key] = parsed.isoformat()
+    for key in ["rolling_weeks_default", "admin_rolling_weeks"]:
+        try:
+            weeks = int(horizon.get(key) or DEFAULT_DISPLAY_HORIZON[key])
+        except (TypeError, ValueError):
+            weeks = DEFAULT_DISPLAY_HORIZON[key]
+        horizon[key] = max(1, min(52, weeks))
+    return horizon
+
+
+def validate_display_horizon(payload):
+    if not isinstance(payload, dict):
+        return None, "Display horizon settings must be an object"
+    try:
+        return normalize_display_horizon(payload), None
+    except Exception as exc:
+        return None, f"Invalid display horizon settings: {exc}"
 
 
 def normalize_member_accommodations(raw):
@@ -1786,7 +1834,8 @@ def get_member_context():
             "schedule": load_json(SCHEDULE_FILE, {}),
             "availability_edit_start_date": member_availability_edit_start_date().isoformat(),
             "member_page_settings": {
-                "availability_max_forward_weeks": member_page_settings.get("availability_max_forward_weeks")
+                "availability_max_forward_weeks": member_page_settings.get("availability_max_forward_weeks"),
+                "display_horizon": settings.get("display_horizon", DEFAULT_DISPLAY_HORIZON),
             },
             "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
             "quick_test_mode": quick_test_mode_enabled(),
@@ -2050,6 +2099,7 @@ def get_wallboard_settings():
         "resolver_rules": settings.get("resolver_rules", {}) if isinstance(settings, dict) else {},
         "career_fire_driver": settings.get("career_fire_driver", DEFAULT_CAREER_FIRE_DRIVER_RULES) if isinstance(settings, dict) else DEFAULT_CAREER_FIRE_DRIVER_RULES,
         "member_accommodations": settings.get("member_accommodations", DEFAULT_MEMBER_ACCOMMODATIONS) if isinstance(settings, dict) else DEFAULT_MEMBER_ACCOMMODATIONS,
+        "display_horizon": settings.get("display_horizon", DEFAULT_DISPLAY_HORIZON) if isinstance(settings, dict) else DEFAULT_DISPLAY_HORIZON,
     })
 
 
@@ -2060,7 +2110,8 @@ def save_settings():
     if not isinstance(settings, dict):
         return jsonify({"error": "Settings must be an object"}), 400
 
-    save_json(SETTINGS_FILE, settings)
+    settings["display_horizon"] = normalize_display_horizon(settings.get("display_horizon", {}))
+    save_settings_payload(settings)
     return jsonify({"status": "ok"})
 
 
@@ -2080,8 +2131,21 @@ def save_career_fire_driver_settings():
         return jsonify({"error": error}), 400
     settings = load_settings()
     settings["career_fire_driver"] = rules
-    save_json(SETTINGS_FILE, settings)
+    save_settings_payload(settings)
     return jsonify({"status": "ok", "career_fire_driver": rules})
+
+
+@app.route("/api/settings/display_horizon", methods=["POST"])
+@require_role("supervisor")
+def save_display_horizon_settings():
+    payload = request.get_json(silent=True) or {}
+    rules, error = validate_display_horizon(payload)
+    if error:
+        return jsonify({"error": error}), 400
+    settings = load_settings()
+    settings["display_horizon"] = rules
+    save_settings_payload(settings)
+    return jsonify({"status": "ok", "display_horizon": rules})
 
 
 # =========================

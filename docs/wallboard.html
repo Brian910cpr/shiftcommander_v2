@@ -954,6 +954,27 @@
       return d;
     }
 
+    function displayHorizonRules() {
+      return {
+        mode: "temporary_fixed_until_date",
+        temporary_fixed_end_date: "2026-06-30",
+        resume_rolling_after_date: "2026-06-30",
+        rolling_weeks_default: 5,
+        admin_rolling_weeks: 5,
+        enabled: true,
+        ...(lastLoadedData?.settings?.display_horizon || {})
+      };
+    }
+
+    function visibleEndDateIso(todayValue = getTodayIso()) {
+      const rules = displayHorizonRules();
+      if (rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0, 10)) {
+        return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0, 10);
+      }
+      const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || VISIBLE_WEEKS));
+      return toIsoLocal(addDays(parseLocalDate(todayValue), (weeks * 7) - 1));
+    }
+
     function startOfWeekSunday(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
       d.setDate(d.getDate() - d.getDay());
@@ -965,11 +986,13 @@
       const thisWeekStart = startOfWeekSunday(today);
       const offsetWeekStart = addDays(thisWeekStart, weekOffset * 7);
       const visibleStart = addDays(offsetWeekStart, -7);
+      const visibleEndIso = visibleEndDateIso();
       const dates = [];
 
       for (let i = 0; i < VISIBLE_DAYS; i++) {
         const d = addDays(visibleStart, i);
-        dates.push({ iso: toIsoLocal(d), dateObj: d });
+        const iso = toIsoLocal(d);
+        if (iso <= visibleEndIso) dates.push({ iso, dateObj: d });
       }
 
       return dates;
@@ -1694,6 +1717,12 @@
         autoFocusedAssignedWeek = true;
       }
       const visibleDates = buildVisibleDates(currentWeekOffset);
+      if (!visibleDates.length) {
+        app.className = "state";
+        app.innerHTML = `<div class="state-title">No visible dates in this display range</div><div class="state-detail">The temporary display horizon ends ${escapeHtml(visibleEndDateIso())}. Future schedule data remains available for workflows.</div>`;
+        metaWindow.textContent = `Showing through: ${visibleEndDateIso()}`;
+        return;
+      }
       const offsetLabel = currentWeekOffset === 0 ? "Today focus" : `${currentWeekOffset > 0 ? "+" : ""}${currentWeekOffset} week`;
 
       subtitle.textContent = `Here is who is working. Here is what is open. ${offsetLabel}`;

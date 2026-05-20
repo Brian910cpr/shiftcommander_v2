@@ -39,6 +39,7 @@ class AppSmokeTests(unittest.TestCase):
             ROOT / "data" / "shifts.json",
             ROOT / "data" / "schedule.json",
             ROOT / "data" / "settings.json",
+            ROOT / "docs" / "data" / "settings.json",
             ROOT / "data" / "availability.json",
             ROOT / "debug" / "latest_run_summary.json",
             ROOT / "debug" / "latest_run_supervisor_cards.json",
@@ -190,6 +191,15 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("Assigned Shifts", response.get_data(as_text=True))
         response.close()
 
+        self.login_member(member_id)
+        response = self.client.get("/api/member/context")
+        self.assertEqual(response.status_code, 200)
+        context = response.get_json()
+        self.assertIn("display_horizon", context["member_page_settings"])
+        self.assertEqual(context["member_page_settings"]["display_horizon"]["temporary_fixed_end_date"], "2026-06-30")
+        self.assertTrue(any(str(shift.get("date", "")).startswith("2026-07-") for shift in context["schedule"].get("shifts", [])))
+        response.close()
+
     def test_local_testing_dropdown_can_open_supervisor_pages_for_testing(self):
         response = self.client.get("/api/testing/members", base_url="http://127.0.0.1:5000")
         self.assertEqual(response.status_code, 200)
@@ -323,10 +333,42 @@ class AppSmokeTests(unittest.TestCase):
         wallboard_settings = response.get_json()
         self.assertIn("career_fire_driver", wallboard_settings)
         self.assertIn("member_accommodations", wallboard_settings)
+        self.assertIn("display_horizon", wallboard_settings)
         response.close()
 
         response = self.client.post("/api/settings/career_fire_driver", json={**payload, "days": ["SA"]})
         self.assertEqual(response.status_code, 400)
+        response.close()
+
+    def test_display_horizon_settings_api_validates_and_persists_visual_only_rule(self):
+        self.login_supervisor()
+        payload = {
+            "enabled": True,
+            "mode": "temporary_fixed_until_date",
+            "temporary_fixed_end_date": "2026-06-30",
+            "resume_rolling_after_date": "2026-06-30",
+            "rolling_weeks_default": 5,
+            "admin_rolling_weeks": 5,
+        }
+
+        response = self.client.post("/api/settings/display_horizon", json=payload)
+
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        horizon = data["display_horizon"]
+        self.assertTrue(horizon["enabled"])
+        self.assertEqual(horizon["temporary_fixed_end_date"], "2026-06-30")
+        self.assertEqual(horizon["admin_rolling_weeks"], 5)
+        response.close()
+
+        response = self.client.get("/api/wallboard_settings")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["display_horizon"]["temporary_fixed_end_date"], "2026-06-30")
+        response.close()
+
+        response = self.client.post("/api/settings/display_horizon", json={"admin_rolling_weeks": 999})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["display_horizon"]["admin_rolling_weeks"], 52)
         response.close()
 
     def test_quick_test_supervisor_api_bypass_is_demo_only(self):

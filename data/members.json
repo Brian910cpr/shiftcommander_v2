@@ -51,7 +51,17 @@
       "rotation": null,
       "scheduler": {
         "avoid_with": []
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 24,
+      "preferred_hours": null,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -100,7 +110,17 @@
       ],
       "rank": "Asst. Chief",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 24,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -148,7 +168,17 @@
       ],
       "rank": "Deputy Chief",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": null,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -196,7 +226,17 @@
       ],
       "rank": "Lieutenant",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -249,7 +289,17 @@
       "rotation": null,
       "scheduler": {
         "reserve_only": true
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 50,
+      "preferred_hours": 40,
+      "hourly_or_salaried": "salaried"
     },
     {
       "active": true,
@@ -268,7 +318,7 @@
         "pay_rate": 50000,
         "pay_rate_unit": "yr",
         "pay_type": "salaried",
-        "preferred_weekly_hour_cap": 50,
+        "preferred_weekly_hour_cap": 50.0,
         "status": "FT"
       },
       "first_name": "Nicholas",
@@ -288,7 +338,7 @@
           "rotation_track": null,
           "shift_length_hours": null,
           "style": "availability_based",
-          "swap_strategy": "allow"
+          "swap_strategy": "supervisor_only"
         }
       },
       "qrv_certified": true,
@@ -302,7 +352,17 @@
       "rotation": null,
       "scheduler": {
         "reserve_only": true
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 50,
+      "preferred_hours": 50,
+      "hourly_or_salaried": "salaried"
     },
     {
       "active": false,
@@ -350,7 +410,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -398,7 +468,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -446,7 +526,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -495,7 +585,17 @@
       ],
       "rank": "",
       "raw_cert": "EMR",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -544,7 +644,17 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -592,7 +702,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 12,
+      "preferred_hours": 12,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": false,
@@ -640,7 +760,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -694,7 +824,17 @@
         "avoid_with": [
           "102"
         ]
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -743,7 +883,17 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 36,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": false,
@@ -791,7 +941,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -840,7 +1000,17 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": false,
@@ -889,7 +1059,17 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -935,7 +1115,17 @@
       "qualifications": [],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 12,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -983,7 +1173,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -1032,7 +1232,17 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 12,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": false,
@@ -1082,7 +1292,17 @@
       ],
       "rank": "",
       "raw_cert": "PARAMEDIC",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -1130,7 +1350,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -1179,7 +1409,17 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 36,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": false,
@@ -1227,7 +1467,17 @@
       ],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -1273,7 +1523,17 @@
       "qualifications": [],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": false,
@@ -1319,7 +1579,17 @@
       "qualifications": [],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -1367,7 +1637,17 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 24,
+      "preferred_hours": 12,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": false,
@@ -1416,7 +1696,17 @@
       ],
       "rank": "",
       "raw_cert": "AEMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 0,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "volunteer"
     },
     {
       "active": true,
@@ -1469,7 +1759,17 @@
       "rotation": {
         "pair": "AC",
         "role": "C"
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": "C",
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 36,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1519,7 +1819,17 @@
       ],
       "rank": "",
       "raw_cert": "PARAMEDIC",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 24,
+      "preferred_hours": 12,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1569,7 +1879,17 @@
       ],
       "rank": "",
       "raw_cert": "AEMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 36,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1617,7 +1937,17 @@
       ],
       "rank": "",
       "raw_cert": "AEMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 12,
+      "preferred_hours": 0,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": false,
@@ -1663,7 +1993,17 @@
       "qualifications": [],
       "rank": "",
       "raw_cert": "NCLD",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": null,
+      "preferred_hours": null,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1715,7 +2055,17 @@
       "rotation": {
         "pair": "AC",
         "role": "A"
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": "A",
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 36,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1768,7 +2118,17 @@
       "rotation": {
         "pair": "AC",
         "role": "A"
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": "A",
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 40,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1816,7 +2176,17 @@
       ],
       "rank": "",
       "raw_cert": "PARAMEDIC",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 40,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1867,7 +2237,17 @@
       "rotation": {
         "pair": "BD",
         "role": "D"
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": "D",
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 40,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1916,7 +2296,17 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": null,
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 40,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     },
     {
       "active": true,
@@ -1970,7 +2360,17 @@
       },
       "scheduler": {
         "avoid_with": []
-      }
+      },
+      "shift_system": null,
+      "shift_system_assignment": null,
+      "rotation_slot": "D",
+      "rotation_authorized": false,
+      "expected_rotation_ot_allowed": false,
+      "zipper_participation": false,
+      "zipper_group": null,
+      "max_hours_allowed": 36,
+      "preferred_hours": 36,
+      "hourly_or_salaried": "hourly"
     }
   ]
 }

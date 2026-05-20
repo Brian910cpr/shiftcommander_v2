@@ -93,6 +93,7 @@
     .day-top{display:flex;justify-content:space-between;align-items:start}
     .day-num{font-size:34px;font-weight:950;line-height:1}
     .day-date{font-size:12px;color:var(--muted);font-weight:850;text-align:right}
+    .day-iso{margin-top:2px;font-size:10px;color:rgba(167,184,216,.72);font-weight:800;letter-spacing:.03em}
     .state-grid{display:grid;gap:10px}
     .shift-row{display:grid;gap:7px}
     .shift-label{font-size:12px;font-weight:950;color:var(--muted);letter-spacing:.06em}
@@ -411,6 +412,7 @@
       availability: { months: {} },
       schedule: {},
       availabilityEditStartDate: "",
+      displayHorizon: {},
       displayWeekOffset: DEFAULT_EDITABLE_WEEK_OFFSET,
       selectedTimecardStart: "",
       viewMode: "",
@@ -442,9 +444,17 @@
       return `/login.html?next=${encodeURIComponent(window.location.pathname || "/member")}`;
     }
     function asArray(value){ return Array.isArray(value) ? value : []; }
-    function isoToDate(iso){ return new Date(`${iso}T00:00:00`); }
-    function formatDate(date){ return date.toISOString().slice(0,10); }
-    function addDays(date, days){ const d = new Date(date); d.setDate(d.getDate()+days); return d; }
+    function parseIsoLocalDate(isoDate) {
+      const parts = String(isoDate || "").slice(0, 10).split("-").map(Number);
+      if(parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) return new Date(NaN);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    function isoToDate(iso){ return parseIsoLocalDate(iso); }
+    function formatDate(date){
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+    }
+    function addDays(date, days){ const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()); d.setDate(d.getDate()+days); return d; }
+    function todayIso(){ return formatDate(new Date()); }
     function operationalCycleStart(date){
       const d = new Date(date);
       d.setHours(0,0,0,0);
@@ -583,15 +593,57 @@
       appState.dirtyAvailabilityKeys.add(`${dateIso}|${shift}`);
       renderSaveState();
     }
+    function scheduleDateIsos(){
+      return [...new Set(asArray(appState.schedule?.shifts)
+        .map((shift) => String(shift?.date || shift?.shift_date || "").slice(0,10))
+        .filter((iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso)))]
+        .sort();
+    }
+    function scheduleAnchorDate(){
+      const dates = scheduleDateIsos();
+      if(!dates.length) return null;
+      const editStartIso = appState.availabilityEditStartDate || "";
+      return dates.find((iso) => iso >= editStartIso) || dates[0];
+    }
+    function displayHorizonRules(){
+      return {
+        mode: "temporary_fixed_until_date",
+        temporary_fixed_end_date: "2026-06-30",
+        resume_rolling_after_date: "2026-06-30",
+        rolling_weeks_default: 5,
+        admin_rolling_weeks: 5,
+        enabled: true,
+        ...(appState.displayHorizon || {})
+      };
+    }
+    function visibleEndDateIso(todayValue = todayIso()){
+      const rules = displayHorizonRules();
+      if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0,10)){
+        return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
+      }
+      const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5));
+      return formatDate(addDays(parseIsoLocalDate(todayValue), (weeks * DAYS_PER_OPERATIONAL_CYCLE) - 1));
+    }
     function displayWeekStart(){
-      const start = operationalCycleStart(new Date());
+      const scheduleAnchor = scheduleAnchorDate();
+      const start = scheduleAnchor ? isoToDate(scheduleAnchor) : operationalCycleStart(new Date());
       start.setDate(start.getDate() + (appState.displayWeekOffset * DAYS_PER_OPERATIONAL_CYCLE));
       return start;
     }
     function visibleDates(){
       const start = displayWeekStart();
       appState.forwardWeeks = selectedForwardWeeks();
-      return Array.from({length: appState.forwardWeeks * DAYS_PER_OPERATIONAL_CYCLE}, (_,i) => addDays(start, i));
+      const count = appState.forwardWeeks * DAYS_PER_OPERATIONAL_CYCLE;
+      const startIso = formatDate(start);
+      const endIso = visibleEndDateIso();
+      const fromSchedule = scheduleDateIsos()
+        .filter((iso) => iso >= startIso)
+        .filter((iso) => iso <= endIso)
+        .slice(0, count)
+        .map(parseIsoLocalDate)
+        .filter((date) => !Number.isNaN(date.getTime()));
+      if(fromSchedule.length) return fromSchedule;
+      return Array.from({length: count}, (_,i) => addDays(start, i)).filter((date) => formatDate(date) <= endIso);
     }
     function memberEditStartDate(){
       return appState.availabilityEditStartDate ? isoToDate(appState.availabilityEditStartDate) : nextOperationalCycleStart(new Date());
@@ -1111,6 +1163,7 @@
       document.getElementById("calendarHead").innerHTML = dates.slice(0, 7).map((date) => `<div class="dow">${date.toLocaleDateString(undefined,{weekday:"short"})}</div>`).join("");
       document.getElementById("calendarGrid").innerHTML = dates.map((date) => {
         const iso = formatDate(date);
+        const weekday = date.toLocaleDateString(undefined,{weekday:"short"});
         const locked = editLocked(iso);
         const dateCycleClass = cycleClass(iso);
         const lockedReason = lockReason(iso);
@@ -1136,10 +1189,10 @@
           `;
         }).join("");
         return `
-          <div class="day-card ${locked ? "locked" : ""} ${dateCycleClass}">
+          <div class="day-card ${locked ? "locked" : ""} ${dateCycleClass}" data-date="${esc(iso)}" data-weekday="${esc(weekday)}" data-source="schedule">
             <div class="day-top">
               <div class="day-num">${date.getDate()}</div>
-              <div class="day-date">${date.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</div>
+              <div class="day-date">${esc(weekday)} · ${date.toLocaleDateString(undefined,{month:"short",day:"numeric"})}<div class="day-iso">${esc(iso)}</div></div>
             </div>
             <div class="state-grid">${rows}</div>
             <div class="day-note">${locked ? "Current cycle: station whiteboard/manual." : "Future cycle: tap AM or PM to change your answer."}</div>
@@ -1211,6 +1264,7 @@
       appState.schedule = context.data.schedule || {};
       appState.availabilityEditStartDate = context.data.availability_edit_start_date || "";
       appState.adminMaxForwardWeeks = context.data.member_page_settings?.availability_max_forward_weeks || null;
+      appState.displayHorizon = context.data.member_page_settings?.display_horizon || {};
       appState.contextReady = true;
       appState.dirtyAvailability = false;
       appState.dirtyAvailabilityKeys.clear();

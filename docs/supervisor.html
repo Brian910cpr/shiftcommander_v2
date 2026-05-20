@@ -64,11 +64,20 @@
     .field{display:grid;gap:8px}
     .field label{color:var(--muted);font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
     .field select,.field input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
-    .career-settings{margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);display:grid;gap:12px}
+    .control-card{margin-top:16px;padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));display:grid;gap:12px}
+    .control-head{display:grid;gap:4px}
+    .control-head h3{margin:0;font-size:17px}
+    .control-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
     .weekday-checks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
     .weekday-check{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-weight:900;color:var(--text)}
     .weekday-check input{width:auto}
-    .career-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .toggle-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.14);font-weight:900}
+    .toggle-line input{width:auto}
+    .compact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .field-mini{display:grid;gap:6px;color:var(--muted);font-size:12px;font-weight:900}
+    .field-mini input{width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:850}
+    .control-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .status-line{display:inline-flex;align-items:center;min-height:28px;width:max-content;max-width:100%;padding:6px 10px;border-radius:999px;border:1px solid rgba(105,184,255,.24);background:rgba(105,184,255,.08);color:#cfe4ff;font-size:12px;font-weight:850}
     .main{display:grid;gap:14px}
     .week-summary{margin-top:10px}
     .summary-stat{min-width:110px;padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)}
@@ -216,11 +225,12 @@
           <span class="badge locked">Supervisor Locked</span>
           <span class="badge draft">Draft</span>
         </div>
-        <section class="career-settings" aria-label="Career Fire Driver settings">
-          <div>
+        <section class="control-card" aria-label="Career Fire Driver settings">
+          <div class="control-head">
             <h3>Career Fire Driver</h3>
-            <p class="muted">Select weekdays where career fire driver coverage is expected. This creates only a wallboard transition notice, not a required resolver seat.</p>
+            <p>Marks daytime EMT/driver coverage.</p>
           </div>
+          <div class="mini">Days</div>
           <div class="weekday-checks" id="careerDayChecks">
             <label class="weekday-check"><input type="checkbox" value="MO"> Mon</label>
             <label class="weekday-check"><input type="checkbox" value="TU"> Tue</label>
@@ -228,13 +238,34 @@
             <label class="weekday-check"><input type="checkbox" value="TH"> Thu</label>
             <label class="weekday-check"><input type="checkbox" value="FR"> Fri</label>
           </div>
-          <div class="career-actions">
-            <button class="btn" id="careerStandardBtn" type="button">Select Standard M/T/Th</button>
-            <button class="btn" id="careerAllBtn" type="button">Select All Weekdays</button>
-            <button class="btn" id="careerClearBtn" type="button">Clear Career Coverage</button>
-            <button class="btn primary" id="careerSaveBtn" type="button">Save Career Coverage</button>
+          <div class="compact-fields">
+            <label class="field-mini">Start <input id="careerStartTime" type="time" value="08:00"></label>
+            <label class="field-mini">End <input id="careerEndTime" type="time" value="18:00"></label>
           </div>
-          <div class="mini" id="careerStatus">Transition watch label: 0800 Relief Arrival</div>
+          <div class="control-actions">
+            <button class="btn" id="careerStandardBtn" type="button">Standard M/T/Th</button>
+            <button class="btn" id="careerAllBtn" type="button">All Weekdays</button>
+            <button class="btn" id="careerClearBtn" type="button">Clear Days</button>
+            <button class="btn primary" id="careerSaveBtn" type="button">Save Coverage</button>
+          </div>
+          <div class="status-line" id="careerStatus">Active: Mon, Tue, Thu · 0800-1800</div>
+        </section>
+        <section class="control-card" aria-label="Display Horizon settings">
+          <div class="control-head">
+            <h3>Display Horizon</h3>
+            <p>Controls how far ahead the schedule is shown.</p>
+          </div>
+          <label class="toggle-line"><span>Freeze visible calendar</span><input type="checkbox" id="displayHorizonEnabled"></label>
+          <div class="compact-fields">
+            <label class="field-mini">Show through <input id="displayHorizonEndDate" type="date" value="2026-06-30"></label>
+            <label class="field-mini">Rolling weeks <input id="displayHorizonRollingWeeks" type="number" min="1" max="52" value="5"></label>
+          </div>
+          <div class="control-actions">
+            <button class="btn" id="horizonFreezeBtn" type="button">Freeze Through June 30</button>
+            <button class="btn" id="horizonRollingBtn" type="button">Use Rolling Horizon</button>
+            <button class="btn primary" id="horizonSaveBtn" type="button">Save Horizon</button>
+          </div>
+          <div class="status-line" id="horizonStatus">Visible through Jun 30, 2026</div>
         </section>
       </aside>
 
@@ -306,6 +337,14 @@
       counts_as_required_coverage: false,
       creates_holdover_assignment: false,
       visible_on_wallboard: true
+    };
+    const DEFAULT_DISPLAY_HORIZON = {
+      mode: "temporary_fixed_until_date",
+      temporary_fixed_end_date: "2026-06-30",
+      resume_rolling_after_date: "2026-06-30",
+      rolling_weeks_default: 5,
+      admin_rolling_weeks: 5,
+      enabled: true
     };
 
     function apiUrl(path){
@@ -445,6 +484,20 @@
       return { ...DEFAULT_CAREER_FIRE_DRIVER, ...(state.settings?.career_fire_driver || {}) };
     }
 
+    function timeCompact(value){
+      return String(value || "").replace(":", "");
+    }
+
+    function shortDateLabel(iso){
+      const date = isoToDate(iso);
+      if(Number.isNaN(date.getTime())) return String(iso || "");
+      return date.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
+    }
+
+    function careerDayLabel(day){
+      return ({ MO:"Mon", TU:"Tue", WE:"Wed", TH:"Thu", FR:"Fri" })[String(day || "").toUpperCase()] || String(day || "");
+    }
+
     function setCareerDays(days){
       const selected = new Set((days || []).map((day) => String(day).toUpperCase()));
       document.querySelectorAll("#careerDayChecks input[type='checkbox']").forEach((box) => {
@@ -459,9 +512,16 @@
     function renderCareerFireDriverSettings(){
       const rules = careerRules();
       setCareerDays(rules.days || DEFAULT_CAREER_FIRE_DRIVER.days);
+      const start = document.getElementById("careerStartTime");
+      const end = document.getElementById("careerEndTime");
       const status = document.getElementById("careerStatus");
+      if(start) start.value = rules.start_time || "08:00";
+      if(end) end.value = rules.end_time || "18:00";
       if(status){
-        status.textContent = `${rules.label || "Career Fire Driver"} · ${rules.start_time || "08:00"}-${rules.end_time || "18:00"} · ${rules.transition_watch_label || "0800 Relief Arrival"} · marker only, not resolver coverage`;
+        const days = asArray(rules.days).map(careerDayLabel).join(", ");
+        status.textContent = days
+          ? `Active: ${days} · ${timeCompact(rules.start_time || "08:00")}-${timeCompact(rules.end_time || "18:00")}`
+          : "No career coverage selected";
       }
     }
 
@@ -469,6 +529,8 @@
       const payload = {
         ...careerRules(),
         days: careerDaysFromUi(),
+        start_time: document.getElementById("careerStartTime")?.value || "08:00",
+        end_time: document.getElementById("careerEndTime")?.value || "18:00",
         counts_as_required_coverage: false,
         creates_holdover_assignment: false
       };
@@ -476,9 +538,58 @@
         const result = await apiPost("/api/settings/career_fire_driver", payload);
         state.settings.career_fire_driver = result.career_fire_driver || payload;
         renderCareerFireDriverSettings();
+        const status = document.getElementById("careerStatus");
+        if(status) status.textContent = "Saved";
         showFlash("Career Fire Driver coverage saved.", "success");
       }catch(error){
         showFlash(`Career Fire Driver save failed: ${error.message || "unknown error"}`, "error");
+      }
+    }
+
+    function renderDisplayHorizonSettings(){
+      const rules = displayHorizonRules();
+      const enabled = document.getElementById("displayHorizonEnabled");
+      const endDate = document.getElementById("displayHorizonEndDate");
+      const weeks = document.getElementById("displayHorizonRollingWeeks");
+      const status = document.getElementById("horizonStatus");
+      if(enabled) enabled.checked = !!rules.enabled && rules.mode === "temporary_fixed_until_date";
+      if(endDate) endDate.value = String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
+      if(weeks) weeks.value = Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5);
+      if(status) status.textContent = rules.enabled && rules.mode === "temporary_fixed_until_date"
+        ? `Visible through ${shortDateLabel(String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10))}`
+        : `Rolling horizon: ${Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5)} weeks`;
+    }
+
+    function displayHorizonPayload(){
+      const enabled = document.getElementById("displayHorizonEnabled")?.checked;
+      const endDate = document.getElementById("displayHorizonEndDate")?.value || "2026-06-30";
+      const weeks = Number(document.getElementById("displayHorizonRollingWeeks")?.value || 5);
+      return {
+        ...displayHorizonRules(),
+        enabled,
+        mode: enabled ? "temporary_fixed_until_date" : "rolling",
+        temporary_fixed_end_date: endDate,
+        resume_rolling_after_date: endDate,
+        rolling_weeks_default: 5,
+        admin_rolling_weeks: Math.max(1, weeks || 5),
+      };
+    }
+
+    async function saveDisplayHorizonSettings(){
+      const payload = displayHorizonPayload();
+      try{
+        const result = await apiPost("/api/settings/display_horizon", payload);
+        state.settings.display_horizon = result.display_horizon || payload;
+        renderDisplayHorizonSettings();
+        populateWeekSelect();
+        renderWeekSummary();
+        renderOpenSeats();
+        renderBoard();
+        const status = document.getElementById("horizonStatus");
+        if(status) status.textContent = "Saved";
+        showFlash("Display horizon saved.", "success");
+      }catch(error){
+        showFlash(`Display horizon save failed: ${error.message || "unknown error"}`, "error");
       }
     }
 
@@ -502,14 +613,43 @@
     }
 
     function isoToDate(iso){
-      return new Date(`${iso}T00:00:00`);
+      const parts = String(iso || "").slice(0,10).split("-").map(Number);
+      if(parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) return new Date(NaN);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function formatDate(date){
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+    }
+
+    function addDays(date, days){
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      d.setDate(d.getDate() + days);
+      return d;
+    }
+
+    function todayIso(){
+      return formatDate(new Date());
+    }
+
+    function displayHorizonRules(){
+      return { ...DEFAULT_DISPLAY_HORIZON, ...(state.settings?.display_horizon || {}) };
+    }
+
+    function visibleEndDateIso(todayValue = todayIso()){
+      const rules = displayHorizonRules();
+      if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0,10)){
+        return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
+      }
+      const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5));
+      return formatDate(addDays(isoToDate(todayValue), (weeks * 7) - 1));
     }
 
     function weekStartIso(dateIso){
       const date = isoToDate(dateIso);
       const offset = (date.getDay() + 6) % 7;
       date.setDate(date.getDate() - offset);
-      return date.toISOString().slice(0,10);
+      return formatDate(date);
     }
 
     function formatWeekLabel(weekIso){
@@ -638,7 +778,8 @@
     }
 
     function groupedWeekShifts(){
-      const shifts = asArray(state.schedule?.shifts).filter((shift) => weekStartIso(shift.date) === state.selectedWeek);
+      const visibleEnd = visibleEndDateIso();
+      const shifts = asArray(state.schedule?.shifts).filter((shift) => String(shift?.date || "").slice(0,10) <= visibleEnd && weekStartIso(shift.date) === state.selectedWeek);
       const grouped = new Map();
       for(const shift of shifts){
         if(!grouped.has(shift.date)) grouped.set(shift.date, []);
@@ -896,7 +1037,10 @@
     }
 
     function availableWeeks(){
-      const weekSet = new Set(asArray(state.schedule?.shifts).map((shift) => weekStartIso(shift.date)));
+      const visibleEnd = visibleEndDateIso();
+      const weekSet = new Set(asArray(state.schedule?.shifts)
+        .filter((shift) => String(shift?.date || "").slice(0,10) <= visibleEnd)
+        .map((shift) => weekStartIso(shift.date)));
       return [...weekSet].sort();
     }
 
@@ -999,6 +1143,7 @@
       state.schedule = schedule || {};
       state.supervisorState = supervisorState || { entries: [] };
       renderCareerFireDriverSettings();
+      renderDisplayHorizonSettings();
       document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(sessionInfo?.member_id || sessionInfo?.role || "unknown")}`;
       updateActionDiagnostics();
 
@@ -1119,6 +1264,17 @@
       document.getElementById("careerAllBtn").addEventListener("click", () => setCareerDays(["MO", "TU", "WE", "TH", "FR"]));
       document.getElementById("careerClearBtn").addEventListener("click", () => setCareerDays([]));
       document.getElementById("careerSaveBtn").addEventListener("click", saveCareerFireDriverSettings);
+      document.getElementById("horizonFreezeBtn").addEventListener("click", () => {
+        document.getElementById("displayHorizonEnabled").checked = true;
+        document.getElementById("displayHorizonEndDate").value = "2026-06-30";
+        document.getElementById("displayHorizonRollingWeeks").value = "5";
+        document.getElementById("horizonStatus").textContent = "Visible through Jun 30, 2026";
+      });
+      document.getElementById("horizonRollingBtn").addEventListener("click", () => {
+        document.getElementById("displayHorizonEnabled").checked = false;
+        document.getElementById("horizonStatus").textContent = `Rolling horizon: ${Number(document.getElementById("displayHorizonRollingWeeks").value || 5)} weeks`;
+      });
+      document.getElementById("horizonSaveBtn").addEventListener("click", saveDisplayHorizonSettings);
       document.body.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-action]");
         if(!button) return;

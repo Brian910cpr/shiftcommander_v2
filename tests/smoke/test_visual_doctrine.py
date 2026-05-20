@@ -2,7 +2,7 @@ import copy
 import json
 import sys
 import unittest
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 
@@ -271,6 +271,70 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertNotIn("currentWeekOffset", member)
         self.assertNotIn("visibleCycleStarts", member)
 
+    def test_member_calendar_uses_schedule_iso_dates_for_2026_weekdays(self):
+        member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")
+        self.assertIn("function parseIsoLocalDate", member)
+        self.assertIn("function scheduleDateIsos", member)
+        self.assertIn("appState.schedule?.shifts", member)
+        self.assertIn('data-date="${esc(iso)}"', member)
+        self.assertIn('data-weekday="${esc(weekday)}"', member)
+        self.assertIn('data-source="schedule"', member)
+        self.assertNotIn('new Date(`${iso}T00:00:00`)', member)
+
+        self.assertEqual(date(2026, 6, 1).strftime("%A"), "Monday")
+        self.assertEqual(date(2026, 6, 2).strftime("%A"), "Tuesday")
+        self.assertEqual(date(2026, 5, 31).strftime("%A"), "Sunday")
+        self.assertNotEqual(date(2026, 6, 1).strftime("%A"), "Thursday")
+        self.assertNotEqual(date(2026, 5, 28).strftime("%A"), "Sunday")
+
+    def test_temporary_display_horizon_limits_visible_calendar_only(self):
+        settings = json.loads((ROOT / "data" / "settings.json").read_text(encoding="utf-8"))
+        schedule = json.loads((ROOT / "data" / "schedule.json").read_text(encoding="utf-8"))
+        member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")
+        supervisor = (ROOT / "docs" / "supervisor.html").read_text(encoding="utf-8")
+        wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
+
+        horizon = settings["display_horizon"]
+        self.assertTrue(horizon["enabled"])
+        self.assertEqual(horizon["mode"], "temporary_fixed_until_date")
+        self.assertEqual(horizon["temporary_fixed_end_date"], "2026-06-30")
+        self.assertEqual(horizon["resume_rolling_after_date"], "2026-06-30")
+        self.assertEqual(horizon["admin_rolling_weeks"], 5)
+        self.assertTrue(any(str(shift.get("date", "")).startswith("2026-07-") for shift in schedule.get("shifts", [])))
+
+        for page in [member, supervisor, wallboard]:
+            self.assertIn("function visibleEndDateIso", page)
+            self.assertIn("temporary_fixed_end_date", page)
+            self.assertIn("admin_rolling_weeks", page)
+        self.assertIn("iso <= endIso", member)
+        self.assertIn('String(shift?.date || "").slice(0,10) <= visibleEnd', supervisor)
+        self.assertIn("iso <= visibleEndIso", wallboard)
+        self.assertIn("Display Horizon", supervisor)
+        self.assertIn("horizonFreezeBtn", supervisor)
+        self.assertIn("horizonRollingBtn", supervisor)
+        self.assertIn("/api/settings/display_horizon", supervisor)
+        self.assertIn("Controls how far ahead the schedule is shown.", supervisor)
+        self.assertIn("Freeze visible calendar", supervisor)
+        self.assertIn("Show through", supervisor)
+        self.assertIn("Rolling weeks", supervisor)
+        self.assertIn("Freeze Through June 30", supervisor)
+        self.assertIn("Use Rolling Horizon", supervisor)
+        self.assertIn("Save Horizon", supervisor)
+        self.assertIn("Future schedule data remains available for workflows", wallboard)
+        self.assertIn("member_page_settings", (ROOT / "server.py").read_text(encoding="utf-8"))
+        self.assertIn('"display_horizon"', (ROOT / "server.py").read_text(encoding="utf-8"))
+
+        def visible_end(today_value, enabled=True, mode="temporary_fixed_until_date", weeks=5):
+            if enabled and mode == "temporary_fixed_until_date" and today_value <= "2026-06-30":
+                return "2026-06-30"
+            return (date.fromisoformat(today_value) + timedelta(days=(weeks * 7) - 1)).isoformat()
+
+        self.assertEqual(visible_end("2026-05-20"), "2026-06-30")
+        self.assertEqual(visible_end("2026-06-30"), "2026-06-30")
+        self.assertEqual(visible_end("2026-07-01"), "2026-08-04")
+        self.assertEqual(visible_end("2026-05-20", enabled=False), "2026-06-23")
+        self.assertEqual(visible_end("2026-05-20", mode="rolling"), "2026-06-23")
+
     def test_member_timecard_week_selector_controls_print_preview(self):
         member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")
         self.assertIn('id="timecardWeekSelect"', member)
@@ -289,9 +353,13 @@ class VisualDoctrineTests(unittest.TestCase):
         settings = json.loads((ROOT / "data" / "settings.json").read_text(encoding="utf-8"))
         self.assertIn("Career Fire Driver", supervisor)
         self.assertIn("careerStandardBtn", supervisor)
-        self.assertIn("Select Standard M/T/Th", supervisor)
-        self.assertIn("Select All Weekdays", supervisor)
-        self.assertIn("Clear Career Coverage", supervisor)
+        self.assertIn("Marks daytime EMT/driver coverage.", supervisor)
+        self.assertIn("Standard M/T/Th", supervisor)
+        self.assertIn("All Weekdays", supervisor)
+        self.assertIn("Clear Days", supervisor)
+        self.assertIn("Save Coverage", supervisor)
+        self.assertIn('id="careerStartTime"', supervisor)
+        self.assertIn('id="careerEndTime"', supervisor)
         self.assertIn("/api/settings/career_fire_driver", supervisor)
         self.assertIn(".sc-career-fire-driver-block", wallboard)
         self.assertIn(".sc-career-fire-driver-pill", wallboard)
