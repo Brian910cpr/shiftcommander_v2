@@ -471,6 +471,7 @@
     }
 
     .sc-career-fire-driver-pill,
+    .sc-coverage-gap-pill,
     .sc-transition-watch-pill,
     .sc-member-accommodation-watch-pill {
       display: inline-flex;
@@ -520,6 +521,7 @@
     }
 
     .sc-transition-watch-pill,
+    .sc-coverage-gap-pill,
     .sc-member-accommodation-watch-pill {
       font-size: 10px;
       color: #cbd5e4;
@@ -528,11 +530,13 @@
       opacity: 0.92;
     }
 
-    .sc-career-fire-driver-block .sc-transition-watch-pill {
+    .sc-coverage-gap-pill {
       width: 100%;
       box-sizing: border-box;
       border-radius: 10px;
       justify-content: flex-start;
+      background: rgba(10, 15, 22, 0.86);
+      border-color: rgba(180, 191, 210, 0.22);
     }
 
     .slot.volunteer-driver-pill,
@@ -1092,6 +1096,10 @@
       return `${compactTime(startTime)}-${compactTime(endTime)} Watch`;
     }
 
+    function coverageGapLabel(startTime, endTime) {
+      return `Coverage Gap: ${compactTime(startTime)}-${compactTime(endTime)}`;
+    }
+
     function careerCoverageForShift(shift) {
       const rules = careerFireDriverRules();
       if (!rules?.enabled || rules?.visible_on_wallboard === false) return null;
@@ -1107,15 +1115,15 @@
       const coverageName = String(rules.label || "Career Fire Driver").trim();
       const timeLabel = `${compactTime(rules.start_time)}-${compactTime(rules.end_time)}`;
       const coverageLabel = `${coverageName} · ${timeLabel}`;
-      let watchLabel = "";
+      let gapLabel = "";
       if (rules?.show_transition_watch !== false && careerStart !== null && normalStart !== null && careerStart > normalStart) {
-        watchLabel = watchRangeLabel(rules.normal_shift_start, rules.start_time);
+        gapLabel = coverageGapLabel(rules.normal_shift_start, rules.start_time);
       }
       return {
         coverageName,
         timeLabel,
         coverageLabel,
-        watchLabel,
+        gapLabel,
         title: "Career Fire Driver coverage is shown from settings. This is operational context only, not a resolver assignment, open shift, overtime, or holdover."
       };
     }
@@ -1541,15 +1549,7 @@
         });
 
       const renderedSlots = [
-        ...(careerCoverage ? [`
-          <div class="sc-career-fire-driver-block" title="${escapeHtml(careerCoverage.title)}">
-            <div class="sc-career-fire-driver-pill">
-              <div class="sc-career-fire-driver-title">${escapeHtml(careerCoverage.coverageName)}</div>
-              <div class="sc-career-fire-driver-time">${escapeHtml(careerCoverage.timeLabel)}</div>
-            </div>
-            ${careerCoverage.watchLabel ? `<div class="sc-transition-watch-pill">${escapeHtml(careerCoverage.watchLabel)}</div>` : ""}
-          </div>
-        `] : []),
+        ...(careerCoverage?.gapLabel ? [`<div class="sc-coverage-gap-pill" title="Coverage gap notice only. This is not an open shift, holdover, overtime, or member assignment.">${escapeHtml(careerCoverage.gapLabel)}</div>`] : []),
         ...(memberAccommodationWatch ? [`<div class="sc-member-accommodation-watch-pill" title="${escapeHtml(memberAccommodationWatch.title)}">${escapeHtml(memberAccommodationWatch.label)}</div>`] : []),
         ...(showOpenAls && !readiness.problem ? [renderSlot({ role: "ATTENDANT", display_role: "ALS Attendant", display_open_alert: true }, shift.date, memberLookup, {
           displayLabel: "Volunteer ALS Response Appreciated",
@@ -1582,7 +1582,15 @@
             return renderSlot({ ...seat, role: "SUPPORT", display_role: "Support" }, shift.date, memberLookup);
           }
           return renderSlot(seat, shift.date, memberLookup);
-        })
+        }),
+        ...(careerCoverage ? [`
+          <div class="sc-career-fire-driver-block" title="${escapeHtml(careerCoverage.title)}">
+            <div class="sc-career-fire-driver-pill">
+              <div class="sc-career-fire-driver-title">${escapeHtml(careerCoverage.coverageName)}</div>
+              <div class="sc-career-fire-driver-time">${escapeHtml(careerCoverage.timeLabel)}</div>
+            </div>
+          </div>
+        `] : [])
       ]
         .filter(Boolean);
 
