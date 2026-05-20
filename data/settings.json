@@ -98,6 +98,37 @@
     "adr_zipper_simulation_only": true,
     "adr_zipper_allow_24_compression": false
   },
+  "career_fire_driver": {
+    "enabled": true,
+    "label": "Career Fire Driver",
+    "effective_start": "2026-06-01",
+    "days": ["MO", "TU", "TH"],
+    "start_time": "08:00",
+    "end_time": "18:00",
+    "normal_shift_start": "06:00",
+    "show_transition_watch": true,
+    "transition_watch_label": "0800 Relief Arrival",
+    "transition_watch_style": "duty_driver_black_small",
+    "counts_as_required_coverage": false,
+    "creates_holdover_assignment": false,
+    "visible_on_wallboard": true
+  },
+  "member_accommodations": {
+    "effective_start_offsets": [
+      {
+        "member_id": "181",
+        "member_name": "Anna Squires",
+        "active": true,
+        "normal_shift_start": "06:00",
+        "effective_start": "08:00",
+        "applies_to_labels": ["AM"],
+        "watch_label": "0600-0800 Watch",
+        "visible_on_wallboard": true,
+        "counts_as_required_coverage": false,
+        "creates_holdover_assignment": false
+      }
+    ]
+  },
   "security": {
     "google_login_required": true,
     "trusted_device_duration_days": 30,

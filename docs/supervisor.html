@@ -64,6 +64,11 @@
     .field{display:grid;gap:8px}
     .field label{color:var(--muted);font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
     .field select,.field input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+    .career-settings{margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);display:grid;gap:12px}
+    .weekday-checks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+    .weekday-check{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-weight:900;color:var(--text)}
+    .weekday-check input{width:auto}
+    .career-actions{display:flex;gap:8px;flex-wrap:wrap}
     .main{display:grid;gap:14px}
     .week-summary{margin-top:10px}
     .summary-stat{min-width:110px;padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)}
@@ -211,6 +216,26 @@
           <span class="badge locked">Supervisor Locked</span>
           <span class="badge draft">Draft</span>
         </div>
+        <section class="career-settings" aria-label="Career Fire Driver settings">
+          <div>
+            <h3>Career Fire Driver</h3>
+            <p class="muted">Select weekdays where career fire driver coverage is expected. This creates only a wallboard transition notice, not a required resolver seat.</p>
+          </div>
+          <div class="weekday-checks" id="careerDayChecks">
+            <label class="weekday-check"><input type="checkbox" value="MO"> Mon</label>
+            <label class="weekday-check"><input type="checkbox" value="TU"> Tue</label>
+            <label class="weekday-check"><input type="checkbox" value="WE"> Wed</label>
+            <label class="weekday-check"><input type="checkbox" value="TH"> Thu</label>
+            <label class="weekday-check"><input type="checkbox" value="FR"> Fri</label>
+          </div>
+          <div class="career-actions">
+            <button class="btn" id="careerStandardBtn" type="button">Select Standard M/T/Th</button>
+            <button class="btn" id="careerAllBtn" type="button">Select All Weekdays</button>
+            <button class="btn" id="careerClearBtn" type="button">Clear Career Coverage</button>
+            <button class="btn primary" id="careerSaveBtn" type="button">Save Career Coverage</button>
+          </div>
+          <div class="mini" id="careerStatus">Transition watch label: 0800 Relief Arrival</div>
+        </section>
       </aside>
 
       <main class="main">
@@ -266,6 +291,21 @@
         message: "Click a workflow button to run an action.",
         ok: null,
       },
+    };
+    const DEFAULT_CAREER_FIRE_DRIVER = {
+      enabled: true,
+      label: "Career Fire Driver",
+      effective_start: "2026-06-01",
+      days: ["MO", "TU", "TH"],
+      start_time: "08:00",
+      end_time: "18:00",
+      normal_shift_start: "06:00",
+      show_transition_watch: true,
+      transition_watch_label: "0800 Relief Arrival",
+      transition_watch_style: "duty_driver_black_small",
+      counts_as_required_coverage: false,
+      creates_holdover_assignment: false,
+      visible_on_wallboard: true
     };
 
     function apiUrl(path){
@@ -398,6 +438,47 @@
       for(const [id, value] of Object.entries(values)){
         const item = document.getElementById(id);
         if(item) item.textContent = value;
+      }
+    }
+
+    function careerRules(){
+      return { ...DEFAULT_CAREER_FIRE_DRIVER, ...(state.settings?.career_fire_driver || {}) };
+    }
+
+    function setCareerDays(days){
+      const selected = new Set((days || []).map((day) => String(day).toUpperCase()));
+      document.querySelectorAll("#careerDayChecks input[type='checkbox']").forEach((box) => {
+        box.checked = selected.has(String(box.value).toUpperCase());
+      });
+    }
+
+    function careerDaysFromUi(){
+      return [...document.querySelectorAll("#careerDayChecks input[type='checkbox']:checked")].map((box) => box.value);
+    }
+
+    function renderCareerFireDriverSettings(){
+      const rules = careerRules();
+      setCareerDays(rules.days || DEFAULT_CAREER_FIRE_DRIVER.days);
+      const status = document.getElementById("careerStatus");
+      if(status){
+        status.textContent = `${rules.label || "Career Fire Driver"} · ${rules.start_time || "08:00"}-${rules.end_time || "18:00"} · ${rules.transition_watch_label || "0800 Relief Arrival"} · marker only, not resolver coverage`;
+      }
+    }
+
+    async function saveCareerFireDriverSettings(){
+      const payload = {
+        ...careerRules(),
+        days: careerDaysFromUi(),
+        counts_as_required_coverage: false,
+        creates_holdover_assignment: false
+      };
+      try{
+        const result = await apiPost("/api/settings/career_fire_driver", payload);
+        state.settings.career_fire_driver = result.career_fire_driver || payload;
+        renderCareerFireDriverSettings();
+        showFlash("Career Fire Driver coverage saved.", "success");
+      }catch(error){
+        showFlash(`Career Fire Driver save failed: ${error.message || "unknown error"}`, "error");
       }
     }
 
@@ -917,6 +998,7 @@
       state.calendarMarkers = calendarMarkers || { markers: [] };
       state.schedule = schedule || {};
       state.supervisorState = supervisorState || { entries: [] };
+      renderCareerFireDriverSettings();
       document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(sessionInfo?.member_id || sessionInfo?.role || "unknown")}`;
       updateActionDiagnostics();
 
@@ -1033,6 +1115,10 @@
       document.getElementById("dryRunBtn").addEventListener("click", () => handleWeekAction("dry"));
       document.getElementById("resolveBtn").addEventListener("click", () => handleWeekAction("resolve"));
       document.getElementById("publishBtn").addEventListener("click", () => handleWeekAction("publish"));
+      document.getElementById("careerStandardBtn").addEventListener("click", () => setCareerDays(["MO", "TU", "TH"]));
+      document.getElementById("careerAllBtn").addEventListener("click", () => setCareerDays(["MO", "TU", "WE", "TH", "FR"]));
+      document.getElementById("careerClearBtn").addEventListener("click", () => setCareerDays([]));
+      document.getElementById("careerSaveBtn").addEventListener("click", saveCareerFireDriverSettings);
       document.body.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-action]");
         if(!button) return;

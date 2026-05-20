@@ -23,7 +23,6 @@
   "june_future_intent_assignments": [
     { "date": "2026-06-01", "label": "AM", "role": "ATTENDANT", "member_id": "186", "assigned_name": "Lynnsey Benson", "board_name": "Lynnsey", "confidence": "high" },
     { "date": "2026-06-01", "label": "PM", "role": "ATTENDANT", "member_id": "186", "assigned_name": "Lynnsey Benson", "board_name": "Lynnsey", "confidence": "high" },
-    { "date": "2026-06-01", "label": "PM", "role": "DRIVER", "member_id": "188", "assigned_name": "Brian Ennis", "board_name": "Brian", "confidence": "high" },
     { "date": "2026-06-03", "label": "AM", "role": "ATTENDANT", "member_id": "190", "assigned_name": "Barbara", "board_name": "Barbara", "confidence": "high" },
     { "date": "2026-06-03", "label": "PM", "role": "ATTENDANT", "member_id": "190", "assigned_name": "Barbara", "board_name": "Barbara", "confidence": "high" },
     { "date": "2026-06-04", "label": "AM", "role": "ATTENDANT", "member_id": "180", "assigned_name": "Sophia Williams", "board_name": "Sophie", "confidence": "high" },
@@ -32,17 +31,13 @@
     { "date": "2026-06-05", "label": "PM", "role": "ATTENDANT", "member_id": "186", "assigned_name": "Lynnsey Benson", "board_name": "Lynnsey", "confidence": "high" },
     { "date": "2026-06-05", "label": "PM", "role": "DRIVER", "member_id": "188", "assigned_name": "Brian Ennis", "board_name": "Brian", "confidence": "high" },
     { "date": "2026-06-08", "label": "AM", "role": "ATTENDANT", "member_id": "180", "assigned_name": "Sophia Williams", "board_name": "Sophie", "confidence": "high" },
-    { "date": "2026-06-08", "label": "AM", "role": "DRIVER", "member_id": "188", "assigned_name": "Brian Ennis", "board_name": "Brian", "confidence": "high" },
     { "date": "2026-06-08", "label": "PM", "role": "ATTENDANT", "member_id": "180", "assigned_name": "Sophia Williams", "board_name": "Sophie", "confidence": "high" },
     { "date": "2026-06-08", "label": "PM", "role": "DRIVER", "member_id": "189", "assigned_name": "Collin Harrison", "board_name": "Collin", "confidence": "high" },
     { "date": "2026-06-09", "label": "AM", "role": "ATTENDANT", "member_id": "186", "assigned_name": "Lynnsey Benson", "board_name": "Lynnsey", "confidence": "high" },
-    { "date": "2026-06-09", "label": "AM", "role": "DRIVER", "member_id": "188", "assigned_name": "Brian Ennis", "board_name": "Brian", "confidence": "high" },
     { "date": "2026-06-09", "label": "PM", "role": "ATTENDANT", "member_id": "186", "assigned_name": "Lynnsey Benson", "board_name": "Lynnsey", "confidence": "high" },
     { "date": "2026-06-09", "label": "PM", "role": "DRIVER", "member_id": "189", "assigned_name": "Collin Harrison", "board_name": "Collin", "confidence": "high" },
     { "date": "2026-06-11", "label": "AM", "role": "ATTENDANT", "member_id": "190", "assigned_name": "Barbara", "board_name": "Barbara", "confidence": "high" },
-    { "date": "2026-06-11", "label": "AM", "role": "DRIVER", "member_id": "188", "assigned_name": "Brian Ennis", "board_name": "Brian", "confidence": "high" },
     { "date": "2026-06-11", "label": "PM", "role": "ATTENDANT", "member_id": "190", "assigned_name": "Barbara", "board_name": "Barbara", "confidence": "high" },
-    { "date": "2026-06-11", "label": "PM", "role": "DRIVER", "member_id": "188", "assigned_name": "Brian Ennis", "board_name": "Brian", "confidence": "high" },
     { "date": "2026-06-12", "label": "AM", "role": "ATTENDANT", "member_id": "180", "assigned_name": "Sophia Williams", "board_name": "Sophie", "confidence": "high" },
     { "date": "2026-06-12", "label": "AM", "role": "DRIVER", "member_id": "188", "assigned_name": "Brian Ennis", "board_name": "Brian", "confidence": "high" },
     { "date": "2026-06-12", "label": "PM", "role": "ATTENDANT", "member_id": "180", "assigned_name": "Sophia Williams", "board_name": "Sophie", "confidence": "high" },
@@ -52,7 +47,6 @@
     { "date": "2026-06-15", "label": "AM", "role": "ATTENDANT", "member_id": "190", "assigned_name": "Barbara", "board_name": "Barbara", "confidence": "high" },
     { "date": "2026-06-15", "label": "PM", "role": "ATTENDANT", "member_id": "190", "assigned_name": "Barbara", "board_name": "Barbara", "confidence": "high" },
     { "date": "2026-06-16", "label": "AM", "role": "ATTENDANT", "member_id": "180", "assigned_name": "Sophia Williams", "board_name": "Sophie", "confidence": "high" },
-    { "date": "2026-06-16", "label": "AM", "role": "DRIVER", "member_id": "188", "assigned_name": "Brian Ennis", "board_name": "Brian", "confidence": "high" },
     { "date": "2026-06-16", "label": "PM", "role": "ATTENDANT", "member_id": "180", "assigned_name": "Sophia Williams", "board_name": "Sophie", "confidence": "high" },
     { "date": "2026-06-16", "label": "PM", "role": "DRIVER", "member_id": "189", "assigned_name": "Collin Harrison", "board_name": "Collin", "confidence": "high" },
     { "date": "2026-06-17", "label": "AM", "role": "ATTENDANT", "member_id": "186", "assigned_name": "Lynnsey Benson", "board_name": "Lynnsey", "confidence": "high" },
@@ -69,12 +63,12 @@
     { "date": "2026-06-10", "label": "PM", "role": "DRIVER", "board_label": "open", "confidence": "medium" }
   ],
   "needs_review_rows": [
-    { "date": "2026-06-02", "label": "AM", "physical_board_expected": "Brian visible; role unclear", "confidence": "low", "recommended_action": "Confirm before import" },
+    { "date": "2026-06-02", "label": "AM", "physical_board_expected": "Visible mark/name unclear; do not import without confirmation", "confidence": "low", "recommended_action": "Confirm before import" },
     { "date": "2026-06-18", "label": "PM", "physical_board_expected": "Collin visible; pairing unclear", "confidence": "low", "recommended_action": "Confirm before import" },
     { "date": "2026-06-21", "label": "AM", "physical_board_expected": "Lynnsey/Brian area visible; exact AM/PM split unclear", "confidence": "low", "recommended_action": "Confirm before import" },
-    { "date": "2026-06-22", "label": "AM", "physical_board_expected": "Barbara/Brian area visible; exact date alignment unclear", "confidence": "low", "recommended_action": "Confirm before import" },
+    { "date": "2026-06-22", "label": "AM", "physical_board_expected": "Barbara area visible; exact date alignment unclear", "confidence": "low", "recommended_action": "Confirm before import" },
     { "date": "2026-06-26", "label": "AM", "physical_board_expected": "Collin/Brian visible; exact seat split unclear", "confidence": "low", "recommended_action": "Confirm before import" },
-    { "date": "2026-06-29", "label": "PM", "physical_board_expected": "Lynnsey/Brian visible; exact seat split unclear", "confidence": "low", "recommended_action": "Confirm before import" },
-    { "date": "2026-06-30", "label": "AM", "physical_board_expected": "Brian visible; role unclear", "confidence": "low", "recommended_action": "Confirm before import" }
+    { "date": "2026-06-29", "label": "PM", "physical_board_expected": "Lynnsey area visible; exact seat split unclear", "confidence": "low", "recommended_action": "Confirm before import" },
+    { "date": "2026-06-30", "label": "AM", "physical_board_expected": "Visible mark/name unclear; do not import without confirmation", "confidence": "low", "recommended_action": "Confirm before import" }
   ]
 }

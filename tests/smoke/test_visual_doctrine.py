@@ -2,6 +2,7 @@ import copy
 import json
 import sys
 import unittest
+from datetime import date
 from pathlib import Path
 
 
@@ -281,6 +282,48 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn("start: period.startIso", member)
         self.assertIn("end: period.endIso", member)
         self.assertIn("appState.selectedTimecardStart = event.target.value", member)
+
+    def test_career_fire_driver_controls_and_wallboard_marker_exist(self):
+        supervisor = (ROOT / "docs" / "supervisor.html").read_text(encoding="utf-8")
+        wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
+        settings = json.loads((ROOT / "data" / "settings.json").read_text(encoding="utf-8"))
+        self.assertIn("Career Fire Driver", supervisor)
+        self.assertIn("careerStandardBtn", supervisor)
+        self.assertIn("Select Standard M/T/Th", supervisor)
+        self.assertIn("Select All Weekdays", supervisor)
+        self.assertIn("Clear Career Coverage", supervisor)
+        self.assertIn("/api/settings/career_fire_driver", supervisor)
+        self.assertIn(".sc-career-fire-driver-block", wallboard)
+        self.assertIn(".sc-career-fire-driver-pill", wallboard)
+        self.assertIn(".sc-transition-watch-pill", wallboard)
+        self.assertIn("careerCoverageForShift", wallboard)
+        self.assertIn("coverageLabel", wallboard)
+        self.assertIn("not a resolver assignment, open shift, overtime, or holdover", wallboard)
+        self.assertIn("memberAccommodationWatchForShift", wallboard)
+        self.assertIn(".sc-member-accommodation-watch-pill", wallboard)
+        self.assertNotIn("Anna", wallboard)
+        self.assertNotIn("Gracie", wallboard)
+        self.assertEqual(settings["career_fire_driver"]["days"], ["MO", "TU", "TH"])
+        self.assertFalse(settings["career_fire_driver"]["counts_as_required_coverage"])
+        self.assertFalse(settings["career_fire_driver"]["creates_holdover_assignment"])
+        accommodation = settings["member_accommodations"]["effective_start_offsets"][0]
+        self.assertEqual(accommodation["member_id"], "181")
+        self.assertEqual(accommodation["effective_start"], "08:00")
+        self.assertFalse(accommodation["counts_as_required_coverage"])
+        self.assertFalse(accommodation["creates_holdover_assignment"])
+
+    def test_june_import_does_not_use_brian_for_career_fire_driver_days(self):
+        settings = json.loads((ROOT / "data" / "settings.json").read_text(encoding="utf-8"))
+        import_payload = json.loads((ROOT / "data" / "june_forming_import.json").read_text(encoding="utf-8"))
+        career_days = set(settings["career_fire_driver"]["days"])
+        weekday_codes = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
+        violations = []
+        for row in import_payload.get("june_future_intent_assignments", []):
+            row_date = date.fromisoformat(row["date"])
+            day_code = weekday_codes[row_date.weekday()]
+            if day_code in career_days and row.get("member_id") == "188":
+                violations.append(f'{row["date"]} {row["label"]}')
+        self.assertEqual(violations, [])
 
     def test_member_calendar_shows_open_opportunity_markers(self):
         member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")

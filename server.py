@@ -7,6 +7,7 @@ import secrets
 import shutil
 import sys
 import time
+import re
 from copy import deepcopy
 from datetime import date, datetime, timedelta, UTC
 from functools import wraps
@@ -46,6 +47,37 @@ SUPERVISOR_STATE_FILE = os.path.join(DATA_DIR, "supervisor_state.json")
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
 CALENDAR_MARKERS_FILE = os.path.join(DATA_DIR, "calendar_markers.json")
 PUBLIC_CALENDAR_MARKERS_FILE = os.path.join(DOCS_DIR, "data", "calendar_markers.json")
+DEFAULT_CAREER_FIRE_DRIVER_RULES = {
+    "enabled": True,
+    "label": "Career Fire Driver",
+    "effective_start": "2026-06-01",
+    "days": ["MO", "TU", "TH"],
+    "start_time": "08:00",
+    "end_time": "18:00",
+    "normal_shift_start": "06:00",
+    "show_transition_watch": True,
+    "transition_watch_label": "0800 Relief Arrival",
+    "transition_watch_style": "duty_driver_black_small",
+    "counts_as_required_coverage": False,
+    "creates_holdover_assignment": False,
+    "visible_on_wallboard": True,
+}
+DEFAULT_MEMBER_ACCOMMODATIONS = {
+    "effective_start_offsets": [
+        {
+            "member_id": "181",
+            "member_name": "Anna Squires",
+            "active": True,
+            "normal_shift_start": "06:00",
+            "effective_start": "08:00",
+            "applies_to_labels": ["AM"],
+            "watch_label": "0600-0800 Watch",
+            "visible_on_wallboard": True,
+            "counts_as_required_coverage": False,
+            "creates_holdover_assignment": False,
+        }
+    ]
+}
 TEST_MEMBER_LOGIN = {
     "username": "test",
     "password": "test",
@@ -795,7 +827,96 @@ def save_shifts_file(shifts):
 
 def load_settings():
     data = load_json(SETTINGS_FILE, {})
-    return data if isinstance(data, dict) else {}
+    if not isinstance(data, dict):
+        data = {}
+    data["career_fire_driver"] = normalize_career_fire_driver_rules(data.get("career_fire_driver", {}))
+    data["member_accommodations"] = normalize_member_accommodations(data.get("member_accommodations", {}))
+    return data
+
+
+def normalize_career_fire_driver_rules(raw):
+    rules = deepcopy(DEFAULT_CAREER_FIRE_DRIVER_RULES)
+    if isinstance(raw, dict):
+        rules.update(raw)
+    valid_days = {"MO", "TU", "WE", "TH", "FR"}
+    days = rules.get("days", [])
+    if not isinstance(days, list):
+        days = DEFAULT_CAREER_FIRE_DRIVER_RULES["days"]
+    rules["days"] = [day for day in [str(item).strip().upper() for item in days] if day in valid_days]
+    for key in ["enabled", "show_transition_watch", "visible_on_wallboard"]:
+        rules[key] = bool(rules.get(key))
+    rules["counts_as_required_coverage"] = False
+    rules["creates_holdover_assignment"] = False
+    for key in ["label", "effective_start", "start_time", "end_time", "normal_shift_start", "transition_watch_label", "transition_watch_style"]:
+        rules[key] = str(rules.get(key) or DEFAULT_CAREER_FIRE_DRIVER_RULES[key]).strip()
+    return rules
+
+
+def validate_career_fire_driver_rules(payload):
+    if not isinstance(payload, dict):
+        return None, "Career Fire Driver settings must be an object"
+    valid_days = {"MO", "TU", "WE", "TH", "FR"}
+    time_keys = ["start_time", "end_time", "normal_shift_start"]
+    days = payload.get("days", [])
+    if not isinstance(days, list):
+        return None, "days must be a list"
+    normalized_days = []
+    for item in days:
+        day = str(item).strip().upper()
+        if day not in valid_days:
+            return None, f"Invalid weekday code: {day}"
+        if day not in normalized_days:
+            normalized_days.append(day)
+    for key in time_keys:
+        value = str(payload.get(key, DEFAULT_CAREER_FIRE_DRIVER_RULES[key]) or "").strip()
+        if not re.match(r"^\d{2}:\d{2}$", value):
+            return None, f"{key} must use HH:MM"
+        hour, minute = [int(part) for part in value.split(":")]
+        if hour > 23 or minute > 59:
+            return None, f"{key} must use a valid HH:MM time"
+    merged = normalize_career_fire_driver_rules({**DEFAULT_CAREER_FIRE_DRIVER_RULES, **payload, "days": normalized_days})
+    merged["counts_as_required_coverage"] = False
+    merged["creates_holdover_assignment"] = False
+    return merged, None
+
+
+def normalize_member_accommodations(raw):
+    if not isinstance(raw, dict):
+        raw = {}
+    defaults = deepcopy(DEFAULT_MEMBER_ACCOMMODATIONS)
+    offsets = raw.get("effective_start_offsets", defaults["effective_start_offsets"])
+    if not isinstance(offsets, list):
+        offsets = defaults["effective_start_offsets"]
+
+    normalized_offsets = []
+    for item in offsets:
+        if not isinstance(item, dict):
+            continue
+        merged = {
+            "member_id": str(item.get("member_id") or "").strip(),
+            "member_name": str(item.get("member_name") or "").strip(),
+            "active": bool(item.get("active", True)),
+            "normal_shift_start": str(item.get("normal_shift_start") or "06:00").strip(),
+            "effective_start": str(item.get("effective_start") or "08:00").strip(),
+            "applies_to_labels": item.get("applies_to_labels", ["AM"]),
+            "watch_label": str(item.get("watch_label") or "0600-0800 Watch").strip(),
+            "visible_on_wallboard": bool(item.get("visible_on_wallboard", True)),
+            "counts_as_required_coverage": False,
+            "creates_holdover_assignment": False,
+        }
+        if not isinstance(merged["applies_to_labels"], list):
+            merged["applies_to_labels"] = ["AM"]
+        merged["applies_to_labels"] = [
+            str(label).strip().upper()
+            for label in merged["applies_to_labels"]
+            if str(label).strip()
+        ]
+        if merged["member_id"]:
+            normalized_offsets.append(merged)
+
+    if not normalized_offsets:
+        normalized_offsets = defaults["effective_start_offsets"]
+    return {"effective_start_offsets": normalized_offsets}
 
 
 def load_availability_payload():
@@ -1917,7 +2038,9 @@ def get_settings():
 def get_wallboard_settings():
     settings = load_settings()
     return jsonify({
-        "resolver_rules": settings.get("resolver_rules", {}) if isinstance(settings, dict) else {}
+        "resolver_rules": settings.get("resolver_rules", {}) if isinstance(settings, dict) else {},
+        "career_fire_driver": settings.get("career_fire_driver", DEFAULT_CAREER_FIRE_DRIVER_RULES) if isinstance(settings, dict) else DEFAULT_CAREER_FIRE_DRIVER_RULES,
+        "member_accommodations": settings.get("member_accommodations", DEFAULT_MEMBER_ACCOMMODATIONS) if isinstance(settings, dict) else DEFAULT_MEMBER_ACCOMMODATIONS,
     })
 
 
@@ -1930,6 +2053,26 @@ def save_settings():
 
     save_json(SETTINGS_FILE, settings)
     return jsonify({"status": "ok"})
+
+
+@app.route("/api/settings/career_fire_driver", methods=["GET"])
+@require_role("supervisor")
+def get_career_fire_driver_settings():
+    settings = load_settings()
+    return jsonify(settings.get("career_fire_driver", DEFAULT_CAREER_FIRE_DRIVER_RULES))
+
+
+@app.route("/api/settings/career_fire_driver", methods=["POST"])
+@require_role("supervisor")
+def save_career_fire_driver_settings():
+    payload = request.get_json(silent=True)
+    rules, error = validate_career_fire_driver_rules(payload)
+    if error:
+        return jsonify({"error": error}), 400
+    settings = load_settings()
+    settings["career_fire_driver"] = rules
+    save_json(SETTINGS_FILE, settings)
+    return jsonify({"status": "ok", "career_fire_driver": rules})
 
 
 # =========================

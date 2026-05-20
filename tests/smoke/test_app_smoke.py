@@ -38,6 +38,7 @@ class AppSmokeTests(unittest.TestCase):
         cls.paths_to_preserve = [
             ROOT / "data" / "shifts.json",
             ROOT / "data" / "schedule.json",
+            ROOT / "data" / "settings.json",
             ROOT / "data" / "availability.json",
             ROOT / "debug" / "latest_run_summary.json",
             ROOT / "debug" / "latest_run_supervisor_cards.json",
@@ -282,6 +283,44 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("Supervisor signature", html)
         self.assertIn("Print", html)
         self.assertIn("Thursday 05/21/2026 through Wednesday 05/27/2026", html)
+        response.close()
+
+    def test_career_fire_driver_settings_api_validates_and_persists_marker_only(self):
+        self.login_supervisor()
+        payload = {
+            "enabled": True,
+            "label": "Career Fire Driver",
+            "effective_start": "2026-06-01",
+            "days": ["MO", "WE", "FR"],
+            "start_time": "08:00",
+            "end_time": "18:00",
+            "normal_shift_start": "06:00",
+            "show_transition_watch": True,
+            "transition_watch_label": "0800 Relief Arrival",
+            "transition_watch_style": "duty_driver_black_small",
+            "counts_as_required_coverage": True,
+            "creates_holdover_assignment": True,
+            "visible_on_wallboard": True,
+        }
+
+        response = self.client.post("/api/settings/career_fire_driver", json=payload)
+
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data["career_fire_driver"]["days"], ["MO", "WE", "FR"])
+        self.assertFalse(data["career_fire_driver"]["counts_as_required_coverage"])
+        self.assertFalse(data["career_fire_driver"]["creates_holdover_assignment"])
+        response.close()
+
+        response = self.client.get("/api/wallboard_settings")
+        self.assertEqual(response.status_code, 200)
+        wallboard_settings = response.get_json()
+        self.assertIn("career_fire_driver", wallboard_settings)
+        self.assertIn("member_accommodations", wallboard_settings)
+        response.close()
+
+        response = self.client.post("/api/settings/career_fire_driver", json={**payload, "days": ["SA"]})
+        self.assertEqual(response.status_code, 400)
         response.close()
 
     def test_quick_test_supervisor_api_bypass_is_demo_only(self):

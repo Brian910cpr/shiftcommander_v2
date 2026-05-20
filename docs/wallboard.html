@@ -458,6 +458,51 @@
       background: rgba(74, 55, 108, 0.46);
     }
 
+    .sc-career-fire-driver-block {
+      display: grid;
+      gap: 4px;
+      align-items: start;
+      justify-items: start;
+      padding: 7px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(180, 191, 210, 0.24);
+      background: rgba(5, 8, 12, 0.72);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .sc-career-fire-driver-pill,
+    .sc-transition-watch-pill,
+    .sc-member-accommodation-watch-pill {
+      display: inline-flex;
+      align-items: center;
+      align-self: flex-start;
+      width: auto;
+      min-height: 0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(180, 191, 210, 0.28);
+      background: #05080c;
+      color: #d7dfec;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.1px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .sc-career-fire-driver-pill {
+      padding: 8px 11px;
+      font-size: 13px;
+      color: #eef4ff;
+      border-color: rgba(180, 191, 210, 0.36);
+    }
+
+    .sc-transition-watch-pill,
+    .sc-member-accommodation-watch-pill {
+      font-size: 11px;
+      color: #cbd5e4;
+      background: #0a0f16;
+    }
+
     .slot.volunteer-driver-pill,
     .shift-card.green .slot.volunteer-driver-pill,
     .shift-card.yellow .slot.volunteer-driver-pill,
@@ -861,6 +906,12 @@
       return 0;
     }
 
+    function parseLocalDate(iso) {
+      const parts = String(iso || "").slice(0, 10).split("-").map(Number);
+      if (parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) return null;
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
     function addDays(dateObj, days) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
       d.setDate(d.getDate() + days);
@@ -980,6 +1031,88 @@
 
     function isStructuralDriverCovered(seat) {
       return isDriverSeat(seat) && (seat?.structural_driver_coverage === true || seat?.volunteer_crew_driver === true || (seat?.duty_crew === true && String(seat?.assigned_name || "").trim().toUpperCase() === "VOLUNTEER CREW DRIVER"));
+    }
+
+    function weekdayCodeForIso(iso) {
+      const date = parseLocalDate(iso);
+      if (!date) return "";
+      return ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][date.getDay()] || "";
+    }
+
+    function minutesFromHHMM(value) {
+      const match = String(value || "").trim().match(/^(\d{2}):(\d{2})$/);
+      if (!match) return null;
+      const hour = Number(match[1]);
+      const minute = Number(match[2]);
+      if (!Number.isFinite(hour) || !Number.isFinite(minute) || hour > 23 || minute > 59) return null;
+      return hour * 60 + minute;
+    }
+
+    function compactTime(value) {
+      return String(value || "").replace(":", "");
+    }
+
+    function careerFireDriverRules() {
+      return lastLoadedData?.settings?.career_fire_driver || {};
+    }
+
+    function watchRangeLabel(startTime, endTime) {
+      return `${compactTime(startTime)}-${compactTime(endTime)} Watch`;
+    }
+
+    function careerCoverageForShift(shift) {
+      const rules = careerFireDriverRules();
+      if (!rules?.enabled || rules?.visible_on_wallboard === false) return null;
+      const label = String(shift?.label || "").trim().toUpperCase();
+      if (label && !["AM", "DAY"].includes(label)) return null;
+      const shiftDate = String(shift?.date || "").slice(0, 10);
+      if (!shiftDate || (rules.effective_start && compareIso(shiftDate, String(rules.effective_start).slice(0, 10)) < 0)) return null;
+      const dayCode = weekdayCodeForIso(shiftDate);
+      const days = Array.isArray(rules.days) ? rules.days.map((day) => String(day).toUpperCase()) : [];
+      if (!days.includes(dayCode)) return null;
+      const careerStart = minutesFromHHMM(rules.start_time);
+      const normalStart = minutesFromHHMM(rules.normal_shift_start);
+      const coverageLabel = `${String(rules.label || "Career Fire Driver").trim()} · ${compactTime(rules.start_time)}-${compactTime(rules.end_time)}`;
+      let watchLabel = "";
+      if (rules?.show_transition_watch !== false && careerStart !== null && normalStart !== null && careerStart > normalStart) {
+        watchLabel = watchRangeLabel(rules.normal_shift_start, rules.start_time);
+      }
+      return {
+        coverageLabel,
+        watchLabel,
+        title: "Career Fire Driver coverage is shown from settings. This is operational context only, not a resolver assignment, open shift, overtime, or holdover."
+      };
+    }
+
+    function memberAccommodationRules() {
+      const payload = lastLoadedData?.settings?.member_accommodations || {};
+      return Array.isArray(payload?.effective_start_offsets) ? payload.effective_start_offsets : [];
+    }
+
+    function assignedMemberIdsForShift(shift) {
+      return (shift?.seats || [])
+        .map(seat => String(seat?.assigned || "").trim())
+        .filter(Boolean);
+    }
+
+    function memberAccommodationWatchForShift(shift) {
+      const label = String(shift?.label || "").trim().toUpperCase();
+      const assignedIds = new Set(assignedMemberIdsForShift(shift));
+      for (const rule of memberAccommodationRules()) {
+        if (!rule?.active || rule?.visible_on_wallboard === false) continue;
+        const memberId = String(rule.member_id || "").trim();
+        if (!memberId || !assignedIds.has(memberId)) continue;
+        const labels = Array.isArray(rule.applies_to_labels) ? rule.applies_to_labels.map(item => String(item).toUpperCase()) : ["AM"];
+        if (label && labels.length && !labels.includes(label)) continue;
+        const normalStart = minutesFromHHMM(rule.normal_shift_start);
+        const effectiveStart = minutesFromHHMM(rule.effective_start);
+        if (normalStart === null || effectiveStart === null || effectiveStart <= normalStart) continue;
+        return {
+          label: String(rule.watch_label || watchRangeLabel(rule.normal_shift_start, rule.effective_start)).trim(),
+          title: "Member accommodation watch notice. This is not an open shift, holdover, overtime, or required coverage assignment."
+        };
+      }
+      return null;
     }
 
     function buildMemberLookup(payload) {
@@ -1361,6 +1494,8 @@
       const readiness = shift.readiness || shiftReadiness({ ...shift, seats: normalizedSeats }, memberLookup);
       const urgency = urgencyClass(shift.date, readiness.problem);
       const shiftTooltip = basicCrewTooltip(readiness) || readiness.status;
+      const careerCoverage = careerCoverageForShift(shift);
+      const memberAccommodationWatch = memberAccommodationWatchForShift({ ...shift, seats: normalizedSeats });
       const orderedSeats = normalizedSeats
         .slice()
         .sort((left, right) => {
@@ -1370,6 +1505,13 @@
         });
 
       const renderedSlots = [
+        ...(careerCoverage ? [`
+          <div class="sc-career-fire-driver-block" title="${escapeHtml(careerCoverage.title)}">
+            <div class="sc-career-fire-driver-pill">${escapeHtml(careerCoverage.coverageLabel)}</div>
+            ${careerCoverage.watchLabel ? `<div class="sc-transition-watch-pill">${escapeHtml(careerCoverage.watchLabel)}</div>` : ""}
+          </div>
+        `] : []),
+        ...(memberAccommodationWatch ? [`<div class="sc-member-accommodation-watch-pill" title="${escapeHtml(memberAccommodationWatch.title)}">${escapeHtml(memberAccommodationWatch.label)}</div>`] : []),
         ...(showOpenAls && !readiness.problem ? [renderSlot({ role: "ATTENDANT", display_role: "ALS Attendant", display_open_alert: true }, shift.date, memberLookup, {
           displayLabel: "Volunteer ALS Response Appreciated",
           volunteer: true,
