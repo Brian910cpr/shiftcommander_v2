@@ -38,6 +38,7 @@ class AppSmokeTests(unittest.TestCase):
         cls.paths_to_preserve = [
             ROOT / "data" / "shifts.json",
             ROOT / "data" / "schedule.json",
+            ROOT / "docs" / "data" / "schedule.json",
             ROOT / "data" / "settings.json",
             ROOT / "docs" / "data" / "settings.json",
             ROOT / "data" / "availability.json",
@@ -115,10 +116,22 @@ class AppSmokeTests(unittest.TestCase):
         response.close()
 
         schedule_path = ROOT / "data" / "schedule.json"
+        public_schedule_path = ROOT / "docs" / "data" / "schedule.json"
         temp_path = ROOT / "data" / "schedule.json.smoke_tmp"
+        public_temp_path = ROOT / "docs" / "data" / "schedule.json.smoke_tmp"
         if schedule_path.exists():
             shutil.move(str(schedule_path), str(temp_path))
         try:
+            response = self.client.get("/api/schedule")
+            self.assertEqual(response.status_code, 200)
+            payload = response.get_json()
+            self.assertIsInstance(payload.get("shifts"), list)
+            self.assertGreater(len(payload.get("shifts", [])), 0)
+            self.assertEqual(response.headers.get("X-ShiftCommander-Source"), "file")
+            response.close()
+
+            if public_schedule_path.exists():
+                shutil.move(str(public_schedule_path), str(public_temp_path))
             response = self.client.get("/api/schedule")
             self.assertEqual(response.status_code, 200)
             payload = response.get_json()
@@ -128,6 +141,8 @@ class AppSmokeTests(unittest.TestCase):
         finally:
             if temp_path.exists():
                 shutil.move(str(temp_path), str(schedule_path))
+            if public_temp_path.exists():
+                shutil.move(str(public_temp_path), str(public_schedule_path))
 
     def test_calendar_markers_api_loads_and_missing_file_is_safe(self):
         response = self.client.get("/api/calendar_markers")

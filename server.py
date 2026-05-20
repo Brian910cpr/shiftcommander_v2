@@ -214,6 +214,22 @@ def fast_json_file_response(path, empty_payload=EMPTY_SCHEDULE_BYTES):
     return response
 
 
+def schedule_json_response():
+    if os.path.exists(SCHEDULE_FILE) and os.path.getsize(SCHEDULE_FILE) > 0:
+        return fast_json_file_response(SCHEDULE_FILE)
+    return fast_json_file_response(PUBLIC_SCHEDULE_FILE)
+
+
+def load_schedule_payload():
+    schedule = load_json(SCHEDULE_FILE, {})
+    if isinstance(schedule, dict) and isinstance(schedule.get("shifts"), list) and schedule["shifts"]:
+        return schedule
+    public_schedule = load_json(PUBLIC_SCHEDULE_FILE, {})
+    if isinstance(public_schedule, dict):
+        return public_schedule
+    return {}
+
+
 def now_iso():
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
@@ -1841,7 +1857,7 @@ def get_member_context():
             "member": member,
             "roster": member_roster_payload(),
             "availability": extract_member_availability(member_id),
-            "schedule": load_json(SCHEDULE_FILE, {}),
+            "schedule": load_schedule_payload(),
             "availability_edit_start_date": member_availability_edit_start_date().isoformat(),
             "member_page_settings": {
                 "availability_max_forward_weeks": member_page_settings.get("availability_max_forward_weeks"),
@@ -2519,7 +2535,7 @@ def supervisor_resolve_week():
 
 @app.route("/api/schedule", methods=["GET"])
 def get_schedule_api():
-    return fast_json_file_response(SCHEDULE_FILE)
+    return schedule_json_response()
 
 
 # =========================
