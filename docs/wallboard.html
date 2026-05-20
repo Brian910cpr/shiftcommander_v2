@@ -461,8 +461,9 @@
     .sc-career-fire-driver-block {
       display: grid;
       gap: 3px;
-      align-items: start;
-      justify-items: start;
+      align-items: stretch;
+      justify-items: stretch;
+      width: 100%;
       padding: 0;
       border: 0;
       background: transparent;
@@ -492,6 +493,7 @@
       display: grid;
       gap: 2px;
       width: 100%;
+      box-sizing: border-box;
       min-height: 58px;
       padding: 10px 14px;
       border-radius: 14px;
@@ -524,6 +526,13 @@
       background: #0a0f16;
       padding: 4px 8px;
       opacity: 0.92;
+    }
+
+    .sc-career-fire-driver-block .sc-transition-watch-pill {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 10px;
+      justify-content: flex-start;
     }
 
     .slot.volunteer-driver-pill,

@@ -298,6 +298,8 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn(".sc-career-fire-driver-title", wallboard)
         self.assertIn(".sc-career-fire-driver-time", wallboard)
         self.assertIn(".sc-transition-watch-pill", wallboard)
+        self.assertIn(".sc-career-fire-driver-block .sc-transition-watch-pill", wallboard)
+        self.assertIn("width: 100%", wallboard)
         self.assertIn("careerCoverageForShift", wallboard)
         self.assertIn("coverageName", wallboard)
         self.assertIn("timeLabel", wallboard)

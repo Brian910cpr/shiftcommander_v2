@@ -1,6 +1,6 @@
 {
   "build": {
-    "generated_at": "2026-05-20T15:02:42.068835Z",
+    "generated_at": "2026-05-20T15:16:05.764736Z",
     "resolver_version": "rule-based-v1",
     "resolver_engine": "deterministic_rule_based",
     "operational_today": "2026-05-20",
@@ -250,6 +250,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -328,6 +330,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -462,6 +466,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -537,6 +543,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -675,6 +683,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -753,6 +763,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -891,6 +903,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -999,6 +1013,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -1076,6 +1092,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -1285,6 +1303,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -1368,6 +1388,8 @@
           "Solo EMT Anchor Rule applied",
           "Solo EMT Anchor Rule applied",
           "ALS/AEMT/Paramedic-qualified member normalized to ATTENDANT display order",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -1575,6 +1597,8 @@
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
+          "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
+          "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import"
         ]
       },
@@ -1650,6 +1674,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -1789,6 +1815,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -1867,6 +1895,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -2005,6 +2035,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -2080,6 +2112,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -2219,6 +2253,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -2296,6 +2332,8 @@
         "notes": [
           "Solo EMT Anchor Rule applied",
           "Solo EMT Anchor Rule applied",
+          "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
+          "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
@@ -2435,6 +2473,8 @@
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
+          "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
+          "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import",
           "Solo EMT Anchor Rule skipped because attendant is preserved OPEN from rollout import"
         ]
       },
@@ -2512,6 +2552,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -2649,6 +2691,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -2726,6 +2770,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -2864,6 +2910,8 @@
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned"
         ]
       },
@@ -2950,6 +2998,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
@@ -5152,6 +5202,8 @@
       "resolver": {
         "engine": "deterministic_rule_based",
         "notes": [
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
+          "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
           "Solo EMT Anchor Rule skipped because ALS/AEMT/Paramedic is assigned",
