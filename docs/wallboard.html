@@ -1519,6 +1519,9 @@
           tooltip: basicCrewTooltip(readiness) || "This crew is legally operational, but ALS participation is still welcome if available."
         })] : []),
         ...orderedSeats.map(seat => {
+          if (seat?.career_fire_driver && isDriverSeat(seat) && seat?.structural_driver_coverage) {
+            return "";
+          }
           if (seat?.duty_crew && isDriverSeat(seat) && !String(seat?.assigned || "").trim()) {
             return renderSlot(seat, shift.date, memberLookup, {
               displayLabel: "Volunteer Crew Driver",

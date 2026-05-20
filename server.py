@@ -60,6 +60,9 @@ DEFAULT_CAREER_FIRE_DRIVER_RULES = {
     "transition_watch_style": "duty_driver_black_small",
     "counts_as_required_coverage": False,
     "creates_holdover_assignment": False,
+    "counts_toward_driver_coverage": True,
+    "counts_toward_emt_coverage": True,
+    "counts_as_named_member_assignment": False,
     "visible_on_wallboard": True,
 }
 DEFAULT_MEMBER_ACCOMMODATIONS = {
@@ -847,6 +850,9 @@ def normalize_career_fire_driver_rules(raw):
         rules[key] = bool(rules.get(key))
     rules["counts_as_required_coverage"] = False
     rules["creates_holdover_assignment"] = False
+    rules["counts_toward_driver_coverage"] = bool(rules.get("counts_toward_driver_coverage", True))
+    rules["counts_toward_emt_coverage"] = bool(rules.get("counts_toward_emt_coverage", True))
+    rules["counts_as_named_member_assignment"] = False
     for key in ["label", "effective_start", "start_time", "end_time", "normal_shift_start", "transition_watch_label", "transition_watch_style"]:
         rules[key] = str(rules.get(key) or DEFAULT_CAREER_FIRE_DRIVER_RULES[key]).strip()
     return rules
@@ -877,6 +883,9 @@ def validate_career_fire_driver_rules(payload):
     merged = normalize_career_fire_driver_rules({**DEFAULT_CAREER_FIRE_DRIVER_RULES, **payload, "days": normalized_days})
     merged["counts_as_required_coverage"] = False
     merged["creates_holdover_assignment"] = False
+    merged["counts_toward_driver_coverage"] = True
+    merged["counts_toward_emt_coverage"] = True
+    merged["counts_as_named_member_assignment"] = False
     return merged, None
 
 

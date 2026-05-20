@@ -40,6 +40,19 @@ DEFAULT_RULE_SETTINGS = {
     "volunteer_crew_driver_all_shifts": False,
     "volunteer_crew_driver_structurally_affixed": False,
     "duty_crew_patterns": ["SAT_AM", "SAT_PM", "SUN_AM"],
+    "career_fire_driver": {
+        "enabled": False,
+        "label": "Career Fire Driver",
+        "effective_start": "2026-06-01",
+        "days": ["MO", "TU", "TH"],
+        "start_time": "08:00",
+        "end_time": "18:00",
+        "normal_shift_start": "06:00",
+        "counts_toward_driver_coverage": True,
+        "counts_toward_emt_coverage": True,
+        "counts_as_named_member_assignment": False,
+        "creates_holdover_assignment": False,
+    },
     "operational_cycle_start_weekday": "THU",
     "adr_zipper_enabled": False,
     "adr_zipper_simulation_only": True,
@@ -47,6 +60,7 @@ DEFAULT_RULE_SETTINGS = {
 }
 
 WEEKDAY_INDEX = {"MON": 0, "TUE": 1, "WED": 2, "THU": 3, "FRI": 4, "SAT": 5, "SUN": 6}
+WEEKDAY_CODES = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 
 def upper(value: Any) -> str:
@@ -314,6 +328,12 @@ def load_rule_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
             for key, value in source.items():
                 if key in out:
                     out[key] = value
+    if isinstance(settings, dict) and isinstance(settings.get("career_fire_driver"), dict):
+        career_rules = dict(DEFAULT_RULE_SETTINGS["career_fire_driver"])
+        career_rules.update(settings["career_fire_driver"])
+        career_rules["creates_holdover_assignment"] = False
+        career_rules["counts_as_named_member_assignment"] = False
+        out["career_fire_driver"] = career_rules
     out["late_fill_window_days"] = out.get("interest_window_days") or out.get("late_fill_window_days") or 14
     if not out.get("volunteer_crew_driver_patterns"):
         out["volunteer_crew_driver_patterns"] = out.get("duty_crew_patterns") or DEFAULT_RULE_SETTINGS["volunteer_crew_driver_patterns"]
@@ -617,6 +637,7 @@ class RuleBasedResolver:
     def _initialize_shift(self, shift: Dict[str, Any]) -> None:
         shift.setdefault("resolver", {"engine": "deterministic_rule_based", "notes": []})
         volunteer_driver_applies = self._volunteer_crew_driver_applies(shift)
+        career_driver_applies = self._career_fire_driver_applies(shift)
         for index, seat in enumerate(shift.get("seats", [])):
             role = seat_role(seat)
             seat["role"] = role
@@ -634,7 +655,23 @@ class RuleBasedResolver:
             seat["supervisor_review"] = False
             seat["solo_emt_anchor_applied"] = False
             seat["aemt_reclaim_attempted"] = False
-            if role == DRIVER and volunteer_driver_applies:
+            if role == DRIVER and career_driver_applies:
+                career_rules = self.rules.get("career_fire_driver", {})
+                label = str(career_rules.get("label") or "Career Fire Driver").strip() or "Career Fire Driver"
+                seat["career_fire_driver"] = True
+                seat["coverage_source"] = "career_fire_driver"
+                seat["role_capability"] = ["EMT", "DRIVER"]
+                seat["structural_driver_coverage"] = True
+                seat["structural_coverage_type"] = "career_fire_driver"
+                seat["display_role"] = "CAREER FIRE DRIVER"
+                seat["external_coverage_label"] = label
+                seat["coverage_start_time"] = str(career_rules.get("start_time") or "08:00")
+                seat["coverage_end_time"] = str(career_rules.get("end_time") or "18:00")
+                seat["counts_toward_driver_coverage"] = True
+                seat["counts_toward_emt_coverage"] = True
+                seat["counts_as_named_member_assignment"] = False
+                seat["creates_holdover_assignment"] = False
+            elif role == DRIVER and volunteer_driver_applies:
                 seat["duty_crew"] = True
                 seat["volunteer_crew_driver"] = True
                 seat["structural_driver_coverage"] = True
@@ -649,6 +686,28 @@ class RuleBasedResolver:
             return True
         patterns = self.rules.get("volunteer_crew_driver_patterns") or self.rules.get("duty_crew_patterns") or []
         return shift_pattern(shift) in {upper(item) for item in patterns}
+
+    def _career_fire_driver_applies(self, shift: Dict[str, Any]) -> bool:
+        rules = self.rules.get("career_fire_driver")
+        if not isinstance(rules, dict):
+            return False
+        if rules.get("enabled") is False or lower(rules.get("enabled")) in {"false", "0", "no", "never"}:
+            return False
+        if rules.get("visible_on_wallboard") is False:
+            return False
+        if rules.get("counts_toward_driver_coverage") is False:
+            return False
+        label = shift_label(shift)
+        if label not in {"AM", "DAY"}:
+            return False
+        day = shift_date(shift)
+        if not day:
+            return False
+        effective = parse_day(rules.get("effective_start"))
+        if effective and day < effective:
+            return False
+        days = {upper(item) for item in rules.get("days", []) if str(item).strip()}
+        return WEEKDAY_CODES[day.weekday()] in days
 
     def _phase0_preserve(self, shift: Dict[str, Any]) -> None:
         for seat in shift.get("seats", []):
@@ -861,7 +920,8 @@ class RuleBasedResolver:
         late = self._inside_late_window(shift)
         for seat in self._seats(shift, DRIVER, open_only=True):
             if seat.get("structural_driver_coverage") and not seat.get("assigned"):
-                self._mark_open(shift, seat, "Volunteer Crew Driver is attached to this shift by Admin policy.")
+                reason = "Career Fire Driver covers the configured driver-capable interval for this shift." if seat.get("career_fire_driver") else "Volunteer Crew Driver is attached to this shift by Admin policy."
+                self._mark_open(shift, seat, reason)
                 continue
             if seat.get("rollout_open"):
                 filled = self._late_fill(shift, seat) if self._rollout_open_released(shift, DRIVER) else False
@@ -1099,7 +1159,7 @@ class RuleBasedResolver:
         structural_driver = bool(seat.get("structural_driver_coverage") and role == DRIVER)
         solo_emt_opportunity = bool(role == DRIVER and seat.get("solo_emt_anchor_opportunity"))
         if structural_driver:
-            label = "Volunteer Crew Driver"
+            label = str(seat.get("external_coverage_label") or ("Career Fire Driver" if seat.get("career_fire_driver") else "Volunteer Crew Driver"))
         elif solo_emt_opportunity:
             label = SOLO_EMT_OPEN_OPPORTUNITY_LABEL
         else:
@@ -1128,6 +1188,8 @@ class RuleBasedResolver:
             "next_selection_run": seat.get("next_selection_run"),
             "interest_collecting": seat.get("interest_collecting"),
             "duty_crew": bool(seat.get("duty_crew")),
+            "career_fire_driver": bool(seat.get("career_fire_driver")),
+            "coverage_source": seat.get("coverage_source"),
         }
         if open_record not in self.open_seats:
             self.open_seats.append(open_record)
@@ -1256,6 +1318,8 @@ class RuleBasedResolver:
             "rollout_import_hold": bool(seat.get("rollout_import_hold")),
             "actionable_open_shift": bool(seat.get("actionable_open_shift")),
             "volunteer_crew_driver": bool(seat.get("volunteer_crew_driver")),
+            "career_fire_driver": bool(seat.get("career_fire_driver")),
+            "coverage_source": seat.get("coverage_source"),
             "structural_driver_coverage": bool(seat.get("structural_driver_coverage")),
             "assignment_reason": seat.get("assignment_reason"),
             "open_reason": seat.get("open_reason"),

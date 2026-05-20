@@ -471,6 +471,65 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         self.assertEqual(driver["assigned_name"], "Volunteer Crew Driver")
         self.assertEqual(result["shifts"][0]["crew_status"], "Complete")
 
+    def test_career_fire_driver_covers_configured_weekday_driver_interval(self):
+        data = base_payload(date_iso="2026-06-08", label="AM")
+        data["settings"]["career_fire_driver"] = {
+            "enabled": True,
+            "label": "Career Fire Driver",
+            "effective_start": "2026-06-01",
+            "days": ["MO", "TU", "TH"],
+            "start_time": "08:00",
+            "end_time": "18:00",
+            "normal_shift_start": "06:00",
+            "counts_toward_driver_coverage": True,
+            "counts_toward_emt_coverage": True,
+            "counts_as_named_member_assignment": False,
+            "creates_holdover_assignment": False,
+            "visible_on_wallboard": True,
+        }
+        data["members"] = [member("aemt", "AEMT", "PT")]
+        set_availability(data, "aemt", "2026-06-08", "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertTrue(driver["structural_driver_coverage"])
+        self.assertTrue(driver["career_fire_driver"])
+        self.assertEqual(driver["coverage_source"], "career_fire_driver")
+        self.assertEqual(driver["assigned_name"], "Career Fire Driver")
+        self.assertEqual(driver["assignment_status"], "STRUCTURAL_COVERAGE")
+        self.assertTrue(driver["counts_toward_driver_coverage"])
+        self.assertTrue(driver["counts_toward_emt_coverage"])
+        self.assertFalse(driver["counts_as_named_member_assignment"])
+        self.assertEqual(result["build"]["summary"]["open_driver_seats"], 0)
+        self.assertEqual(result["shifts"][0]["crew_status"], "Complete")
+
+    def test_clearing_career_fire_driver_days_returns_open_driver(self):
+        data = base_payload(date_iso="2026-06-08", label="AM")
+        data["settings"]["career_fire_driver"] = {
+            "enabled": True,
+            "label": "Career Fire Driver",
+            "effective_start": "2026-06-01",
+            "days": [],
+            "start_time": "08:00",
+            "end_time": "18:00",
+            "normal_shift_start": "06:00",
+            "counts_toward_driver_coverage": True,
+            "counts_toward_emt_coverage": True,
+            "visible_on_wallboard": True,
+        }
+        data["members"] = [member("aemt", "AEMT", "PT")]
+        set_availability(data, "aemt", "2026-06-08", "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertFalse(driver.get("career_fire_driver"))
+        self.assertFalse(driver.get("structural_driver_coverage"))
+        self.assertEqual(driver["assigned_name"], "OPEN DRIVER")
+        self.assertEqual(result["build"]["summary"]["open_driver_seats"], 1)
+        self.assertEqual(result["shifts"][0]["crew_status"], "Open Driver")
+
     def test_volunteer_crew_driver_does_not_replace_preserved_named_driver(self):
         data = base_payload(date_iso="2026-06-20", label="AM")
         data["members"] = [member("aemt", "AEMT", "PT"), member("emt_driver", "EMT", "PT")]

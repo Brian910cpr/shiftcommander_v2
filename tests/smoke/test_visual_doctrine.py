@@ -77,7 +77,7 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertTrue(any(seat.get("role") == "DRIVER" and seat.get("assigned_name") == "OPEN DRIVER" for seat in june17["seats"]))
         self.assertEqual(june18["crew_status"], "Open Attendant")
         self.assertTrue(any(seat.get("role") == "ATTENDANT" and str(seat.get("assigned_name", "")).startswith("OPEN") for seat in june18["seats"]))
-        self.assertTrue(any(seat.get("role") == "DRIVER" and seat.get("assigned_name") == "OPEN DRIVER" for seat in june18["seats"]))
+        self.assertTrue(any(seat.get("role") == "DRIVER" and seat.get("assigned_name") == "Career Fire Driver" and seat.get("structural_driver_coverage") for seat in june18["seats"]))
 
     def test_wallboard_readiness_and_urgency_are_separate(self):
         wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
@@ -306,6 +306,9 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertEqual(settings["career_fire_driver"]["days"], ["MO", "TU", "TH"])
         self.assertFalse(settings["career_fire_driver"]["counts_as_required_coverage"])
         self.assertFalse(settings["career_fire_driver"]["creates_holdover_assignment"])
+        self.assertTrue(settings["career_fire_driver"]["counts_toward_driver_coverage"])
+        self.assertTrue(settings["career_fire_driver"]["counts_toward_emt_coverage"])
+        self.assertFalse(settings["career_fire_driver"]["counts_as_named_member_assignment"])
         accommodation = settings["member_accommodations"]["effective_start_offsets"][0]
         self.assertEqual(accommodation["member_id"], "181")
         self.assertEqual(accommodation["effective_start"], "08:00")
@@ -324,6 +327,16 @@ class VisualDoctrineTests(unittest.TestCase):
             if day_code in career_days and row.get("member_id") == "188":
                 violations.append(f'{row["date"]} {row["label"]}')
         self.assertEqual(violations, [])
+
+    def test_june_career_fire_driver_days_do_not_show_open_driver_for_covered_interval(self):
+        schedule = json.loads((ROOT / "data" / "schedule.json").read_text(encoding="utf-8"))
+        june8 = next(row for row in schedule["shifts"] if row.get("date") == "2026-06-08" and row.get("label") == "AM")
+        driver = next(seat for seat in june8["seats"] if seat.get("role") == "DRIVER")
+        self.assertTrue(driver.get("career_fire_driver"))
+        self.assertTrue(driver.get("structural_driver_coverage"))
+        self.assertEqual(driver.get("assigned_name"), "Career Fire Driver")
+        self.assertNotEqual(driver.get("assigned_name"), "OPEN DRIVER")
+        self.assertEqual(june8.get("crew_status"), "Complete")
 
     def test_member_calendar_shows_open_opportunity_markers(self):
         member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")

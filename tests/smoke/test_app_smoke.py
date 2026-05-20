@@ -300,6 +300,9 @@ class AppSmokeTests(unittest.TestCase):
             "transition_watch_style": "duty_driver_black_small",
             "counts_as_required_coverage": True,
             "creates_holdover_assignment": True,
+            "counts_toward_driver_coverage": False,
+            "counts_toward_emt_coverage": False,
+            "counts_as_named_member_assignment": True,
             "visible_on_wallboard": True,
         }
 
@@ -310,6 +313,9 @@ class AppSmokeTests(unittest.TestCase):
         self.assertEqual(data["career_fire_driver"]["days"], ["MO", "WE", "FR"])
         self.assertFalse(data["career_fire_driver"]["counts_as_required_coverage"])
         self.assertFalse(data["career_fire_driver"]["creates_holdover_assignment"])
+        self.assertTrue(data["career_fire_driver"]["counts_toward_driver_coverage"])
+        self.assertTrue(data["career_fire_driver"]["counts_toward_emt_coverage"])
+        self.assertFalse(data["career_fire_driver"]["counts_as_named_member_assignment"])
         response.close()
 
         response = self.client.get("/api/wallboard_settings")

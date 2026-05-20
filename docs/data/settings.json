@@ -111,6 +111,9 @@
     "transition_watch_style": "duty_driver_black_small",
     "counts_as_required_coverage": false,
     "creates_holdover_assignment": false,
+    "counts_toward_driver_coverage": true,
+    "counts_toward_emt_coverage": true,
+    "counts_as_named_member_assignment": false,
     "visible_on_wallboard": true
   },
   "member_accommodations": {
