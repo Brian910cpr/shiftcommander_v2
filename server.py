@@ -117,7 +117,7 @@ def parse_csv_env(name, default_values):
 
 
 SC_QUICK_TEST_MODE = env_flag("SC_QUICK_TEST_MODE", False)
-SC_DEMO_SUPERVISOR_BYPASS = env_flag("SC_DEMO_SUPERVISOR_BYPASS", False)
+SC_DEMO_SUPERVISOR_BYPASS = env_flag("SC_DEMO_SUPERVISOR_BYPASS", SC_QUICK_TEST_MODE)
 SC_ALLOWED_ORIGINS = parse_csv_env(
     "SC_ALLOWED_ORIGINS",
     [
