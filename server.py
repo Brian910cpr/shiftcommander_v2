@@ -1501,17 +1501,136 @@ def member_roster_payload():
 
 def extract_member_availability(member_id):
     payload = load_availability_payload()
-    filtered = {"months": {}, "patterns_by_member": {}}
+    filtered = {"months": {}, "patterns_by_member": {}, "intent_metadata": {}, "entries": []}
     for month_key, month_bucket in payload.get("months", {}).items():
         if not isinstance(month_bucket, dict):
             continue
         member_bucket = month_bucket.get(member_id)
         if isinstance(member_bucket, dict):
             filtered["months"][month_key] = {member_id: member_bucket}
+            for date_iso, day_entry in member_bucket.items():
+                if not isinstance(day_entry, dict):
+                    continue
+                for period, value in day_entry.items():
+                    intent = canonical_member_intent(value)
+                    if intent is None:
+                        intent = "blank"
+                    meta = availability_intent_metadata(payload, member_id, str(date_iso)[:10], str(period).upper())
+                    filtered["entries"].append({
+                        "member_id": member_id,
+                        "date": str(date_iso)[:10],
+                        "period": str(period).upper(),
+                        "member_intent": intent,
+                        "updated_at": meta.get("updated_at"),
+                        "updated_by": meta.get("updated_by"),
+                        "source": meta.get("source") or "legacy_availability",
+                    })
     patterns = payload.get("patterns_by_member", {})
     if isinstance(patterns, dict) and isinstance(patterns.get(member_id), dict):
         filtered["patterns_by_member"][member_id] = patterns[member_id]
+    metadata = payload.get("intent_metadata", {})
+    if isinstance(metadata, dict) and isinstance(metadata.get(member_id), dict):
+        filtered["intent_metadata"][member_id] = metadata[member_id]
     return filtered
+
+
+def canonical_member_intent(value):
+    if isinstance(value, dict):
+        value = value.get("member_intent") or value.get("intent") or value.get("status")
+    raw = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    aliases = {
+        "preferred": "prefer",
+        "prefer": "prefer",
+        "yes": "prefer",
+        "available": "available",
+        "can_work": "available",
+        "do_not_schedule": "do_not",
+        "do_not": "do_not",
+        "unavailable": "do_not",
+        "dns": "do_not",
+        "no": "do_not",
+        "blank": "blank",
+        "unset": "blank",
+        "none": "blank",
+        "no_answer": "blank",
+        "": "blank",
+    }
+    return aliases.get(raw)
+
+
+def availability_value_for_intent(intent):
+    return {
+        "prefer": "preferred",
+        "available": "available",
+        "do_not": "do_not_schedule",
+        "blank": "blank",
+    }[intent]
+
+
+def availability_intent_metadata(payload, member_id, date_iso, period):
+    metadata = payload.get("intent_metadata", {}) if isinstance(payload, dict) else {}
+    entry = metadata.get(member_id, {}).get(date_iso, {}).get(period) if isinstance(metadata, dict) else None
+    return entry if isinstance(entry, dict) else {}
+
+
+def validate_availability_entry(member_id, entry):
+    if not isinstance(entry, dict):
+        raise ValueError("Each availability entry must be an object")
+    date_iso = str(entry.get("date") or "").strip()[:10]
+    try:
+        date_obj = datetime.fromisoformat(date_iso).date()
+    except ValueError as exc:
+        raise ValueError(f"Invalid availability date: {date_iso or '<blank>'}") from exc
+    period = str(entry.get("period") or entry.get("shift") or "").strip().upper()
+    if period not in {"AM", "PM"}:
+        raise ValueError("Availability period must be AM or PM")
+    intent = canonical_member_intent(entry.get("member_intent", entry.get("intent", entry.get("status"))))
+    if intent not in {"blank", "prefer", "available", "do_not"}:
+        raise ValueError("member_intent must be blank, prefer, available, or do_not")
+    return {
+        "member_id": member_id,
+        "date": date_iso,
+        "date_obj": date_obj,
+        "period": period,
+        "member_intent": intent,
+    }
+
+
+def save_member_availability_entries(member_id, entries, actor_member_id=None):
+    if not isinstance(entries, list):
+        raise ValueError("Availability payload entries must be a list")
+    member = member_record_by_id(member_id)
+    if member is None:
+        raise ValueError("Member record not found")
+
+    full_payload = load_availability_payload()
+    edit_start_date = member_availability_edit_start_date()
+    now_value = now_iso()
+    actor = str(actor_member_id or member_id)
+    saved = []
+
+    for raw_entry in entries:
+        entry = validate_availability_entry(member_id, raw_entry)
+        if entry["date_obj"] < edit_start_date:
+            raise ValueError("Availability in the current Thursday cycle is locked for member editing")
+        month_key = entry["date"][:7]
+        value = availability_value_for_intent(entry["member_intent"])
+        full_payload.setdefault("months", {}).setdefault(month_key, {}).setdefault(member_id, {}).setdefault(entry["date"], {})
+        full_payload["months"][month_key][member_id][entry["date"]][entry["period"]] = value
+        meta = {
+            "member_id": member_id,
+            "date": entry["date"],
+            "period": entry["period"],
+            "member_intent": entry["member_intent"],
+            "updated_at": now_value,
+            "updated_by": actor,
+            "source": "member_portal",
+        }
+        full_payload.setdefault("intent_metadata", {}).setdefault(member_id, {}).setdefault(entry["date"], {})[entry["period"]] = meta
+        saved.append(meta)
+
+    save_availability_payload(full_payload)
+    return saved
 
 
 def apply_member_profile_update(member, payload):
@@ -1548,6 +1667,9 @@ def member_availability_edit_start_date():
 
 
 def apply_member_availability_update(member_id, payload):
+    if isinstance(payload, dict) and "entries" in payload:
+        save_member_availability_entries(member_id, payload.get("entries"), actor_member_id=member_id)
+        return
     if not isinstance(payload, dict) or not isinstance(payload.get("months"), dict):
         raise ValueError("Availability payload must contain a months object")
 
@@ -2204,6 +2326,14 @@ def save_member_profile():
     })
 
 
+@app.route("/api/member/availability", methods=["GET"])
+def get_member_availability():
+    member_id, _, error = resolve_member_request_member()
+    if error:
+        return error
+    return jsonify(extract_member_availability(member_id))
+
+
 @app.route("/api/member/availability", methods=["POST"])
 def save_member_availability():
     payload = request.get_json(silent=True) or {}
@@ -2217,6 +2347,7 @@ def save_member_availability():
     return jsonify({
         "status": "ok",
         "member_id": member_id,
+        "availability": extract_member_availability(member_id),
         "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
         "quick_test_mode": quick_test_mode_enabled(),
     })

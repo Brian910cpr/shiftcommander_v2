@@ -575,6 +575,77 @@ class AppSmokeTests(unittest.TestCase):
         finally:
             self.server.SC_QUICK_TEST_MODE = original
 
+    def test_member_availability_entries_save_and_reload(self):
+        original = self.server.SC_QUICK_TEST_MODE
+        try:
+            self.server.SC_QUICK_TEST_MODE = True
+            edit_start = self.server.member_availability_edit_start_date()
+            target = edit_start
+            while target.weekday() != 2:
+                target += timedelta(days=1)
+            date_iso = target.isoformat()
+            month = target.strftime("%Y-%m")
+            schedule_before = (ROOT / "data" / "schedule.json").read_bytes()
+
+            cases = [
+                ("prefer", "preferred"),
+                ("available", "available"),
+                ("do_not", "do_not_schedule"),
+                ("blank", "blank"),
+            ]
+            for intent, stored_value in cases:
+                response = self.client.post("/api/member/availability", json={
+                    "member_id": "188",
+                    "entries": [{"date": date_iso, "period": "AM", "member_intent": intent}],
+                })
+                self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+                payload = response.get_json()
+                self.assertEqual(payload["availability"]["months"][month]["188"][date_iso]["AM"], stored_value)
+                saved_entry = next(row for row in payload["availability"]["entries"] if row["date"] == date_iso and row["period"] == "AM")
+                self.assertEqual(saved_entry["member_intent"], intent)
+                self.assertEqual(saved_entry["source"], "member_portal")
+                response.close()
+
+                response = self.client.get(f"/api/member/availability?member_id=188")
+                self.assertEqual(response.status_code, 200)
+                reloaded = response.get_json()
+                self.assertEqual(reloaded["months"][month]["188"][date_iso]["AM"], stored_value)
+                reloaded_entry = next(row for row in reloaded["entries"] if row["date"] == date_iso and row["period"] == "AM")
+                self.assertEqual(reloaded_entry["member_intent"], intent)
+                response.close()
+
+            file_payload = json.loads((ROOT / "data" / "availability.json").read_text(encoding="utf-8"))
+            self.assertEqual(file_payload["months"][month]["188"][date_iso]["AM"], "blank")
+            self.assertEqual(file_payload["intent_metadata"]["188"][date_iso]["AM"]["member_intent"], "blank")
+            self.assertEqual(file_payload["intent_metadata"]["188"][date_iso]["AM"]["source"], "member_portal")
+            self.assertEqual((ROOT / "data" / "schedule.json").read_bytes(), schedule_before)
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original
+
+    def test_member_availability_entries_reject_invalid_member_and_intent(self):
+        original = self.server.SC_QUICK_TEST_MODE
+        try:
+            self.server.SC_QUICK_TEST_MODE = True
+            edit_start = self.server.member_availability_edit_start_date()
+            date_iso = edit_start.isoformat()
+
+            response = self.client.post("/api/member/availability", json={
+                "member_id": "missing-member",
+                "entries": [{"date": date_iso, "period": "AM", "member_intent": "prefer"}],
+            })
+            self.assertEqual(response.status_code, 404)
+            response.close()
+
+            response = self.client.post("/api/member/availability", json={
+                "member_id": "188",
+                "entries": [{"date": date_iso, "period": "AM", "member_intent": "maybe"}],
+            })
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("member_intent", response.get_data(as_text=True))
+            response.close()
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original
+
     def test_debug_endpoints_serve_after_generation(self):
         self.login_supervisor()
         self.client.post("/api/generate")

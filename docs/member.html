@@ -480,12 +480,22 @@
       return `${days[date.getDay()]}_${shift}`;
     }
     function normalizeStatus(value){
+      if(value && typeof value === "object"){
+        return normalizeStatus(value.member_intent || value.intent || value.status);
+      }
       const raw = String(value || "").trim().toLowerCase();
       if(raw === "blank" || raw === "no_answer") return "blank";
-      if(raw === "preferred") return "preferred";
+      if(raw === "preferred" || raw === "prefer") return "preferred";
       if(raw === "available") return "available";
-      if(raw === "do_not_schedule" || raw === "unavailable") return "do_not_schedule";
+      if(raw === "do_not_schedule" || raw === "do_not" || raw === "unavailable") return "do_not_schedule";
       return "";
+    }
+    function memberIntentFromStatus(value){
+      const status = normalizeStatus(value);
+      if(status === "preferred") return "prefer";
+      if(status === "available") return "available";
+      if(status === "do_not_schedule") return "do_not";
+      return "blank";
     }
     const AVAILABILITY_STATES = ["blank", "preferred", "available", "do_not_schedule"];
     function stateLabel(value){
@@ -1382,18 +1392,19 @@
     async function saveAvailability(){
       try{
         const memberId = getMemberId();
-        const months = {};
+        const entries = [];
         for(const key of appState.dirtyAvailabilityKeys){
           const [dateIso, shift] = key.split("|");
           if(!dateIso || !shift || editLocked(dateIso)) continue;
           const month = monthKey(dateIso);
           const value = normalizeStatus(appState.availability?.months?.[month]?.[memberId]?.[dateIso]?.[shift]) || "blank";
-          months[month] ||= {};
-          months[month][memberId] ||= {};
-          months[month][memberId][dateIso] ||= {};
-          months[month][memberId][dateIso][shift] = value;
+          entries.push({
+            date: dateIso,
+            period: shift,
+            member_intent: memberIntentFromStatus(value)
+          });
         }
-        if(!Object.keys(months).length){
+        if(!entries.length){
           appState.dirtyAvailability = false;
           appState.dirtyAvailabilityKeys.clear();
           renderSaveState();
@@ -1402,8 +1413,9 @@
         }
         await apiPost(apiPath("/api/member/availability"), {
           member_id: memberId,
-          months,
+          entries,
         });
+        await loadMemberContextFor(memberId);
         appState.dirtyAvailability = false;
         appState.dirtyAvailabilityKeys.clear();
         appState.lastSavedAt = new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
