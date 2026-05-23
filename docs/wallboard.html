@@ -438,6 +438,24 @@
       align-content: center;
     }
 
+    .bid-review-label {
+      position: relative;
+      z-index: 1;
+      justify-self: start;
+      min-height: 18px;
+      color: #ffd37a;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .bid-review-label.urgent,
+    .bid-review-label.review {
+      color: #ffd0d0;
+    }
+
     .slot {
       padding: 9px 12px;
       border-radius: 14px;
@@ -1362,6 +1380,93 @@
       return Number.isFinite(value) ? value : fallback;
     }
 
+    function bidCycleDays() {
+      return numberSetting("bid_cycle_days", numberSetting("interest_cycle_days", 3));
+    }
+
+    function urgentSupervisorWindowDays() {
+      return numberSetting("urgent_supervisor_window_days", 3);
+    }
+
+    function openOpportunityHorizonDays() {
+      const rules = displayHorizonRules();
+      const direct = Number(rules.open_opportunity_horizon_days || rules.actionable_horizon_days);
+      if (Number.isFinite(direct) && direct > 0) return direct;
+      const weeks = Number(rules.admin_rolling_weeks || rules.rolling_weeks_default);
+      if (Number.isFinite(weeks) && weeks > 0) return weeks * 7;
+      return 28;
+    }
+
+    function fieldDate(value) {
+      const raw = String(value || "").slice(0, 10);
+      const parsed = raw ? parseLocalDate(raw) : null;
+      return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+    }
+
+    function coverageRequestStartDate(shift, seats) {
+      const keys = ["coverage_request_created_at", "coverage_request_activated_at", "open_need_started_at", "opened_at"];
+      const dates = [];
+      [shift, ...(seats || [])].forEach(source => {
+        if (!source) return;
+        keys.forEach(key => {
+          const parsed = fieldDate(source[key]);
+          if (parsed) dates.push(parsed);
+        });
+      });
+      if (!dates.length) return null;
+      return dates.sort((a, b) => a - b)[0];
+    }
+
+    function nextRollingBidReviewDate(openNeedStartedAt, today, cycleDays) {
+      let reviewAt = addDays(openNeedStartedAt, cycleDays);
+      while (reviewAt < today) {
+        reviewAt = addDays(reviewAt, cycleDays);
+      }
+      return reviewAt;
+    }
+
+    function bidReviewMetadata(shift, openSeats, readiness) {
+      const shiftDate = fieldDate(shift?.date || shift?.shift_date);
+      const today = getTodayDate();
+      const cycleDays = bidCycleDays();
+      const urgentDays = urgentSupervisorWindowDays();
+      const meta = {
+        bid_cycle_days: cycleDays,
+        urgent_supervisor_window_days: urgentDays,
+        open_horizon_days: openOpportunityHorizonDays(),
+        open_need_started_at: null,
+        next_bid_review_at: null,
+        bid_display_label: "",
+        bid_display_state: "none"
+      };
+      if (!shiftDate) return meta;
+      const days = Math.round((shiftDate - today) / 86400000);
+      const status = String(readiness?.status || "").toLowerCase();
+      if (status.includes("review")) {
+        return { ...meta, bid_display_label: "Review", bid_display_state: "review" };
+      }
+      if (!openSeats?.length) return meta;
+      if (days >= 0 && days <= urgentDays) {
+        return { ...meta, bid_display_label: "10-21 112", bid_display_state: "urgent" };
+      }
+      if (days < 0) {
+        return { ...meta, bid_display_label: "Review", bid_display_state: "review" };
+      }
+
+      const requestStarted = coverageRequestStartDate(shift, openSeats);
+      const openNeedStartedAt = requestStarted || addDays(shiftDate, -meta.open_horizon_days);
+      const reviewAt = nextRollingBidReviewDate(openNeedStartedAt, today, cycleDays);
+      const reviewIso = toIsoLocal(reviewAt);
+      const todayIso = toIsoLocal(today);
+      return {
+        ...meta,
+        open_need_started_at: toIsoLocal(openNeedStartedAt),
+        next_bid_review_at: reviewIso,
+        bid_display_label: reviewIso === todayIso ? "Bid Today" : `Bid ${reviewAt.getMonth() + 1}/${reviewAt.getDate()}`,
+        bid_display_state: reviewIso === todayIso ? "bid_today" : "bid"
+      };
+    }
+
     function allowAdditionalOt() {
       const value = String(ruleSettings()?.allow_additional_ot ?? "true").toLowerCase();
       return !(value === "false" || value === "never" || value === "0" || value === "no");
@@ -1654,6 +1759,10 @@
       });
       const hasOpenAttendant = futureOpenSeats.some(isAttendantSeat);
       const hasOpenDriver = futureOpenSeats.some(isDriverSeat);
+      const bidReview = bidReviewMetadata(shift, futureOpenSeats, readiness);
+      const bidReviewHtml = bidReview.bid_display_label
+        ? `<div class="bid-review-label ${escapeHtml(bidReview.bid_display_state)}" title="Next bid review date: ${escapeHtml(bidReview.next_bid_review_at || bidReview.bid_display_label)}">${escapeHtml(bidReview.bid_display_label)}</div>`
+        : "";
 
       const renderedSlots = [
         ...(careerCoverage?.gapLabel ? [`<div class="sc-coverage-gap-pill" title="Coverage gap notice only. This is not an open shift, holdover, overtime, or member assignment.">${escapeHtml(careerCoverage.gapLabel)}</div>`] : []),
@@ -1714,6 +1823,7 @@
             <div class="shift-name">${escapeHtml(shift.label)}</div>
           </div>
           <div class="slots">${slotsHtml}</div>
+          ${bidReviewHtml}
         </div>
       `;
     }

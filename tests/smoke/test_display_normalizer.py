@@ -74,6 +74,7 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(row["open_slots"], ["attendant", "driver"])
         self.assertEqual(row["coverage_priority"], "open")
         self.assertEqual(row["attention_level"], "high")
+        self.assertIn("next_bid_review_at", row["bid_review"])
 
     def test_career_fire_only_with_open_attendant(self):
         row = display_for(shift(
@@ -199,6 +200,68 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(ncld_row["crew_status"], "invalid")
         self.assertIn("invalid:attendant_requires_emt_or_als", emr_row["issues"])
         self.assertIn("invalid:attendant_requires_emt_or_als", ncld_row["issues"])
+
+    def test_bid_review_uses_horizon_start_not_shift_date(self):
+        row = display_for({
+            "date": "2026-07-06",
+            "label": "AM",
+            "unit": "120",
+            "seats": [
+                seat("ATTENDANT", None, "OPEN ATTENDANT"),
+                seat("DRIVER", None, "OPEN DRIVER"),
+            ],
+        }, today_iso="2026-06-08")
+
+        self.assertEqual(row["bid_review"]["open_horizon_days"], 28)
+        self.assertEqual(row["bid_review"]["open_need_started_at"], "2026-06-08")
+        self.assertEqual(row["bid_review"]["next_bid_review_at"], "2026-06-11")
+        self.assertEqual(row["bid_review"]["bid_display_label"], "Bid 6/11")
+        self.assertNotEqual(row["bid_review"]["next_bid_review_at"], row["date"])
+
+    def test_bid_review_reups_after_review_date_passes(self):
+        row = display_for({
+            "date": "2026-07-06",
+            "label": "AM",
+            "unit": "120",
+            "seats": [
+                seat("ATTENDANT", None, "OPEN ATTENDANT", open_need_started_at="2026-06-08"),
+                seat("DRIVER", None, "OPEN DRIVER"),
+            ],
+        }, today_iso="2026-06-12")
+
+        self.assertEqual(row["bid_review"]["open_need_started_at"], "2026-06-08")
+        self.assertEqual(row["bid_review"]["next_bid_review_at"], "2026-06-14")
+        self.assertEqual(row["bid_review"]["bid_display_label"], "Bid 6/14")
+
+    def test_bid_review_for_coverage_request_starts_at_request_date(self):
+        row = display_for({
+            "date": "2026-07-06",
+            "label": "AM",
+            "unit": "120",
+            "coverage_request_created_at": "2026-06-20T10:00:00",
+            "seats": [
+                seat("ATTENDANT", None, "OPEN ATTENDANT"),
+                seat("DRIVER", "emt", "Eddie"),
+            ],
+        }, today_iso="2026-06-20")
+
+        self.assertEqual(row["bid_review"]["open_need_started_at"], "2026-06-20")
+        self.assertEqual(row["bid_review"]["next_bid_review_at"], "2026-06-23")
+        self.assertEqual(row["bid_review"]["bid_display_label"], "Bid 6/23")
+
+    def test_bid_review_switches_to_urgent_window_label(self):
+        row = display_for({
+            "date": "2026-05-25",
+            "label": "AM",
+            "unit": "120",
+            "seats": [
+                seat("ATTENDANT", None, "OPEN ATTENDANT"),
+                seat("DRIVER", None, "OPEN DRIVER"),
+            ],
+        }, today_iso="2026-05-23")
+
+        self.assertEqual(row["bid_review"]["bid_display_label"], "10-21 112")
+        self.assertEqual(row["bid_review"]["bid_display_state"], "urgent")
 
 
 if __name__ == "__main__":

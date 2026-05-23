@@ -175,6 +175,25 @@ class OpenShiftBidReviewTests(unittest.TestCase):
         self.assertEqual(result["decision"], "supervisor_review")
         self.assertIn("wrong_cert", result["candidates"][0]["warnings"])
 
+    def test_prefer_bid_does_not_displace_already_assigned_whiteboard_member(self):
+        target_seat = seat(
+            "DRIVER",
+            "assigned",
+            "Assigned Member",
+            resolver_bucket="preserved_rollout_import",
+            rollout_sticky=True,
+            assignment_reason="Preserved from physical May wallboard rollout import.",
+        )
+        result = self.review(
+            [member("bidder", "Bidder Member", "EMT")],
+            availability(("bidder", "preferred")),
+            target_seat,
+        )
+
+        self.assertFalse(result["auto_assign"])
+        self.assertEqual(result["decision"], "not_open")
+        self.assertEqual(result["reason"], "seat_not_open")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2705,14 +2705,15 @@ def get_schedule_api():
 def get_bootstrap():
     schedule = load_schedule_payload()
     members = load_members_payload()
+    settings = load_settings()
     return jsonify({
         "health": health_payload(),
         "members": members,
         "availability": load_availability_payload(),
-        "settings": load_settings(),
+        "settings": settings,
         "shifts": schedule.get("shifts", []) if isinstance(schedule, dict) else [],
         "schedule": schedule,
-        "display": normalize_wallboard_display(schedule, members),
+        "display": normalize_wallboard_display(schedule, members, settings),
         "generated_at": now_iso(),
     })
 
@@ -2721,7 +2722,8 @@ def get_bootstrap():
 def get_wallboard_display():
     schedule = load_schedule_payload()
     members = load_members_payload()
-    return jsonify(normalize_wallboard_display(schedule, members))
+    settings = load_settings()
+    return jsonify(normalize_wallboard_display(schedule, members, settings))
 
 
 @app.route("/api/schedule_integrity", methods=["GET"])

@@ -89,6 +89,27 @@ class MemberDashboardTests(unittest.TestCase):
         self.assertEqual(row["obligation_state"], "assigned")
         self.assertEqual(row["display"]["primary_label"], "Scheduled")
         self.assertTrue(row["responsibility_remains_with_member"])
+        self.assertEqual(row["member_intent"], "blank")
+        self.assertIn("assigned_blank_needs_intent_confirmation", row["intent_flags"])
+
+    def test_whiteboard_assigned_non_rotation_missing_intent_derives_prefer(self):
+        schedule = {"shifts": [{"date": "2026-06-01", "label": "AM", "seats": [{
+            "role": "DRIVER",
+            "assigned": "188",
+            "assigned_name": "Brian Ennis",
+            "resolver_bucket": "preserved_rollout_import",
+            "rollout_sticky": True,
+            "assignment_reason": "Preserved from physical May wallboard rollout import.",
+        }]}]}
+        payload = dashboard("188", [member("188", "Brian Ennis", status="FT")], schedule)
+
+        row = cell(payload)
+        self.assertEqual(row["obligation_state"], "assigned")
+        self.assertEqual(row["explicit_member_intent"], "blank")
+        self.assertEqual(row["member_intent"], "prefer")
+        self.assertEqual(row["member_intent_source"], "derived_whiteboard_import")
+        self.assertIn("whiteboard_import_assigned_prefer", row["intent_flags"])
+        self.assertTrue(row["responsibility_remains_with_member"])
 
     def test_aemt_rotation_creates_rotation_commitment_not_prefer(self):
         schedule = {"shifts": [{"date": "2026-06-01", "label": "AM", "seats": []}]}
@@ -128,6 +149,7 @@ class MemberDashboardTests(unittest.TestCase):
         self.assertEqual(row["member_intent"], "do_not")
         self.assertNotIn("◆", row["display"]["symbols"])
         self.assertNotIn("◇", row["display"]["symbols"])
+        self.assertEqual(row["change_request_state"], "none")
 
     def test_do_not_on_rotation_commitment_does_not_remove_responsibility(self):
         schedule = {"shifts": [{"date": "2026-06-01", "label": "AM", "seats": [{"role": "ATTENDANT", "assigned": "aemt_1", "assigned_name": "AEMT One"}]}]}
@@ -137,8 +159,22 @@ class MemberDashboardTests(unittest.TestCase):
         row = cell(payload)
         self.assertEqual(row["obligation_state"], "rotation_commitment")
         self.assertEqual(row["member_intent"], "do_not")
+        self.assertEqual(row["change_request_state"], "coverage_requested_by_me")
         self.assertTrue(row["responsibility_remains_with_member"])
         self.assertEqual(row["assigned_seat"]["assigned"], "aemt_1")
+
+    def test_do_not_on_assigned_shift_derives_coverage_request_not_removal(self):
+        schedule = {"shifts": [{"date": "2026-06-01", "label": "AM", "seats": [{"role": "DRIVER", "assigned": "188", "assigned_name": "Brian Ennis"}]}]}
+        availability = {"months": {"2026-06": {"188": {"2026-06-01": {"AM": "do_not_schedule"}}}}}
+        payload = dashboard("188", [member("188", "Brian Ennis", status="FT")], schedule, availability)
+
+        row = cell(payload)
+        self.assertEqual(row["obligation_state"], "assigned")
+        self.assertEqual(row["member_intent"], "do_not")
+        self.assertEqual(row["change_request_state"], "coverage_requested_by_me")
+        self.assertTrue(row["change_request"]["derived"])
+        self.assertTrue(row["responsibility_remains_with_member"])
+        self.assertEqual(row["assigned_seat"]["assigned"], "188")
 
     def test_coverage_request_overlay_preserves_responsibility(self):
         schedule = {"shifts": [{"date": "2026-06-01", "label": "AM", "seats": [{"role": "DRIVER", "assigned": "188", "assigned_name": "Brian Ennis"}]}]}

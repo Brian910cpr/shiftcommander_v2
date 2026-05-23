@@ -75,16 +75,20 @@ def is_open_seat(seat: Dict[str, Any]) -> bool:
     return not assigned and is_open_name(seat.get("assigned_name") or seat.get("member_name"))
 
 
-def availability_intent(availability: Dict[str, Any], member_id_value: str, date_iso: str, period: str) -> str:
+def availability_intent_info(availability: Dict[str, Any], member_id_value: str, date_iso: str, period: str) -> Tuple[str, str]:
     month = date_iso[:7]
     months = availability.get("months") if isinstance(availability.get("months"), dict) else {}
     exact = months.get(month, {}).get(member_id_value, {}).get(date_iso, {}) if isinstance(months, dict) else {}
     if isinstance(exact, dict) and period in exact:
-        return normalize_intent(exact.get(period))
+        return normalize_intent(exact.get(period)), "explicit"
     direct = availability.get(member_id_value, {}).get(date_iso, {}) if isinstance(availability.get(member_id_value), dict) else {}
     if isinstance(direct, dict) and period in direct:
-        return normalize_intent(direct.get(period))
-    return "blank"
+        return normalize_intent(direct.get(period)), "explicit"
+    return "blank", "missing"
+
+
+def availability_intent(availability: Dict[str, Any], member_id_value: str, date_iso: str, period: str) -> str:
+    return availability_intent_info(availability, member_id_value, date_iso, period)[0]
 
 
 def index_schedule(schedule: Dict[str, Any]) -> Dict[Tuple[str, str], Dict[str, Any]]:
@@ -106,6 +110,45 @@ def assigned_seat(shift: Optional[Dict[str, Any]], member_id_value: str) -> Opti
         if str(seat.get("assigned") or "").strip() == member_id_value:
             return seat
     return None
+
+
+def is_whiteboard_import_assignment(seat: Optional[Dict[str, Any]]) -> bool:
+    if not seat:
+        return False
+    factors = " ".join(str(value or "") for value in seat.get("selection_factors", []) if value is not None)
+    haystack = " ".join([
+        str(seat.get("resolver_bucket") or ""),
+        str(seat.get("assignment_reason") or ""),
+        str(seat.get("selection_statement") or ""),
+        factors,
+    ]).lower()
+    return bool(
+        seat.get("rollout_sticky")
+        or seat.get("preserved_existing_assignment")
+        or "preserved_rollout_import" in haystack
+        or "physical may wallboard" in haystack
+        or "whiteboard" in haystack
+    )
+
+
+def effective_member_intent(
+    explicit_intent: str,
+    intent_source: str,
+    obligation_state: str,
+    seat: Optional[Dict[str, Any]],
+) -> Tuple[str, str, List[str]]:
+    flags: List[str] = []
+    if (
+        explicit_intent == "blank"
+        and intent_source == "missing"
+        and obligation_state == "assigned"
+        and is_whiteboard_import_assignment(seat)
+    ):
+        flags.append("whiteboard_import_assigned_prefer")
+        return "prefer", "derived_whiteboard_import", flags
+    if explicit_intent == "blank" and obligation_state == "assigned":
+        flags.append("assigned_blank_needs_intent_confirmation")
+    return explicit_intent, intent_source, flags
 
 
 def has_open_opportunity(shift: Optional[Dict[str, Any]]) -> bool:
@@ -233,15 +276,17 @@ def display_for_cell(obligation_state: str, member_intent: str, opportunity_stat
         primary = "Prefer" if obligation_state == "none" else primary
         if opportunity_state != "none":
             symbols.append("◆")
-        help_parts.append("Prefer is a strong bid signal for open opportunities.")
+        help_parts.append("Prefer: I want this shift and want to be considered first.")
     elif member_intent == "available":
         primary = "Available" if obligation_state == "none" else primary
         if opportunity_state != "none":
             symbols.append("◇")
-        help_parts.append("Available is a soft bid signal for open opportunities.")
+        help_parts.append("Available: I can work this if needed.")
     elif member_intent == "do_not":
         primary = "Do Not" if obligation_state == "none" else primary
-        help_parts.append("Do Not withdraws bid interest. On an assignment or rotation commitment it does not clear responsibility.")
+        help_parts.append("Do Not: do not schedule me here; if already scheduled, I need coverage.")
+    else:
+        help_parts.append("Blank: no decision; notify if appropriate, but do not auto-consider me.")
 
     if change_request_state == "coverage_requested_by_me":
         symbols.append("REQ")
@@ -286,9 +331,18 @@ def build_cell(
     seat = assigned_seat(shift, mid)
     is_rotation = date_iso in rotation_dates
     obligation_state = "rotation_commitment" if is_rotation else ("assigned" if seat else "none")
-    member_intent = availability_intent(availability, mid, date_iso, period)
+    explicit_intent, intent_source = availability_intent_info(availability, mid, date_iso, period)
+    member_intent, intent_source, intent_flags = effective_member_intent(explicit_intent, intent_source, obligation_state, seat)
     opportunity_state = opportunity_state_for(shift, change_requests, date_iso, period)
     change_request_state, change_request = change_state_for(change_requests, mid, date_iso, period)
+    if change_request_state == "none" and member_intent == "do_not" and obligation_state in {"assigned", "rotation_commitment"}:
+        change_request_state = "coverage_requested_by_me"
+        change_request = {
+            "derived": True,
+            "type": "drop_coverage_request",
+            "status": "pending_supervisor_review",
+            "reason": "assigned_member_marked_do_not",
+        }
     responsibility = obligation_state in {"assigned", "rotation_commitment"}
     return {
         "date": date_iso,
@@ -296,6 +350,9 @@ def build_cell(
         "member_id": mid,
         "obligation_state": obligation_state,
         "member_intent": member_intent,
+        "member_intent_source": intent_source,
+        "explicit_member_intent": explicit_intent,
+        "intent_flags": intent_flags,
         "opportunity_state": opportunity_state,
         "change_request_state": change_request_state,
         "display": display_for_cell(obligation_state, member_intent, opportunity_state, change_request_state),
