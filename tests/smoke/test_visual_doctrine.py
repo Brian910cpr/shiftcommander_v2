@@ -42,10 +42,16 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn('const SCHEDULE_URL = "/api/schedule"', wallboard)
         self.assertIn('const MARKERS_URL = "/api/calendar_markers"', wallboard)
         self.assertIn("Volunteer ALS Response Appreciated", wallboard)
-        self.assertIn("Volunteer Crew Driver", wallboard)
+        self.assertIn("Vol Fire", wallboard)
         self.assertIn("Basic Crew Finalized", wallboard)
-        self.assertIn("OPEN ALS", wallboard)
+        self.assertIn("open-attendant", wallboard)
+        self.assertIn("open-driver", wallboard)
+        self.assertIn("has-open-slot", wallboard)
+        self.assertIn("driverCoverageLabel", wallboard)
         self.assertNotIn("OPEN DUTY CREW DRIVER", wallboard)
+        self.assertNotIn("OPEN ALS", wallboard)
+        self.assertNotIn("OPEN ATTENDANT", wallboard)
+        self.assertNotIn("OPEN DRIVER", wallboard)
 
     def test_public_schedule_mirror_uses_current_resolver_output(self):
         live = json.loads((ROOT / "data" / "schedule.json").read_text(encoding="utf-8"))
@@ -106,7 +112,8 @@ class VisualDoctrineTests(unittest.TestCase):
         wallboard = (ROOT / "docs" / "wallboard.html").read_text(encoding="utf-8")
         self.assertIn('SOLO_EMT_OPEN_OPPORTUNITY_LABEL = "ALS or Driver Needed"', resolver)
         self.assertIn("solo_emt_anchor_opportunity", resolver)
-        self.assertIn("ALS or Driver Needed", wallboard)
+        self.assertIn('displayLabel: "OPEN"', wallboard)
+        self.assertNotIn("ALS or Driver Needed", wallboard)
         self.assertIn("solo-emt-opportunity-seat", wallboard)
         self.assertIn("ALS may upgrade the attendant seat", wallboard)
         self.assertIn("raw === \"ALS OR DRIVER NEEDED\"", wallboard)
@@ -129,7 +136,10 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn("!options.volunteerDriver && isFutureOpen", wallboard)
         self.assertIn("!options.volunteerDriver && options.volunteer", wallboard)
         self.assertIn("!options.volunteerDriver && isDutySeat(seat)", wallboard)
-        self.assertIn('const memberClass = options.volunteerDriver ? ""', wallboard)
+        self.assertIn('const memberClass = options.volunteerDriver ? "fire-coverage"', wallboard)
+        self.assertIn(".member.fire-coverage", wallboard)
+        self.assertIn("driverCoverageLabel", wallboard)
+        self.assertIn('displayLabel: "Vol Fire"', wallboard)
         forbidden = [
             'options.volunteerDriver ? "green"',
             'options.volunteerDriver ? "yellow"',

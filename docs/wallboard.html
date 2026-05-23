@@ -25,8 +25,8 @@
       --gray-bg: rgba(28, 35, 49, 0.9);
       --gray-bd: #4c5a70;
 
-      --name-green: #52ef7f;
-      --name-blue: #69b8ff;
+      --name-green: #39ff7a;
+      --name-blue: #30b8ff;
       --name-pink: #ff8fcb;
       --name-red: #ff9c9c;
       --name-default: #eef4ff;
@@ -38,8 +38,10 @@
       --past-dim: 0.76;
       --future-soft: 0.96;
 
-      --open-seat-border: rgba(255, 100, 100, 0.9);
-      --open-seat-glow: rgba(255, 100, 100, 0.24);
+      --open-attendant: #39ff7a;
+      --open-driver: #30b8ff;
+      --open-seat-border: rgba(57, 255, 122, 0.9);
+      --open-seat-glow: rgba(48, 184, 255, 0.24);
       --month-line: rgba(143, 211, 255, 0.28);
       --month-line-strong: rgba(143, 211, 255, 0.42);
     }
@@ -376,6 +378,21 @@
       box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.10);
     }
 
+    .shift-card.has-open-slot {
+      border-width: 2px;
+      border-color: rgba(57, 255, 122, 0.76);
+      box-shadow: inset 0 0 0 1px rgba(57, 255, 122, 0.14), 0 0 18px rgba(48, 184, 255, 0.16);
+    }
+
+    .shift-card.has-open-driver {
+      border-color: rgba(48, 184, 255, 0.82);
+    }
+
+    .shift-card.has-open-attendant.has-open-driver {
+      border-color: rgba(57, 255, 122, 0.82);
+      box-shadow: inset 0 0 0 1px rgba(57, 255, 122, 0.15), 0 0 20px rgba(48, 184, 255, 0.18);
+    }
+
     .shift-card.urgency-interest::after,
     .shift-card.urgency-cycle::after,
     .shift-card.urgency-ot::after,
@@ -391,7 +408,7 @@
     .shift-card.urgency-interest::after { box-shadow: inset 0 0 0 2px rgba(255, 209, 102, 0.22), 0 0 16px rgba(255, 209, 102, 0.18); }
     .shift-card.urgency-cycle::after { box-shadow: inset 0 0 0 2px rgba(255, 176, 55, 0.34), 0 0 24px rgba(255, 176, 55, 0.28); }
     .shift-card.urgency-ot::after { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.55), 0 0 24px rgba(255, 100, 100, 0.20); }
-    .shift-card.urgency-now::after { animation: slowPulseRed 2.2s ease-in-out infinite; }
+    .shift-card.urgency-now::after { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.46), 0 0 18px rgba(255, 100, 100, 0.20); }
 
     .shift-top {
       display: flex;
@@ -410,14 +427,6 @@
       text-transform: uppercase;
       font-weight: 900;
       line-height: 1;
-    }
-
-    .shift-status {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
     }
 
     .slots {
@@ -445,7 +454,18 @@
 
     .slot.open-seat {
       border-color: var(--open-seat-border);
-      background: rgba(118, 22, 27, 0.52);
+      background: rgba(10, 18, 28, 0.74);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.035);
+    }
+
+    .slot.open-attendant {
+      border-color: rgba(57, 255, 122, 0.58);
+      background: rgba(10, 34, 20, 0.66);
+    }
+
+    .slot.open-driver {
+      border-color: rgba(48, 184, 255, 0.62);
+      background: rgba(8, 28, 48, 0.7);
     }
 
     .slot.volunteer-seat {
@@ -556,12 +576,6 @@
       box-shadow: none !important;
     }
 
-    @keyframes slowPulseRed {
-      0% { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.44), 0 0 0 0 rgba(255, 100, 100, 0.03); }
-      50% { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.72), 0 0 20px 4px var(--open-seat-glow); }
-      100% { box-shadow: inset 0 0 0 2px rgba(255, 100, 100, 0.44), 0 0 0 0 rgba(255, 100, 100, 0.03); }
-    }
-
     .member {
       display: flex;
       align-items: center;
@@ -584,6 +598,19 @@
     .member.red { color: var(--name-red); }
     .member.dark { color: var(--name-dark); }
     .member.default { color: var(--name-default); }
+    .member.open-attendant {
+      color: var(--open-attendant);
+      font-size: 31px;
+      letter-spacing: 0.08em;
+    }
+    .member.open-driver {
+      color: var(--open-driver);
+      font-size: 31px;
+      letter-spacing: 0.08em;
+    }
+    .member.fire-coverage {
+      color: #ffffff !important;
+    }
     .member.empty {
       color: #ffd1d1;
       font-style: normal;
@@ -680,7 +707,7 @@
         <span class="legend-chip"><span class="legend-dot emr"></span>EMR name</span>
         <span class="legend-chip"><span class="legend-dot ncld"></span>NCLD name</span>
         <span class="legend-chip"><span class="legend-dot open"></span>open staffing need</span>
-        <span class="legend-chip"><span class="legend-dot duty"></span>Volunteer Crew Driver</span>
+        <span class="legend-chip"><span class="legend-dot duty"></span>Vol Fire</span>
         <span class="legend-chip">Green = fully staffed</span>
         <span class="legend-chip">Yellow = driver needed</span>
         <span class="legend-chip">Red = attendant/ALS needed</span>
@@ -1094,6 +1121,14 @@
       return isDriverSeat(seat) && (seat?.structural_driver_coverage === true || seat?.volunteer_crew_driver === true || (seat?.duty_crew === true && String(seat?.assigned_name || "").trim().toUpperCase() === "VOLUNTEER CREW DRIVER"));
     }
 
+    function driverCoverageLabel(value) {
+      const raw = String(value || "").trim();
+      const upper = raw.toUpperCase();
+      if (upper.includes("CAREER FIRE")) return "Career Fire";
+      if (upper.includes("VOLUNTEER") || upper.includes("VOL FIRE") || upper.includes("VOL. FIRE")) return "Vol Fire";
+      return raw;
+    }
+
     function weekdayCodeForIso(iso) {
       const date = parseLocalDate(iso);
       if (!date) return "";
@@ -1240,7 +1275,7 @@
       const fromName = rawName ? memberLookup?.byName?.get(rawName.toUpperCase()) : null;
       const cert = normalizeCertValue(fromId?.cert || fromName?.cert || "");
 
-      if (isDutySeat(seat)) return "dark";
+      if (isDutySeat(seat) || isStructuralDriverCovered(seat)) return "fire-coverage";
       if (cert === "ALS") return "green";
       if (cert === "EMT") return "blue";
       if (cert === "EMR") return "pink";
@@ -1498,7 +1533,7 @@
         return "This crew is legally operational, but ALS participation is still welcome if available.";
       }
       if (options.volunteerDriver) {
-        return "Volunteer Crew Driver is built into this shift.";
+        return "Vol Fire driver coverage is built into this shift.";
       }
       if (options.soloEmtOpportunity || seat?.solo_emt_anchor_opportunity) {
         return "This shift currently has an EMT anchor. ALS may upgrade the attendant seat, or EMT/EMR/NCLD may complete driver coverage.";
@@ -1532,18 +1567,18 @@
       if (!rawName && !showOpenAlert) return "";
 
       const displayName = options.displayLabel || (
-        (!pastDate && isAttendantSeat(seat) && isOpenName(rawName))
-          ? "OPEN ALS"
-          : rawName
-          ? displayAssignedName(shiftDate, rawName)
+        rawName
+          ? (isOpenName(rawName) ? "OPEN" : displayAssignedName(shiftDate, rawName))
           : (pastDate ? "—" : "OPEN")
       );
 
       const normalizedName = String(displayName || "").trim().toUpperCase();
-      const isFutureOpen = !pastDate && !options.volunteer && (normalizedName === "OPEN" || normalizedName.startsWith("OPEN ") || (!rawName && showOpenAlert));
+      const isFutureOpen = !pastDate && !options.volunteer && (normalizedName === "OPEN" || (!rawName && showOpenAlert));
       const hasMember = !!rawName && !isOpenName(rawName);
-      const memberClass = options.volunteerDriver ? "" : (hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : "empty"));
+      const openRoleClass = isFutureOpen ? (isAttendantSeat(seat) ? "open-attendant" : isDriverSeat(seat) ? "open-driver" : "empty") : "";
+      const memberClass = options.volunteerDriver ? "fire-coverage" : (hasMember ? colorClassFromSeat(seat, memberLookup) : (pastDate ? "default" : openRoleClass || "empty"));
       const openSeatClass = !options.volunteerDriver && isFutureOpen ? "open-seat" : "";
+      const openRoleSlotClass = isFutureOpen ? (isAttendantSeat(seat) ? "open-attendant" : isDriverSeat(seat) ? "open-driver" : "") : "";
       const volunteerClass = !options.volunteerDriver && options.volunteer ? "volunteer-seat" : "";
       const volunteerDriverClass = options.volunteerDriver ? "volunteer-driver-pill" : "";
       const soloEmtOpportunityClass = options.soloEmtOpportunity ? "solo-emt-opportunity-seat" : "";
@@ -1551,7 +1586,7 @@
       const title = escapeHtml(tooltipForSeat(seat, shiftDate, memberLookup, options));
 
       return `
-        <div class="slot ${openSeatClass} ${volunteerClass} ${volunteerDriverClass} ${soloEmtOpportunityClass} ${dutyClass}" title="${title}">
+        <div class="slot ${openSeatClass} ${openRoleSlotClass} ${volunteerClass} ${volunteerDriverClass} ${soloEmtOpportunityClass} ${dutyClass}" title="${title}">
           <div class="member ${memberClass}">${escapeHtml(displayName)}</div>
         </div>
       `;
@@ -1572,6 +1607,14 @@
           if (priority !== 0) return priority;
           return String(left?.role || "").localeCompare(String(right?.role || ""));
         });
+      const futureOpenSeats = orderedSeats.filter(seat => {
+        if (isPastDate(shift.date)) return false;
+        if (isStructuralDriverCovered(seat)) return false;
+        const name = String(seat?.assigned_name || "").trim();
+        return isOpenName(name) || (!String(seat?.assigned || "").trim() && seat?.display_open_alert === true);
+      });
+      const hasOpenAttendant = futureOpenSeats.some(isAttendantSeat);
+      const hasOpenDriver = futureOpenSeats.some(isDriverSeat);
 
       const renderedSlots = [
         ...(careerCoverage?.gapLabel ? [`<div class="sc-coverage-gap-pill" title="Coverage gap notice only. This is not an open shift, holdover, overtime, or member assignment.">${escapeHtml(careerCoverage.gapLabel)}</div>`] : []),
@@ -1588,14 +1631,14 @@
           }
           if (seat?.duty_crew && isDriverSeat(seat) && !String(seat?.assigned || "").trim()) {
             return renderSlot(seat, shift.date, memberLookup, {
-              displayLabel: "Volunteer Crew Driver",
+              displayLabel: "Vol Fire",
               volunteer: !readiness.problem,
               volunteerDriver: true
             });
           }
           if (seat?.solo_emt_anchor_opportunity && isDriverSeat(seat) && !String(seat?.assigned || "").trim()) {
             return renderSlot(seat, shift.date, memberLookup, {
-              displayLabel: "ALS or Driver Needed",
+              displayLabel: "OPEN",
               soloEmtOpportunity: true,
               tooltip: "This shift currently has an EMT anchor. ALS may upgrade the attendant seat, or EMT/EMR/NCLD may complete driver coverage."
             });
@@ -1611,7 +1654,7 @@
         ...(careerCoverage ? [`
           <div class="sc-career-fire-driver-block" title="${escapeHtml(careerCoverage.title)}">
             <div class="sc-career-fire-driver-pill">
-              <div class="sc-career-fire-driver-title">${escapeHtml(careerCoverage.coverageName)}</div>
+              <div class="sc-career-fire-driver-title">${escapeHtml(driverCoverageLabel(careerCoverage.coverageName))}</div>
               <div class="sc-career-fire-driver-time">${escapeHtml(careerCoverage.timeLabel)}</div>
             </div>
           </div>
@@ -1628,10 +1671,9 @@
         `;
 
       return `
-        <div class="shift-card ${readiness.color || shift.pillClass || "gray"} ${urgency}" title="${escapeHtml(shiftTooltip)}">
+        <div class="shift-card ${readiness.color || shift.pillClass || "gray"} ${urgency} ${hasOpenAttendant || hasOpenDriver ? "has-open-slot" : ""} ${hasOpenAttendant ? "has-open-attendant" : ""} ${hasOpenDriver ? "has-open-driver" : ""}" title="${escapeHtml(shiftTooltip)}">
           <div class="shift-top">
             <div class="shift-name">${escapeHtml(shift.label)}</div>
-            <div class="shift-status">${escapeHtml(readiness.status)}</div>
           </div>
           <div class="slots">${slotsHtml}</div>
         </div>
