@@ -70,6 +70,10 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(row["attendantSlot"]["color"], "green")
         self.assertEqual(row["driverSlot"]["label"], "OPEN")
         self.assertEqual(row["driverSlot"]["color"], "blue")
+        self.assertTrue(row["has_open_slot"])
+        self.assertEqual(row["open_slots"], ["attendant", "driver"])
+        self.assertEqual(row["coverage_priority"], "open")
+        self.assertEqual(row["attention_level"], "high")
 
     def test_career_fire_only_with_open_attendant(self):
         row = display_for(shift(
@@ -81,6 +85,10 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(row["attendantSlot"]["color"], "green")
         self.assertEqual(row["driverSlot"]["label"], "Career Fire")
         self.assertEqual(row["driverSlot"]["color"], "white")
+        self.assertTrue(row["has_open_slot"])
+        self.assertEqual(row["open_slots"], ["attendant"])
+        self.assertEqual(row["coverage_priority"], "open")
+        self.assertEqual(row["attention_level"], "high")
 
     def test_als_and_emt_display_as_attendant_then_driver(self):
         row = display_for(shift(
@@ -92,6 +100,9 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(row["attendantSlot"]["color"], "green")
         self.assertEqual(row["driverSlot"]["label"], "Eddie")
         self.assertEqual(row["driverSlot"]["color"], "blue")
+        self.assertFalse(row["has_open_slot"])
+        self.assertEqual(row["coverage_priority"], "covered")
+        self.assertEqual(row["attention_level"], "low")
 
     def test_unlocked_emt_and_als_reversed_normalizes_display_order(self):
         row = display_for(shift(
@@ -114,6 +125,8 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(row["attendantSlot"]["label"], "Eddie")
         self.assertEqual(row["driverSlot"]["label"], "Anna")
         self.assertEqual(row["crew_status"], "needs_review")
+        self.assertEqual(row["coverage_priority"], "needs_review")
+        self.assertEqual(row["attention_level"], "medium")
         self.assertIn("needs_review:locked_emt_attendant_als_driver", row["issues"])
 
     def test_emt_attendant_and_career_fire_is_degraded(self):
@@ -127,6 +140,9 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(row["driverSlot"]["label"], "Career Fire")
         self.assertEqual(row["driverSlot"]["color"], "white")
         self.assertEqual(row["crew_status"], "degraded")
+        self.assertFalse(row["has_open_slot"])
+        self.assertEqual(row["coverage_priority"], "degraded")
+        self.assertEqual(row["attention_level"], "medium")
 
     def test_open_emt_outside_fallback_window_preserves_ideal_staffing_target(self):
         row = display_for({
@@ -143,6 +159,10 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(row["attendantSlot"]["color"], "green")
         self.assertEqual(row["driverSlot"]["label"], "Eddie")
         self.assertEqual(row["driverSlot"]["color"], "blue")
+        self.assertTrue(row["has_open_slot"])
+        self.assertEqual(row["open_slots"], ["attendant"])
+        self.assertEqual(row["coverage_priority"], "open")
+        self.assertEqual(row["attention_level"], "high")
 
     def test_open_emt_inside_fallback_window_raises_emt_and_reveals_driver_need(self):
         row = display_for({
@@ -160,6 +180,10 @@ class DisplayNormalizerTests(unittest.TestCase):
         self.assertEqual(row["driverSlot"]["label"], "OPEN")
         self.assertEqual(row["driverSlot"]["color"], "blue")
         self.assertEqual(row["crew_status"], "driver_needed")
+        self.assertTrue(row["has_open_slot"])
+        self.assertEqual(row["open_slots"], ["driver"])
+        self.assertEqual(row["coverage_priority"], "open")
+        self.assertEqual(row["attention_level"], "high")
 
     def test_emr_or_ncld_in_attendant_is_invalid(self):
         emr_row = display_for(shift(

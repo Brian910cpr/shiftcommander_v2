@@ -252,6 +252,34 @@ def crew_status_for_slots(attendant_slot: Dict[str, Any], driver_slot: Dict[str,
     return "preferred"
 
 
+def attention_metadata(attendant_slot: Dict[str, Any], driver_slot: Dict[str, Any], crew_status: str, issues: List[str]) -> Dict[str, Any]:
+    open_slots = []
+    if attendant_slot.get("isOpen"):
+        open_slots.append("attendant")
+    if driver_slot.get("isOpen"):
+        open_slots.append("driver")
+
+    if open_slots:
+        coverage_priority = "open"
+        attention_level = "high"
+    elif crew_status in {"invalid", "needs_review"} or any(issue.startswith(("invalid", "needs_review")) for issue in issues):
+        coverage_priority = "needs_review"
+        attention_level = "high" if crew_status == "invalid" else "medium"
+    elif crew_status in {"degraded", "driver_needed"}:
+        coverage_priority = "degraded"
+        attention_level = "medium"
+    else:
+        coverage_priority = "covered"
+        attention_level = "low"
+
+    return {
+        "coverage_priority": coverage_priority,
+        "attention_level": attention_level,
+        "has_open_slot": bool(open_slots),
+        "open_slots": open_slots,
+    }
+
+
 def normalize_wallboard_shift(
     shift: Dict[str, Any],
     members_by_id: Dict[str, Dict[str, Any]],
@@ -277,12 +305,14 @@ def normalize_wallboard_shift(
         issues.append("needs_review:structural_driver_in_attendant_slot")
     if attendant_slot.get("kind") == "member" and attendant_slot.get("qualification") in {"EMR", "NCLD"}:
         issues.append("invalid:attendant_requires_emt_or_als")
+    crew_status = crew_status_for_slots(attendant_slot, driver_slot, issues)
 
     return {
         "date": str(shift.get("date") or shift.get("shift_date") or "")[:10],
         "period": str(shift.get("label") or shift.get("period") or "").strip(),
         "unit": shift.get("unit"),
-        "crew_status": crew_status_for_slots(attendant_slot, driver_slot, issues),
+        "crew_status": crew_status,
+        **attention_metadata(attendant_slot, driver_slot, crew_status, issues),
         "attendantSlot": attendant_slot,
         "driverSlot": driver_slot,
         "issues": issues,
