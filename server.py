@@ -15,6 +15,7 @@ from datetime import date, datetime, timedelta, UTC
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
 from engine.display_normalizer import normalize_wallboard_display
+from engine.member_dashboard import build_member_dashboard
 
 SERVER_IMPORT_STARTED = time.perf_counter()
 
@@ -47,6 +48,7 @@ INFERRED_PREFERENCES_FILE = os.path.join(DATA_DIR, "inferred_preferences.json")
 SCHEDULE_LOCKED_FILE = os.path.join(DATA_DIR, "schedule_locked.json")
 ROLLOUT_IMPORT_FILE = os.path.join(DATA_DIR, "rollout_import.json")
 ROTATION_TEMPLATES_FILE = os.path.join(DATA_DIR, "rotation_templates.json")
+SWAP_REQUESTS_FILE = os.path.join(DATA_DIR, "swap_requests.json")
 SUPERVISOR_STATE_FILE = os.path.join(DATA_DIR, "supervisor_state.json")
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
 CALENDAR_MARKERS_FILE = os.path.join(DATA_DIR, "calendar_markers.json")
@@ -2002,6 +2004,29 @@ def get_member_context():
             "selected_member_id": member_id,
         }
     )
+
+
+@app.route("/api/member_dashboard", methods=["GET"])
+def get_member_dashboard():
+    member_id, _, error = resolve_member_request_member()
+    if error:
+        return error
+    dashboard = build_member_dashboard(
+        member_id,
+        members_payload=load_members_payload(),
+        schedule_payload=load_schedule_payload(),
+        availability_payload=load_availability_payload(),
+        settings=load_settings(),
+        rotation_templates=load_json(ROTATION_TEMPLATES_FILE, {}),
+        change_requests_payload=load_json(SWAP_REQUESTS_FILE, {}),
+        start_date=request.args.get("start") or request.args.get("start_date"),
+        end_date=request.args.get("end") or request.args.get("end_date"),
+    )
+    if dashboard is None:
+        return auth_json_error("Member record not found", 404)
+    dashboard["auth_mode"] = "quick_test" if quick_test_mode_enabled() else "real_login"
+    dashboard["quick_test_mode"] = quick_test_mode_enabled()
+    return jsonify(dashboard)
 
 
 @app.route("/api/member/timecard", methods=["GET"])
