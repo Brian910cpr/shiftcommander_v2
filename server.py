@@ -8,6 +8,8 @@ import shutil
 import sys
 import time
 import re
+import urllib.error
+import urllib.request
 from copy import deepcopy
 from datetime import date, datetime, timedelta, UTC
 from functools import wraps
@@ -1458,8 +1460,8 @@ def docs_root():
 @app.route("/docs/<path:path>")
 def serve_docs(path):
     lowered = str(path or "").lower()
-    if lowered == "supervisor.html" and current_auth()["role"] != "supervisor":
-        return login_redirect("supervisor")
+    # Rescue pass: let the Supervisor shell open without a Flask session.
+    # Protected write APIs still enforce supervisor auth.
     if lowered in {"admin.html", "admin_members.html"} and current_auth()["role"] != "supervisor":
         return login_redirect("supervisor")
     if lowered == "member.html" and not quick_test_mode_enabled() and current_auth()["role"] not in {"member", "supervisor"}:
@@ -1479,8 +1481,6 @@ def wallboard_shortcut():
 
 @app.route("/supervisor")
 def supervisor_shortcut():
-    if current_auth()["role"] != "supervisor":
-        return login_redirect("supervisor")
     return redirect("/docs/supervisor.html")
 
 
@@ -2536,6 +2536,33 @@ def supervisor_resolve_week():
 @app.route("/api/schedule", methods=["GET"])
 def get_schedule_api():
     return schedule_json_response()
+
+
+SC_UPSTREAM_API_BASE = os.environ.get("SC_UPSTREAM_API_BASE", "https://sc-api.adr-fr.org").rstrip("/")
+
+
+@app.route("/api/sc_proxy", methods=["GET"])
+def sc_proxy_get():
+    path = str(request.args.get("path") or "").strip()
+    if path not in {"/api/bootstrap", "/api/schedule"}:
+        return jsonify({"error": "Unsupported proxy path"}), 400
+    upstream_url = f"{SC_UPSTREAM_API_BASE}{path}"
+    try:
+        req = urllib.request.Request(upstream_url, headers={
+            "Accept": "application/json",
+            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0 ShiftCommanderSupervisor/1.0",
+        })
+        with urllib.request.urlopen(req, timeout=12) as upstream:
+            payload = upstream.read()
+            status = upstream.getcode()
+            content_type = upstream.headers.get("Content-Type") or "application/json"
+        return Response(payload, status=status, mimetype=content_type.split(";", 1)[0])
+    except urllib.error.HTTPError as exc:
+        payload = exc.read() or json.dumps({"error": str(exc)}).encode("utf-8")
+        return Response(payload, status=exc.code, mimetype="application/json")
+    except Exception as exc:
+        return jsonify({"error": f"Proxy fetch failed: {exc}", "upstream": upstream_url}), 502
 
 
 # =========================

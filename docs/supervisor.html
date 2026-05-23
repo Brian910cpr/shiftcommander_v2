@@ -134,10 +134,18 @@
     .action-diagnostics .diag-item span{word-break:break-word}
     .action-diagnostics.fail{border-color:rgba(255,123,123,.4);background:rgba(255,123,123,.08)}
     .action-diagnostics.ok{border-color:rgba(82,239,127,.35);background:rgba(82,239,127,.06)}
+    .startup-diagnostics{display:grid;gap:8px;padding:14px 16px;border-radius:var(--radius);border:1px solid rgba(255,209,102,.34);background:rgba(255,209,102,.08)}
+    .startup-diagnostics h3{margin:0}
+    .startup-diagnostics .diag-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .startup-diagnostics .diag-item{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.14)}
+    .startup-diagnostics .diag-item strong{display:block;margin-bottom:4px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+    .startup-diagnostics .diag-item span{word-break:break-word}
+    .startup-diagnostics .diag-warning{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,123,123,.35);background:rgba(255,123,123,.08);color:#ffd2d2}
     .empty.error{border:1px solid rgba(255,123,123,.35);background:rgba(255,123,123,.08);color:#ffd2d2}
     .error-detail{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word}
     .legend{display:grid;gap:8px}
-    @media (max-width: 1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}}
+    @media (max-width: 1200px){.layout{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-actions{justify-items:start}.startup-diagnostics .diag-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width: 700px){.startup-diagnostics .diag-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -164,6 +172,18 @@
 
     <div class="flash" id="flash"></div>
     <section class="startup-issues" id="startupIssues"></section>
+    <section class="startup-diagnostics" id="startupDiagnostics">
+      <h3>Backend/API status</h3>
+      <div class="diag-grid">
+        <div class="diag-item"><strong>API Base</strong><span id="startupApiBase">--</span></div>
+        <div class="diag-item"><strong>Bootstrap loaded</strong><span id="startupBootstrapLoaded">no</span></div>
+        <div class="diag-item"><strong>Source used</strong><span id="startupSource">--</span></div>
+        <div class="diag-item"><strong>Member count</strong><span id="startupMemberCount">0</span></div>
+        <div class="diag-item"><strong>Shift count</strong><span id="startupShiftCount">0</span></div>
+        <div class="diag-item"><strong>Last loaded</strong><span id="startupLoadedAt">--</span></div>
+      </div>
+      <div class="diag-warning hidden" id="startupErrorMessage"></div>
+    </section>
     <section class="action-diagnostics hidden" id="actionDiagnostics">
       <h3>Action details</h3>
       <div class="diag-grid">
@@ -299,16 +319,13 @@
 
   <script>
     const BUILD_CODE = "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001";
-    const PUBLIC_API_BASE = "https://shiftcommander-v2.onrender.com";
-    function defaultApiBase(){
-      const host = window.location.hostname;
-      return host === "adr-fr.org" || host === "www.adr-fr.org" ? PUBLIC_API_BASE : "";
-    }
-    const API_BASE = window.SC_API_BASE_URL || defaultApiBase() || localStorage.getItem("sc_api_base_url") || "";
+    const DEFAULT_API_BASE = "https://sc-api.adr-fr.org";
+    const API_BASE = window.SC_API_BASE_URL || localStorage.getItem("sc_api_base_url") || DEFAULT_API_BASE;
     const state = {
       members: [],
       memberById: new Map(),
       settings: {},
+      availability: {},
       calendarMarkers: { markers: [] },
       shifts: [],
       schedule: {},
@@ -316,6 +333,12 @@
       selectedWeek: null,
       session: null,
       health: null,
+      bootstrap: {
+        loaded: false,
+        source: "demo-fallback",
+        loadedAt: "",
+        errors: [],
+      },
       lastAction: {
         endpoint: "None yet",
         status: "--",
@@ -348,7 +371,14 @@
     };
 
     function apiUrl(path){
+      if(/^https?:\/\//i.test(path)) return path;
       return `${API_BASE}${path}`;
+    }
+
+    const PROXYABLE_GET_PATHS = new Set(["/api/bootstrap", "/api/schedule"]);
+
+    function apiProxyUrl(path){
+      return `${window.location.origin}/api/sc_proxy?path=${encodeURIComponent(path)}`;
     }
 
     function esc(value){
@@ -356,7 +386,14 @@
     }
 
     async function apiGetDetailed(url){
-      const response = await fetch(apiUrl(url), { credentials: "include" });
+      let response = null;
+      try{
+        response = await fetch(apiUrl(url), { credentials: "include" });
+      }catch(fetchError){
+        if(!PROXYABLE_GET_PATHS.has(url)) throw fetchError;
+        console.warn("Supervisor direct GET failed; retrying through same-origin proxy", { url, apiBase: API_BASE, error: fetchError });
+        response = await fetch(apiProxyUrl(url), { credentials: "include" });
+      }
       const text = await response.text();
       let data = null;
       try{
@@ -379,6 +416,163 @@
     async function apiGet(url){
       const result = await apiGetDetailed(url);
       return result.data;
+    }
+
+    function firstArray(...values){
+      return values.find((value) => Array.isArray(value)) || [];
+    }
+
+    function normalizeMember(member){
+      return {
+        ...member,
+        id: member?.id || member?.member_id,
+        member_id: member?.member_id || member?.id,
+        name: member?.name || member?.display_name || member?.full_name || member?.member_name || member?.id || member?.member_id || "Unknown member",
+        birthday_md: normalizeBirthday(member?.birthday_mmdd || member?.birthday)
+      };
+    }
+
+    function lookupMemberName(memberId, members){
+      const key = String(memberId || "").trim();
+      if(!key) return "";
+      const member = members.find((item) => String(item.member_id || item.id || "").trim() === key);
+      return member?.name || "";
+    }
+
+    function normalizeSeat(rawSeat, shift, index, members){
+      const assignedId = rawSeat?.assigned
+        ?? rawSeat?.assigned_member_id
+        ?? rawSeat?.member_id
+        ?? rawSeat?.assignee_id
+        ?? rawSeat?.assignment?.member_id
+        ?? rawSeat?.assignment?.assigned_member_id
+        ?? "";
+      const assignedName = rawSeat?.assigned_name
+        ?? rawSeat?.member_name
+        ?? rawSeat?.assignee_name
+        ?? rawSeat?.assignment?.member_name
+        ?? rawSeat?.assignment?.assigned_name
+        ?? lookupMemberName(assignedId, members);
+      const role = rawSeat?.role || rawSeat?.position || rawSeat?.seat || rawSeat?.seat_label || rawSeat?.unit_position || "Seat";
+      return {
+        ...rawSeat,
+        _seat_index: rawSeat?._seat_index ?? index,
+        active: rawSeat?.active !== false,
+        assigned: assignedId || rawSeat?.assigned || null,
+        assigned_name: assignedName || rawSeat?.assigned_name || "",
+        role,
+        seat_id: rawSeat?.seat_id || `${shift?.date || "unknown"}:${shift?.label || shift?.time_label || "SHIFT"}:${role}:${index}`,
+      };
+    }
+
+    function seatsFromShift(shift, members){
+      if(Array.isArray(shift?.seats)){
+        return shift.seats.map((seat, index) => normalizeSeat(seat || {}, shift, index, members));
+      }
+      const assignments = firstArray(shift?.assignments, shift?.assignment?.assignments);
+      if(assignments.length){
+        return assignments.map((assignment, index) => normalizeSeat(assignment || {}, shift, index, members));
+      }
+      const assignedId = shift?.assigned_member_id ?? shift?.member_id ?? shift?.assignee_id ?? shift?.assignment?.member_id ?? "";
+      if(assignedId || shift?.assigned_name || shift?.member_name || shift?.position || shift?.seat){
+        return [normalizeSeat({
+          assigned_member_id: assignedId,
+          assigned_name: shift?.assigned_name || shift?.member_name || shift?.assignee_name,
+          role: shift?.position || shift?.seat || shift?.unit_position || "Assigned",
+          status: shift?.status,
+        }, shift, 0, members)];
+      }
+      return [normalizeSeat({ role: shift?.position || shift?.seat || "Seat", status: shift?.status }, shift, 0, members)];
+    }
+
+    function normalizeShift(shift, index, members){
+      const date = String(shift?.date || shift?.shift_date || shift?.start_date || shift?.starts_at || "").slice(0, 10);
+      const label = shift?.label || shift?.time_label || shift?.shift_label || shift?.shift_type || shift?.period || shift?.start_end || shift?.start_time || `Shift ${index + 1}`;
+      const normalized = {
+        ...shift,
+        date,
+        label,
+        unit: shift?.unit || shift?.unit_id || shift?.truck || shift?.station || shift?.resource || "",
+        crew_status: shift?.crew_status || shift?.status || shift?.state || "Schedule status",
+      };
+      normalized.seats = seatsFromShift(normalized, members);
+      return normalized;
+    }
+
+    function normalizeBootstrapPayload(raw, source, errors=[]){
+      const members = firstArray(raw?.members?.members, raw?.members, raw?.data?.members).map(normalizeMember);
+      const rawShifts = firstArray(raw?.schedule?.shifts, raw?.shifts, raw?.schedule, raw?.data?.shifts);
+      const shifts = rawShifts.map((shift, index) => normalizeShift(shift || {}, index, members)).filter((shift) => shift.date);
+      return {
+        members,
+        shifts,
+        settings: raw?.settings || raw?.data?.settings || {},
+        availability: raw?.availability || raw?.data?.availability || {},
+        health: raw?.health || raw?.data?.health || {},
+        loadedAt: new Date().toISOString(),
+        source,
+        errors,
+      };
+    }
+
+    function normalizeSchedulePayload(raw, members, errors=[]){
+      const rawShifts = firstArray(raw?.shifts, raw?.schedule?.shifts, raw?.data?.shifts);
+      const shifts = rawShifts.map((shift, index) => normalizeShift(shift || {}, index, members)).filter((shift) => shift.date);
+      return {
+        members,
+        shifts,
+        settings: {},
+        availability: {},
+        health: {},
+        loadedAt: new Date().toISOString(),
+        source: "schedule-fallback",
+        errors,
+      };
+    }
+
+    async function loadSupervisorBootstrap(){
+      const errors = [];
+      console.log("Supervisor API base used", API_BASE);
+      let normalized = normalizeBootstrapPayload({}, "demo-fallback", errors);
+      try{
+        const bootstrap = (await apiGetDetailed("/api/bootstrap")).data || {};
+        console.log("Supervisor raw bootstrap response", bootstrap);
+        normalized = normalizeBootstrapPayload(bootstrap, "bootstrap", errors);
+      }catch(error){
+        console.error("Supervisor bootstrap fetch failed", error);
+        const authWarning = error.status === 401 || error.status === 403
+          ? "Supervisor auth required by backend, but page is running in demo/bypass display mode."
+          : "";
+        errors.push(authWarning || `/api/bootstrap failed: HTTP ${error.status || "unknown"} ${error.statusText || error.message || ""}`.trim());
+        normalized = normalizeBootstrapPayload({}, "demo-fallback", errors);
+      }
+
+      if(!normalized.shifts.length){
+        console.warn("Supervisor fallback attempt: /api/schedule", { previousSource: normalized.source, errors });
+        try{
+          const schedule = (await apiGetDetailed("/api/schedule")).data || {};
+          normalized = {
+            ...normalizeSchedulePayload(schedule, normalized.members, errors),
+            settings: normalized.settings || {},
+            availability: normalized.availability || {},
+            health: normalized.health || {},
+          };
+        }catch(error){
+          console.error("Supervisor schedule fallback failed", error);
+          const authWarning = error.status === 401 || error.status === 403
+            ? "Supervisor auth required by backend, but page is running in demo/bypass display mode."
+            : "";
+          errors.push(authWarning || `/api/schedule failed: HTTP ${error.status || "unknown"} ${error.statusText || error.message || ""}`.trim());
+          normalized = { ...normalized, source: "demo-fallback", loadedAt: new Date().toISOString(), errors };
+        }
+      }
+
+      if(!normalized.shifts.length){
+        errors.push("No shifts loaded. Bootstrap and schedule fallback returned no usable shifts.");
+      }
+      normalized.errors = [...new Set(errors.filter(Boolean))];
+      console.log("Supervisor normalized data", normalized);
+      return normalized;
     }
 
     async function apiPost(url, payload){
@@ -454,6 +648,27 @@
       document.getElementById("healthPill").innerHTML = `<strong>Health</strong> ${esc(state.health?.status || "unreachable")}`;
       document.getElementById("quickTestSupervisorBadge").classList.toggle("hidden", !state.health?.quick_test_mode);
       updateActionDiagnostics();
+    }
+
+    function renderStartupDiagnostics(){
+      const errors = asArray(state.bootstrap?.errors);
+      const values = {
+        startupApiBase: API_BASE,
+        startupBootstrapLoaded: state.bootstrap?.loaded ? "yes" : "no",
+        startupSource: state.bootstrap?.source || "--",
+        startupMemberCount: String(state.members.length),
+        startupShiftCount: String(asArray(state.schedule?.shifts).length),
+        startupLoadedAt: state.bootstrap?.loadedAt || "--",
+      };
+      for(const [id, value] of Object.entries(values)){
+        const item = document.getElementById(id);
+        if(item) item.textContent = value;
+      }
+      const errorNode = document.getElementById("startupErrorMessage");
+      if(errorNode){
+        errorNode.classList.toggle("hidden", !errors.length);
+        errorNode.innerHTML = errors.length ? errors.map(esc).join("<br>") : "";
+      }
     }
 
     function updateActionDiagnostics(next={}){
@@ -637,6 +852,24 @@
     }
 
     function visibleEndDateIso(todayValue = todayIso()){
+      const rules = displayHorizonRules();
+      const latestLoadedShiftDate = asArray(state.schedule?.shifts)
+        .map((shift) => String(shift?.date || "").slice(0,10))
+        .filter(Boolean)
+        .sort()
+        .pop();
+      const configuredEnd = (() => {
+        if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0,10)){
+          return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
+        }
+        const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5));
+        return formatDate(addDays(isoToDate(todayValue), (weeks * 7) - 1));
+      })();
+      if(latestLoadedShiftDate && latestLoadedShiftDate > configuredEnd) return latestLoadedShiftDate;
+      return configuredEnd;
+    }
+
+    function configuredVisibleEndDateIso(todayValue = todayIso()){
       const rules = displayHorizonRules();
       if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0,10)){
         return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
@@ -992,7 +1225,8 @@
                         const memberId = String(seat?.assigned || "").trim();
                         const member = memberId ? state.memberById.get(memberId) : null;
                         const assignedName = String(seat?.assigned_name || member?.name || "").trim();
-                        const empty = !assignedName;
+                        const unresolvedMember = !!memberId && !member && !assignedName;
+                        const empty = !assignedName && !memberId;
                         const contenders = consideredCandidates(seat);
                         const selectionFactors = asArray(seat?.selection_factors).slice(0, 4);
                         return `
@@ -1000,10 +1234,10 @@
                             <div class="seat-top">
                               <div class="seat-title">
                                 <strong>${esc(seat.role || "Seat")}</strong>
-                                <div class="seat-name ${empty ? "empty" : certClass(member, seat)}">${esc(assignedName || "OPEN")}</div>
-                                <div class="seat-sub">${esc(seat.seat_id || seatKey)}</div>
+                                <div class="seat-name ${empty ? "empty" : certClass(member, seat)}">${esc(assignedName || memberId || "OPEN")}</div>
+                                <div class="seat-sub">${esc(seat.seat_id || seatKey)}${unresolvedMember ? ` · unresolved member ${esc(memberId)}` : ``}</div>
                               </div>
-                              <div class="chip-row">${seatBadges(seatState, member, seat)}</div>
+                              <div class="chip-row">${seatBadges(seatState, member, seat)}${unresolvedMember ? `<span class="badge open">Unresolved member</span>` : ``}</div>
                             </div>
                             ${seat?.selection_statement ? `
                               <div class="reason-box">
@@ -1060,100 +1294,40 @@
       const issues = [];
       document.getElementById("boardMeta").textContent = "Loading schedule…";
       setStartupIssues([]);
-      renderRuntimePills();
+      state.session = { authenticated: false, role: "demo/bypass" };
 
-      try{
-        state.health = (await apiGetDetailed("/api/health")).data;
-      }catch(error){
-        console.error("Supervisor startup: failed to load /api/health", error);
-        issues.push(`/api/health failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
-        state.health = { status: "unreachable", quick_test_mode: false };
-      }
-      renderRuntimePills();
+      const normalized = await loadSupervisorBootstrap();
+      issues.push(...asArray(normalized.errors));
 
-      let sessionInfo = null;
-      let members = null;
-      let settings = null;
-      let calendarMarkers = { markers: [] };
-      let schedule = null;
-      let supervisorState = { entries: [] };
-
-      try{
-        sessionInfo = (await apiGetDetailed("/api/auth/session")).data;
-      }catch(error){
-        console.error("Supervisor startup: failed to load /api/auth/session", error);
-        issues.push(`/api/auth/session failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
-      }
-
-      try{
-        members = (await apiGetDetailed("/api/members")).data;
-      }catch(error){
-        console.error("Supervisor startup: failed to load /api/members", error);
-        issues.push(`/api/members failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
-      }
-
-      try{
-        settings = (await apiGetDetailed("/api/settings")).data;
-      }catch(error){
-        console.error("Supervisor startup: failed to load /api/settings", error);
-        issues.push(`/api/settings failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
-      }
-
-      try{
-        calendarMarkers = (await apiGetDetailed("/api/calendar_markers")).data || { markers: [] };
-      }catch(error){
-        console.warn("Supervisor startup: calendar markers unavailable", error);
-        calendarMarkers = { markers: [] };
-      }
-
-      try{
-        schedule = (await apiGetDetailed("/api/schedule")).data;
-      }catch(error){
-        console.error("Supervisor startup: failed to load /api/schedule", error);
-        const responseText = String(error.responseText || "").trim() || "(empty response)";
-        renderOpenSeatsError(`/api/schedule failed with HTTP ${error.status || "unknown"}`);
-        renderBoardError(
-          "Schedule load failed",
-          `/api/schedule returned HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim(),
-          responseText
-        );
-        document.getElementById("weekSelect").innerHTML = `<option value="">Schedule load failed</option>`;
-        document.getElementById("weekSummary").innerHTML = "";
-        issues.push(`/api/schedule failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
-        setStartupIssues(issues);
-        return;
-      }
-
-      try{
-        supervisorState = (await apiGetDetailed("/api/supervisor/state")).data || { entries: [] };
-      }catch(error){
-        console.error("Supervisor startup: failed to load /api/supervisor/state", error);
-        issues.push(`/api/supervisor/state failed: HTTP ${error.status || "unknown"} ${error.statusText || ""}`.trim());
-        supervisorState = { entries: [] };
-      }
-
-      state.session = sessionInfo || {};
-      state.members = asArray(members?.members || members).map((member) => ({
-        ...member,
-        birthday_md: normalizeBirthday(member?.birthday_mmdd || member?.birthday)
-      }));
+      state.bootstrap = {
+        loaded: normalized.source === "bootstrap",
+        source: normalized.source,
+        loadedAt: normalized.loadedAt,
+        errors: asArray(normalized.errors),
+      };
+      state.health = normalized.health || { status: normalized.shifts.length ? "ok" : "unreachable" };
+      state.members = asArray(normalized.members);
       state.memberById = new Map(state.members.map((member) => [String(member.member_id || member.id), member]));
-      state.settings = settings || {};
-      state.calendarMarkers = calendarMarkers || { markers: [] };
-      state.schedule = schedule || {};
-      state.supervisorState = supervisorState || { entries: [] };
+      state.settings = normalized.settings || {};
+      state.availability = normalized.availability || {};
+      state.calendarMarkers = { markers: [] };
+      state.schedule = { shifts: asArray(normalized.shifts) };
+      state.supervisorState = { entries: [] };
+      renderStartupDiagnostics();
+      renderRuntimePills();
       renderCareerFireDriverSettings();
       renderDisplayHorizonSettings();
-      document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> ${esc(sessionInfo?.member_id || sessionInfo?.role || "unknown")}`;
+      document.getElementById("sessionPill").innerHTML = `<strong>Session</strong> demo/bypass`;
       updateActionDiagnostics();
 
       const shiftList = asArray(state.schedule?.shifts);
       if(!shiftList.length){
-        console.error("Supervisor startup: /api/schedule succeeded but returned no shifts", state.schedule);
+        console.error("Supervisor startup: no shifts loaded", { schedule: state.schedule, bootstrap: state.bootstrap });
         document.getElementById("weekSelect").innerHTML = `<option value="">No shifts available yet</option>`;
         state.selectedWeek = null;
         renderNoShiftsBuilt();
         setStartupIssues(issues);
+        renderStartupDiagnostics();
         return;
       }
 
@@ -1177,6 +1351,7 @@
       }
 
       setStartupIssues(issues);
+      renderStartupDiagnostics();
     }
 
     async function doLiveAction(action, payload, successMessage){
