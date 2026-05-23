@@ -15856,7 +15856,7 @@
           "PM": "blank"
         },
         "2026-06-10": {
-          "AM": "blank",
+          "AM": "preferred",
           "PM": "blank"
         },
         "2026-06-11": {
@@ -102762,6 +102762,21 @@
         "SUN_AM",
         "SUN_PM"
       ]
+    }
+  },
+  "intent_metadata": {
+    "188": {
+      "2026-06-10": {
+        "AM": {
+          "member_id": "188",
+          "date": "2026-06-10",
+          "period": "AM",
+          "member_intent": "prefer",
+          "updated_at": "2026-05-23T21:34:55.398852Z",
+          "updated_by": "188",
+          "source": "member_portal"
+        }
+      }
     }
   }
 }
