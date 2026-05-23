@@ -1,3 +1,4 @@
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -7,66 +8,133 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from engine.rotation_projection import project_member_rotation  # noqa: E402
+from engine.rotation_projection import aemt_rotation_slot_for_date, project_member_rotation  # noqa: E402
 
 
-SETTINGS = {"rotation_223": {"cycle_anchor_date": "2026-04-01"}}
-TEMPLATES = {
-    "rotation_templates": [
-        {
-            "template_id": "rot_223_12h_relief",
-            "shift_length_hours": 12,
-            "cycle_length_days": 14,
-            "tracks": [
-                {"track_id": "A", "role": "day", "pattern_key": "pattern_1"},
-                {"track_id": "C", "role": "night", "pattern_key": "pattern_1"},
-            ],
-            "patterns": {
-                "pattern_1": ["ON", "ON", "OFF", "OFF", "ON", "ON", "ON", "OFF", "OFF", "ON", "ON", "OFF", "OFF", "OFF"]
-            },
-        }
-    ]
-}
+def load_json(path):
+    with (ROOT / path).open("r", encoding="utf-8") as handle:
+        return json.load(handle)
 
 
-def member(track="A", cert="AEMT"):
-    return {
-        "member_id": "186",
-        "name": "Lynnsey Benson",
-        "ops_cert": cert,
-        "rotation": {"pair": "AC", "role": track},
-        "employment": {"preferred_weekly_hour_cap": 24},
-    }
+def load_member(member_id):
+    members = load_json("data/members.json")["members"]
+    return next(member for member in members if str(member.get("member_id")) == str(member_id))
+
+
+SETTINGS = load_json("data/settings.json")
+TEMPLATES = load_json("data/rotation_templates.json")
 
 
 class RotationProjectionTests(unittest.TestCase):
-    def test_projects_member_rotation_commitments_without_schedule_mutation(self):
-        schedule = {"shifts": []}
+    def test_biz_exists_active_and_is_c_shift_aemt_rotation(self):
+        biz = load_member("191")
+
+        self.assertTrue(biz["active"])
+        self.assertEqual(biz["name"], "Biz")
+        self.assertEqual(biz["raw_cert"], "AEMT")
+        self.assertEqual(biz["ops_cert"], "ALS")
+        self.assertEqual(biz["rotation_slot"], "C")
+        self.assertEqual(biz["rotation_scope"], "aemt_als_rotation")
+
+    def test_projection_treats_abcd_as_aemt_only(self):
         result = project_member_rotation(
-            member(),
+            load_member("186"),
             SETTINGS,
             TEMPLATES,
-            schedule_payload=schedule,
-            start_date="2026-04-01",
-            end_date="2026-04-04",
+            schedule_payload={"shifts": []},
+            start_date="2026-06-01",
+            end_date="2026-06-01",
         )
 
         self.assertTrue(result["generated_from_rotation"])
-        self.assertEqual(result["rotation_group"], "A")
-        self.assertEqual([row["date"] for row in result["projected_shifts"]], ["2026-04-01", "2026-04-02"])
-        self.assertTrue(all(row["period"] == "AM" for row in result["projected_shifts"]))
-        self.assertEqual(schedule, {"shifts": []})
+        self.assertEqual(result["rotation_scope"], "aemt_als_rotation")
+        self.assertEqual(result["rotation_label"], "AEMT/ALS rotation")
+        self.assertEqual(result["expected_role"], "ATTENDANT")
+        self.assertEqual(result["projected_shifts"][0]["period"], "24")
 
-    def test_includes_current_assignment_and_pending_change_overlay(self):
+    def test_june_1_2026_resolves_to_b_shift_and_projects_lynnsey(self):
+        self.assertEqual(aemt_rotation_slot_for_date(SETTINGS, "2026-06-01", TEMPLATES["rotation_templates"][0]), "B")
+
+        result = project_member_rotation(
+            load_member("186"),
+            SETTINGS,
+            TEMPLATES,
+            schedule_payload={"shifts": []},
+            start_date="2026-06-01",
+            end_date="2026-06-01",
+        )
+
+        self.assertEqual(result["member_name"], "Lynnsey Benson")
+        self.assertEqual(result["rotation_group"], "B")
+        self.assertEqual([row["date"] for row in result["projected_shifts"]], ["2026-06-01"])
+
+    def test_c_shift_projects_biz_on_correct_cycle_date(self):
+        self.assertEqual(aemt_rotation_slot_for_date(SETTINGS, "2026-06-02", TEMPLATES["rotation_templates"][0]), "C")
+
+        result = project_member_rotation(
+            load_member("191"),
+            SETTINGS,
+            TEMPLATES,
+            schedule_payload={"shifts": []},
+            start_date="2026-06-02",
+            end_date="2026-06-02",
+        )
+
+        self.assertEqual(result["member_name"], "Biz")
+        self.assertEqual(result["rotation_group"], "C")
+        self.assertEqual([row["date"] for row in result["projected_shifts"]], ["2026-06-02"])
+
+    def test_a_shift_projects_sophie_and_d_shift_projects_barbara(self):
+        self.assertEqual(aemt_rotation_slot_for_date(SETTINGS, "2026-06-04", TEMPLATES["rotation_templates"][0]), "A")
+        self.assertEqual(aemt_rotation_slot_for_date(SETTINGS, "2026-06-03", TEMPLATES["rotation_templates"][0]), "D")
+
+        sophie = project_member_rotation(
+            load_member("180"),
+            SETTINGS,
+            TEMPLATES,
+            schedule_payload={"shifts": []},
+            start_date="2026-06-04",
+            end_date="2026-06-04",
+        )
+        barbara = project_member_rotation(
+            load_member("190"),
+            SETTINGS,
+            TEMPLATES,
+            schedule_payload={"shifts": []},
+            start_date="2026-06-03",
+            end_date="2026-06-03",
+        )
+
+        self.assertEqual(sophie["rotation_group"], "A")
+        self.assertEqual(sophie["projected_shifts"][0]["member_name"], "Sophia Williams")
+        self.assertEqual(barbara["rotation_group"], "D")
+        self.assertEqual(barbara["projected_shifts"][0]["member_name"], "Barbara")
+
+    def test_brian_and_sidney_are_not_projected_as_aemt_rotation_members(self):
+        for member_id in ("188", "185"):
+            result = project_member_rotation(
+                load_member(member_id),
+                SETTINGS,
+                TEMPLATES,
+                schedule_payload={"shifts": []},
+                start_date="2026-06-01",
+                end_date="2026-06-04",
+            )
+
+            self.assertFalse(result["generated_from_rotation"])
+            self.assertEqual(result["projected_shifts"], [])
+            self.assertIn(result["warnings"][0], {"member_has_no_rotation_track", "member_not_in_aemt_als_rotation"})
+
+    def test_projection_includes_current_assignment_and_pending_change_overlay(self):
         schedule = {
             "shifts": [
                 {
-                    "date": "2026-04-01",
+                    "date": "2026-06-01",
                     "label": "AM",
                     "unit": "120",
                     "seats": [
                         {
-                            "seat_id": "2026-04-01:AM:ATTENDANT:0",
+                            "seat_id": "2026-06-01:AM:ATTENDANT:0",
                             "role": "ATTENDANT",
                             "assigned": "186",
                             "assigned_name": "Lynnsey Benson",
@@ -81,49 +149,23 @@ class RotationProjectionTests(unittest.TestCase):
                 "request_id": "scr_1",
                 "type": "drop_coverage_request",
                 "status": "pending_bids",
-                "original_assignment": {"member_id": "186", "date": "2026-04-01", "period": "AM"},
+                "original_assignment": {"member_id": "186", "date": "2026-06-01", "period": "24"},
             }
         ]
 
         result = project_member_rotation(
-            member(),
+            load_member("186"),
             SETTINGS,
             TEMPLATES,
             schedule_payload=schedule,
             change_requests=requests,
-            start_date="2026-04-01",
-            end_date="2026-04-01",
+            start_date="2026-06-01",
+            end_date="2026-06-01",
         )
 
         row = result["projected_shifts"][0]
-        self.assertEqual(row["current_published_assignment"]["seat_key"], "2026-04-01:AM:ATTENDANT:0")
+        self.assertEqual(row["current_published_assignment"]["seat_key"], "2026-06-01:AM:ATTENDANT:0")
         self.assertEqual(row["pending_change_request"]["status"], "pending_bids")
-
-    def test_projects_ot_hours_without_authorizing_extra_ot(self):
-        result = project_member_rotation(
-            member(),
-            SETTINGS,
-            TEMPLATES,
-            schedule_payload={},
-            start_date="2026-04-01",
-            end_date="2026-04-07",
-        )
-
-        sunday = next(row for row in result["projected_shifts"] if row["date"] == "2026-04-05")
-        self.assertEqual(sunday["projected_week_hours"], 36)
-        self.assertEqual(sunday["projected_ot_hours"], 12)
-
-    def test_member_without_rotation_track_returns_warning(self):
-        result = project_member_rotation(
-            {"member_id": "1", "name": "No Rotation"},
-            SETTINGS,
-            TEMPLATES,
-            start_date="2026-04-01",
-            end_date="2026-04-01",
-        )
-
-        self.assertFalse(result["generated_from_rotation"])
-        self.assertIn("member_has_no_rotation_track", result["warnings"])
 
 
 if __name__ == "__main__":

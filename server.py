@@ -841,8 +841,10 @@ def normalize_member_rotation(member):
     rotation = member.get("rotation")
     if not isinstance(rotation, dict):
         rotation = infer_rotation_from_legacy(member) or {}
+    rotation_scope = str(rotation.get("scope") or member.get("rotation_scope") or "").strip()
     pair = str(rotation.get("pair") or "").strip().upper()
     role = str(rotation.get("role") or "").strip().upper()
+    is_aemt_rotation = rotation_scope == "aemt_als_rotation"
 
     if role and pair not in ("AC", "BD"):
         pair = "AC" if role in ("A", "C") else "BD" if role in ("B", "D") else ""
@@ -851,6 +853,9 @@ def normalize_member_rotation(member):
         member["rotation"] = None
     else:
         member["rotation"] = {"pair": pair, "role": role}
+        if is_aemt_rotation:
+            member["rotation"]["scope"] = "aemt_als_rotation"
+            member["rotation"]["label"] = "AEMT/ALS rotation"
 
     prefs = member.setdefault("preferences", {}) if isinstance(member, dict) else {}
     if not isinstance(prefs, dict):
@@ -864,12 +869,24 @@ def normalize_member_rotation(member):
     if member["rotation"]:
         role = member["rotation"]["role"]
         shift_pref["rotation_track"] = role
-        shift_pref["rotation_role"] = "day" if role in ("A", "B") else "night"
-        shift_pref["relief_partner_track"] = {"A": "C", "B": "D", "C": "A", "D": "B"}[role]
+        if is_aemt_rotation:
+            member["rotation_scope"] = "aemt_als_rotation"
+            member["rotation_label"] = "AEMT/ALS rotation"
+            member["shift_system"] = "aemt_abcd_rotation"
+            member["shift_system_assignment"] = "aemt_abcd_rotation"
+            shift_pref["rotation_role"] = "aemt_als_rotation"
+            shift_pref["rotation_scope"] = "aemt_als_rotation"
+            shift_pref["relief_partner_track"] = None
+            shift_pref["staffing_system"] = "aemt_abcd_rotation"
+            shift_pref["style"] = "aemt_als_rotation"
+            shift_pref["shift_length_hours"] = 24
+        else:
+            shift_pref["rotation_role"] = "day" if role in ("A", "B") else "night"
+            shift_pref["relief_partner_track"] = {"A": "C", "B": "D", "C": "A", "D": "B"}[role]
+            shift_pref.setdefault("shift_length_hours", 12)
+            if not shift_pref.get("style") or shift_pref.get("style") == "availability_based":
+                shift_pref["style"] = "rotation_223_relief"
         shift_pref.setdefault("rotation_template_id", "rot_223_12h_relief")
-        shift_pref.setdefault("shift_length_hours", 12)
-        if not shift_pref.get("style") or shift_pref.get("style") == "availability_based":
-            shift_pref["style"] = "rotation_223_relief"
     else:
         shift_pref.setdefault("rotation_track", None)
         shift_pref.setdefault("rotation_role", None)

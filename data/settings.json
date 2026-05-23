@@ -102,7 +102,11 @@
     "enabled": true,
     "label": "Career Fire Driver",
     "effective_start": "2026-06-01",
-    "days": ["MO", "TU", "TH"],
+    "days": [
+      "MO",
+      "TU",
+      "TH"
+    ],
     "start_time": "08:00",
     "end_time": "18:00",
     "normal_shift_start": "06:00",
@@ -124,7 +128,9 @@
         "active": true,
         "normal_shift_start": "06:00",
         "effective_start": "08:00",
-        "applies_to_labels": ["AM"],
+        "applies_to_labels": [
+          "AM"
+        ],
         "watch_label": "0600-0800 Watch",
         "visible_on_wallboard": true,
         "counts_as_required_coverage": false,
@@ -180,16 +186,49 @@
   ],
   "rotation_systems": {
     "aemt_abcd_rotation": {
-      "label": "A/B/C/D AEMT Rotation",
+      "label": "A/B/C/D AEMT/ALS Rotation",
       "admin_configurable": true,
       "slots": [
-        { "slot": "A", "primary_member_id": null },
-        { "slot": "B", "primary_member_id": null },
-        { "slot": "C", "primary_member_id": null },
-        { "slot": "D", "primary_member_id": null }
+        {
+          "slot": "A",
+          "primary_member_id": "180",
+          "board_name": "Sophie",
+          "member_name": "Sophia Williams"
+        },
+        {
+          "slot": "B",
+          "primary_member_id": "186",
+          "board_name": "Lynnsey",
+          "member_name": "Lynnsey Benson"
+        },
+        {
+          "slot": "C",
+          "primary_member_id": "191",
+          "board_name": "Biz",
+          "member_name": "Biz"
+        },
+        {
+          "slot": "D",
+          "primary_member_id": "190",
+          "board_name": "Barbara",
+          "member_name": "Barbara"
+        }
       ],
       "expected_rotation_ot_requires_admin_approval": true,
-      "allow_unfilled_slots": true
+      "allow_unfilled_slots": true,
+      "scope": "aemt_als_rotation",
+      "coverage_role": "ATTENDANT",
+      "qualification": "ALS",
+      "description": "AEMT/ALS rotation only; EMT, driver-only, EMR, and NCLD members are not included.",
+      "cycle_anchor_date": "2026-06-01",
+      "cycle_anchor_slot": "B",
+      "slot_order": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "shift_length_hours": 24
     },
     "emt_zipper": {
       "label": "EMT Zipper",

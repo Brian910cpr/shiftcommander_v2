@@ -1,4 +1,4 @@
-"""Read-only A/B/C/D rotation commitment projection.
+"""Read-only AEMT/ALS A/B/C/D rotation commitment projection.
 
 The projection is intentionally advisory. It does not assign, clear, or rewrite
 schedule seats. Rotation commitments remain baseline responsibilities; pending
@@ -11,7 +11,11 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional
 
-from engine.rotation_engine import get_rotation_role, get_track_status_for_date
+AEMT_ROTATION_SYSTEM_ID = "aemt_abcd_rotation"
+AEMT_ROTATION_SCOPE = "aemt_als_rotation"
+DEFAULT_SLOT_ORDER = ["A", "B", "C", "D"]
+DEFAULT_ANCHOR_DATE = "2026-06-01"
+DEFAULT_ANCHOR_SLOT = "B"
 
 
 def parse_date(value: Any) -> Optional[date]:
@@ -50,6 +54,90 @@ def member_rotation_track(member: Dict[str, Any]) -> Optional[str]:
     return track if track in {"A", "B", "C", "D"} else None
 
 
+def member_rotation_scope(member: Dict[str, Any]) -> str:
+    rotation = member.get("rotation") if isinstance(member.get("rotation"), dict) else {}
+    prefs = member.get("preferences") if isinstance(member.get("preferences"), dict) else {}
+    shift_pref = prefs.get("shift_preference") if isinstance(prefs.get("shift_preference"), dict) else {}
+    values = [
+        member.get("rotation_scope"),
+        rotation.get("scope"),
+        shift_pref.get("rotation_scope"),
+        shift_pref.get("style"),
+        shift_pref.get("staffing_system"),
+        member.get("shift_system_assignment"),
+        member.get("shift_system"),
+    ]
+    for value in values:
+        text = str(value or "").strip()
+        if text:
+            return text
+    return ""
+
+
+def aemt_rotation_system(settings: Dict[str, Any]) -> Dict[str, Any]:
+    systems = settings.get("rotation_systems") if isinstance(settings.get("rotation_systems"), dict) else {}
+    system = systems.get(AEMT_ROTATION_SYSTEM_ID) if isinstance(systems.get(AEMT_ROTATION_SYSTEM_ID), dict) else {}
+    return system
+
+
+def configured_aemt_slots(settings: Dict[str, Any]) -> Dict[str, str]:
+    system = aemt_rotation_system(settings)
+    slots = system.get("slots") if isinstance(system.get("slots"), list) else []
+    configured: Dict[str, str] = {}
+    for slot in slots:
+        if not isinstance(slot, dict):
+            continue
+        slot_id = str(slot.get("slot") or "").strip().upper()
+        primary_id = str(slot.get("primary_member_id") or "").strip()
+        if slot_id in {"A", "B", "C", "D"} and primary_id:
+            configured[slot_id] = primary_id
+    return configured
+
+
+def is_aemt_rotation_member(member: Dict[str, Any], settings: Dict[str, Any]) -> bool:
+    if member_cert(member) != "ALS":
+        return False
+    track = member_rotation_track(member)
+    if not track:
+        return False
+    slots = configured_aemt_slots(settings)
+    if slots:
+        return slots.get(track) == member_id(member)
+    return member_rotation_scope(member) in {AEMT_ROTATION_SCOPE, AEMT_ROTATION_SYSTEM_ID}
+
+
+def aemt_rotation_anchor(settings: Dict[str, Any], template: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    system = aemt_rotation_system(settings)
+    template = template if isinstance(template, dict) else {}
+    slot_order = system.get("slot_order") or template.get("slot_order") or DEFAULT_SLOT_ORDER
+    if not isinstance(slot_order, list):
+        slot_order = DEFAULT_SLOT_ORDER
+    slot_order = [str(slot).strip().upper() for slot in slot_order if str(slot).strip().upper() in {"A", "B", "C", "D"}]
+    if not slot_order:
+        slot_order = DEFAULT_SLOT_ORDER
+    anchor_date = str(system.get("cycle_anchor_date") or template.get("cycle_anchor_date") or DEFAULT_ANCHOR_DATE)[:10]
+    anchor_slot = str(system.get("cycle_anchor_slot") or template.get("cycle_anchor_slot") or DEFAULT_ANCHOR_SLOT).strip().upper()
+    if anchor_slot not in slot_order:
+        anchor_slot = slot_order[0]
+    return {
+        "anchor_date": anchor_date,
+        "anchor_slot": anchor_slot,
+        "slot_order": slot_order,
+    }
+
+
+def aemt_rotation_slot_for_date(settings: Dict[str, Any], date_iso: str, template: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    target = parse_date(date_iso)
+    anchor = aemt_rotation_anchor(settings, template)
+    anchor_day = parse_date(anchor["anchor_date"])
+    if not target or not anchor_day:
+        return None
+    slot_order = anchor["slot_order"]
+    anchor_index = slot_order.index(anchor["anchor_slot"])
+    offset = (target - anchor_day).days
+    return slot_order[(anchor_index + offset) % len(slot_order)]
+
+
 def rotation_template(rotation_templates_payload: Dict[str, Any], template_id: str = "rot_223_12h_relief") -> Optional[Dict[str, Any]]:
     for template in rotation_templates_payload.get("rotation_templates", []) if isinstance(rotation_templates_payload, dict) else []:
         if isinstance(template, dict) and template.get("template_id") == template_id:
@@ -58,6 +146,9 @@ def rotation_template(rotation_templates_payload: Dict[str, Any], template_id: s
 
 
 def rotation_anchor_date(settings: Dict[str, Any], template: Dict[str, Any]) -> Optional[str]:
+    anchor = aemt_rotation_anchor(settings, template)
+    if anchor.get("anchor_date"):
+        return anchor["anchor_date"]
     if template.get("anchor_date"):
         return str(template["anchor_date"])[:10]
     rotation_223 = settings.get("rotation_223") if isinstance(settings.get("rotation_223"), dict) else {}
@@ -124,6 +215,15 @@ def schedule_assignment_for(schedule_payload: Dict[str, Any], member_id_value: s
     return None
 
 
+def schedule_assignments_for_date(schedule_payload: Dict[str, Any], member_id_value: str, date_iso: str) -> List[Dict[str, Any]]:
+    assignments = []
+    for period in ("AM", "PM"):
+        assignment = schedule_assignment_for(schedule_payload, member_id_value, date_iso, period)
+        if assignment:
+            assignments.append(assignment)
+    return assignments
+
+
 def pending_status_for(change_requests: Iterable[Dict[str, Any]], member_id_value: str, date_iso: str, period: str) -> Optional[Dict[str, Any]]:
     for request in change_requests or []:
         if not isinstance(request, dict):
@@ -160,9 +260,23 @@ def project_member_rotation(
             "member_id": member_id(member),
             "member_name": member_name(member),
             "rotation_group": track,
+            "rotation_scope": AEMT_ROTATION_SCOPE,
+            "rotation_label": "AEMT/ALS rotation",
             "generated_from_rotation": False,
             "projected_shifts": [],
             "warnings": ["member_has_no_rotation_track" if not track else "rotation_template_missing"],
+        }
+
+    if not is_aemt_rotation_member(member, settings):
+        return {
+            "member_id": member_id(member),
+            "member_name": member_name(member),
+            "rotation_group": track,
+            "rotation_scope": AEMT_ROTATION_SCOPE,
+            "rotation_label": "AEMT/ALS rotation",
+            "generated_from_rotation": False,
+            "projected_shifts": [],
+            "warnings": ["member_not_in_aemt_als_rotation"],
         }
 
     anchor = rotation_anchor_date(settings, template)
@@ -178,27 +292,30 @@ def project_member_rotation(
             "warnings": ["rotation_anchor_missing"],
         }
 
-    role = get_rotation_role(track)
-    period = "AM" if role == "day" else "PM"
-    expected_role = expected_role_for_member(member)
-    hours = float(template.get("shift_length_hours") or 12)
+    role = AEMT_ROTATION_SCOPE
+    period = "24"
+    expected_role = "ATTENDANT"
+    anchor_config = aemt_rotation_anchor(settings, template)
+    hours = float(aemt_rotation_system(settings).get("shift_length_hours") or template.get("shift_length_hours") or 24)
     threshold = non_ot_threshold(member)
     weekly_hours: Dict[str, float] = {}
     projected = []
     cursor = start
     while cursor <= end:
-        status = get_track_status_for_date(template, track, anchor, cursor.isoformat())
-        if status == "ON":
+        active_slot = aemt_rotation_slot_for_date(settings, cursor.isoformat(), template)
+        if active_slot == track:
             week_start = (cursor - timedelta(days=cursor.weekday())).isoformat()
             prior = weekly_hours.get(week_start, 0.0)
             weekly_hours[week_start] = prior + hours
             projected_ot = max(0.0, weekly_hours[week_start] - threshold) if threshold is not None else 0.0
             date_iso = cursor.isoformat()
-            current_assignment = schedule_assignment_for(schedule_payload, member_id(member), date_iso, period)
+            current_assignments = schedule_assignments_for_date(schedule_payload, member_id(member), date_iso)
             projected.append({
                 "member_id": member_id(member),
                 "member_name": member_name(member),
                 "rotation_group": track,
+                "rotation_scope": AEMT_ROTATION_SCOPE,
+                "rotation_label": "AEMT/ALS rotation",
                 "date": date_iso,
                 "period": period,
                 "expected_role": expected_role,
@@ -206,7 +323,8 @@ def project_member_rotation(
                 "projected_week_hours": weekly_hours[week_start],
                 "projected_ot_hours": projected_ot,
                 "generated_from_rotation": True,
-                "current_published_assignment": current_assignment,
+                "current_published_assignment": current_assignments[0] if current_assignments else None,
+                "current_published_assignments": current_assignments,
                 "pending_change_request": pending_status_for(change_requests or [], member_id(member), date_iso, period),
             })
         cursor += timedelta(days=1)
@@ -215,10 +333,14 @@ def project_member_rotation(
         "member_id": member_id(member),
         "member_name": member_name(member),
         "rotation_group": track,
+        "rotation_scope": AEMT_ROTATION_SCOPE,
+        "rotation_label": "AEMT/ALS rotation",
         "rotation_role": role,
         "expected_role": expected_role,
         "generated_from_rotation": True,
         "anchor_date": anchor,
+        "anchor_slot": anchor_config["anchor_slot"],
+        "slot_order": anchor_config["slot_order"],
         "template_id": template.get("template_id"),
         "projected_shifts": projected,
         "warnings": [],

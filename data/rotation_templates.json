@@ -71,7 +71,19 @@
         "A relieves C",
         "C relieves A",
         "B relieves D",
-        "D relieves B"
+        "D relieves B",
+        "A/B/C/D labels are AEMT/ALS rotation slots, not whole-schedule member tracks."
+      ],
+      "scope": "aemt_als_rotation",
+      "coverage_role": "ATTENDANT",
+      "qualification": "ALS",
+      "cycle_anchor_date": "2026-06-01",
+      "cycle_anchor_slot": "B",
+      "slot_order": [
+        "A",
+        "B",
+        "C",
+        "D"
       ]
     }
   ]

@@ -1739,13 +1739,15 @@
         "shift24": "no_preference",
         "shift_preference": {
           "allow_swap_outside_rotation": true,
-          "relief_partner_track": "A",
-          "rotation_role": "night",
+          "relief_partner_track": null,
+          "rotation_role": "aemt_als_rotation",
           "rotation_template_id": "rot_223_12h_relief",
-          "rotation_track": "C",
-          "shift_length_hours": 12,
-          "style": "rotation_223_relief",
-          "swap_strategy": "allow"
+          "rotation_track": "A",
+          "shift_length_hours": 24,
+          "style": "aemt_als_rotation",
+          "swap_strategy": "allow",
+          "rotation_scope": "aemt_als_rotation",
+          "staffing_system": "aemt_abcd_rotation"
         }
       },
       "qrv_certified": true,
@@ -1758,18 +1760,22 @@
       "raw_cert": "AEMT",
       "rotation": {
         "pair": "AC",
-        "role": "C"
+        "role": "A",
+        "scope": "aemt_als_rotation",
+        "label": "AEMT/ALS rotation"
       },
-      "shift_system": null,
-      "shift_system_assignment": null,
-      "rotation_slot": "C",
-      "rotation_authorized": false,
+      "shift_system": "aemt_abcd_rotation",
+      "shift_system_assignment": "aemt_abcd_rotation",
+      "rotation_slot": "A",
+      "rotation_authorized": true,
       "expected_rotation_ot_allowed": false,
       "zipper_participation": false,
       "zipper_group": null,
       "max_hours_allowed": 36,
       "preferred_hours": 36,
-      "hourly_or_salaried": "hourly"
+      "hourly_or_salaried": "hourly",
+      "rotation_scope": "aemt_als_rotation",
+      "rotation_label": "AEMT/ALS rotation"
     },
     {
       "active": true,
@@ -2036,13 +2042,14 @@
         "shift24": "no_preference",
         "shift_preference": {
           "allow_swap_outside_rotation": true,
-          "relief_partner_track": "C",
-          "rotation_role": "day",
-          "rotation_template_id": "rot_223_12h_relief",
-          "rotation_track": "A",
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_template_id": null,
+          "rotation_track": null,
           "shift_length_hours": 12,
-          "style": "rotation_223_relief",
-          "swap_strategy": "allow"
+          "style": "availability_based",
+          "swap_strategy": "allow",
+          "rotation_scope": null
         }
       },
       "qrv_certified": false,
@@ -2052,20 +2059,19 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": {
-        "pair": "AC",
-        "role": "A"
-      },
+      "rotation": null,
       "shift_system": null,
       "shift_system_assignment": null,
-      "rotation_slot": "A",
+      "rotation_slot": null,
       "rotation_authorized": false,
       "expected_rotation_ot_allowed": false,
       "zipper_participation": false,
       "zipper_group": null,
       "max_hours_allowed": 36,
       "preferred_hours": 36,
-      "hourly_or_salaried": "hourly"
+      "hourly_or_salaried": "hourly",
+      "rotation_scope": null,
+      "rotation_label": null
     },
     {
       "active": true,
@@ -2098,13 +2104,15 @@
         "shift24": "prefer",
         "shift_preference": {
           "allow_swap_outside_rotation": true,
-          "relief_partner_track": "C",
-          "rotation_role": "day",
+          "relief_partner_track": null,
+          "rotation_role": "aemt_als_rotation",
           "rotation_template_id": "rot_223_12h_relief",
-          "rotation_track": "A",
-          "shift_length_hours": 12,
-          "style": "rotation_223_relief",
-          "swap_strategy": "allow"
+          "rotation_track": "B",
+          "shift_length_hours": 24,
+          "style": "aemt_als_rotation",
+          "swap_strategy": "allow",
+          "rotation_scope": "aemt_als_rotation",
+          "staffing_system": "aemt_abcd_rotation"
         }
       },
       "qrv_certified": true,
@@ -2116,19 +2124,23 @@
       "rank": "",
       "raw_cert": "AEMT",
       "rotation": {
-        "pair": "AC",
-        "role": "A"
+        "pair": "BD",
+        "role": "B",
+        "scope": "aemt_als_rotation",
+        "label": "AEMT/ALS rotation"
       },
-      "shift_system": null,
-      "shift_system_assignment": null,
-      "rotation_slot": "A",
-      "rotation_authorized": false,
+      "shift_system": "aemt_abcd_rotation",
+      "shift_system_assignment": "aemt_abcd_rotation",
+      "rotation_slot": "B",
+      "rotation_authorized": true,
       "expected_rotation_ot_allowed": false,
       "zipper_participation": false,
       "zipper_group": null,
       "max_hours_allowed": 40,
       "preferred_hours": 36,
-      "hourly_or_salaried": "hourly"
+      "hourly_or_salaried": "hourly",
+      "rotation_scope": "aemt_als_rotation",
+      "rotation_label": "AEMT/ALS rotation"
     },
     {
       "active": true,
@@ -2218,13 +2230,14 @@
         "ampm": "no_preference",
         "shift24": "no_preference",
         "shift_preference": {
-          "relief_partner_track": "B",
-          "rotation_role": "night",
-          "rotation_track": "D",
-          "style": "rotation_223_relief",
-          "rotation_template_id": "rot_223_12h_relief",
+          "relief_partner_track": null,
+          "rotation_role": null,
+          "rotation_track": null,
+          "style": "availability_based",
+          "rotation_template_id": null,
           "shift_length_hours": 12,
-          "swap_strategy": "allow"
+          "swap_strategy": "allow",
+          "rotation_scope": null
         }
       },
       "qrv_certified": false,
@@ -2234,20 +2247,19 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": {
-        "pair": "BD",
-        "role": "D"
-      },
+      "rotation": null,
       "shift_system": null,
       "shift_system_assignment": null,
-      "rotation_slot": "D",
+      "rotation_slot": null,
       "rotation_authorized": false,
       "expected_rotation_ot_allowed": false,
       "zipper_participation": false,
       "zipper_group": null,
       "max_hours_allowed": 40,
       "preferred_hours": 36,
-      "hourly_or_salaried": "hourly"
+      "hourly_or_salaried": "hourly",
+      "rotation_scope": null,
+      "rotation_label": null
     },
     {
       "active": true,
@@ -2339,13 +2351,15 @@
         "shift24": "no_preference",
         "shift_preference": {
           "allow_swap_outside_rotation": true,
-          "relief_partner_track": "B",
-          "rotation_role": "night",
+          "relief_partner_track": null,
+          "rotation_role": "aemt_als_rotation",
           "rotation_template_id": "rot_223_12h_relief",
           "rotation_track": "D",
-          "shift_length_hours": 12,
-          "style": "rotation_223_relief",
-          "swap_strategy": "allow"
+          "shift_length_hours": 24,
+          "style": "aemt_als_rotation",
+          "swap_strategy": "allow",
+          "rotation_scope": "aemt_als_rotation",
+          "staffing_system": "aemt_abcd_rotation"
         }
       },
       "qrv_certified": false,
@@ -2356,21 +2370,82 @@
       "raw_cert": "AEMT",
       "rotation": {
         "pair": "BD",
-        "role": "D"
+        "role": "D",
+        "scope": "aemt_als_rotation",
+        "label": "AEMT/ALS rotation"
       },
       "scheduler": {
         "avoid_with": []
       },
-      "shift_system": null,
-      "shift_system_assignment": null,
+      "shift_system": "aemt_abcd_rotation",
+      "shift_system_assignment": "aemt_abcd_rotation",
       "rotation_slot": "D",
-      "rotation_authorized": false,
+      "rotation_authorized": true,
       "expected_rotation_ot_allowed": false,
       "zipper_participation": false,
       "zipper_group": null,
       "max_hours_allowed": 36,
       "preferred_hours": 36,
-      "hourly_or_salaried": "hourly"
+      "hourly_or_salaried": "hourly",
+      "rotation_scope": "aemt_als_rotation",
+      "rotation_label": "AEMT/ALS rotation"
+    },
+    {
+      "member_id": "191",
+      "name": "Biz",
+      "first_name": "Biz",
+      "last_name": "",
+      "email": "",
+      "phone": "",
+      "cert": "ALS",
+      "ops_cert": "ALS",
+      "raw_cert": "AEMT",
+      "qualifications": [
+        "AEMT",
+        "DRIVER",
+        "QRV"
+      ],
+      "active": true,
+      "employment": {
+        "status": "PT",
+        "pay_type": "hourly",
+        "pay_rate": 18,
+        "pay_rate_unit": "hr",
+        "overtime_eligible": false,
+        "preferred_weekly_hour_cap": 36,
+        "hard_weekly_hour_cap": 36
+      },
+      "preferences": {
+        "ampm": "no_preference",
+        "shift24": "no_preference",
+        "shift_preference": {
+          "allow_swap_outside_rotation": true,
+          "relief_partner_track": null,
+          "rotation_role": "aemt_als_rotation",
+          "rotation_scope": "aemt_als_rotation",
+          "rotation_template_id": "rot_223_12h_relief",
+          "rotation_track": "C",
+          "shift_length_hours": 24,
+          "style": "aemt_als_rotation",
+          "staffing_system": "aemt_abcd_rotation",
+          "swap_strategy": "allow"
+        }
+      },
+      "rotation": {
+        "pair": "AC",
+        "role": "C",
+        "scope": "aemt_als_rotation",
+        "label": "AEMT/ALS rotation"
+      },
+      "rotation_slot": "C",
+      "rotation_scope": "aemt_als_rotation",
+      "rotation_label": "AEMT/ALS rotation",
+      "rotation_authorized": true,
+      "expected_rotation_ot_allowed": false,
+      "shift_system": "aemt_abcd_rotation",
+      "shift_system_assignment": "aemt_abcd_rotation",
+      "zipper_participation": false,
+      "zipper_group": null
     }
   ]
 }
