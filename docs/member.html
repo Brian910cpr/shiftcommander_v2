@@ -108,6 +108,8 @@
     .shift-marker.driver{background:#b88412}
     .shift-marker.upgrade{background:#6d49c8}
     .shift-marker.pickup{background:#5f4777}
+    .shift-marker.bid-strong{background:#0f8d48}
+    .shift-marker.bid-soft{background:#4977a8}
     .state-btn.preferred{background:rgba(20,103,55,.72);border-color:#28d36b}
     .state-btn.available{background:rgba(113,82,12,.74);border-color:#ffbd4d}
     .state-btn.do_not_schedule{background:rgba(105,31,39,.76);border-color:#ff6f6f}
@@ -527,11 +529,18 @@
     function isOpenSeat(seat){
       return !String(seat?.assigned || "").trim() && isOpenSeatName(seat?.assigned_name);
     }
-    function shiftOpportunityMarkers(dateIso, shiftLabel){
+    function shiftOpportunityMarkers(dateIso, shiftLabel, statusValue=""){
       const scheduleShift = findScheduleShift(dateIso, shiftLabel);
       if(!scheduleShift) return [];
       const seats = asArray(scheduleShift.seats);
       const markers = [];
+      const hasOpenShiftSeat = seats.some((seat) => isOpenSeat(seat) && seat?.structural_driver_coverage !== true);
+      const status = normalizeStatus(statusValue);
+      if(hasOpenShiftSeat && status === "preferred"){
+        markers.push({ key:"active_bid_prefer", cls:"bid-strong", text:"◆", title:"Active strong bid for an open shift." });
+      }else if(hasOpenShiftSeat && status === "available"){
+        markers.push({ key:"active_bid_available", cls:"bid-soft", text:"◇", title:"Active soft bid for an open shift." });
+      }
       if(memberSeatOnShift(scheduleShift)){
         markers.push({ key:"assigned", cls:"assigned", text:"YOU", title:"You are assigned to this shift." });
       }
@@ -1173,7 +1182,7 @@
           const help = locked ? lockedReason : stateHelp(value);
           const next = nextState(value);
           const cls = stateClass(value);
-          const markers = shiftOpportunityMarkers(iso, shift);
+          const markers = shiftOpportunityMarkers(iso, shift, value);
           const buttonTitle = markerTitle(help, markers);
           return `
             <div class="shift-row">
