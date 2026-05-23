@@ -715,7 +715,7 @@
     const SCHEDULE_TIMEOUT_MS = 15000;
     const MEMBERS_TIMEOUT_MS = 8000;
     const IDLE_RESET_MS = 60000;
-    const VISIBLE_WEEKS = 5;
+    const VISIBLE_WEEKS = 1;
     const VISIBLE_DAYS = VISIBLE_WEEKS * 7;
     const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -724,6 +724,7 @@
     let calendarMarkers = { markers: [] };
     let idleTimer = null;
     let autoFocusedAssignedWeek = false;
+    let manualWeekSelected = false;
 
     function apiUrl(path) {
       return `${API_BASE}${path}`;
@@ -975,24 +976,25 @@
       return toIsoLocal(addDays(parseLocalDate(todayValue), (weeks * 7) - 1));
     }
 
-    function startOfWeekSunday(dateObj) {
+    function startOfWeekMonday(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
-      d.setDate(d.getDate() - d.getDay());
+      const day = d.getDay() || 7;
+      d.setDate(d.getDate() - day + 1);
       return d;
     }
 
     function buildVisibleDates(weekOffset = 0) {
       const today = getTodayDate();
-      const thisWeekStart = startOfWeekSunday(today);
+      const thisWeekStart = startOfWeekMonday(today);
       const offsetWeekStart = addDays(thisWeekStart, weekOffset * 7);
-      const visibleStart = addDays(offsetWeekStart, -7);
       const visibleEndIso = visibleEndDateIso();
       const dates = [];
 
       for (let i = 0; i < VISIBLE_DAYS; i++) {
-        const d = addDays(visibleStart, i);
+        const d = addDays(offsetWeekStart, i);
         const iso = toIsoLocal(d);
-        if (iso <= visibleEndIso) dates.push({ iso, dateObj: d });
+        const withinDisplayHorizon = iso <= visibleEndIso;
+        dates.push({ iso, dateObj: d, withinDisplayHorizon });
       }
 
       return dates;
@@ -1010,8 +1012,8 @@
     function weekOffsetForIsoDate(isoDate) {
       const target = parseIsoDate(isoDate);
       if (Number.isNaN(target.getTime())) return null;
-      const thisWeekStart = startOfWeekSunday(getTodayDate());
-      const targetWeekStart = startOfWeekSunday(target);
+      const thisWeekStart = startOfWeekMonday(getTodayDate());
+      const targetWeekStart = startOfWeekMonday(target);
       return Math.round((targetWeekStart - thisWeekStart) / (7 * 86400000));
     }
 
@@ -1711,7 +1713,7 @@
       const daysMap = normalizeShiftsToDays(data, data?.memberLookup);
       const shifts = Array.isArray(data?.shifts) ? data.shifts : [];
       const todayIso = getTodayIso();
-      if (!autoFocusedAssignedWeek && currentWeekOffset === 0 && shifts.length && !firstVisibleWeekHasAssignedMember(shifts, 0)) {
+      if (!manualWeekSelected && !autoFocusedAssignedWeek && currentWeekOffset === 0 && shifts.length && !firstVisibleWeekHasAssignedMember(shifts, 0)) {
         const assignedOffset = firstFutureAssignedWeekOffset(shifts);
         if (assignedOffset !== null && assignedOffset > 0) currentWeekOffset = assignedOffset;
         autoFocusedAssignedWeek = true;
@@ -1734,6 +1736,13 @@
         return;
       }
 
+      const visibleShiftCount = visibleDates.reduce((count, day) => count + (daysMap[day.iso] || []).length, 0);
+      if (visibleShiftCount === 0) {
+        app.className = "state";
+        app.innerHTML = `<div class="state-title">No loaded shifts for this week.</div><div class="state-detail">Use Previous Week or Next Week to move by calendar week.</div>`;
+        return;
+      }
+
       app.className = "board";
       app.innerHTML = visibleDates.map((day, index) => renderDayCard(day.iso, daysMap[day.iso] || [], todayIso, visibleDates, index, data?.memberLookup)).join("");
     }
@@ -1745,6 +1754,7 @@
     function resetIdleTimer() {
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
+        if (manualWeekSelected) return;
         if (currentWeekOffset !== 0) {
           currentWeekOffset = 0;
           autoFocusedAssignedWeek = true;
@@ -1759,19 +1769,22 @@
       });
 
       document.getElementById("prevWeekBtn").addEventListener("click", () => {
+        manualWeekSelected = true;
         currentWeekOffset -= 1;
         rerender();
         resetIdleTimer();
       });
 
       document.getElementById("todayBtn").addEventListener("click", () => {
+        manualWeekSelected = true;
         currentWeekOffset = 0;
-        autoFocusedAssignedWeek = true;
+        autoFocusedAssignedWeek = false;
         rerender();
         resetIdleTimer();
       });
 
       document.getElementById("nextWeekBtn").addEventListener("click", () => {
+        manualWeekSelected = true;
         currentWeekOffset += 1;
         rerender();
         resetIdleTimer();

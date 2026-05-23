@@ -14,6 +14,7 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta, UTC
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
+from engine.display_normalizer import normalize_wallboard_display
 
 SERVER_IMPORT_STARTED = time.perf_counter()
 
@@ -2546,15 +2547,24 @@ def get_schedule_api():
 @app.route("/api/bootstrap", methods=["GET"])
 def get_bootstrap():
     schedule = load_schedule_payload()
+    members = load_members_payload()
     return jsonify({
         "health": health_payload(),
-        "members": load_members_payload(),
+        "members": members,
         "availability": load_availability_payload(),
         "settings": load_settings(),
         "shifts": schedule.get("shifts", []) if isinstance(schedule, dict) else [],
         "schedule": schedule,
+        "display": normalize_wallboard_display(schedule, members),
         "generated_at": now_iso(),
     })
+
+
+@app.route("/api/wallboard_display", methods=["GET"])
+def get_wallboard_display():
+    schedule = load_schedule_payload()
+    members = load_members_payload()
+    return jsonify(normalize_wallboard_display(schedule, members))
 
 
 @app.route("/api/base44/manifest", methods=["GET"])
@@ -2569,6 +2579,7 @@ def get_base44_manifest():
             "health": {"method": "GET", "path": "/api/health"},
             "bootstrap": {"method": "GET", "path": "/api/bootstrap"},
             "schedule": {"method": "GET", "path": "/api/schedule"},
+            "wallboard_display": {"method": "GET", "path": "/api/wallboard_display"},
             "generate": {"method": "POST", "path": "/api/generate"},
             "members_get": {"method": "GET", "path": "/api/members"},
             "members_post": {"method": "POST", "path": "/api/members"},

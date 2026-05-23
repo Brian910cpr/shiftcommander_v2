@@ -544,10 +544,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-05-20:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -557,17 +557,19 @@
           "supervisor_review": false,
           "solo_emt_anchor_applied": false,
           "aemt_reclaim_attempted": false,
-          "locked": false,
+          "locked": true,
           "published": true,
           "preserved_existing_assignment": true,
-          "rollout_open": true,
-          "rollout_import_hold": true,
-          "actionable_open_shift": true,
-          "assignment_reason": "Preserved open during rollout import; available for open-shift workflow after rollout.",
-          "open_reason": "Preserved open during rollout import; available for open-shift workflow after rollout.",
-          "next_selection_run": "2026-05-21",
-          "interest_collecting": true,
-          "selection_statement": "OPEN DRIVER: Preserved open during rollout import; available for open-shift workflow after rollout.."
+          "assignment_reason": "Manual May whiteboard update: Brian Ennis assigned Driver for 2026-05-20 PM.",
+          "selection_statement": "Brian Ennis: Manual May whiteboard update; preserved in Driver/BLS slot.",
+          "cert": "EMT",
+          "manual_whiteboard_update": true,
+          "rollout_sticky": true,
+          "selection_factors": [
+            "manual_whiteboard_update",
+            "DRIVER",
+            "EMT"
+          ]
         }
       ],
       "resolver": {
