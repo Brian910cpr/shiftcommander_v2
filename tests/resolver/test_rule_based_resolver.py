@@ -73,6 +73,20 @@ def notice_for(result, mid):
     return next(row for row in result["notification_eligibility"] if row["member_id"] == mid)
 
 
+def brian_ft_emt():
+    row = member("brian", "EMT", "FT")
+    row.update({
+        "name": "Brian Ennis",
+        "employment": {
+            "status": "FT",
+            "pay_type": "hourly",
+            "preferred_weekly_hour_cap": 36,
+            "hard_weekly_hour_cap": 40,
+        },
+    })
+    return row
+
+
 class RuleBasedResolverDoctrineTests(unittest.TestCase):
     def test_no_rotation_authorized_aemts_are_hard_held_against_ot(self):
         data = base_payload()
@@ -604,6 +618,98 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
 
         self.assertEqual(first_seat(result, "ATTENDANT")["assigned"], "emt_bridge")
         self.assertEqual(first_seat(result, "DRIVER")["assigned"], "emr_driver")
+
+    def test_ft_emt_under_36_wins_driver_before_casual_prefer(self):
+        data = base_payload(seats=[{"role": "DRIVER", "hours": 12}])
+        data["members"] = [brian_ft_emt(), member("casual_emt", "EMT", "PT")]
+        data["hour_totals"] = {"brian": 24, "casual_emt": 0}
+        set_availability(data, "casual_emt", FAR, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "brian")
+        self.assertEqual(driver["resolver_bucket"], "ft_emt_baseline")
+        self.assertTrue(driver["ft_emt_baseline_applied"])
+        self.assertEqual(driver["ft_emt_hours_before"], 24)
+        self.assertEqual(driver["ft_emt_hours_after"], 36)
+        self.assertEqual(driver["ft_emt_base_hours"], 36)
+        self.assertIn("FT EMT baseline hours before casual staffing", driver["assignment_reason"])
+
+    def test_ft_emt_reaches_exactly_36_as_baseline(self):
+        data = base_payload(seats=[{"role": "DRIVER", "hours": 12}])
+        data["members"] = [brian_ft_emt(), member("casual_emt", "EMT", "PT")]
+        data["hour_totals"] = {"brian": 24, "casual_emt": 0}
+        set_availability(data, "brian", FAR, "AM", "AVAILABLE")
+        set_availability(data, "casual_emt", FAR, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "brian")
+        self.assertEqual(driver["resolver_bucket"], "ft_emt_baseline")
+        self.assertEqual(driver["ot_classification"], "none")
+        self.assertEqual(driver["ft_emt_hours_after"], 36)
+
+    def test_ft_emt_at_or_over_36_no_longer_outranks_casual_no_ot(self):
+        data = base_payload(seats=[{"role": "DRIVER", "hours": 12}])
+        data["members"] = [brian_ft_emt(), member("casual_emt", "EMT", "PT")]
+        data["hour_totals"] = {"brian": 36, "casual_emt": 0}
+        set_availability(data, "brian", FAR, "AM", "PREFER")
+        set_availability(data, "casual_emt", FAR, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "casual_emt")
+        self.assertEqual(driver["resolver_bucket"], "emt_prefer_no_ot")
+        self.assertTrue(any(row["member_id"] == "brian" and row["reason"] == "ft_emt_base_hours_satisfied" for row in driver["rejected_candidates"]))
+
+    def test_ft_emt_do_not_does_not_blindly_assign_baseline(self):
+        data = base_payload(seats=[{"role": "DRIVER", "hours": 12}])
+        data["members"] = [brian_ft_emt(), member("casual_emt", "EMT", "PT")]
+        data["hour_totals"] = {"brian": 24, "casual_emt": 0}
+        set_availability(data, "brian", FAR, "AM", "DO_NOT")
+        set_availability(data, "casual_emt", FAR, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "casual_emt")
+        self.assertNotEqual(driver.get("assigned"), "brian")
+        self.assertTrue(any(row["member_id"] == "brian" and row["reason"] == "availability_do_not" for row in driver["rejected_candidates"]))
+
+    def test_ft_emt_same_shift_conflict_does_not_assign_baseline_driver(self):
+        data = base_payload(seats=[
+            {"role": "ATTENDANT", "hours": 12, "assigned": "brian", "assigned_name": "Brian Ennis"},
+            {"role": "DRIVER", "hours": 12},
+        ])
+        data["members"] = [brian_ft_emt(), member("casual_emt", "EMT", "PT")]
+        data["hour_totals"] = {"brian": 12, "casual_emt": 0}
+        set_availability(data, "casual_emt", FAR, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertEqual(driver["assigned"], "casual_emt")
+        self.assertTrue(any(row["member_id"] == "brian" and row["reason"] == "duplicate_same_shift" for row in driver["rejected_candidates"]))
+
+    def test_ft_emt_would_exceed_36_routes_to_extra_or_review_not_baseline(self):
+        data = base_payload(date_iso=NEAR, seats=[{"role": "DRIVER", "hours": 12}])
+        data["members"] = [brian_ft_emt()]
+        data["hour_totals"] = {"brian": 36}
+        set_availability(data, "brian", NEAR, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        driver = first_seat(result, "DRIVER")
+        self.assertNotEqual(driver.get("resolver_bucket"), "ft_emt_baseline")
+        self.assertTrue(driver.get("supervisor_review") or driver.get("ot_classification") == "additional_ot" or not driver.get("assigned"))
+
+    def test_nick_is_not_active_ft_emt_fixture(self):
+        data = base_payload(seats=[{"role": "DRIVER", "hours": 12}])
+        data["members"] = [brian_ft_emt(), member("casual_emt", "EMT", "PT")]
+        self.assertNotIn("nick", {row["member_id"].lower() for row in data["members"]})
 
     def test_published_locked_assignment_is_preserved(self):
         data = base_payload()

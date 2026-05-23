@@ -29,6 +29,7 @@ DEFAULT_RULE_SETTINGS = {
     "emt_anchor_window_days": 14,
     "show_als_appreciated_for_basic_crew": True,
     "expected_rotation_ot_allowance": 12.0,
+    "ft_emt_base_hours_per_week": 36.0,
     "additional_ot_escalation_policy": "late_fill_only",
     "unset_gets_open_shift_notices": True,
     "do_not_suppresses_notices": True,
@@ -109,6 +110,22 @@ def employment(member: Dict[str, Any]) -> str:
     raw = upper(raw)
     aliases = {"FULL_TIME": "FT", "PART_TIME": "PT", "VOLUNTEER": "PRN", "PER_DIEM": "PRN"}
     return aliases.get(raw, raw or "PRN")
+
+
+def ft_emt_base_hours(member: Dict[str, Any], default: float = 36.0) -> float:
+    emp = member.get("employment", {}) if isinstance(member.get("employment"), dict) else {}
+    for value in (
+        member.get("base_hours_per_week"),
+        member.get("weekly_base_hours"),
+        emp.get("base_hours_per_week"),
+        emp.get("preferred_weekly_hour_cap"),
+    ):
+        try:
+            if value not in (None, ""):
+                return float(value)
+        except (TypeError, ValueError):
+            pass
+    return float(default)
 
 
 def nested_value(source: Dict[str, Any], *path: str) -> Any:
@@ -909,6 +926,7 @@ class RuleBasedResolver:
 
     def _phase4_drivers(self, shift: Dict[str, Any]) -> None:
         buckets = [
+            ("ft_emt_baseline", lambda m, a: self._ft_emt_baseline_candidate(m, shift)),
             ("emt_prefer_no_ot", lambda m, a: cert(m) == "EMT" and a == PREFER and self._non_ot(m, shift)),
             ("emt_available_no_ot", lambda m, a: cert(m) == "EMT" and a == AVAILABLE and self._non_ot(m, shift)),
             ("ft_emt_no_ot", lambda m, a: employment(m) == "FT" and cert(m) == "EMT" and a in {PREFER, AVAILABLE} and self._non_ot(m, shift)),
@@ -1039,9 +1057,12 @@ class RuleBasedResolver:
                     reason = "outside_bucket_rules"
                     if avail in {PREFER, AVAILABLE} and not allow_additional_ot and not self._non_ot(member, shift):
                         reason = "additional_ot_blocked"
+                    if bucket_name == "ft_emt_baseline":
+                        reason = self._ft_emt_baseline_reject_reason(member, shift, avail)
                     self._reject(seat, mid, reason, phase, bucket_name)
                     continue
-                valid, reason = self._candidate_valid_for_seat(member, shift, seat, allow_unset=False, allow_additional_ot=allow_additional_ot, phase=phase, bucket=bucket_name)
+                allow_unset = bucket_name == "ft_emt_baseline"
+                valid, reason = self._candidate_valid_for_seat(member, shift, seat, allow_unset=allow_unset, allow_additional_ot=allow_additional_ot, phase=phase, bucket=bucket_name)
                 if valid:
                     self._assign(shift, seat, member, phase, bucket_name, ot_class)
                     return True
@@ -1119,6 +1140,12 @@ class RuleBasedResolver:
         rollout_sticky: bool = False,
     ) -> None:
         mid = member_id(member)
+        hours_before = self.assigned_hours.get(mid, 0.0)
+        seat_hours = hours_for(shift, seat)
+        base_hours = ft_emt_base_hours(member, float(self.rules.get("ft_emt_base_hours_per_week", 36.0))) if employment(member) == "FT" and cert(member) == "EMT" else None
+        resolved_assignment_reason = assignment_reason
+        if bucket == "ft_emt_baseline":
+            resolved_assignment_reason = "FT EMT baseline hours before casual staffing."
         seat.update({
             "assigned": mid,
             "assigned_name": member_name(member),
@@ -1131,13 +1158,23 @@ class RuleBasedResolver:
             "locked": locked or bool(seat.get("locked")),
             "published": published or bool(seat.get("published")),
             "rollout_sticky": rollout_sticky or bool(seat.get("rollout_sticky")),
-            "assignment_reason": assignment_reason,
-            "selection_statement": assignment_reason or f"Selected {member_name(member)} for {seat_role(seat)} by {bucket}.",
+            "assignment_reason": resolved_assignment_reason,
+            "selection_statement": resolved_assignment_reason or f"Selected {member_name(member)} for {seat_role(seat)} by {bucket}.",
             "selection_factors": [phase, bucket, self._effective_availability(shift, seat, member), cert(member), ot_classification],
             "display_open_alert": False,
             "display_on_board": True,
         })
-        self.assigned_hours[mid] = self.assigned_hours.get(mid, 0.0) + hours_for(shift, seat)
+        if bucket == "ft_emt_baseline":
+            seat.update({
+                "ft_emt_baseline_applied": True,
+                "ft_emt_hours_before": hours_before,
+                "ft_emt_hours_after": hours_before + seat_hours,
+                "ft_emt_base_hours": base_hours,
+                "seat_priority": "base_hours_first",
+            })
+            if "ft_emt_baseline" not in seat["selection_factors"]:
+                seat["selection_factors"].append("ft_emt_baseline")
+        self.assigned_hours[mid] = hours_before + seat_hours
         self.audit.append(self._seat_audit(shift, seat))
         self.trace.append(f"{seat['seat_id']} assigned {mid} in {phase}/{bucket}")
 
@@ -1275,9 +1312,32 @@ class RuleBasedResolver:
         mid = member_id(member)
         base = self.assigned_hours.get(mid, 0.0)
         threshold = 40.0 if employment(member) == "FT" else 0.0
+        if employment(member) == "FT" and cert(member) == "EMT":
+            threshold = ft_emt_base_hours(member, float(self.rules.get("ft_emt_base_hours_per_week", 36.0)))
         if employment(member) in {"PT", "PRN"}:
             threshold = float(member.get("ot_threshold", member.get("weekly_non_ot_hours", 24.0)) or 24.0)
         return max(0.0, base + 12.0 - threshold)
+
+    def _ft_emt_baseline_candidate(self, member: Dict[str, Any], shift: Dict[str, Any]) -> bool:
+        if employment(member) != "FT" or cert(member) != "EMT":
+            return False
+        avail = availability_for(self.data, shift, member)
+        if avail == DO_NOT:
+            return False
+        base_hours = ft_emt_base_hours(member, float(self.rules.get("ft_emt_base_hours_per_week", 36.0)))
+        return self.assigned_hours.get(member_id(member), 0.0) + hours_for(shift, {"hours": 12}) <= base_hours
+
+    def _ft_emt_baseline_reject_reason(self, member: Dict[str, Any], shift: Dict[str, Any], avail: str) -> str:
+        if employment(member) != "FT" or cert(member) != "EMT":
+            return "not_ft_emt_baseline_candidate"
+        if avail == DO_NOT:
+            return "availability_do_not"
+        base_hours = ft_emt_base_hours(member, float(self.rules.get("ft_emt_base_hours_per_week", 36.0)))
+        before = self.assigned_hours.get(member_id(member), 0.0)
+        after = before + 12.0
+        if after > base_hours:
+            return "ft_emt_base_hours_satisfied"
+        return "outside_bucket_rules"
 
     def _within_expected_rotation_ot(self, member: Dict[str, Any], shift: Dict[str, Any]) -> bool:
         auth = self.rotation_auth.get(member_id(member), {})
@@ -1326,6 +1386,10 @@ class RuleBasedResolver:
             "solo_emt_anchor_applied": bool(seat.get("solo_emt_anchor_applied")),
             "solo_emt_anchor_opportunity": bool(seat.get("solo_emt_anchor_opportunity")),
             "aemt_reclaim_attempted": bool(seat.get("aemt_reclaim_attempted")),
+            "ft_emt_baseline_applied": bool(seat.get("ft_emt_baseline_applied")),
+            "ft_emt_hours_before": seat.get("ft_emt_hours_before"),
+            "ft_emt_hours_after": seat.get("ft_emt_hours_after"),
+            "ft_emt_base_hours": seat.get("ft_emt_base_hours"),
             "committed": bool(seat.get("assigned")),
             "open": not bool(seat.get("assigned")) and not self._seat_has_structural_coverage(seat),
             "supervisor_review": bool(seat.get("supervisor_review")),
