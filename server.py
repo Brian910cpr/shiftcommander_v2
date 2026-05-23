@@ -234,6 +234,121 @@ def load_schedule_payload():
     return {}
 
 
+def schedule_file_summary(path):
+    exists = os.path.exists(path)
+    payload = load_json(path, {}) if exists else {}
+    shifts = payload.get("shifts") if isinstance(payload, dict) else None
+    shifts = shifts if isinstance(shifts, list) else []
+    dates = sorted({str(shift.get("date")) for shift in shifts if isinstance(shift, dict) and shift.get("date")})
+    summary = {
+        "exists": exists,
+        "shift_count": len(shifts),
+        "date_min": dates[0] if dates else None,
+        "date_max": dates[-1] if dates else None,
+        "modified_at": None,
+    }
+    if exists:
+        try:
+            summary["modified_at"] = datetime.fromtimestamp(os.path.getmtime(path), UTC).isoformat().replace("+00:00", "Z")
+        except OSError:
+            summary["modified_at"] = None
+    return summary, shifts
+
+
+def schedule_shift_key(shift):
+    if not isinstance(shift, dict):
+        return None
+    shift_id = shift.get("shift_id") or shift.get("id")
+    if shift_id:
+        return str(shift_id)
+    date_value = shift.get("date")
+    period_value = shift.get("period") or shift.get("label")
+    unit_value = shift.get("unit") or shift.get("unit_id") or ""
+    if date_value and period_value:
+        return f"{date_value}|{period_value}|{unit_value}"
+    return None
+
+
+def schedule_assignment_signature(shift):
+    seats = shift.get("seats") if isinstance(shift, dict) else None
+    if not isinstance(seats, list):
+        return []
+    signature = []
+    for index, seat in enumerate(seats):
+        if not isinstance(seat, dict):
+            continue
+        role = str(seat.get("role") or seat.get("position") or f"seat_{index}")
+        signature.append({
+            "role": role,
+            "assigned": None if seat.get("assigned") is None else str(seat.get("assigned")),
+            "assigned_name": seat.get("assigned_name"),
+            "assignment_status": seat.get("assignment_status"),
+            "cert": seat.get("cert"),
+        })
+    return sorted(signature, key=lambda item: item["role"])
+
+
+def schedule_display_path(path):
+    try:
+        return os.path.relpath(path, BASE_DIR).replace("\\", "/")
+    except ValueError:
+        return os.path.abspath(path).replace("\\", "/")
+
+
+def compare_schedule_files(active_path=SCHEDULE_FILE, mirror_path=PUBLIC_SCHEDULE_FILE):
+    active_summary, active_shifts = schedule_file_summary(active_path)
+    mirror_summary, mirror_shifts = schedule_file_summary(mirror_path)
+    active_by_key = {key: shift for shift in active_shifts if (key := schedule_shift_key(shift))}
+    mirror_by_key = {key: shift for shift in mirror_shifts if (key := schedule_shift_key(shift))}
+
+    active_keys = set(active_by_key)
+    mirror_keys = set(mirror_by_key)
+    missing_from_mirror = sorted(active_keys - mirror_keys)
+    missing_from_active = sorted(mirror_keys - active_keys)
+    sample_mismatches = []
+
+    for key in missing_from_mirror[:10]:
+        sample_mismatches.append({"key": key, "type": "missing_from_mirror"})
+    for key in missing_from_active[: max(0, 10 - len(sample_mismatches))]:
+        sample_mismatches.append({"key": key, "type": "missing_from_active"})
+
+    assignment_mismatch_count = 0
+    for key in sorted(active_keys & mirror_keys):
+        active_assignment = schedule_assignment_signature(active_by_key[key])
+        mirror_assignment = schedule_assignment_signature(mirror_by_key[key])
+        if active_assignment != mirror_assignment:
+            assignment_mismatch_count += 1
+            if len(sample_mismatches) < 10:
+                sample_mismatches.append({
+                    "key": key,
+                    "type": "assignment_mismatch",
+                    "active": active_assignment,
+                    "mirror": mirror_assignment,
+                })
+
+    key_mismatch_count = len(missing_from_mirror) + len(missing_from_active)
+    if not active_summary["exists"] or not mirror_summary["exists"]:
+        status = "error"
+    elif key_mismatch_count or assignment_mismatch_count:
+        status = "warning"
+    else:
+        status = "ok"
+
+    return {
+        "status": status,
+        "active_file": schedule_display_path(active_path),
+        "mirror_file": schedule_display_path(mirror_path),
+        "active": active_summary,
+        "mirror": mirror_summary,
+        "key_mismatches": key_mismatch_count,
+        "missing_from_mirror": len(missing_from_mirror),
+        "missing_from_active": len(missing_from_active),
+        "assignment_mismatches": assignment_mismatch_count,
+        "sample_mismatches": sample_mismatches,
+        "generated_at": now_iso(),
+    }
+
+
 def now_iso():
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
@@ -2567,6 +2682,11 @@ def get_wallboard_display():
     return jsonify(normalize_wallboard_display(schedule, members))
 
 
+@app.route("/api/schedule_integrity", methods=["GET"])
+def get_schedule_integrity():
+    return jsonify(compare_schedule_files())
+
+
 @app.route("/api/base44/manifest", methods=["GET"])
 def get_base44_manifest():
     return jsonify({
@@ -2580,6 +2700,7 @@ def get_base44_manifest():
             "bootstrap": {"method": "GET", "path": "/api/bootstrap"},
             "schedule": {"method": "GET", "path": "/api/schedule"},
             "wallboard_display": {"method": "GET", "path": "/api/wallboard_display"},
+            "schedule_integrity": {"method": "GET", "path": "/api/schedule_integrity"},
             "generate": {"method": "POST", "path": "/api/generate"},
             "members_get": {"method": "GET", "path": "/api/members"},
             "members_post": {"method": "POST", "path": "/api/members"},
