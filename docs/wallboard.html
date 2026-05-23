@@ -337,9 +337,9 @@
     }
 
     .shift-list {
-      padding: 10px 10px 12px 10px;
+      padding: 8px 8px 10px 8px;
       display: grid;
-      gap: 10px;
+      gap: 8px;
       flex: 1;
     }
 
@@ -347,11 +347,12 @@
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 10px;
+      padding: 9px;
       display: grid;
-      gap: 8px;
+      gap: 6px;
       position: relative;
       overflow: hidden;
+      align-content: stretch;
     }
 
     .shift-card.green {
@@ -380,17 +381,17 @@
 
     .shift-card.has-open-slot {
       border-width: 2px;
-      border-color: rgba(57, 255, 122, 0.76);
-      box-shadow: inset 0 0 0 1px rgba(57, 255, 122, 0.14), 0 0 18px rgba(48, 184, 255, 0.16);
+      border-color: rgba(255, 190, 92, 0.7);
+      box-shadow: inset 0 0 0 1px rgba(255, 190, 92, 0.12), 0 0 14px rgba(255, 190, 92, 0.12);
     }
 
     .shift-card.has-open-driver {
-      border-color: rgba(48, 184, 255, 0.82);
+      border-color: rgba(255, 190, 92, 0.68);
     }
 
     .shift-card.has-open-attendant.has-open-driver {
-      border-color: rgba(57, 255, 122, 0.82);
-      box-shadow: inset 0 0 0 1px rgba(57, 255, 122, 0.15), 0 0 20px rgba(48, 184, 255, 0.18);
+      border-color: rgba(255, 190, 92, 0.78);
+      box-shadow: inset 0 0 0 1px rgba(255, 190, 92, 0.14), 0 0 16px rgba(255, 190, 92, 0.14);
     }
 
     .shift-card.urgency-interest::after,
@@ -431,17 +432,18 @@
 
     .slots {
       display: grid;
-      gap: 8px;
+      gap: 6px;
       position: relative;
       z-index: 1;
+      align-content: center;
     }
 
     .slot {
-      padding: 14px 16px;
+      padding: 9px 12px;
       border-radius: 14px;
       background: rgba(255,255,255,0.045);
       border: 1px solid rgba(255,255,255,0.07);
-      min-height: 58px;
+      min-height: clamp(58px, 5.2vh, 86px);
       display: flex;
       align-items: center;
       justify-content: flex-start;
@@ -454,18 +456,18 @@
 
     .slot.open-seat {
       border-color: var(--open-seat-border);
-      background: rgba(10, 18, 28, 0.74);
+      background: rgba(10, 18, 28, 0.58);
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.035);
     }
 
     .slot.open-attendant {
-      border-color: rgba(57, 255, 122, 0.58);
-      background: rgba(10, 34, 20, 0.66);
+      border-color: rgba(57, 255, 122, 0.42);
+      background: rgba(10, 34, 20, 0.38);
     }
 
     .slot.open-driver {
-      border-color: rgba(48, 184, 255, 0.62);
-      background: rgba(8, 28, 48, 0.7);
+      border-color: rgba(48, 184, 255, 0.46);
+      background: rgba(8, 28, 48, 0.42);
     }
 
     .slot.volunteer-seat {
@@ -490,7 +492,6 @@
       box-shadow: none;
     }
 
-    .sc-career-fire-driver-pill,
     .sc-coverage-gap-pill,
     .sc-transition-watch-pill,
     .sc-member-accommodation-watch-pill {
@@ -511,33 +512,30 @@
     }
 
     .sc-career-fire-driver-pill {
-      display: grid;
-      gap: 2px;
+      display: flex;
+      align-items: center;
       width: 100%;
       box-sizing: border-box;
-      min-height: 58px;
-      padding: 10px 14px;
+      min-height: clamp(58px, 5.2vh, 86px);
+      padding: 9px 12px;
       border-radius: 14px;
-      color: #eef4ff;
-      background: #05080c;
-      border-color: rgba(180, 191, 210, 0.34);
-      align-content: center;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.035);
+      color: #ffffff;
+      background: transparent;
+      border: 0;
+      box-shadow: inset 0 -2px 0 rgba(255,255,255,0.18);
     }
 
     .sc-career-fire-driver-title {
-      font-size: 18px;
-      font-weight: 900;
-      line-height: 1.05;
-      color: #eef4ff;
-    }
-
-    .sc-career-fire-driver-time {
-      font-size: 11px;
-      font-weight: 900;
-      line-height: 1;
-      color: #aeb9c9;
-      letter-spacing: 0.08em;
+      font-family: "Barlow Condensed", "Roboto Condensed", "Inter Tight", "Arial Narrow", Arial, Helvetica, sans-serif;
+      font-size: clamp(1.85rem, 2.05vw, 2.85rem);
+      font-weight: 800;
+      line-height: 1.02;
+      color: #ffffff;
+      letter-spacing: 0;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.28);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .sc-transition-watch-pill,
@@ -564,13 +562,13 @@
     .shift-card.yellow .slot.volunteer-driver-pill,
     .shift-card.red .slot.volunteer-driver-pill,
     .shift-card.gray .slot.volunteer-driver-pill {
-      border-color: rgba(180, 191, 210, 0.34) !important;
-      background: #05080c !important;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.035) !important;
+      border-color: transparent !important;
+      background: transparent !important;
+      box-shadow: inset 0 -2px 0 rgba(255,255,255,0.18) !important;
     }
 
     .slot.volunteer-driver-pill .member {
-      color: #eef4ff !important;
+      color: #ffffff !important;
       background: transparent !important;
       border: 0 !important;
       box-shadow: none !important;
@@ -580,14 +578,18 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      font-size: 27px;
-      font-weight: 900;
+      font-family: "Barlow Condensed", "Roboto Condensed", "Inter Tight", "Arial Narrow", Arial, Helvetica, sans-serif;
+      font-size: clamp(1.85rem, 2.05vw, 2.85rem);
+      font-weight: 800;
       line-height: 1.02;
-      word-break: break-word;
-      letter-spacing: 0.1px;
+      word-break: normal;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0;
       text-align: left !important;
       width: 100%;
-      padding: 4px 0;
+      padding: 1px 0;
       border-radius: 12px;
       background: transparent;
     }
@@ -600,16 +602,19 @@
     .member.default { color: var(--name-default); }
     .member.open-attendant {
       color: var(--open-attendant);
-      font-size: 31px;
-      letter-spacing: 0.08em;
+      font-size: clamp(2rem, 2.25vw, 3.05rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
     }
     .member.open-driver {
       color: var(--open-driver);
-      font-size: 31px;
-      letter-spacing: 0.08em;
+      font-size: clamp(2rem, 2.25vw, 3.05rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
     }
     .member.fire-coverage {
       color: #ffffff !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.28);
     }
     .member.empty {
       color: #ffd1d1;
@@ -663,7 +668,10 @@
     }
 
     @media (max-width: 1800px) {
-      .member { font-size: 22px; }
+      .member,
+      .sc-career-fire-driver-title {
+        font-size: clamp(1.65rem, 2.25vw, 2.45rem);
+      }
       .day-number { font-size: 30px; }
     }
 
@@ -682,8 +690,15 @@
     @media (max-width: 700px) {
       .weekday-row, .board { grid-template-columns: 1fr; }
       .title { font-size: 28px; }
-      .member { font-size: 22px; text-align: left; }
-      .slot { min-height: 54px; }
+      .member,
+      .sc-career-fire-driver-title {
+        font-size: clamp(1.8rem, 9vw, 2.8rem);
+        text-align: left;
+      }
+      .slot,
+      .sc-career-fire-driver-pill {
+        min-height: 62px;
+      }
     }
   </style>
 </head>
@@ -1223,25 +1238,36 @@
       const members = Array.isArray(payload?.members) ? payload.members : (Array.isArray(payload) ? payload : []);
       const byId = new Map();
       const byName = new Map();
+      const firstNameCounts = new Map();
 
       for (const member of members) {
         const memberId = String(member?.member_id ?? member?.id ?? "").trim();
         const name = String(member?.name || [member?.first_name, member?.last_name].filter(Boolean).join(" ")).trim();
         const cert = normalizeCertValue(member?.ops_cert || member?.cert || member?.raw_cert || "");
         const birthdayMonthDay = normalizeBirthdayMonthDay(member?.birthday_mmdd || member?.birthday);
+        const firstName = String(member?.first_name || name.split(/\s+/)[0] || "").trim();
+        const lastName = String(member?.last_name || name.split(/\s+/).slice(1).join(" ") || "").trim();
+        const isActive = member?.active !== false;
 
         const entry = {
           id: memberId,
           name,
           cert,
+          firstName,
+          lastName,
+          isActive,
           birthdayMonthDay
         };
 
         if (memberId) byId.set(memberId, entry);
         if (name) byName.set(name.toUpperCase(), entry);
+        if (isActive && firstName) {
+          const key = firstName.toUpperCase();
+          firstNameCounts.set(key, (firstNameCounts.get(key) || 0) + 1);
+        }
       }
 
-      return { byId, byName };
+      return { byId, byName, firstNameCounts };
     }
 
     function normalizeBirthdayMonthDay(value) {
@@ -1302,11 +1328,23 @@
       return d < today;
     }
 
-    function displayAssignedName(shiftDate, assignedName) {
+    function displayWallboardMemberName(rawName, member, memberLookup) {
+      const name = String(member?.name || rawName || "").trim();
+      if (!name) return "";
+      const firstName = String(member?.firstName || name.split(/\s+/)[0] || "").trim();
+      if (!firstName) return name;
+      const lastName = String(member?.lastName || name.split(/\s+/).slice(1).join(" ") || "").trim();
+      const collisionCount = memberLookup?.firstNameCounts?.get(firstName.toUpperCase()) || 0;
+      if (collisionCount > 1 && lastName) return `${firstName} ${lastName.charAt(0).toUpperCase()}.`;
+      return firstName;
+    }
+
+    function displayAssignedName(shiftDate, assignedName, seat = null, memberLookup = null) {
       const raw = String(assignedName || "").trim();
       if (raw.toUpperCase() === "OPEN" && isPastDate(shiftDate)) return "—";
       if (!raw) return isPastDate(shiftDate) ? "—" : "OPEN";
-      return raw;
+      if (isOpenName(raw)) return "OPEN";
+      return displayWallboardMemberName(raw, seat ? resolveMemberEntry(seat, memberLookup) : null, memberLookup);
     }
 
     function daysUntil(isoDate) {
@@ -1561,6 +1599,7 @@
         memberLookup?.byId?.get(assignedId)?.name ||
         ""
       ).trim();
+      const resolvedMember = resolveMemberEntry(seat, memberLookup);
       const pastDate = isPastDate(shiftDate);
       const showOpenAlert = seat?.display_open_alert === true || options.forceOpenAls === true;
 
@@ -1568,7 +1607,7 @@
 
       const displayName = options.displayLabel || (
         rawName
-          ? (isOpenName(rawName) ? "OPEN" : displayAssignedName(shiftDate, rawName))
+          ? (isOpenName(rawName) ? "OPEN" : displayWallboardMemberName(rawName, resolvedMember, memberLookup))
           : (pastDate ? "—" : "OPEN")
       );
 
@@ -1655,7 +1694,6 @@
           <div class="sc-career-fire-driver-block" title="${escapeHtml(careerCoverage.title)}">
             <div class="sc-career-fire-driver-pill">
               <div class="sc-career-fire-driver-title">${escapeHtml(driverCoverageLabel(careerCoverage.coverageName))}</div>
-              <div class="sc-career-fire-driver-time">${escapeHtml(careerCoverage.timeLabel)}</div>
             </div>
           </div>
         `] : [])
