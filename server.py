@@ -125,6 +125,7 @@ SC_ALLOWED_ORIGINS = parse_csv_env(
     [
         "https://adr-fr.org",
         "https://www.adr-fr.org",
+        "https://sc.adr-fr.org",
         "http://127.0.0.1:5000",
         "http://localhost:5000",
         "http://127.0.0.1:8001",
@@ -2536,6 +2537,55 @@ def supervisor_resolve_week():
 @app.route("/api/schedule", methods=["GET"])
 def get_schedule_api():
     return schedule_json_response()
+
+
+# =========================
+# BASE44 BOOTSTRAP (READ-ONLY)
+# =========================
+
+@app.route("/api/bootstrap", methods=["GET"])
+def get_bootstrap():
+    schedule = load_schedule_payload()
+    return jsonify({
+        "health": health_payload(),
+        "members": load_members_payload(),
+        "availability": load_availability_payload(),
+        "settings": load_settings(),
+        "shifts": schedule.get("shifts", []) if isinstance(schedule, dict) else [],
+        "schedule": schedule,
+        "generated_at": now_iso(),
+    })
+
+
+@app.route("/api/base44/manifest", methods=["GET"])
+def get_base44_manifest():
+    return jsonify({
+        "service": "ShiftCommander",
+        "version": os.environ.get("SHIFTCOMMANDER_VERSION"),
+        "generated_at": now_iso(),
+        "local_base_url": request.host_url.rstrip("/"),
+        "source_of_truth": "ShiftCommander backend JSON files/API",
+        "endpoints": {
+            "health": {"method": "GET", "path": "/api/health"},
+            "bootstrap": {"method": "GET", "path": "/api/bootstrap"},
+            "schedule": {"method": "GET", "path": "/api/schedule"},
+            "generate": {"method": "POST", "path": "/api/generate"},
+            "members_get": {"method": "GET", "path": "/api/members"},
+            "members_post": {"method": "POST", "path": "/api/members"},
+            "availability_get": {"method": "GET", "path": "/api/availability"},
+            "availability_post": {"method": "POST", "path": "/api/availability"},
+            "settings_get": {"method": "GET", "path": "/api/settings"},
+            "settings_post": {"method": "POST", "path": "/api/settings"},
+            "shifts_get": {"method": "GET", "path": "/api/shifts"},
+            "shifts_post": {"method": "POST", "path": "/api/shifts"},
+        },
+        "notes": [
+            "Base44 should call backend functions/proxies, not the browser directly.",
+            "Localhost is dev-only.",
+            "Replace base URL with deployed public backend URL for production.",
+            "ShiftCommander remains source of truth.",
+        ],
+    })
 
 
 SC_UPSTREAM_API_BASE = os.environ.get("SC_UPSTREAM_API_BASE", "https://sc-api.adr-fr.org").rstrip("/")
