@@ -432,6 +432,13 @@ def current_auth():
             member = member_record_by_email(auth_email)
             if member is None:
                 return {"authenticated": True, "role": "member", "member_id": None, "email": auth_email}
+            if member_has_supervisor_access(member):
+                return {
+                    "authenticated": True,
+                    "role": "supervisor",
+                    "member_id": str(member.get("member_id", member.get("id")) or "").strip() or None,
+                    "email": auth_email,
+                }
             return {
                 "authenticated": True,
                 "role": "member",
@@ -517,6 +524,25 @@ def require_role(role_name):
             return func(*args, **kwargs)
         return wrapped
     return decorator
+
+
+def member_has_supervisor_access(member):
+    if not isinstance(member, dict):
+        return False
+    access = member.get("access") if isinstance(member.get("access"), dict) else {}
+    auth = member.get("auth") if isinstance(member.get("auth"), dict) else {}
+    roles = member.get("roles") if isinstance(member.get("roles"), list) else []
+    role_values = {str(value or "").strip().lower() for value in roles}
+    role_values.add(str(member.get("role") or "").strip().lower())
+    role_values.add(str(auth.get("role") or "").strip().lower())
+    role_values.update(str(value or "").strip().lower() for value in auth.get("roles", []) if isinstance(auth.get("roles"), list))
+    return (
+        access.get("supervisor") is True
+        or access.get("admin") is True
+        or auth.get("supervisor_access") is True
+        or auth.get("admin_access") is True
+        or bool(role_values & {"supervisor", "admin"})
+    )
 
 
 def current_member_record():

@@ -308,14 +308,14 @@ class AppSmokeTests(unittest.TestCase):
         try:
             self.server.SC_QUICK_TEST_MODE = False
             self.server.SC_DEMO_SUPERVISOR_BYPASS = False
-            self.login_google_member("brian@910cpr.com")
+            self.login_google_member("collinharrison10@gmail.com")
 
             response = self.client.post(
                 "/api/member/availability",
-                json={"member_id": "188", "entries": [{"date": "2026-06-30", "period": "AM", "member_intent": "prefer"}]},
+                json={"member_id": "189", "entries": [{"date": "2026-06-30", "period": "AM", "member_intent": "prefer"}]},
             )
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.get_json().get("member_id"), "188")
+            self.assertEqual(response.get_json().get("member_id"), "189")
             response.close()
 
             response = self.client.post(
@@ -324,6 +324,64 @@ class AppSmokeTests(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 403)
             self.assertIn("own availability", response.get_json().get("error", ""))
+            response.close()
+        finally:
+            with self.client.session_transaction() as session:
+                session.clear()
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
+    def test_google_identified_supervisor_members_have_admin_access(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = False
+            for email, member_id, name in (
+                ("brian@910cpr.com", "188", "Brian Ennis"),
+                ("toneybrett92@gmail.com", "159", "Brett Toney"),
+            ):
+                self.login_google_member(email)
+
+                response = self.client.get("/api/auth/session")
+                self.assertEqual(response.status_code, 200)
+                payload = response.get_json()
+                self.assertEqual(payload.get("role"), "supervisor", name)
+                self.assertEqual(payload.get("member_id"), member_id, name)
+                response.close()
+
+                response = self.client.get("/docs/admin_members.html")
+                self.assertEqual(response.status_code, 200, name)
+                response.close()
+
+                response = self.client.post(
+                    "/api/member/availability",
+                    json={"member_id": "186", "entries": [{"date": "2026-06-30", "period": "PM", "member_intent": "available"}]},
+                )
+                self.assertEqual(response.status_code, 200, name)
+                self.assertEqual(response.get_json().get("member_id"), "186")
+                response.close()
+        finally:
+            with self.client.session_transaction() as session:
+                session.clear()
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
+    def test_regular_google_member_is_blocked_from_supervisor_api(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = False
+            self.login_google_member("collinharrison10@gmail.com")
+
+            response = self.client.get("/api/auth/session")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.get_json().get("role"), "member")
+            response.close()
+
+            response = self.client.get("/api/supervisor/state")
+            self.assertEqual(response.status_code, 403)
             response.close()
         finally:
             with self.client.session_transaction() as session:

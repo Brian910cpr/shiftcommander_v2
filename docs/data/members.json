@@ -1179,7 +1179,29 @@
       ],
       "rank": "",
       "raw_cert": "EMT",
-      "rotation": null
+      "rotation": null,
+      "auth_email": "toneybrett92@gmail.com",
+      "google_email": "toneybrett92@gmail.com",
+      "role": "supervisor",
+      "roles": [
+        "member",
+        "supervisor",
+        "admin"
+      ],
+      "access": {
+        "supervisor": true,
+        "admin": true
+      },
+      "auth": {
+        "google_email": "toneybrett92@gmail.com",
+        "role": "supervisor",
+        "roles": [
+          "supervisor",
+          "admin"
+        ],
+        "supervisor_access": true,
+        "admin_access": true
+      }
     },
     {
       "active": false,
@@ -1895,7 +1917,29 @@
       "rotation_scope": null,
       "rotation_label": null,
       "rotation_authorized": false,
-      "expected_rotation_ot_allowed": false
+      "expected_rotation_ot_allowed": false,
+      "auth_email": "brian@910cpr.com",
+      "google_email": "brian@910cpr.com",
+      "role": "supervisor",
+      "roles": [
+        "member",
+        "supervisor",
+        "admin"
+      ],
+      "access": {
+        "supervisor": true,
+        "admin": true
+      },
+      "auth": {
+        "google_email": "brian@910cpr.com",
+        "role": "supervisor",
+        "roles": [
+          "supervisor",
+          "admin"
+        ],
+        "supervisor_access": true,
+        "admin_access": true
+      }
     },
     {
       "active": true,

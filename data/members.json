@@ -1419,7 +1419,29 @@
       "zipper_group": null,
       "max_hours_allowed": 36,
       "preferred_hours": 36,
-      "hourly_or_salaried": "hourly"
+      "hourly_or_salaried": "hourly",
+      "auth_email": "toneybrett92@gmail.com",
+      "google_email": "toneybrett92@gmail.com",
+      "role": "supervisor",
+      "roles": [
+        "member",
+        "supervisor",
+        "admin"
+      ],
+      "access": {
+        "supervisor": true,
+        "admin": true
+      },
+      "auth": {
+        "google_email": "toneybrett92@gmail.com",
+        "role": "supervisor",
+        "roles": [
+          "supervisor",
+          "admin"
+        ],
+        "supervisor_access": true,
+        "admin_access": true
+      }
     },
     {
       "active": false,
@@ -2259,7 +2281,29 @@
       "preferred_hours": 36,
       "hourly_or_salaried": "hourly",
       "rotation_scope": null,
-      "rotation_label": null
+      "rotation_label": null,
+      "auth_email": "brian@910cpr.com",
+      "google_email": "brian@910cpr.com",
+      "role": "supervisor",
+      "roles": [
+        "member",
+        "supervisor",
+        "admin"
+      ],
+      "access": {
+        "supervisor": true,
+        "admin": true
+      },
+      "auth": {
+        "google_email": "brian@910cpr.com",
+        "role": "supervisor",
+        "roles": [
+          "supervisor",
+          "admin"
+        ],
+        "supervisor_access": true,
+        "admin_access": true
+      }
     },
     {
       "active": true,
