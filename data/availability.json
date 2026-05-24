@@ -15913,7 +15913,7 @@
         },
         "2026-06-11": {
           "AM": "do_not_schedule",
-          "PM": "do_not_schedule"
+          "PM": "preferred"
         },
         "2026-06-12": {
           "AM": "preferred",
@@ -103299,11 +103299,10 @@
           "member_id": "188",
           "date": "2026-06-11",
           "period": "PM",
-          "member_intent": "do_not",
-          "updated_at": "2026-05-23T22:41:18.844361Z",
-          "updated_by": "system_forced_seed",
-          "source": "forced_whiteboard_seating_seed",
-          "seed_reason": "forced_non_assigned_members_do_not"
+          "member_intent": "prefer",
+          "updated_at": "2026-05-24T02:09:46.250000Z",
+          "updated_by": "188",
+          "source": "member_portal"
         }
       },
       "2026-06-12": {
@@ -103366,10 +103365,9 @@
           "date": "2026-06-15",
           "period": "PM",
           "member_intent": "do_not",
-          "updated_at": "2026-05-23T22:41:18.844361Z",
-          "updated_by": "system_forced_seed",
-          "source": "forced_whiteboard_seating_seed",
-          "seed_reason": "forced_non_assigned_members_do_not"
+          "updated_at": "2026-05-24T02:09:46.250000Z",
+          "updated_by": "188",
+          "source": "member_portal"
         }
       },
       "2026-06-16": {
