@@ -68,6 +68,12 @@ class AppSmokeTests(unittest.TestCase):
             session["auth_role"] = "member"
             session["member_id"] = str(member_id)
 
+    def login_google_member(self, email):
+        with self.client.session_transaction() as session:
+            session.clear()
+            session["auth_role"] = "member"
+            session["auth_email"] = str(email).lower()
+
     @classmethod
     def tearDownClass(cls):
         for path in cls.paths_to_preserve:
@@ -201,12 +207,12 @@ class AppSmokeTests(unittest.TestCase):
         self.assertEqual(payload.get("auth_mode"), "local_testing_dropdown")
         response.close()
 
+        self.login_member(member_id)
         response = self.client.get("/docs/member.html")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Assigned Shifts", response.get_data(as_text=True))
         response.close()
 
-        self.login_member(member_id)
         response = self.client.get("/api/member/context")
         self.assertEqual(response.status_code, 200)
         context = response.get_json()
@@ -232,6 +238,7 @@ class AppSmokeTests(unittest.TestCase):
         self.assertEqual(payload.get("auth_mode"), "local_testing_dropdown")
         response.close()
 
+        self.login_supervisor()
         response = self.client.get("/docs/admin_members.html")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Admin Member Management", response.get_data(as_text=True))
@@ -258,6 +265,8 @@ class AppSmokeTests(unittest.TestCase):
             self.assertTrue(payload.get("demo_supervisor_bypass"))
             response.close()
         finally:
+            with self.client.session_transaction() as session:
+                session.clear()
             self.server.SC_QUICK_TEST_MODE = original_quick
             self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
 
@@ -271,6 +280,75 @@ class AppSmokeTests(unittest.TestCase):
             response.close()
         finally:
             self.server.SC_QUICK_TEST_MODE = original_quick
+
+    def test_member_availability_write_requires_authenticated_member(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = False
+            with self.client.session_transaction() as session:
+                session.clear()
+
+            response = self.client.post(
+                "/api/member/availability",
+                json={"member_id": "188", "entries": [{"date": "2026-06-30", "period": "AM", "member_intent": "prefer"}]},
+            )
+            self.assertEqual(response.status_code, 401)
+            response.close()
+        finally:
+            with self.client.session_transaction() as session:
+                session.clear()
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
+    def test_google_identified_member_can_save_only_own_availability(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = False
+            self.login_google_member("brian@910cpr.com")
+
+            response = self.client.post(
+                "/api/member/availability",
+                json={"member_id": "188", "entries": [{"date": "2026-06-30", "period": "AM", "member_intent": "prefer"}]},
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.get_json().get("member_id"), "188")
+            response.close()
+
+            response = self.client.post(
+                "/api/member/availability",
+                json={"member_id": "186", "entries": [{"date": "2026-06-30", "period": "PM", "member_intent": "available"}]},
+            )
+            self.assertEqual(response.status_code, 403)
+            self.assertIn("own availability", response.get_json().get("error", ""))
+            response.close()
+        finally:
+            with self.client.session_transaction() as session:
+                session.clear()
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
+    def test_supervisor_can_save_member_availability_for_others(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = False
+            self.login_supervisor()
+
+            response = self.client.post(
+                "/api/member/availability",
+                json={"member_id": "186", "entries": [{"date": "2026-06-30", "period": "PM", "member_intent": "available"}]},
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.get_json().get("member_id"), "186")
+            response.close()
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
 
     def test_timecard_period_is_thursday_to_wednesday(self):
         period = self.server.get_current_timecard_period(date(2026, 5, 19))
@@ -518,6 +596,7 @@ class AppSmokeTests(unittest.TestCase):
         original = self.server.SC_QUICK_TEST_MODE
         try:
             self.server.SC_QUICK_TEST_MODE = True
+            self.login_supervisor()
             edit_start = self.server.member_availability_edit_start_date()
             target = edit_start
             while target.weekday() != 1:
@@ -579,6 +658,7 @@ class AppSmokeTests(unittest.TestCase):
         original = self.server.SC_QUICK_TEST_MODE
         try:
             self.server.SC_QUICK_TEST_MODE = True
+            self.login_member("188")
             edit_start = self.server.member_availability_edit_start_date()
             target = edit_start
             while target.weekday() != 2:
@@ -626,6 +706,7 @@ class AppSmokeTests(unittest.TestCase):
         original = self.server.SC_QUICK_TEST_MODE
         try:
             self.server.SC_QUICK_TEST_MODE = True
+            self.login_supervisor()
             edit_start = self.server.member_availability_edit_start_date()
             date_iso = edit_start.isoformat()
 

@@ -421,15 +421,30 @@ def current_auth():
     if demo_supervisor_bypass_enabled():
         return {"authenticated": True, "role": "supervisor", "member_id": None}
     role = session.get("auth_role")
-    if role == "supervisor":
-        return {"authenticated": True, "role": "supervisor", "member_id": None}
+    if role in {"supervisor", "admin"}:
+        return {"authenticated": True, "role": role, "member_id": None, "email": str(session.get("auth_email") or "").strip().lower() or None}
     if role == "member":
+        auth_email = str(session.get("auth_email") or "").strip().lower()
+        if auth_email:
+            # Beta Google-login bridge: the session email is trusted only after a
+            # separate login layer creates the Flask session. TODO: verify Google
+            # ID tokens server-side before creating this session in production.
+            member = member_record_by_email(auth_email)
+            if member is None:
+                return {"authenticated": True, "role": "member", "member_id": None, "email": auth_email}
+            return {
+                "authenticated": True,
+                "role": "member",
+                "member_id": str(member.get("member_id", member.get("id")) or "").strip() or None,
+                "email": auth_email,
+            }
         return {
             "authenticated": True,
             "role": "member",
             "member_id": str(session.get("member_id") or "").strip() or None,
+            "email": None,
         }
-    return {"authenticated": False, "role": None, "member_id": None}
+    return {"authenticated": False, "role": None, "member_id": None, "email": None}
 
 
 def auth_json_error(message, status_code=401):
@@ -519,6 +534,20 @@ def member_record_by_id(member_id):
     return next((member for member in load_members() if str(member.get("member_id", member.get("id"))) == member_id), None)
 
 
+def member_record_by_email(email):
+    email = str(email or "").strip().lower()
+    if not email:
+        return None
+    return next(
+        (
+            member
+            for member in load_members()
+            if member.get("active") is not False and str(member.get("email") or "").strip().lower() == email
+        ),
+        None,
+    )
+
+
 def start_member_session(member_id):
     session.clear()
     session["auth_role"] = "member"
@@ -586,6 +615,41 @@ def resolve_member_request_member(payload=None):
     if member is None:
         return None, None, auth_json_error("Member record not found", 404)
     return member_id, member, None
+
+
+def resolve_member_write_target(payload=None):
+    """Resolve a member write target from backend auth, not frontend selection.
+
+    Beta limitation: Google identity is currently represented by the Flask
+    session's auth_email after login. The backend maps that email to an active
+    ShiftCommander member before writes. TODO: add production Google ID-token
+    verification/session creation before claiming production-grade security.
+    """
+    auth = current_auth()
+    if not auth.get("authenticated"):
+        return None, None, auth_json_error("Authentication required", 401)
+
+    requested_id = requested_member_id(payload)
+    if auth.get("role") in {"supervisor", "admin"}:
+        member_id = requested_id or str(auth.get("member_id") or "").strip()
+        member = member_record_by_id(member_id)
+        if member is None:
+            return None, None, auth_json_error("Member record not found", 404)
+        return str(member_id), member, None
+
+    if auth.get("role") != "member":
+        return None, None, auth_json_error("Member access required", 403)
+
+    auth_member_id = str(auth.get("member_id") or "").strip()
+    if not auth_member_id:
+        return None, None, auth_json_error("Authenticated member record not found", 401)
+    if requested_id and str(requested_id) != auth_member_id:
+        return None, None, auth_json_error("Members may only write their own availability", 403)
+
+    member = member_record_by_id(auth_member_id)
+    if member is None or member.get("active") is False:
+        return None, None, auth_json_error("Authenticated member record not found", 401)
+    return auth_member_id, member, None
 
 
 def login_page_html(role_name, next_url=""):
@@ -2337,7 +2401,7 @@ def get_member_availability():
 @app.route("/api/member/availability", methods=["POST"])
 def save_member_availability():
     payload = request.get_json(silent=True) or {}
-    member_id, _, error = resolve_member_request_member(payload)
+    member_id, _, error = resolve_member_write_target(payload)
     if error:
         return error
     try:
