@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Barlow+Condensed:wght@700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+
+    --background: 220 20% 97%;
+    --foreground: 220 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 220 70% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 93%;
+    --secondary-foreground: 220 20% 25%;
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 220 15% 93%;
+    --accent-foreground: 220 20% 15%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 220 70% 50%;
+    --chart-1: 142 71% 45%;
+    --chart-2: 220 70% 50%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 262 83% 58%;
+    --radius: 0.625rem;
+
+    --status-complete: 152 60% 42%;
+    --status-warning: 38 92% 50%;
+    --status-open: 0 72% 55%;
+    --status-review: 262 60% 55%;
+    --status-structural: 220 15% 25%;
+  }
+
+  .dark {
+    --background: 222 30% 8%;
+    --foreground: 210 20% 93%;
+    --card: 222 25% 11%;
+    --card-foreground: 210 20% 93%;
+    --popover: 222 25% 11%;
+    --popover-foreground: 210 20% 93%;
+    --primary: 217 70% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 20% 16%;
+    --secondary-foreground: 210 15% 80%;
+    --muted: 222 20% 14%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 222 20% 16%;
+    --accent-foreground: 210 20% 93%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 15% 18%;
+    --input: 222 15% 18%;
+    --ring: 217 70% 55%;
+    --chart-1: 142 60% 50%;
+    --chart-2: 217 70% 55%;
+    --chart-3: 38 92% 55%;
+    --chart-4: 0 62% 55%;
+    --chart-5: 262 70% 60%;
+
+    --status-complete: 152 55% 45%;
+    --status-warning: 38 85% 55%;
+    --status-open: 0 65% 55%;
+    --status-review: 270 55% 60%;
+    --status-structural: 215 20% 35%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
