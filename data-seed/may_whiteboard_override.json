@@ -1,0 +1,24 @@
+{
+  "source": "whiteboard_manual_override",
+  "logic_mode": "mirror_only",
+  "transactions_live": true,
+  "notes": "Manual mirror seed for 2026-05-24 through 2026-05-31. Show OPEN only where the physical whiteboard showed OPEN.",
+  "shifts": [
+    { "date": "2026-05-24", "label": "AM", "attendant": "Lynnsey", "driver": null },
+    { "date": "2026-05-24", "label": "PM", "attendant": "Lynnsey", "driver": "Brian" },
+    { "date": "2026-05-25", "label": "AM", "attendant": "Sophie", "driver": "Biz" },
+    { "date": "2026-05-25", "label": "PM", "attendant": "Sophie", "driver": "Sidney" },
+    { "date": "2026-05-26", "label": "AM", "attendant": "Barbara", "driver": "OPEN" },
+    { "date": "2026-05-26", "label": "PM", "attendant": "Barbara", "driver": "Sidney" },
+    { "date": "2026-05-27", "label": "AM", "attendant": "Sophie", "driver": "Brian" },
+    { "date": "2026-05-27", "label": "PM", "attendant": "Sophie", "driver": "Brian" },
+    { "date": "2026-05-28", "label": "AM", "attendant": "Lynnsey", "driver": "OPEN" },
+    { "date": "2026-05-28", "label": "PM", "attendant": "Lynnsey", "driver": "Collin" },
+    { "date": "2026-05-29", "label": "AM", "attendant": "OPEN", "driver": "Collin" },
+    { "date": "2026-05-29", "label": "PM", "attendant": "OPEN", "driver": "Collin" },
+    { "date": "2026-05-30", "label": "AM", "attendant": "Barbara", "driver": null },
+    { "date": "2026-05-30", "label": "PM", "attendant": "Barbara", "driver": null },
+    { "date": "2026-05-31", "label": "AM", "attendant": "Sophie", "driver": null },
+    { "date": "2026-05-31", "label": "PM", "attendant": "Sophie", "driver": "Brian" }
+  ]
+}

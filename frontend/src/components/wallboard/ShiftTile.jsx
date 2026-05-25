@@ -1,12 +1,12 @@
 import React from 'react';
-import { parseISO, format, isToday, isPast } from 'date-fns';
+import { getBidMicroDisplay } from '@/lib/bidDeadline';
 
 /**
  * ShiftTile — 5-row micro-layout wallboard tile.
  *
  * Row 1: Period label (AM / PM)
  * Row 2: Attendant slot (name / OPEN)
- * Row 3: Attendant micro-status (Bid M/D | Bid Today | Call Sup | Review | spacer)
+ * Row 3: Open-seat micro-status (Until M/D | Call Sup | Review | spacer)
  * Row 4: Driver slot (name / Career Fire / Vol Fire / OPEN)
  * Row 5: Shift time (0600-1800 | 1800-0600 | structural_time | spacer)
  *
@@ -54,23 +54,24 @@ function tileClasses(crew_status, hasAnyOpen) {
 
 // ── Row 3: attendant micro-status ─────────────────────────────────────────────
 // Derives bid/call messaging from shift metadata only — no schedule writes.
-function getAttendantMicro(shift) {
+function getOpenSeatMicro(shift) {
+  if (shift.logic_mode === 'mirror_only' || shift.display_mode === 'mirror_only') return null;
+
   const crewStatus   = (shift.crew_status || '').toLowerCase();
   const attentionLvl = (shift.attention_level || '').toLowerCase();
-  const hasOpenAtt   = (shift.open_slots || []).includes('attendant');
+  const hasOpenSeat  = Boolean(shift.has_open_slot || (shift.open_slots || []).length);
 
   if (crewStatus === 'review') return { text: 'Review', cls: 'text-violet-400' };
 
-  if (hasOpenAtt && attentionLvl === 'high') {
-    try {
-      const shiftDate = parseISO(shift.date);
-      if (isToday(shiftDate) || isPast(shiftDate)) {
-        return { text: '10-21 112', cls: 'text-red-400' };
-      }
-      return { text: `Bid ${format(shiftDate, 'M/d')}`, cls: 'text-amber-400' };
-    } catch {
-      return { text: '10-21 112', cls: 'text-red-400' };
-    }
+  if (hasOpenSeat && attentionLvl === 'high') {
+    const bidDisplay = getBidMicroDisplay(shift);
+    if (!bidDisplay) return null;
+    const cls = bidDisplay.state === 'urgent'
+      ? 'text-red-400'
+      : bidDisplay.state === 'review'
+        ? 'text-violet-400'
+        : 'text-amber-400';
+    return { text: bidDisplay.compact, title: bidDisplay.full, aria: bidDisplay.aria, cls };
   }
 
   return null; // blank spacer
@@ -197,7 +198,7 @@ export default function ShiftTile({ shift }) {
   const hasAnyOpen    = attendantSlot?.isOpen || driverSlot?.isOpen;
   const isAM          = periodLabel === 'AM';
 
-  const attMicro  = getAttendantMicro(shift);
+  const attMicro  = getOpenSeatMicro(shift);
   const shiftTime = getShiftTime(shift, driverSlot);
 
   return (
@@ -230,6 +231,8 @@ export default function ShiftTile({ shift }) {
           {attMicro ? (
             <span
               className={`text-[9px] font-bold tracking-wider uppercase leading-none ${attMicro.cls}`}
+              title={attMicro.title}
+              aria-label={attMicro.aria}
             >
               {attMicro.text}
             </span>

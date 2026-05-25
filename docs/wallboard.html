@@ -1015,27 +1015,6 @@
       return d;
     }
 
-    function displayHorizonRules() {
-      return {
-        mode: "temporary_fixed_until_date",
-        temporary_fixed_end_date: "2026-06-30",
-        resume_rolling_after_date: "2026-06-30",
-        rolling_weeks_default: 5,
-        admin_rolling_weeks: 5,
-        enabled: true,
-        ...(lastLoadedData?.settings?.display_horizon || {})
-      };
-    }
-
-    function visibleEndDateIso(todayValue = getTodayIso()) {
-      const rules = displayHorizonRules();
-      if (rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0, 10)) {
-        return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0, 10);
-      }
-      const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || VISIBLE_WEEKS));
-      return toIsoLocal(addDays(parseLocalDate(todayValue), (weeks * 7) - 1));
-    }
-
     function startOfWeekMonday(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
       const day = d.getDay() || 7;
@@ -1043,17 +1022,78 @@
       return d;
     }
 
+    function operationalVisibleRange(now = new Date()) {
+      const current = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const start = addDays(startOfWeekMonday(current), -7);
+      const end = addDays(start, 42);
+      return { start, end };
+    }
+
+    function shiftDateInOperationalRange(isoDate) {
+      const parsed = parseLocalDate(isoDate);
+      if (!parsed) return false;
+      const range = operationalVisibleRange();
+      return parsed >= range.start && parsed < range.end;
+    }
+
+    function shouldUseCalendarMirrorMode(isoDate) {
+      const parsed = parseLocalDate(isoDate);
+      return !!parsed && parsed.getFullYear() === 2026 && parsed.getMonth() === 5;
+    }
+
+    const MANUAL_WHITEBOARD_OVERRIDES = {
+      "2026-05-24|AM": ["Lynnsey", null],
+      "2026-05-24|PM": ["Lynnsey", "Brian"],
+      "2026-05-25|AM": ["Sophie", "Biz"],
+      "2026-05-25|PM": ["Sophie", "Sidney"],
+      "2026-05-26|AM": ["Barbara", "Open"],
+      "2026-05-26|PM": ["Barbara", "Sidney"],
+      "2026-05-27|AM": ["Sophie", "Brian"],
+      "2026-05-27|PM": ["Sophie", "Brian"],
+      "2026-05-28|AM": ["Lynnsey", "Open"],
+      "2026-05-28|PM": ["Lynnsey", "Collin"],
+      "2026-05-29|AM": ["Open", "Collin"],
+      "2026-05-29|PM": ["Open", "Collin"],
+      "2026-05-30|AM": ["Barbara", null],
+      "2026-05-30|PM": ["Barbara", null],
+      "2026-05-31|AM": ["Sophie", null],
+      "2026-05-31|PM": ["Sophie", "Brian"]
+    };
+
+    function manualWhiteboardOverride(dateIso, label) {
+      return MANUAL_WHITEBOARD_OVERRIDES[`${dateIso}|${String(label || "").toUpperCase()}`] || null;
+    }
+
+    function manualMirrorSeat(role, label) {
+      if (label === null || label === undefined) return null;
+      const raw = String(label).trim();
+      if (!raw) return null;
+      return {
+        role,
+        display_role: role === "ATTENDANT" ? "Attendant" : "Driver",
+        assigned_name: raw.toUpperCase() === "OPEN" ? "OPEN" : raw,
+        source: "whiteboard_manual_override",
+        logic_mode: "mirror_only",
+        transactions_live: true,
+        display_on_board: true
+      };
+    }
+
+    function clampWeekOffset(offset) {
+      return Math.max(-1, Math.min(4, Number(offset) || 0));
+    }
+
     function buildVisibleDates(weekOffset = 0) {
       const today = getTodayDate();
       const thisWeekStart = startOfWeekMonday(today);
-      const offsetWeekStart = addDays(thisWeekStart, weekOffset * 7);
-      const visibleEndIso = visibleEndDateIso();
+      const offsetWeekStart = addDays(thisWeekStart, clampWeekOffset(weekOffset) * 7);
+      const range = operationalVisibleRange(today);
       const dates = [];
 
       for (let i = 0; i < VISIBLE_DAYS; i++) {
         const d = addDays(offsetWeekStart, i);
         const iso = toIsoLocal(d);
-        const withinDisplayHorizon = iso <= visibleEndIso;
+        const withinDisplayHorizon = d >= range.start && d < range.end;
         dates.push({ iso, dateObj: d, withinDisplayHorizon });
       }
 
@@ -1389,11 +1429,9 @@
     }
 
     function openOpportunityHorizonDays() {
-      const rules = displayHorizonRules();
+      const rules = lastLoadedData?.settings?.display_horizon || {};
       const direct = Number(rules.open_opportunity_horizon_days || rules.actionable_horizon_days);
       if (Number.isFinite(direct) && direct > 0) return direct;
-      const weeks = Number(rules.admin_rolling_weeks || rules.rolling_weeks_default);
-      if (Number.isFinite(weeks) && weeks > 0) return weeks * 7;
       return 28;
     }
 
@@ -1403,13 +1441,38 @@
       return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
     }
 
+    function fieldDateTime(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return null;
+      if (raw.includes("T")) {
+        const parsed = new Date(raw);
+        if (!Number.isNaN(parsed.getTime())) return parsed;
+      }
+      const parsedDate = fieldDate(raw);
+      if (!parsedDate) return null;
+      parsedDate.setHours(23, 45, 0, 0);
+      return parsedDate;
+    }
+
+    function addDaysDateTime(dateObj, days) {
+      const d = new Date(dateObj.getTime());
+      d.setDate(d.getDate() + days);
+      return d;
+    }
+
     function coverageRequestStartDate(shift, seats) {
-      const keys = ["coverage_request_created_at", "coverage_request_activated_at", "open_need_started_at", "opened_at"];
+      const keys = [
+        "firstVisibleAt", "first_visible_at", "visibleFrom", "visible_from",
+        "bidVisibleFrom", "bid_visible_from", "bidOpenedAt", "bid_opened_at",
+        "bid_started_at", "horizonEnteredAt", "horizon_entered_at",
+        "coverage_request_created_at", "coverage_request_activated_at",
+        "open_need_started_at", "opened_at", "createdAt", "created_at"
+      ];
       const dates = [];
       [shift, ...(seats || [])].forEach(source => {
         if (!source) return;
         keys.forEach(key => {
-          const parsed = fieldDate(source[key]);
+          const parsed = fieldDateTime(source[key]);
           if (parsed) dates.push(parsed);
         });
       });
@@ -1417,16 +1480,41 @@
       return dates.sort((a, b) => a - b)[0];
     }
 
-    function nextRollingBidReviewDate(openNeedStartedAt, today, cycleDays) {
-      let reviewAt = addDays(openNeedStartedAt, cycleDays);
-      while (reviewAt < today) {
-        reviewAt = addDays(reviewAt, cycleDays);
+    function nextRollingBidReviewDate(openNeedStartedAt, now, cycleDays) {
+      let reviewAt = addDaysDateTime(openNeedStartedAt, cycleDays);
+      while (reviewAt <= now) {
+        reviewAt = addDaysDateTime(reviewAt, cycleDays);
       }
       return reviewAt;
     }
 
     function bidReviewMetadata(shift, openSeats, readiness) {
       const shiftDate = fieldDate(shift?.date || shift?.shift_date);
+      if (shift?.logic_mode === "mirror_only") {
+        return {
+          bid_cycle_days: bidCycleDays(),
+          urgent_supervisor_window_days: urgentSupervisorWindowDays(),
+          open_horizon_days: openOpportunityHorizonDays(),
+          open_need_started_at: null,
+          next_bid_review_at: null,
+          bid_display_label: "",
+          bid_display_full_label: "",
+          bid_display_state: "none"
+        };
+      }
+      if (shouldUseCalendarMirrorMode(shift?.date || shift?.shift_date)) {
+        return {
+          bid_cycle_days: bidCycleDays(),
+          urgent_supervisor_window_days: urgentSupervisorWindowDays(),
+          open_horizon_days: openOpportunityHorizonDays(),
+          open_need_started_at: null,
+          next_bid_review_at: null,
+          bid_display_label: "",
+          bid_display_full_label: "",
+          bid_display_state: "none"
+        };
+      }
+      const now = new Date();
       const today = getTodayDate();
       const cycleDays = bidCycleDays();
       const urgentDays = urgentSupervisorWindowDays();
@@ -1437,33 +1525,34 @@
         open_need_started_at: null,
         next_bid_review_at: null,
         bid_display_label: "",
+        bid_display_full_label: "",
         bid_display_state: "none"
       };
       if (!shiftDate) return meta;
       const days = Math.round((shiftDate - today) / 86400000);
       const status = String(readiness?.status || "").toLowerCase();
       if (status.includes("review")) {
-        return { ...meta, bid_display_label: "Review", bid_display_state: "review" };
+        return { ...meta, bid_display_label: "Review", bid_display_full_label: "Review", bid_display_state: "review" };
       }
       if (!openSeats?.length) return meta;
       if (days >= 0 && days <= urgentDays) {
-        return { ...meta, bid_display_label: "10-21 112", bid_display_state: "urgent" };
+        return { ...meta, bid_display_label: "10-21 112", bid_display_full_label: "Call supervisor", bid_display_state: "urgent" };
       }
       if (days < 0) {
-        return { ...meta, bid_display_label: "Review", bid_display_state: "review" };
+        return { ...meta, bid_display_label: "Review", bid_display_full_label: "Review", bid_display_state: "review" };
       }
 
       const requestStarted = coverageRequestStartDate(shift, openSeats);
-      const openNeedStartedAt = requestStarted || addDays(shiftDate, -meta.open_horizon_days);
-      const reviewAt = nextRollingBidReviewDate(openNeedStartedAt, today, cycleDays);
+      const openNeedStartedAt = requestStarted || addDaysDateTime(new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 45, 0, 0), -meta.open_horizon_days);
+      const reviewAt = nextRollingBidReviewDate(openNeedStartedAt, now, cycleDays);
       const reviewIso = toIsoLocal(reviewAt);
-      const todayIso = toIsoLocal(today);
       return {
         ...meta,
         open_need_started_at: toIsoLocal(openNeedStartedAt),
         next_bid_review_at: reviewIso,
-        bid_display_label: reviewIso === todayIso ? "Bid Today" : `Bid ${reviewAt.getMonth() + 1}/${reviewAt.getDate()}`,
-        bid_display_state: reviewIso === todayIso ? "bid_today" : "bid"
+        bid_display_label: `Until ${reviewAt.getMonth() + 1}/${reviewAt.getDate()}`,
+        bid_display_full_label: `Bid until ${reviewAt.getMonth() + 1}/${reviewAt.getDate()}`,
+        bid_display_state: "bid"
       };
     }
 
@@ -1580,6 +1669,12 @@
     }
 
     function shiftReadiness(shift, memberLookup) {
+      if (shift?.logic_mode === "mirror_only") {
+        return { color: "green", status: "Physical whiteboard mirror", problem: false, mirrorOnly: true };
+      }
+      if (shouldUseCalendarMirrorMode(shift?.date || shift?.shift_date)) {
+        return { color: "green", status: shift?.crew_status || "Calendar mirror", problem: false, calendarMirror: true };
+      }
       const seats = normalizeAlsAttendantSeats(shift?.seats || [], memberLookup);
       const attendant = seats.find(isAttendantSeat);
       const driver = seats.find(isDriverSeat);
@@ -1615,10 +1710,20 @@
       for (const shift of inputShifts) {
         const date = shift?.date || shift?.shift_date || "";
         if (!date) continue;
+        if (!shiftDateInOperationalRange(date)) continue;
         if (!days[date]) days[date] = [];
 
         const label = shift?.label || shift?.name || shift?.shift || shift?.unit || "Shift";
-        const seats = normalizeAlsAttendantSeats(Array.isArray(shift?.seats) ? shift.seats : [], memberLookup);
+        const override = manualWhiteboardOverride(date, label);
+        const sourceSeats = override
+          ? [
+              manualMirrorSeat("ATTENDANT", override[0]),
+              manualMirrorSeat("DRIVER", override[1])
+            ].filter(Boolean)
+          : Array.isArray(shift?.seats) ? shift.seats : [];
+        const logicMode = override ? "mirror_only" : shift?.logic_mode;
+        const source = override ? "whiteboard_manual_override" : shift?.source;
+        const seats = logicMode === "mirror_only" ? sourceSeats : normalizeAlsAttendantSeats(sourceSeats, memberLookup);
 
         const visibleSeats = seats.filter(seat => {
           const showOnBoard = seat?.display_on_board === true;
@@ -1631,8 +1736,11 @@
         days[date].push({
           date,
           label: shortShiftLabel(label),
-          pillClass: pillClassForShift({ ...shift, seats: visibleSeats }, memberLookup),
-          readiness: shiftReadiness({ ...shift, seats: visibleSeats }, memberLookup),
+          pillClass: pillClassForShift({ ...shift, source, logic_mode: logicMode, seats: visibleSeats }, memberLookup),
+          readiness: shiftReadiness({ ...shift, source, logic_mode: logicMode, seats: visibleSeats }, memberLookup),
+          source,
+          logic_mode: logicMode,
+          transactions_live: true,
           seats: visibleSeats
         });
       }
@@ -1761,7 +1869,7 @@
       const hasOpenDriver = futureOpenSeats.some(isDriverSeat);
       const bidReview = bidReviewMetadata(shift, futureOpenSeats, readiness);
       const bidReviewHtml = bidReview.bid_display_label
-        ? `<div class="bid-review-label ${escapeHtml(bidReview.bid_display_state)}" title="Next bid review date: ${escapeHtml(bidReview.next_bid_review_at || bidReview.bid_display_label)}">${escapeHtml(bidReview.bid_display_label)}</div>`
+        ? `<div class="bid-review-label ${escapeHtml(bidReview.bid_display_state)}" title="${escapeHtml(bidReview.bid_display_full_label || bidReview.bid_display_label)}" aria-label="${escapeHtml(bidReview.bid_display_full_label || bidReview.bid_display_label)}">${escapeHtml(bidReview.bid_display_label)}</div>`
         : "";
 
       const renderedSlots = [
@@ -1905,14 +2013,16 @@
       const todayIso = getTodayIso();
       if (!manualWeekSelected && !autoFocusedAssignedWeek && currentWeekOffset === 0 && shifts.length && !firstVisibleWeekHasAssignedMember(shifts, 0)) {
         const assignedOffset = firstFutureAssignedWeekOffset(shifts);
-        if (assignedOffset !== null && assignedOffset > 0) currentWeekOffset = assignedOffset;
+        if (assignedOffset !== null && assignedOffset > 0) currentWeekOffset = clampWeekOffset(assignedOffset);
         autoFocusedAssignedWeek = true;
       }
+      currentWeekOffset = clampWeekOffset(currentWeekOffset);
       const visibleDates = buildVisibleDates(currentWeekOffset);
       if (!visibleDates.length) {
         app.className = "state";
-        app.innerHTML = `<div class="state-title">No visible dates in this display range</div><div class="state-detail">The temporary display horizon ends ${escapeHtml(visibleEndDateIso())}. Future schedule data remains available for workflows.</div>`;
-        metaWindow.textContent = `Showing through: ${visibleEndDateIso()}`;
+        const range = operationalVisibleRange();
+        app.innerHTML = `<div class="state-title">No visible dates in this display range</div><div class="state-detail">The wallboard is limited to last week, this week, and four future weeks.</div>`;
+        metaWindow.textContent = `Showing: ${toIsoLocal(range.start)} to ${toIsoLocal(addDays(range.end, -1))}`;
         return;
       }
       const offsetLabel = currentWeekOffset === 0 ? "Today focus" : `${currentWeekOffset > 0 ? "+" : ""}${currentWeekOffset} week`;
@@ -1960,7 +2070,7 @@
 
       document.getElementById("prevWeekBtn").addEventListener("click", () => {
         manualWeekSelected = true;
-        currentWeekOffset -= 1;
+        currentWeekOffset = clampWeekOffset(currentWeekOffset - 1);
         rerender();
         resetIdleTimer();
       });
@@ -1975,7 +2085,7 @@
 
       document.getElementById("nextWeekBtn").addEventListener("click", () => {
         manualWeekSelected = true;
-        currentWeekOffset += 1;
+        currentWeekOffset = clampWeekOffset(currentWeekOffset + 1);
         rerender();
         resetIdleTimer();
       });

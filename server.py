@@ -13,6 +13,7 @@ import urllib.request
 from copy import deepcopy
 from datetime import date, datetime, timedelta, UTC
 from functools import wraps
+from zoneinfo import ZoneInfo
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
 from engine.display_normalizer import normalize_wallboard_display
 from engine.member_dashboard import build_member_dashboard
@@ -50,6 +51,16 @@ ROLLOUT_IMPORT_FILE = os.path.join(DATA_DIR, "rollout_import.json")
 ROTATION_TEMPLATES_FILE = os.path.join(DATA_DIR, "rotation_templates.json")
 SWAP_REQUESTS_FILE = os.path.join(DATA_DIR, "swap_requests.json")
 SUPERVISOR_STATE_FILE = os.path.join(DATA_DIR, "supervisor_state.json")
+LIVE_BETA_TRANSACTIONS_FILE = os.path.join(DATA_DIR, "live_beta_transactions.json")
+GOOGLE_CALENDAR_JUNE_MIRROR_FILE = os.path.join(DATA_DIR, "google_calendar_june_2026_mirror.json")
+GOOGLE_CALENDAR_MIRROR_CACHE_SECONDS = 15 * 60
+ADR_EMPLOYEE_SCHEDULE_CALENDAR_ID = "2fbc3612e56a0a2ce28fe826443e20a88c500e1c5b3c56b126cb4afb88fd233e@group.calendar.google.com"
+ADR_EMPLOYEE_SCHEDULE_ICAL_URL = (
+    "https://calendar.google.com/calendar/ical/"
+    "2fbc3612e56a0a2ce28fe826443e20a88c500e1c5b3c56b126cb4afb88fd233e%40group.calendar.google.com"
+    "/public/basic.ics"
+)
+LOCAL_TZ = ZoneInfo("America/New_York")
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
 CALENDAR_MARKERS_FILE = os.path.join(DATA_DIR, "calendar_markers.json")
 PUBLIC_CALENDAR_MARKERS_FILE = os.path.join(DOCS_DIR, "data", "calendar_markers.json")
@@ -129,12 +140,20 @@ SC_ALLOWED_ORIGINS = parse_csv_env(
         "https://adr-fr.org",
         "https://www.adr-fr.org",
         "https://sc.adr-fr.org",
+        "https://sc-api.adr-fr.org",
+        "https://base44.com",
+        "https://app.base44.com",
         "http://127.0.0.1:5000",
         "http://localhost:5000",
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
         "http://127.0.0.1:8001",
         "http://localhost:8001",
     ],
 )
+SC_ALLOWED_ORIGIN_SUFFIXES = tuple(parse_csv_env("SC_ALLOWED_ORIGIN_SUFFIXES", [".base44.app", ".base44.com"]))
 SC_PUBLIC_BASE_URL = str(os.environ.get("SC_PUBLIC_BASE_URL") or "").strip().rstrip("/")
 SC_FLASK_DEBUG = env_flag("FLASK_DEBUG", False)
 
@@ -178,6 +197,70 @@ def save_json(path, data):
     with open(temp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     os.replace(temp_path, path)
+
+
+def load_live_beta_transactions():
+    payload = load_json(LIVE_BETA_TRANSACTIONS_FILE, {"transactions": []})
+    if not isinstance(payload, dict):
+        payload = {"transactions": []}
+    if not isinstance(payload.get("transactions"), list):
+        payload["transactions"] = []
+    return payload
+
+
+def rollout_status_payload():
+    return {
+        "live_beta": True,
+        "transactions_live": True,
+        "may_24_31": {
+            "source": "whiteboard_manual_override",
+            "logic_mode": "mirror_only",
+            "transactions_live": True,
+        },
+        "june_2026": {
+            "source": "google_calendar_mirror",
+            "logic_mode": "mirror_only",
+            "transactions_live": True,
+        },
+        "july_forward": {
+            "source": "shiftcommander",
+            "logic_mode": "normal",
+            "transactions_live": True,
+        },
+        "august_and_beyond": {
+            "priority_focus": True,
+            "availability_collection": True,
+            "resolver_training_or_planning_allowed": True,
+            "requires_actual_member_submitted_availability": True,
+        },
+        "member_message": (
+            "ShiftCommander is live. The current May/June board reflects the known schedule, "
+            "but availability, swaps, drops, and pickup requests submitted here are real and "
+            "will be reported for supervisor review. Please focus especially on entering "
+            "availability for August and beyond."
+        ),
+    }
+
+
+def record_live_beta_transaction(action_type, actor_member_id=None, affected=None, before=None, after=None, source="member_portal"):
+    payload = load_live_beta_transactions()
+    transaction = {
+        "id": f"live_beta_{int(time.time() * 1000)}_{secrets.token_hex(4)}",
+        "live_beta": True,
+        "transactions_live": True,
+        "requires_supervisor_review": True,
+        "action_type": str(action_type or "unknown"),
+        "source": source,
+        "actor_member_id": str(actor_member_id or "").strip() or None,
+        "created_at": now_iso(),
+        "affected": affected or {},
+        "before": before,
+        "after": after,
+    }
+    payload["transactions"].append(transaction)
+    payload["updated_at"] = transaction["created_at"]
+    save_json(LIVE_BETA_TRANSACTIONS_FILE, payload)
+    return transaction
 
 
 def save_live_schedule(schedule):
@@ -226,7 +309,7 @@ def schedule_json_response():
     return fast_json_file_response(PUBLIC_SCHEDULE_FILE)
 
 
-def load_schedule_payload():
+def load_base_schedule_payload():
     schedule = load_json(SCHEDULE_FILE, {})
     if isinstance(schedule, dict) and isinstance(schedule.get("shifts"), list) and schedule["shifts"]:
         return schedule
@@ -234,6 +317,10 @@ def load_schedule_payload():
     if isinstance(public_schedule, dict):
         return public_schedule
     return {}
+
+
+def load_schedule_payload():
+    return schedule_with_june_calendar_mirror(load_base_schedule_payload())
 
 
 def schedule_file_summary(path):
@@ -469,6 +556,14 @@ def demo_supervisor_bypass_enabled():
 def current_public_base_url():
     if SC_PUBLIC_BASE_URL:
         return SC_PUBLIC_BASE_URL
+    forwarded_host = str(request.headers.get("X-Forwarded-Host") or request.headers.get("Host") or "").split(",", 1)[0].strip()
+    forwarded_proto = str(request.headers.get("X-Forwarded-Proto") or "").split(",", 1)[0].strip().lower()
+    if forwarded_host:
+        if forwarded_proto in {"http", "https"}:
+            return f"{forwarded_proto}://{forwarded_host}".strip().rstrip("/")
+        host_name = forwarded_host.split(":", 1)[0].strip().lower()
+        if host_name not in {"localhost", "127.0.0.1", "::1"} and "." in host_name:
+            return f"https://{forwarded_host}".strip().rstrip("/")
     return str(request.host_url or "").strip().rstrip("/")
 
 
@@ -479,6 +574,14 @@ def allowed_request_origin():
     host_origin = str(request.host_url or "").strip().rstrip("/")
     if origin == host_origin or origin in SC_ALLOWED_ORIGINS:
         return origin
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(origin)
+        host = str(parsed.hostname or "").lower()
+        if parsed.scheme == "https" and any(host.endswith(suffix.lower()) for suffix in SC_ALLOWED_ORIGIN_SUFFIXES):
+            return origin
+    except Exception:
+        return None
     return None
 
 
@@ -641,6 +744,48 @@ def resolve_member_request_member(payload=None):
     if member is None:
         return None, None, auth_json_error("Member record not found", 404)
     return member_id, member, None
+
+
+def resolve_member_read_target(payload=None):
+    """Resolve the member whose portal data may be read.
+
+    Supervisors can view a selected member in beta supervisor mode. Regular
+    members can only read their own member portal data.
+    """
+    if quick_test_mode_enabled():
+        member_id = requested_member_id(payload) or default_quick_test_member_id()
+        member = member_record_by_id(member_id)
+        if member is None:
+            return None, None, auth_json_error("Quick Test member record not found", 404)
+        return str(member_id), member, None
+
+    auth = current_auth()
+    if not auth.get("authenticated"):
+        return None, None, auth_json_error("Authentication required", 401)
+
+    requested_id = requested_member_id(payload)
+    if auth.get("role") in {"supervisor", "admin"}:
+        member_id = requested_id or str(auth.get("member_id") or "").strip()
+        if not member_id:
+            return None, None, auth_json_error("member_id is required for supervisor member view", 400)
+        member = member_record_by_id(member_id)
+        if member is None:
+            return None, None, auth_json_error("Member record not found", 404)
+        return str(member_id), member, None
+
+    if auth.get("role") != "member":
+        return None, None, auth_json_error("Member access required", 403)
+
+    auth_member_id = str(auth.get("member_id") or "").strip()
+    if not auth_member_id:
+        return None, None, auth_json_error("Authenticated member record not found", 401)
+    if requested_id and str(requested_id) != auth_member_id:
+        return None, None, auth_json_error("Members may only read their own portal data", 403)
+
+    member = member_record_by_id(auth_member_id)
+    if member is None or member.get("active") is False:
+        return None, None, auth_json_error("Authenticated member record not found", 401)
+    return auth_member_id, member, None
 
 
 def resolve_member_write_target(payload=None):
@@ -926,9 +1071,56 @@ def infer_rotation_from_legacy(member):
     }
 
 
+MEDICAL_CERT_RANKS = {
+    "NCLD": 0,
+    "EMR": 1,
+    "EMT": 2,
+    "AEMT": 3,
+    "PARAMEDIC": 4,
+}
+
+MEDICAL_CERT_LABELS = {
+    "NCLD": "Non-Certified, Licensed Driver (NCLD)",
+    "EMR": "EMR",
+    "EMT": "EMT",
+    "AEMT": "AEMT",
+    "PARAMEDIC": "Paramedic",
+}
+
+
+def canonical_medical_cert(value):
+    raw = str(value or "").strip().upper()
+    aliases = {
+        "NON-CERTIFIED LICENSED DRIVER": "NCLD",
+        "NON CERTIFIED LICENSED DRIVER": "NCLD",
+        "NON_CERTIFIED_LICENSED_DRIVER": "NCLD",
+        "NCLD": "NCLD",
+        "EMR": "EMR",
+        "EMT": "EMT",
+        "AEMT": "AEMT",
+        "ALS": "AEMT",
+        "PARAMEDIC": "PARAMEDIC",
+        "MEDIC": "PARAMEDIC",
+    }
+    return aliases.get(raw, raw)
+
+
 def normalize_member_rotation(member):
     if not isinstance(member, dict):
         return member
+    medical_cert = canonical_medical_cert(member.get("medical_cert") or member.get("ops_cert") or member.get("cert") or member.get("raw_cert"))
+    if medical_cert:
+        member["medical_cert"] = medical_cert
+        member["medical_cert_rank"] = MEDICAL_CERT_RANKS.get(medical_cert)
+        member["medical_cert_label"] = MEDICAL_CERT_LABELS.get(medical_cert, medical_cert)
+    if medical_cert == "NCLD" or member.get("ncld_status") is True:
+        member["medical_cert"] = "NCLD"
+        member["medical_cert_rank"] = MEDICAL_CERT_RANKS["NCLD"]
+        member["medical_cert_label"] = MEDICAL_CERT_LABELS["NCLD"]
+        member["ncld_status"] = True
+        member.setdefault("ncld_interest_level", "unknown")
+        member.setdefault("ncld_notes", "")
+        member.setdefault("last_interest_update", None)
 
     rotation = member.get("rotation")
     if not isinstance(rotation, dict):
@@ -1582,6 +1774,13 @@ def member_roster_payload():
                 "member_id": str(member.get("member_id", member.get("id"))),
                 "name": member.get("name") or f"Member {member.get('member_id', member.get('id'))}",
                 "ops_cert": member.get("ops_cert") or member.get("cert") or member.get("raw_cert"),
+                "medical_cert": member.get("medical_cert"),
+                "medical_cert_rank": member.get("medical_cert_rank"),
+                "medical_cert_label": member.get("medical_cert_label"),
+                "ncld_status": bool(member.get("ncld_status", False)),
+                "ncld_interest_level": member.get("ncld_interest_level"),
+                "ncld_notes": member.get("ncld_notes"),
+                "last_interest_update": member.get("last_interest_update"),
                 "birthday": member.get("birthday"),
                 "birthday_mmdd": member.get("birthday_mmdd"),
             }
@@ -1589,9 +1788,374 @@ def member_roster_payload():
     return roster
 
 
+def normalized_person_name(value):
+    return re.sub(r"[^a-z0-9]+", " ", str(value or "").strip().lower()).strip()
+
+
+def ical_unescape(value):
+    return (
+        str(value or "")
+        .replace("\\n", "\n")
+        .replace("\\N", "\n")
+        .replace("\\,", ",")
+        .replace("\\;", ";")
+        .replace("\\\\", "\\")
+        .strip()
+    )
+
+
+def parse_ical_datetime(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        if raw.endswith("Z"):
+            return datetime.strptime(raw, "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC).astimezone(LOCAL_TZ)
+        if "T" in raw:
+            return datetime.strptime(raw, "%Y%m%dT%H%M%S").replace(tzinfo=LOCAL_TZ)
+        return datetime.strptime(raw, "%Y%m%d").replace(tzinfo=LOCAL_TZ)
+    except ValueError:
+        return None
+
+
+def parse_ical_events(ics_text):
+    lines = []
+    for raw_line in str(ics_text or "").replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        if raw_line.startswith((" ", "\t")) and lines:
+            lines[-1] += raw_line[1:]
+        else:
+            lines.append(raw_line)
+
+    events = []
+    current = None
+    for line in lines:
+        if line == "BEGIN:VEVENT":
+            current = {}
+            continue
+        if line == "END:VEVENT":
+            if isinstance(current, dict):
+                events.append(current)
+            current = None
+            continue
+        if current is None or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        name = key.split(";", 1)[0].upper()
+        current.setdefault(name, []).append(ical_unescape(value))
+    return events
+
+
+def calendar_event_start(event):
+    values = event.get("DTSTART") if isinstance(event, dict) else None
+    return parse_ical_datetime(values[0]) if values else None
+
+
+def calendar_event_recurrence_start(event):
+    values = event.get("RECURRENCE-ID") if isinstance(event, dict) else None
+    return parse_ical_datetime(values[0]) if values else None
+
+
+def june_2026_calendar_occurrences(ics_text):
+    events = parse_ical_events(ics_text)
+    recurrence_overrides = {
+        (str(event.get("UID", [""])[0]), calendar_event_recurrence_start(event).isoformat())
+        for event in events
+        if calendar_event_recurrence_start(event)
+    }
+    occurrences = []
+
+    for event in events:
+        uid = str(event.get("UID", [""])[0])
+        summary = str(event.get("SUMMARY", [""])[0]).strip()
+        start = calendar_event_start(event)
+        if not start:
+            continue
+
+        if any(str(rule).upper().startswith("FREQ=DAILY") for rule in event.get("RRULE", [])):
+            cursor = max(date(2026, 6, 1), start.date())
+            while cursor <= date(2026, 6, 30):
+                occurrence_start = datetime.combine(cursor, start.timetz()).astimezone(LOCAL_TZ)
+                if (uid, occurrence_start.isoformat()) not in recurrence_overrides:
+                    occurrences.append({"uid": uid, "summary": summary, "start": occurrence_start})
+                cursor += timedelta(days=1)
+            continue
+
+        if start.year == 2026 and start.month == 6:
+            occurrences.append({"uid": uid, "summary": summary, "start": start})
+
+    return occurrences
+
+
+def clean_calendar_summary(summary):
+    text = re.sub(r"\s+", " ", str(summary or "").replace("_", " ").strip())
+    text = re.sub(r"^(AEMT|BASIC|EMT|ALS|DAY|NIGHT|A|B|C|D)\s*[-:]\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s+(DAY|NIGHT)$", "", text, flags=re.IGNORECASE)
+    return text.strip()
+
+
+def member_aliases(member):
+    name = str(member.get("name") or member.get("member_name") or "").strip()
+    aliases = {normalized_person_name(name)}
+    parts = [part for part in normalized_person_name(name).split() if part]
+    if parts:
+        aliases.add(parts[0])
+    if parts and parts[0] == "sophia":
+        aliases.add("sophie")
+    return {alias for alias in aliases if alias}
+
+
+def resolve_calendar_member(summary, members):
+    cleaned = normalized_person_name(clean_calendar_summary(summary))
+    if not cleaned or cleaned in {"open", "aemt", "basic", "emt", "als"} or "company" in cleaned:
+        return None
+    for member in members:
+        if cleaned in member_aliases(member):
+            return member
+    for member in members:
+        aliases = member_aliases(member)
+        if any(alias and re.search(rf"\b{re.escape(alias)}\b", cleaned) for alias in aliases):
+            return member
+    return None
+
+
+def calendar_role_for_occurrence(occurrence, member=None):
+    summary = normalized_person_name(occurrence.get("summary"))
+    uid = str(occurrence.get("uid") or "")
+    if uid.startswith("4copgv8r") or uid.startswith("0d75lqc3") or "aemt" in summary or "als" in summary:
+        return "ATTENDANT"
+    if uid.startswith("1ij3eg78") or uid.startswith("61b1ftda") or "basic" in summary or "emt" in summary:
+        return "DRIVER"
+    cert = str((member or {}).get("ops_cert") or (member or {}).get("cert") or "").strip().upper()
+    return "ATTENDANT" if cert in {"ALS", "AEMT", "PARAMEDIC"} else "DRIVER"
+
+
+def calendar_period_for_start(start):
+    return "AM" if start.hour < 12 else "PM"
+
+
+def calendar_seat_from_occurrence(occurrence, members):
+    summary = clean_calendar_summary(occurrence.get("summary"))
+    if "company" in normalized_person_name(summary):
+        return None
+    member = resolve_calendar_member(summary, members)
+    role = calendar_role_for_occurrence(occurrence, member)
+    is_open = normalized_person_name(summary) == "open"
+    assigned_name = "OPEN" if is_open else (member.get("name") if member else summary)
+    seat = {
+        "role": role,
+        "hours": 12.0,
+        "assigned": None if not member else str(member.get("member_id", member.get("id"))),
+        "assigned_name": f"OPEN {role}" if is_open else assigned_name,
+        "assignment_status": "OPEN" if is_open else "ASSIGNED",
+        "display_on_board": True,
+        "source": "google_calendar_mirror",
+        "logic_mode": "mirror_only",
+        "calendar_uid": occurrence.get("uid"),
+        "calendar_summary": occurrence.get("summary"),
+        "calendar_start": occurrence.get("start").isoformat() if occurrence.get("start") else None,
+    }
+    if is_open:
+        seat["display_open_alert"] = True
+    return seat
+
+
+def choose_calendar_core_seats(seats):
+    chosen = []
+    for role in ("ATTENDANT", "DRIVER"):
+        role_seats = sorted(
+            [seat for seat in seats if seat.get("role") == role],
+            key=lambda seat: str(seat.get("calendar_start") or ""),
+        )
+        assigned = [seat for seat in role_seats if seat.get("assigned") or not str(seat.get("assigned_name") or "").upper().startswith("OPEN")]
+        open_seats = [seat for seat in role_seats if str(seat.get("assigned_name") or "").upper().startswith("OPEN")]
+        if assigned:
+            chosen.append(assigned[0])
+        elif open_seats:
+            chosen.append(open_seats[0])
+    return chosen
+
+
+def build_june_calendar_mirror_payload(ics_text, members_payload=None):
+    members = members_payload if isinstance(members_payload, list) else load_members()
+    grouped = {}
+    for occurrence in june_2026_calendar_occurrences(ics_text):
+        start = occurrence["start"]
+        date_iso = start.date().isoformat()
+        period = calendar_period_for_start(start)
+        seat = calendar_seat_from_occurrence(occurrence, members)
+        if seat:
+            grouped.setdefault((date_iso, period), []).append(seat)
+
+    shifts = []
+    for (date_iso, period), seats in sorted(grouped.items()):
+        core_seats = choose_calendar_core_seats(seats)
+        for index, seat in enumerate(core_seats):
+            seat["seat_id"] = f"{date_iso}:{period}:{seat['role']}:{index}"
+        shifts.append({
+            "date": date_iso,
+            "label": period,
+            "unit": None,
+            "source": "google_calendar_mirror",
+            "logic_mode": "mirror_only",
+            "calendar_id": ADR_EMPLOYEE_SCHEDULE_CALENDAR_ID,
+            "calendar_name": "ADR Employee Schedule",
+            "seats": core_seats,
+            "calendar_events": [
+                {
+                    "summary": seat.get("calendar_summary"),
+                    "uid": seat.get("calendar_uid"),
+                    "role": seat.get("role"),
+                    "assigned": seat.get("assigned"),
+                    "assigned_name": seat.get("assigned_name"),
+                }
+                for seat in seats
+            ],
+        })
+    return {
+        "build": {
+            "source": "google_calendar_mirror",
+            "calendar_id": ADR_EMPLOYEE_SCHEDULE_CALENDAR_ID,
+            "calendar_name": "ADR Employee Schedule",
+            "generated_at": now_iso(),
+            "month": "2026-06",
+            "shift_count": len(shifts),
+        },
+        "shifts": shifts,
+    }
+
+
+def load_google_calendar_june_mirror_payload():
+    cached = load_json(GOOGLE_CALENDAR_JUNE_MIRROR_FILE, {})
+    cached_build = cached.get("build") if isinstance(cached, dict) else {}
+    try:
+        generated_at = datetime.fromisoformat(str(cached_build.get("generated_at") or "").replace("Z", "+00:00"))
+    except ValueError:
+        generated_at = None
+    if (
+        isinstance(cached, dict)
+        and isinstance(cached.get("shifts"), list)
+        and cached["shifts"]
+        and generated_at
+        and (datetime.now(UTC) - generated_at.astimezone(UTC)).total_seconds() < GOOGLE_CALENDAR_MIRROR_CACHE_SECONDS
+    ):
+        return cached
+
+    try:
+        req = urllib.request.Request(ADR_EMPLOYEE_SCHEDULE_ICAL_URL, headers={"User-Agent": "ShiftCommander/1.0"})
+        with urllib.request.urlopen(req, timeout=12) as response:
+            ics_text = response.read().decode("utf-8", "replace")
+        payload = build_june_calendar_mirror_payload(ics_text)
+        payload["build"]["feed_status"] = "ok"
+        save_json(GOOGLE_CALENDAR_JUNE_MIRROR_FILE, payload)
+        return payload
+    except Exception as exc:
+        if isinstance(cached, dict) and isinstance(cached.get("shifts"), list) and cached["shifts"]:
+            cached = deepcopy(cached)
+            cached.setdefault("build", {})["feed_status"] = f"cached_after_error:{exc.__class__.__name__}"
+            return cached
+        return {
+            "build": {
+                "source": "google_calendar_mirror",
+                "calendar_id": ADR_EMPLOYEE_SCHEDULE_CALENDAR_ID,
+                "feed_status": f"unavailable:{exc.__class__.__name__}",
+                "fallback": "base_schedule_payload",
+            },
+            "shifts": [],
+        }
+
+
+def schedule_with_june_calendar_mirror(schedule_payload):
+    base = deepcopy(schedule_payload) if isinstance(schedule_payload, dict) else {}
+    calendar_payload = load_google_calendar_june_mirror_payload()
+    calendar_shifts = calendar_payload.get("shifts") if isinstance(calendar_payload, dict) else []
+    if not isinstance(calendar_shifts, list) or not calendar_shifts:
+        base.setdefault("build", {})["june_calendar_mirror"] = calendar_payload.get("build", {}) if isinstance(calendar_payload, dict) else {}
+        return base
+
+    base_shifts = base.get("shifts") if isinstance(base.get("shifts"), list) else []
+    merged_shifts = [
+        shift for shift in base_shifts
+        if isinstance(shift, dict) and not is_june_2026_date(shift.get("date") or shift.get("shift_date"))
+    ]
+    merged_shifts.extend(calendar_shifts)
+    base["shifts"] = merged_shifts
+    base.setdefault("build", {})["june_calendar_mirror"] = calendar_payload.get("build", {})
+    return base
+
+
+def is_june_2026_date(date_iso):
+    try:
+        day = date.fromisoformat(str(date_iso or "")[:10])
+    except ValueError:
+        return False
+    return day.year == 2026 and day.month == 6
+
+
+def member_is_assigned_to_shift(member_id, member, shift):
+    if not isinstance(shift, dict):
+        return False
+    member_id = str(member_id or "").strip()
+    member_name = normalized_person_name(member.get("name") if isinstance(member, dict) else "")
+    for seat in shift.get("seats", []) if isinstance(shift.get("seats"), list) else []:
+        assigned_id = str(seat.get("assigned") or seat.get("assigned_member_id") or seat.get("member_id") or "").strip()
+        assigned_name = normalized_person_name(seat.get("assigned_name") or seat.get("member_name") or seat.get("name"))
+        if assigned_id and assigned_id == member_id:
+            return True
+        if member_name and assigned_name and assigned_name == member_name:
+            return True
+    return False
+
+
+def schedule_shift_lookup(schedule_payload=None):
+    schedule = schedule_payload if isinstance(schedule_payload, dict) else load_schedule_payload()
+    lookup = {}
+    for shift in schedule.get("shifts", []) if isinstance(schedule.get("shifts"), list) else []:
+        if not isinstance(shift, dict):
+            continue
+        date_iso = str(shift.get("date") or shift.get("shift_date") or "")[:10]
+        period = str(shift.get("label") or shift.get("period") or "").strip().upper()
+        if date_iso and period:
+            lookup[(date_iso, period)] = shift
+    return lookup
+
+
+def june_seeded_availability_entry(member_id, member, date_iso, period, shift_lookup=None):
+    date_iso = str(date_iso or "")[:10]
+    period = str(period or "").strip().upper()
+    if not is_june_2026_date(date_iso) or period not in {"AM", "PM"}:
+        return None
+    shifts = shift_lookup if isinstance(shift_lookup, dict) else schedule_shift_lookup()
+    shift = shifts.get((date_iso, period))
+    intent = "prefer" if member_is_assigned_to_shift(member_id, member, shift) else "do_not"
+    return {
+        "member_id": str(member_id),
+        "date": date_iso,
+        "period": period,
+        "member_intent": intent,
+        "updated_at": None,
+        "updated_by": None,
+        "source": "google_calendar_mirror",
+        "logic_mode": "mirror_only",
+        "availability_seeded": True,
+        "seed_type": "assigned_schedule_to_availability",
+        "member_submitted": False,
+        "transactions_live": True,
+    }
+
+
+def june_seeded_availability_value(member_id, member, date_iso, period):
+    entry = june_seeded_availability_entry(member_id, member, date_iso, period)
+    if not entry:
+        return None
+    return availability_value_for_intent(entry["member_intent"])
+
+
 def extract_member_availability(member_id):
     payload = load_availability_payload()
+    member = member_record_by_id(member_id)
+    shift_lookup = schedule_shift_lookup()
     filtered = {"months": {}, "patterns_by_member": {}, "intent_metadata": {}, "entries": []}
+    explicit_keys = set()
     for month_key, month_bucket in payload.get("months", {}).items():
         if not isinstance(month_bucket, dict):
             continue
@@ -1602,19 +2166,39 @@ def extract_member_availability(member_id):
                 if not isinstance(day_entry, dict):
                     continue
                 for period, value in day_entry.items():
+                    date_key = str(date_iso)[:10]
+                    period_key = str(period).upper()
+                    explicit_keys.add((date_key, period_key))
                     intent = canonical_member_intent(value)
                     if intent is None:
                         intent = "blank"
-                    meta = availability_intent_metadata(payload, member_id, str(date_iso)[:10], str(period).upper())
+                    meta = availability_intent_metadata(payload, member_id, date_key, period_key)
                     filtered["entries"].append({
                         "member_id": member_id,
-                        "date": str(date_iso)[:10],
-                        "period": str(period).upper(),
+                        "date": date_key,
+                        "period": period_key,
                         "member_intent": intent,
                         "updated_at": meta.get("updated_at"),
                         "updated_by": meta.get("updated_by"),
                         "source": meta.get("source") or "legacy_availability",
+                        "logic_mode": meta.get("logic_mode"),
+                        "availability_seeded": bool(meta.get("availability_seeded", False)),
+                        "seed_type": meta.get("seed_type"),
+                        "member_submitted": bool(meta.get("member_submitted", True)),
+                        "transactions_live": bool(meta.get("transactions_live", False)),
+                        "previous_seeded_value": meta.get("previous_seeded_value"),
                     })
+    if member is not None:
+        for day in range(1, 31):
+            date_iso = f"2026-06-{day:02d}"
+            for period in ("AM", "PM"):
+                if (date_iso, period) in explicit_keys:
+                    continue
+                seeded = june_seeded_availability_entry(member_id, member, date_iso, period, shift_lookup)
+                if not seeded:
+                    continue
+                filtered["months"].setdefault("2026-06", {}).setdefault(member_id, {}).setdefault(date_iso, {})[period] = availability_value_for_intent(seeded["member_intent"])
+                filtered["entries"].append(seeded)
     patterns = payload.get("patterns_by_member", {})
     if isinstance(patterns, dict) and isinstance(patterns.get(member_id), dict):
         filtered["patterns_by_member"][member_id] = patterns[member_id]
@@ -1706,6 +2290,9 @@ def save_member_availability_entries(member_id, entries, actor_member_id=None):
         month_key = entry["date"][:7]
         value = availability_value_for_intent(entry["member_intent"])
         full_payload.setdefault("months", {}).setdefault(month_key, {}).setdefault(member_id, {}).setdefault(entry["date"], {})
+        before_value = full_payload["months"][month_key][member_id][entry["date"]].get(entry["period"])
+        seeded_before_value = None if before_value is not None else june_seeded_availability_value(member_id, member, entry["date"], entry["period"])
+        effective_before_value = before_value if before_value is not None else seeded_before_value
         full_payload["months"][month_key][member_id][entry["date"]][entry["period"]] = value
         meta = {
             "member_id": member_id,
@@ -1715,8 +2302,46 @@ def save_member_availability_entries(member_id, entries, actor_member_id=None):
             "updated_at": now_value,
             "updated_by": actor,
             "source": "member_portal",
+            "logic_mode": "normal",
+            "availability_seeded": False,
+            "seed_type": None,
+            "member_submitted": True,
+            "live_beta": True,
+            "transactions_live": True,
+            "requires_supervisor_review": True,
         }
+        if seeded_before_value is not None:
+            meta["previous_seeded_value"] = seeded_before_value
+            meta["previous_seeded_source"] = "google_calendar_mirror"
+            meta["previous_seeded_logic_mode"] = "mirror_only"
+            meta["previous_seeded_type"] = "assigned_schedule_to_availability"
         full_payload.setdefault("intent_metadata", {}).setdefault(member_id, {}).setdefault(entry["date"], {})[entry["period"]] = meta
+        record_live_beta_transaction(
+            "availability_intent",
+            actor_member_id=actor,
+            affected={
+                "member_id": member_id,
+                "date": entry["date"],
+                "shift": entry["period"],
+                "seat": None,
+            },
+            before={
+                "availability_value": effective_before_value,
+                "seeded_value": seeded_before_value,
+                "source": "google_calendar_mirror" if seeded_before_value is not None else None,
+                "logic_mode": "mirror_only" if seeded_before_value is not None else None,
+                "availability_seeded": seeded_before_value is not None,
+                "seed_type": "assigned_schedule_to_availability" if seeded_before_value is not None else None,
+                "member_submitted": False if seeded_before_value is not None else None,
+            },
+            after={
+                "availability_value": value,
+                "member_intent": entry["member_intent"],
+                "availability_seeded": False,
+                "member_submitted": True,
+            },
+            source="member_portal",
+        )
         saved.append(meta)
 
     save_availability_payload(full_payload)
@@ -1728,6 +2353,7 @@ def apply_member_profile_update(member, payload):
     preferences = member.setdefault("preferences", {}) if isinstance(member, dict) else {}
     scheduler = member.setdefault("scheduler", {}) if isinstance(member, dict) else {}
     shift_preference = preferences.setdefault("shift_preference", {})
+    today_iso = datetime.now(LOCAL_TZ).date().isoformat()
 
     if "preferred_weekly_hour_cap" in payload:
         value = payload.get("preferred_weekly_hour_cap")
@@ -1748,6 +2374,40 @@ def apply_member_profile_update(member, payload):
         member["rotation"] = {"pair": "AC" if track in {"A", "C"} else "BD", "role": track} if track in {"A", "B", "C", "D"} else None
     if "avoid_with" in payload:
         scheduler["avoid_with"] = [str(value) for value in payload.get("avoid_with", []) if str(value).strip()]
+    if "medical_cert" in payload:
+        medical_cert = canonical_medical_cert(payload.get("medical_cert"))
+        if medical_cert not in MEDICAL_CERT_RANKS:
+            raise ValueError("medical_cert must be NCLD, EMR, EMT, AEMT, or Paramedic")
+        member["medical_cert"] = medical_cert
+        member["medical_cert_rank"] = MEDICAL_CERT_RANKS[medical_cert]
+        member["medical_cert_label"] = MEDICAL_CERT_LABELS[medical_cert]
+        member["ops_cert"] = medical_cert
+        member["cert"] = medical_cert
+        member["ncld_status"] = medical_cert == "NCLD"
+    if "ncld_status" in payload:
+        member["ncld_status"] = bool(payload.get("ncld_status"))
+        if member["ncld_status"]:
+            member["medical_cert"] = "NCLD"
+            member["medical_cert_rank"] = MEDICAL_CERT_RANKS["NCLD"]
+            member["medical_cert_label"] = MEDICAL_CERT_LABELS["NCLD"]
+            member["ops_cert"] = "NCLD"
+            member["cert"] = "NCLD"
+    if "ncld_interest_level" in payload:
+        value = str(payload.get("ncld_interest_level") or "unknown").strip()
+        allowed = {"unknown", "interested", "active_support", "not_interested"}
+        if value not in allowed:
+            raise ValueError("ncld_interest_level must be unknown, interested, active_support, or not_interested")
+        member["ncld_interest_level"] = value
+        member["last_interest_update"] = today_iso
+    if "ncld_notes" in payload:
+        member["ncld_notes"] = str(payload.get("ncld_notes") or "")
+        member["last_interest_update"] = today_iso
+    if "last_interest_update" in payload:
+        raw = str(payload.get("last_interest_update") or "").strip()
+        if raw:
+            datetime.fromisoformat(raw[:10])
+        member["last_interest_update"] = raw or None
+    normalize_member_rotation(member)
 
 
 def member_availability_edit_start_date():
@@ -1781,7 +2441,42 @@ def apply_member_availability_update(member_id, payload):
                 raise ValueError("Availability in the current Thursday cycle is locked for member editing")
             full_payload.setdefault("months", {}).setdefault(month_key, {}).setdefault(member_id, {})
             if isinstance(day_entry, dict):
+                previous_day = dict(full_payload["months"][month_key][member_id].get(date_iso, {}))
                 full_payload["months"][month_key][member_id][date_iso] = day_entry
+                for period, value in day_entry.items():
+                    period_label = str(period or "").strip().upper()
+                    if period_label not in {"AM", "PM"}:
+                        continue
+                    member = member_record_by_id(member_id)
+                    seeded_before_value = None
+                    if previous_day.get(period) is None and member is not None:
+                        seeded_before_value = june_seeded_availability_value(member_id, member, date_iso, period_label)
+                    effective_before_value = previous_day.get(period) if previous_day.get(period) is not None else seeded_before_value
+                    record_live_beta_transaction(
+                        "availability_intent",
+                        actor_member_id=member_id,
+                        affected={
+                            "member_id": member_id,
+                            "date": str(date_iso)[:10],
+                            "shift": period_label,
+                            "seat": None,
+                        },
+                        before={
+                            "availability_value": effective_before_value,
+                            "seeded_value": seeded_before_value,
+                            "source": "google_calendar_mirror" if seeded_before_value is not None else None,
+                            "logic_mode": "mirror_only" if seeded_before_value is not None else None,
+                            "availability_seeded": seeded_before_value is not None,
+                            "seed_type": "assigned_schedule_to_availability" if seeded_before_value is not None else None,
+                            "member_submitted": False if seeded_before_value is not None else None,
+                        },
+                        after={
+                            "availability_value": value,
+                            "availability_seeded": False,
+                            "member_submitted": True,
+                        },
+                        source="member_portal",
+                    )
 
     save_availability_payload(full_payload)
 
@@ -2193,9 +2888,15 @@ def clear_future_availability():
     })
 
 
+@app.route("/api/live_beta/transactions", methods=["GET"])
+@require_role("supervisor")
+def get_live_beta_transactions():
+    return jsonify(load_live_beta_transactions())
+
+
 @app.route("/api/member/context", methods=["GET"])
 def get_member_context():
-    member_id, member, error = resolve_member_request_member()
+    member_id, member, error = resolve_member_read_target()
     if error:
         return error
     settings = load_settings()
@@ -2211,6 +2912,7 @@ def get_member_context():
                 "availability_max_forward_weeks": member_page_settings.get("availability_max_forward_weeks"),
                 "display_horizon": settings.get("display_horizon", DEFAULT_DISPLAY_HORIZON),
             },
+            "rollout": rollout_status_payload(),
             "auth_mode": "quick_test" if quick_test_mode_enabled() else "real_login",
             "quick_test_mode": quick_test_mode_enabled(),
             "selected_member_id": member_id,
@@ -2220,7 +2922,7 @@ def get_member_context():
 
 @app.route("/api/member_dashboard", methods=["GET"])
 def get_member_dashboard():
-    member_id, _, error = resolve_member_request_member()
+    member_id, _, error = resolve_member_read_target()
     if error:
         return error
     dashboard = build_member_dashboard(
@@ -2243,7 +2945,7 @@ def get_member_dashboard():
 
 @app.route("/api/member/timecard", methods=["GET"])
 def api_member_timecard():
-    member_id, _, error = resolve_member_request_member()
+    member_id, _, error = resolve_member_read_target()
     if error:
         return error
     payload = build_member_timecard(
@@ -2406,7 +3108,10 @@ def save_member_profile():
     target = next((member for member in members if str(member.get("member_id", member.get("id"))) == member_id), None)
     if target is None:
         return auth_json_error("Member record not found", 404)
-    apply_member_profile_update(target, payload)
+    try:
+        apply_member_profile_update(target, payload)
+    except (TypeError, ValueError) as exc:
+        return auth_json_error(str(exc), 400)
     save_members_payload(members_payload)
     return jsonify({
         "status": "ok",
@@ -2418,7 +3123,7 @@ def save_member_profile():
 
 @app.route("/api/member/availability", methods=["GET"])
 def get_member_availability():
-    member_id, _, error = resolve_member_request_member()
+    member_id, _, error = resolve_member_read_target()
     if error:
         return error
     return jsonify(extract_member_availability(member_id))
@@ -2815,6 +3520,10 @@ def supervisor_drop_seat():
         return jsonify({"error": "seat_key not found in current schedule"}), 404
 
     state = load_supervisor_state()
+    before_state = {
+        "assigned_member_id": seat_info["assigned_member_id"],
+        "assigned_name": seat_info["assigned_name"],
+    }
     state = upsert_supervisor_entry(
         state,
         {
@@ -2829,6 +3538,14 @@ def supervisor_drop_seat():
     save_live_schedule(schedule_payload)
     save_supervisor_state(state)
     persist_schedule_locked_from_state(schedule_payload, state)
+    record_live_beta_transaction(
+        "drop_request",
+        actor_member_id=current_auth().get("member_id"),
+        affected={k: seat_info[k] for k in ("seat_key", "date", "label", "role", "unit", "seat_index")},
+        before=before_state,
+        after={"state": "DROPPED", "assigned_member_id": None, "assigned_name": None},
+        source="supervisor_action",
+    )
     return jsonify({"status": "ok", "seat_key": seat_key, "state": "DROPPED"})
 
 
@@ -2846,6 +3563,10 @@ def supervisor_open_seat():
         return jsonify({"error": "seat_key not found in current schedule"}), 404
 
     state = load_supervisor_state()
+    before_state = {
+        "assigned_member_id": seat_info["assigned_member_id"],
+        "assigned_name": seat_info["assigned_name"],
+    }
     state = upsert_supervisor_entry(
         state,
         {
@@ -2860,6 +3581,14 @@ def supervisor_open_seat():
     save_live_schedule(schedule_payload)
     save_supervisor_state(state)
     persist_schedule_locked_from_state(schedule_payload, state)
+    record_live_beta_transaction(
+        "open_seat",
+        actor_member_id=current_auth().get("member_id"),
+        affected={k: seat_info[k] for k in ("seat_key", "date", "label", "role", "unit", "seat_index")},
+        before=before_state,
+        after={"state": "OPEN", "assigned_member_id": None, "assigned_name": None},
+        source="supervisor_action",
+    )
     return jsonify({"status": "ok", "seat_key": seat_key, "state": "OPEN"})
 
 
@@ -2889,6 +3618,21 @@ def supervisor_lock_seat():
     )
     save_supervisor_state(state)
     persist_schedule_locked_from_state(schedule_payload, state)
+    record_live_beta_transaction(
+        "lock_seat",
+        actor_member_id=current_auth().get("member_id"),
+        affected={k: seat_info[k] for k in ("seat_key", "date", "label", "role", "unit", "seat_index")},
+        before={
+            "assigned_member_id": seat_info["assigned_member_id"],
+            "assigned_name": seat_info["assigned_name"],
+        },
+        after={
+            "state": "SUPERVISOR_LOCKED",
+            "assigned_member_id": seat_info["assigned_member_id"],
+            "assigned_name": seat_info["assigned_name"],
+        },
+        source="supervisor_action",
+    )
     return jsonify({"status": "ok", "seat_key": seat_key, "state": "SUPERVISOR_LOCKED"})
 
 
@@ -2935,6 +3679,8 @@ def get_bootstrap():
         "shifts": schedule.get("shifts", []) if isinstance(schedule, dict) else [],
         "schedule": schedule,
         "display": normalize_wallboard_display(schedule, members, settings),
+        "rollout": rollout_status_payload(),
+        "live_beta_transactions": load_live_beta_transactions(),
         "generated_at": now_iso(),
     })
 
@@ -2965,6 +3711,7 @@ def get_base44_manifest():
             "bootstrap": {"method": "GET", "path": "/api/bootstrap"},
             "schedule": {"method": "GET", "path": "/api/schedule"},
             "wallboard_display": {"method": "GET", "path": "/api/wallboard_display"},
+            "live_beta_transactions": {"method": "GET", "path": "/api/live_beta/transactions"},
             "schedule_integrity": {"method": "GET", "path": "/api/schedule_integrity"},
             "generate": {"method": "POST", "path": "/api/generate"},
             "members_get": {"method": "GET", "path": "/api/members"},
@@ -3029,6 +3776,27 @@ def health_payload():
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify(health_payload())
+
+
+@app.route("/api/debug/connectivity", methods=["GET"])
+def debug_connectivity():
+    origin = str(request.headers.get("Origin") or "").strip().rstrip("/")
+    return jsonify({
+        **health_payload(),
+        "backend_reachable": True,
+        "public_base_url": current_public_base_url(),
+        "request_origin": origin or None,
+        "request_host_url": str(request.host_url or "").strip().rstrip("/"),
+        "request_host": request.host,
+        "request_forwarded_proto": request.headers.get("X-Forwarded-Proto"),
+        "request_forwarded_host": request.headers.get("X-Forwarded-Host"),
+        "request_remote_addr": request.remote_addr,
+        "allowed_origin_match": allowed_request_origin(),
+        "allowed_origins": SC_ALLOWED_ORIGINS,
+        "allowed_origin_suffixes": list(SC_ALLOWED_ORIGIN_SUFFIXES),
+        "quick_test_mode": quick_test_mode_enabled(),
+        "build_code": BUILD_CODE,
+    })
 
 
 @app.route("/ api / health", methods=["GET"])

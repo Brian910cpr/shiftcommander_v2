@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { CheckCircle2, AlertCircle, AlertTriangle, Truck, ZapOff, Clock, Shield } from 'lucide-react';
-import { getCrewStatusType } from '@/lib/shiftDisplayRules';
+import { AlertCircle, AlertTriangle, Truck, ZapOff } from 'lucide-react';
 
 /**
  * CompactView — list/table view of all shifts.

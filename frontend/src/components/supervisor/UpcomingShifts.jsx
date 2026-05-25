@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
-import { CalendarDays, UserCheck, Truck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, UserCheck, Truck, AlertCircle } from 'lucide-react';
 
 function statusBadge(crewStatus) {
   const s = (crewStatus || '').toLowerCase();

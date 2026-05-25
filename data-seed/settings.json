@@ -1,0 +1,253 @@
+{
+  "day_rules": {
+    "Thu": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    },
+    "Fri": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    },
+    "Sat": {
+      "AM": "ALS",
+      "PM": "ALS"
+    },
+    "Sun": {
+      "AM": "ALS",
+      "PM": "ALS+EMT"
+    },
+    "Mon": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    },
+    "Tue": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    },
+    "Wed": {
+      "AM": "ALS+EMT",
+      "PM": "ALS+EMT"
+    }
+  },
+  "default_unit": "120",
+  "month": "2026-04",
+  "rotation": {
+    "pairs": {
+      "AC": {
+        "cadence_days": 14,
+        "last_flip": "2026-04-01"
+      },
+      "BD": {
+        "cadence_days": 28,
+        "last_flip": "2026-04-01"
+      }
+    },
+    "type": "2-2-3"
+  },
+  "rotation_223": {
+    "cycle_anchor_date": "2026-04-01",
+    "pairs": {
+      "AC": {
+        "flip_anchor_date": "2026-04-01",
+        "flip_every": 14,
+        "flip_unit": "days"
+      },
+      "BD": {
+        "flip_anchor_date": "2026-04-01",
+        "flip_every": 14,
+        "flip_unit": "days"
+      }
+    },
+    "seed_weeks_default": 26
+  },
+  "rules": {
+    "enforce_cert_pairing": true,
+    "rotation_overrides_ot": true,
+    "strict_pairing": true
+  },
+  "resolver_rules": {
+    "interest_window_days": 14,
+    "late_fill_window_days": 14,
+    "interest_cycle_days": 3,
+    "additional_ot_unlock_days": 2,
+    "allow_additional_ot": true,
+    "emt_anchor_window_days": 14,
+    "show_als_appreciated_for_basic_crew": true,
+    "expected_rotation_ot_allowance": 12,
+    "additional_ot_escalation_policy": "late_fill_only",
+    "unset_gets_open_shift_notices": true,
+    "do_not_suppresses_notices": true,
+    "additional_ot_blocked_until_escalation": true,
+    "preserve_published_assignments": true,
+    "preserve_locked_assignments": true,
+    "volunteer_crew_driver_enabled": true,
+    "volunteer_crew_driver_patterns": [
+      "SAT_AM",
+      "SAT_PM",
+      "SUN_AM"
+    ],
+    "volunteer_crew_driver_all_shifts": false,
+    "volunteer_crew_driver_structurally_affixed": false,
+    "duty_crew_patterns": [
+      "SAT_AM",
+      "SAT_PM",
+      "SUN_AM"
+    ],
+    "duty_crew_label": "DUTY CREW",
+    "adr_zipper_enabled": false,
+    "adr_zipper_simulation_only": true,
+    "adr_zipper_allow_24_compression": false
+  },
+  "career_fire_driver": {
+    "enabled": true,
+    "label": "Career Fire Driver",
+    "effective_start": "2026-06-01",
+    "days": [
+      "MO",
+      "TU",
+      "TH"
+    ],
+    "start_time": "08:00",
+    "end_time": "18:00",
+    "normal_shift_start": "06:00",
+    "show_transition_watch": true,
+    "transition_watch_label": "0800 Relief Arrival",
+    "transition_watch_style": "duty_driver_black_small",
+    "counts_as_required_coverage": false,
+    "creates_holdover_assignment": false,
+    "counts_toward_driver_coverage": true,
+    "counts_toward_emt_coverage": true,
+    "counts_as_named_member_assignment": false,
+    "visible_on_wallboard": true
+  },
+  "member_accommodations": {
+    "effective_start_offsets": [
+      {
+        "member_id": "181",
+        "member_name": "Anna Squires",
+        "active": true,
+        "normal_shift_start": "06:00",
+        "effective_start": "08:00",
+        "applies_to_labels": [
+          "AM"
+        ],
+        "watch_label": "0600-0800 Watch",
+        "visible_on_wallboard": true,
+        "counts_as_required_coverage": false,
+        "creates_holdover_assignment": false
+      }
+    ]
+  },
+  "display_horizon": {
+    "mode": "temporary_fixed_until_date",
+    "temporary_fixed_end_date": "2026-06-30",
+    "resume_rolling_after_date": "2026-06-30",
+    "rolling_weeks_default": 5,
+    "admin_rolling_weeks": 5,
+    "enabled": true
+  },
+  "security": {
+    "google_login_required": true,
+    "trusted_device_duration_days": 30,
+    "session_timeout_minutes": 720
+  },
+  "notification_templates": {
+    "open_shift_notice": "Open shift: {{date}} {{shift}} {{seat_type}}",
+    "upcoming_selection_notice": "Selection run coming up: {{date}} {{shift}}",
+    "selection_result": "Selection result: {{date}} {{shift}}",
+    "schedule_published": "Schedule published: {{week}}",
+    "schedule_changed": "Schedule changed: {{date}} {{shift}}",
+    "rotation_opportunity": "Rotation opportunity: {{date}} {{shift}}",
+    "duty_crew_opening": "Duty crew opening: {{date}} {{shift}}"
+  },
+  "staffing_systems": [
+    {
+      "id": "adr_emt_zipper",
+      "label": "ADR EMT Zipper",
+      "active": false,
+      "experimental": true,
+      "description": "Simulation-only EMT continuity option. No built-in EMT OT is authorized by default."
+    },
+    {
+      "id": "standard_12_hour",
+      "label": "12-Hour Standard",
+      "active": true
+    },
+    {
+      "id": "aemt_abcd_rotation",
+      "label": "A/B/C/D AEMT Rotation",
+      "active": true
+    },
+    {
+      "id": "legacy_rotation",
+      "label": "Legacy Rotation",
+      "active": false
+    }
+  ],
+  "rotation_systems": {
+    "aemt_abcd_rotation": {
+      "label": "A/B/C/D AEMT/ALS Rotation",
+      "admin_configurable": true,
+      "slots": [
+        {
+          "slot": "A",
+          "primary_member_id": "180",
+          "board_name": "Sophie",
+          "member_name": "Sophia Williams"
+        },
+        {
+          "slot": "B",
+          "primary_member_id": "186",
+          "board_name": "Lynnsey",
+          "member_name": "Lynnsey Benson"
+        },
+        {
+          "slot": "C",
+          "primary_member_id": "191",
+          "board_name": "Biz",
+          "member_name": "Biz"
+        },
+        {
+          "slot": "D",
+          "primary_member_id": "190",
+          "board_name": "Barbara",
+          "member_name": "Barbara"
+        }
+      ],
+      "expected_rotation_ot_requires_admin_approval": true,
+      "allow_unfilled_slots": true,
+      "scope": "aemt_als_rotation",
+      "coverage_role": "ATTENDANT",
+      "qualification": "ALS",
+      "description": "AEMT/ALS rotation only; EMT, driver-only, EMR, and NCLD members are not included.",
+      "cycle_anchor_date": "2026-06-01",
+      "cycle_anchor_slot": "B",
+      "slot_order": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "shift_length_hours": 24
+    },
+    "emt_zipper": {
+      "label": "EMT Zipper",
+      "admin_configurable": true,
+      "active": false,
+      "experimental": true,
+      "built_in_ot_authorized_by_default": false,
+      "implementation_status": "schema_only"
+    }
+  },
+  "shift_definitions": {
+    "AM": {
+      "hours": 12
+    },
+    "PM": {
+      "hours": 12
+    },
+    "QRV": {
+      "hours": 12
+    }
+  }
+}

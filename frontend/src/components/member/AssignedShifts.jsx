@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { getScheduleData } from '@/lib/scheduleData';
-import { format, parseISO, isToday, isPast } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { CalendarCheck, Clock, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 

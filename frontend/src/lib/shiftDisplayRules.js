@@ -5,13 +5,14 @@
  *
  * CORE SEPARATION (never conflate these):
  *   Seats/functions  : ATTENDANT, DRIVER, (QRV, 3RD_RIDER)
- *   Certifications   : ALS (incl. AEMT/Paramedic normalized), EMT, EMR, NCLD
+ *   Certifications   : NCLD, EMR, EMT, AEMT, Paramedic
  *
  * Rules:
  *   - Driver is a SEAT, not a certification.
  *   - Attendant is a SEAT, not a certification.
  *   - ALS = preferred clinical qualification for the Attendant seat.
  *   - AEMT and Paramedic normalize to ALS for ADR scheduling logic.
+ *   - NCLD is Non-Certified, Licensed Driver: lowest care level / no medical cert.
  *   - EMR/NCLD are driver-only; they must NEVER fill the Attendant seat.
  *   - ALS in Driver is last-resort (wastes scarce ALS coverage).
  *   - EMT + EMT is Covered/Degraded, NOT equivalent to ALS + EMT.
@@ -68,6 +69,16 @@ export const ALS_CERTS = new Set(['ALS', 'AEMT', 'Paramedic', 'aemt', 'paramedic
 
 /** Certifications that are DRIVER-ONLY; must never appear as Attendant. */
 export const DRIVER_ONLY_CERTS = new Set(['NCLD', 'EMR', 'ncld', 'emr']);
+
+export const MEDICAL_CERT_OPTIONS = [
+  { value: 'NCLD', label: 'Non-Certified, Licensed Driver (NCLD)', short: 'NCLD', rank: 0 },
+  { value: 'EMR', label: 'EMR', short: 'EMR', rank: 1 },
+  { value: 'EMT', label: 'EMT', short: 'EMT', rank: 2 },
+  { value: 'AEMT', label: 'AEMT', short: 'AEMT', rank: 3 },
+  { value: 'Paramedic', label: 'Paramedic', short: 'Paramedic', rank: 4 },
+];
+
+export const MEDICAL_CERT_RANK = Object.fromEntries(MEDICAL_CERT_OPTIONS.map(option => [option.value, option.rank]));
 
 export function normalizeCert(cert) {
   if (!cert) return null;

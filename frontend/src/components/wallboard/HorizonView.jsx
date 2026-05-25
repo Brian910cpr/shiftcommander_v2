@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { format, parseISO, startOfWeek, addDays, isToday, isBefore } from 'date-fns';
+import { format, parseISO, startOfWeek, addDays, isToday } from 'date-fns';
 import DayColumn from './DayColumn';
 import { getCrewStatusType } from '@/lib/shiftDisplayRules';
 import { Badge } from '@/components/ui/badge';

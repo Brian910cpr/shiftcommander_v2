@@ -305,7 +305,7 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertNotEqual(date(2026, 6, 1).strftime("%A"), "Thursday")
         self.assertNotEqual(date(2026, 5, 28).strftime("%A"), "Sunday")
 
-    def test_temporary_display_horizon_limits_visible_calendar_only(self):
+    def test_wallboard_uses_six_week_operational_range(self):
         settings = json.loads((ROOT / "data" / "settings.json").read_text(encoding="utf-8"))
         schedule = json.loads((ROOT / "data" / "schedule.json").read_text(encoding="utf-8"))
         member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")
@@ -320,13 +320,16 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertEqual(horizon["admin_rolling_weeks"], 5)
         self.assertTrue(any(str(shift.get("date", "")).startswith("2026-07-") for shift in schedule.get("shifts", [])))
 
-        for page in [member, supervisor, wallboard]:
+        for page in [member, supervisor]:
             self.assertIn("function visibleEndDateIso", page)
             self.assertIn("temporary_fixed_end_date", page)
             self.assertIn("admin_rolling_weeks", page)
         self.assertIn("iso <= endIso", member)
         self.assertIn('String(shift?.date || "").slice(0,10) <= visibleEnd', supervisor)
-        self.assertIn("iso <= visibleEndIso", wallboard)
+        self.assertIn("function operationalVisibleRange", wallboard)
+        self.assertIn("function shiftDateInOperationalRange", wallboard)
+        self.assertIn("function shouldUseCalendarMirrorMode", wallboard)
+        self.assertIn("clampWeekOffset", wallboard)
         self.assertIn("Display Horizon", supervisor)
         self.assertIn("horizonFreezeBtn", supervisor)
         self.assertIn("horizonRollingBtn", supervisor)
@@ -338,20 +341,18 @@ class VisualDoctrineTests(unittest.TestCase):
         self.assertIn("Freeze Through June 30", supervisor)
         self.assertIn("Use Rolling Horizon", supervisor)
         self.assertIn("Save Horizon", supervisor)
-        self.assertIn("Future schedule data remains available for workflows", wallboard)
+        self.assertIn("last week, this week, and four future weeks", wallboard)
         self.assertIn("member_page_settings", (ROOT / "server.py").read_text(encoding="utf-8"))
         self.assertIn('"display_horizon"', (ROOT / "server.py").read_text(encoding="utf-8"))
 
-        def visible_end(today_value, enabled=True, mode="temporary_fixed_until_date", weeks=5):
-            if enabled and mode == "temporary_fixed_until_date" and today_value <= "2026-06-30":
-                return "2026-06-30"
-            return (date.fromisoformat(today_value) + timedelta(days=(weeks * 7) - 1)).isoformat()
+        def visible_range(today_value):
+            current = date.fromisoformat(today_value)
+            start = current - timedelta(days=current.weekday() + 7)
+            end = start + timedelta(days=42)
+            return start.isoformat(), end.isoformat()
 
-        self.assertEqual(visible_end("2026-05-20"), "2026-06-30")
-        self.assertEqual(visible_end("2026-06-30"), "2026-06-30")
-        self.assertEqual(visible_end("2026-07-01"), "2026-08-04")
-        self.assertEqual(visible_end("2026-05-20", enabled=False), "2026-06-23")
-        self.assertEqual(visible_end("2026-05-20", mode="rolling"), "2026-06-23")
+        self.assertEqual(visible_range("2026-06-08"), ("2026-06-01", "2026-07-13"))
+        self.assertEqual(visible_range("2026-05-25"), ("2026-05-18", "2026-06-29"))
 
     def test_member_timecard_week_selector_controls_print_preview(self):
         member = (ROOT / "docs" / "member.html").read_text(encoding="utf-8")

@@ -103,9 +103,8 @@ The exported `base44/` folder is intentionally not copied into this target.
 
 - Google OAuth/JWT/session verification is not implemented.
 - `src/lib/AuthContext.jsx` is a backend-session stub, not production auth.
-- `src/components/mobile/MobileMemberPortal.jsx` still has direct
-  `https://sc-api.adr-fr.org` availability fetches and should be moved through
-  `src/api/client.js` in the first implementation pass.
+- `src/components/mobile/MobileMemberPortal.jsx` availability calls now flow
+  through `src/api/client.js`.
 - `src/components/supervisor/BootstrapStatus.jsx` still displays a hard-coded
   API base fallback string for diagnostics.
 - `package-lock.json` from the Base44 export was not kept; regenerate after

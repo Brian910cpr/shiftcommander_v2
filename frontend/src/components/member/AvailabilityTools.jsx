@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { format, addDays, startOfWeek, parseISO } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
 import { Copy, Trash2, ChevronDown } from 'lucide-react';
 
 const DISPLAY_WEEK_OPTIONS = [2, 4, 8, 12];

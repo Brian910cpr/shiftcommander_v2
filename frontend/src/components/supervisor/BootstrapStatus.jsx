@@ -2,13 +2,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Server, Users, CalendarDays, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-
-const API_BASE = 'https://sc-api.adr-fr.org';
+import { getApiBase } from '@/api/client';
 
 export default function BootstrapStatus({ loading, error, isLive, shifts, members, loadedAt }) {
   const memberCount = members?.length ?? 0;
   const shiftCount = shifts?.length ?? 0;
+  const apiBase = getApiBase();
 
   return (
     <Card className={`border ${error ? 'border-red-500/30 bg-red-500/5' : isLive ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/30 bg-amber-500/5'}`}>
@@ -43,7 +42,7 @@ export default function BootstrapStatus({ loading, error, isLive, shifts, member
           <span className="text-muted-foreground flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5" /> API Base
           </span>
-          <code className="font-mono text-[11px] text-foreground bg-muted px-2 py-0.5 rounded">{API_BASE}</code>
+          <code className="font-mono text-[11px] text-foreground bg-muted px-2 py-0.5 rounded">{apiBase}</code>
         </div>
 
         {/* Row: Bootstrap Loaded */}

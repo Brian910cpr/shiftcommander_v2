@@ -1,10 +1,11 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CalendarDays, Radio, LayoutList, Monitor } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, Radio, LayoutList, Monitor, User } from 'lucide-react';
 import { format as fmtTime } from 'date-fns';
+import { Link } from 'react-router-dom';
 
-export default function WallboardHeader({ dateRange, displayMode, onSetDisplayMode, onPrevWeek, onNextWeek, onToday, stats, isLive, connectionIssue, lastUpdatedAt }) {
+export default function WallboardHeader({ dateRange, displayMode, onSetDisplayMode, onPrevWeek, onNextWeek, onToday, stats, isLive, connectionIssue, lastUpdatedAt, memberReturnPath = '/member' }) {
   return (
     <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
       <div className="max-w-[1800px] mx-auto px-4 py-3">
@@ -17,7 +18,7 @@ export default function WallboardHeader({ dateRange, displayMode, onSetDisplayMo
             <div>
               <h1 className="text-lg font-bold tracking-tight text-foreground">ShiftCommander</h1>
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                Staffing Board · Unit 120
+                Staffing Board
                 {connectionIssue ? (
                   <span className="flex items-center gap-1 font-semibold text-[10px] text-red-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
@@ -75,6 +76,14 @@ export default function WallboardHeader({ dateRange, displayMode, onSetDisplayMo
                 <LayoutList className="w-3.5 h-3.5" />
                 List
               </button>
+              <div className="w-px h-5 bg-border" />
+              <Link
+                to={memberReturnPath}
+                className="h-8 px-3 text-xs font-semibold flex items-center gap-1.5 transition-colors bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent"
+              >
+                <User className="w-3.5 h-3.5" />
+                Member Page
+              </Link>
             </div>
 
             {/* Divider */}

@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "shiftcommander-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-05-25",
+  "workers_dev": true,
+  "vars": {
+    "SC_BUILD_CODE": "worker-local-seed-001",
+    "SC_DATA_MODE": "local_json_seed"
+  }
+}

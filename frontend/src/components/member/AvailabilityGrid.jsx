@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { format, parseISO, addDays, startOfWeek } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { getScheduleData } from '@/lib/scheduleData';
 import { Button } from '@/components/ui/button';
 import { Save, RotateCcw, UserCheck, Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMemberAvailability, saveMemberAvailability } from '@/api/client';
+import { getAvailabilityVisibleRange } from '@/lib/availabilityRange';
 
 const PREF_CYCLE = ['blank', 'prefer', 'available', 'do_not'];
 const PREF_CONFIG = {
@@ -54,7 +55,7 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
   }, [allShifts]);
 
   const dates = useMemo(() => {
-    const start = startOfWeek(addDays(new Date(), 1), { weekStartsOn: 4 });
+    const { start } = getAvailabilityVisibleRange(displayWeeks);
     const result = [];
     for (let i = 0; i < displayWeeks * 7; i++) {
       result.push(format(addDays(start, i), 'yyyy-MM-dd'));

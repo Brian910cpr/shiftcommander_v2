@@ -14,9 +14,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Radio, CalendarCheck, CalendarDays, Info, Settings, Zap, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { saveMemberAvailability } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
+import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
+import { getAvailabilityVisibleRange } from '@/lib/availabilityRange';
 
 // ── Desktop Open Shifts ───────────────────────────────────────────────────────
 import { getScheduleData } from '@/lib/scheduleData';
@@ -26,6 +28,7 @@ import { toast } from 'sonner';
 
 const ALS_CERTS_D = ['ALS', 'AEMT', 'Paramedic'];
 const FIRE_LABELS_D = ['career fire', 'vol fire', 'volunteer fire', 'fire driver'];
+const LIVE_BETA_MEMBER_MESSAGE = 'ShiftCommander is live. The current May/June board reflects the known schedule, but availability, swaps, drops, and pickup requests submitted here are real and will be reported for supervisor review. Please focus especially on entering availability for August and beyond.';
 
 function isFireSeat(seat) {
   if (!seat) return false;
@@ -46,6 +49,7 @@ function DesktopOpenShifts({ member }) {
     const slots = [];
     all.forEach(shift => {
       if (shift.date < today) return;
+      if (!isShiftInOperationalVisibleRange(shift)) return;
       if (shift.attendant?.status === 'OPEN' && canAttend)
         slots.push({ date: shift.date, label: shift.label, role: 'ALS' });
       if (shift.driver?.status === 'OPEN' && canDrive && !isFireSeat(shift.driver))
@@ -138,7 +142,7 @@ function DesktopOpenShifts({ member }) {
 // ── Source week builder ───────────────────────────────────────────────────────
 function buildSourceWeeks(numWeeks = 8) {
   const weeks = [];
-  const start = startOfWeek(new Date(), { weekStartsOn: 4 });
+  const { start } = getAvailabilityVisibleRange(numWeeks);
   for (let i = 0; i < numWeeks; i++) {
     weeks.push(format(addDays(start, i * 7), 'yyyy-MM-dd'));
   }
@@ -187,7 +191,7 @@ function MemberPageContent({
 
   const NavLinks = () => (
     <div className="flex items-center gap-3">
-      <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Wallboard</Link>
+      <Link to="/wallboard?return=/member" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Wallboard</Link>
       {isSupervisorOrAdmin && (
         <Link to="/supervisor" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Supervisor</Link>
       )}
@@ -250,6 +254,11 @@ function MemberPageContent({
                 )}
               </p>
             </div>
+          </div>
+
+          <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-950">
+            <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <p className="text-xs leading-relaxed">{LIVE_BETA_MEMBER_MESSAGE}</p>
           </div>
 
           {/* Supervisor: "View as member" switcher */}

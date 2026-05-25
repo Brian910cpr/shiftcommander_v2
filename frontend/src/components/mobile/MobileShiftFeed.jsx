@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
 import { getCrewStatusType } from '@/lib/shiftDisplayRules';
 import { AlertTriangle, CheckCircle2, Truck, Clock, AlertCircle, ChevronLeft, ChevronRight, CalendarDays, ZapOff } from 'lucide-react';

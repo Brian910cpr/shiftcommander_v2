@@ -1,12 +1,15 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { format, parseISO, addDays, startOfWeek } from 'date-fns';
-import { getScheduleData, getCrewStatusType } from '@/lib/scheduleData';
-import { CalendarCheck, Zap, CalendarDays, User, ArrowLeftRight, ArrowDownUp, Share2, AlertTriangle, Truck, UserCheck, Settings, Loader2, Star, CheckCircle2 } from 'lucide-react';
+import { format, parseISO, addDays } from 'date-fns';
+import { getScheduleData } from '@/lib/scheduleData';
+import { CalendarCheck, Zap, CalendarDays, User, ArrowLeftRight, ArrowDownUp, Share2, AlertTriangle, Truck, UserCheck, Loader2, Star, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AvailabilityTools from '@/components/member/AvailabilityTools';
 import GeneralPreferences from '@/components/member/GeneralPreferences';
+import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
+import { getAvailabilityVisibleRange } from '@/lib/availabilityRange';
+import { getMemberAvailability, saveMemberAvailability } from '@/api/client';
 
-const SC_API = 'https://sc-api.adr-fr.org';
+const LIVE_BETA_MEMBER_MESSAGE = 'ShiftCommander is live. The current May/June board reflects the known schedule, but availability, swaps, drops, and pickup requests submitted here are real and will be reported for supervisor review. Please focus especially on entering availability for August and beyond.';
 
 function entriesToMap(entries) {
   const map = {};
@@ -183,6 +186,7 @@ function OpenShiftsTab({ member, availability, onAvailabilityChange }) {
     const slots = [];
     allShifts.forEach(shift => {
       if (shift.date < today) return; // only future/today
+      if (!isShiftInOperationalVisibleRange(shift)) return;
       if (shift.attendant?.status === 'OPEN' && canAttend) {
         slots.push({ date: shift.date, label: shift.label, role: 'ALS', key: `${shift.date}:${shift.label}` });
       }
@@ -209,20 +213,15 @@ function OpenShiftsTab({ member, availability, onAvailabilityChange }) {
 
     setSubmitting(prev => ({ ...prev, [key]: true }));
     try {
-      const res = await fetch(`${SC_API}/api/member/availability`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          member_id: String(member.id),
-          entries: [{ date: slot.date, period: slot.label, member_intent: newIntent }],
-        }),
-      });
-      if (res.status === 401 || res.status === 403) { toast.error('Not authorized.'); return; }
-      if (!res.ok) { toast.error(`Save failed (HTTP ${res.status})`); return; }
+      await saveMemberAvailability(member.id, [{ date: slot.date, period: slot.label, member_intent: newIntent }]);
       onAvailabilityChange(slot.date, slot.label, newIntent);
       toast.success(newIntent === 'prefer' ? 'Interest submitted.' : 'Interest withdrawn.');
-    } catch {
-      toast.error('Network error — try again.');
+    } catch (err) {
+      if (err?.status === 401 || err?.status === 403) {
+        toast.error('Not authorized.');
+      } else {
+        toast.error(err?.message ? `Save failed (${err.message})` : 'Network error — try again.');
+      }
     } finally {
       setSubmitting(prev => ({ ...prev, [key]: false }));
     }
@@ -325,7 +324,7 @@ function AvailabilityTab({ member, displayWeeks, onDisplayWeeksChange, sourceWee
   }, [allShifts]);
 
   const dates = useMemo(() => {
-    const start = startOfWeek(addDays(new Date(), 1), { weekStartsOn: 4 });
+    const { start } = getAvailabilityVisibleRange(displayWeeks);
     const result = [];
     for (let i = 0; i < displayWeeks * 7; i++) {
       result.push(format(addDays(start, i), 'yyyy-MM-dd'));
@@ -576,9 +575,7 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
   const fetchAvailability = useCallback(async (id) => {
     if (!id) return;
     try {
-      const res = await fetch(`${SC_API}/api/member/availability?member_id=${encodeURIComponent(id)}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await getMemberAvailability(id);
       setServerAvailability(entriesToMap(data.entries));
       setLocalChanges({});
       pendingChangesRef.current = {};
@@ -606,23 +603,16 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
     });
     console.log('[MobileMemberPortal] Saving availability', { member_id: String(memberId), entries });
     try {
-      const res = await fetch(`${SC_API}/api/member/availability`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ member_id: String(memberId), entries }),
-      });
-      if (res.status === 401 || res.status === 403) { toast.error('Not authorized.'); setSaveStatus('failed'); return; }
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        toast.error(body.detail || body.message || `Save failed (HTTP ${res.status})`);
-        setSaveStatus('failed');
-        return;
-      }
+      await saveMemberAvailability(memberId, entries);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(''), 3000);
       await fetchAvailability(memberId);
-    } catch {
-      toast.error('Network error — save failed.');
+    } catch (err) {
+      if (err?.status === 401 || err?.status === 403) {
+        toast.error('Not authorized.');
+      } else {
+        toast.error(err?.message ? `Save failed (${err.message})` : 'Network error — save failed.');
+      }
       setSaveStatus('failed');
     } finally {
       setSaving(false);
@@ -687,6 +677,13 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
         <div>
           <p className="text-sm font-bold text-foreground">{member.name}</p>
           <p className="text-xs text-muted-foreground">{member.cert}{member.canDrive ? ' · Driver' : ''}</p>
+        </div>
+      </div>
+
+      <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 text-amber-950 flex-shrink-0">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <p className="text-[11px] leading-relaxed">{LIVE_BETA_MEMBER_MESSAGE}</p>
         </div>
       </div>
 

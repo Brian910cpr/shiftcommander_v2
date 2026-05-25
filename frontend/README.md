@@ -7,10 +7,10 @@ The exported UI is mostly portable React. Base44 remains in place externally
 for now, but this target removes the long-term Base44 app/runtime dependency
 from the migrated Vite app.
 
-Backend source of truth:
+Local Worker API source of truth:
 
 ```text
-https://sc-api.adr-fr.org
+http://localhost:8787
 ```
 
 Do not move schedule, member, assignment, resolver, or availability ownership

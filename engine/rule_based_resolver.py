@@ -84,7 +84,9 @@ def member_name(member: Dict[str, Any]) -> str:
 
 
 def cert(member: Dict[str, Any]) -> str:
-    raw = upper(member.get("cert") or member.get("ops_cert") or member.get("raw_cert"))
+    raw = upper(member.get("medical_cert") or member.get("cert") or member.get("ops_cert") or member.get("raw_cert"))
+    if member.get("ncld_status") is True or raw == "NCLD":
+        return "NCLD"
     if raw in {"PARAMEDIC", "AEMT", "ALS"}:
         return "AEMT"
     if raw in {"EMT", "EMR", "NCLD"}:
@@ -205,6 +207,8 @@ def is_active(member: Dict[str, Any]) -> bool:
 
 
 def can_attend(member: Dict[str, Any]) -> bool:
+    if member.get("ncld_status") is True or cert(member) == "NCLD":
+        return False
     if member.get("can_attend") is False:
         return False
     return cert(member) in {"AEMT", "EMT"}

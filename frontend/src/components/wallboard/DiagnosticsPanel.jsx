@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
+import { getApiBase } from '@/api/client';
 
 export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, error, diag, lastUpdatedAt }) {
   const [open, setOpen] = useState(false);
@@ -8,6 +9,7 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
   const dates      = (shifts || []).map(s => s.date).sort();
   const dateFrom   = dates[0] || null;
   const dateTo     = dates[dates.length - 1] || null;
+  const apiBase     = getApiBase();
 
   const statusCls = (code) => {
     if (!code) return 'text-muted-foreground';
@@ -32,7 +34,7 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
 
           {/* API status */}
           <Section label="Endpoint Health">
-            <Row label="API base"           value={diag?.api_base || 'https://sc-api.adr-fr.org'} />
+            <Row label="API base"           value={diag?.api_base || apiBase} />
             <Row label="GET /api/health"           value={diag?.health_status    ?? '—'} cls={statusCls(diag?.health_status)} />
             <Row label="GET /api/wallboard_display" value={diag?.wallboard_status ?? '—'} cls={statusCls(diag?.wallboard_status)} />
             <Row label="GET /api/schedule_integrity" value={diag?.integrity_status ?? '—'} cls={statusCls(diag?.integrity_status)} />

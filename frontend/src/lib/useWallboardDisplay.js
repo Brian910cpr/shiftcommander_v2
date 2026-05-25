@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getWallboardDisplay } from '@/api/client';
+import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
 
 const FULL_REFRESH_MS    = 60 * 1000;
 const VERSION_CHECK_MS   = 10 * 1000;
@@ -38,6 +39,10 @@ function writeCache(payload, loadedAt) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify({ payload, loaded_at: loadedAt.toISOString() }));
   } catch {}
+}
+
+function filterVisibleWallboardShifts(shifts) {
+  return (shifts || []).filter(shift => isShiftInOperationalVisibleRange(shift));
 }
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
@@ -89,7 +94,9 @@ export function useWallboardDisplay() {
       wallboard?.shifts ||
       wallboard?.rows ||
       [];
+    const visibleShifts = filterVisibleWallboardShifts(rawShifts);
     console.log('[SC Wallboard] applySuccess — rawShifts count:', rawShifts.length,
+      '| visible count:', visibleShifts.length,
       '| wallboard keys:', wallboard ? Object.keys(wallboard) : 'null');
     const buildMeta = wallboard?.build || null;
     const version   = buildMeta?.updated_at || buildMeta?.version || buildMeta?.build_id || null;
@@ -97,13 +104,13 @@ export function useWallboardDisplay() {
 
     knownVersionRef.current  = version;
     hasLiveDataRef.current   = true;
-    lastGoodStateRef.current = { shifts: rawShifts, integrity: integrityData, meta: buildMeta };
+    lastGoodStateRef.current = { shifts: visibleShifts, integrity: integrityData, meta: buildMeta };
 
-    writeCache({ shifts: rawShifts, integrity: integrityData, meta: buildMeta }, now);
+    writeCache({ shifts: visibleShifts, integrity: integrityData, meta: buildMeta }, now);
 
     setState(prev => ({
       ...prev,
-      shifts:          rawShifts,
+      shifts:          visibleShifts,
       integrity:       integrityData,
       meta:            buildMeta,
       diag:            diagData || null,

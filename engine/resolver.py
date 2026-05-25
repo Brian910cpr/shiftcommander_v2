@@ -180,7 +180,9 @@ def get_member_name(member: Dict[str, Any]) -> str:
 
 
 def get_member_cert(member: Dict[str, Any]) -> str:
-    cert = upper_str(member.get("cert"))
+    if member.get("ncld_status") is True:
+        return "NCLD"
+    cert = upper_str(member.get("medical_cert") or member.get("cert"))
     if cert:
         if cert in {"PARAMEDIC", "AEMT", "ALS"}:
             return "ALS"
@@ -814,11 +816,11 @@ def role_allowed_by_cert(member: Dict[str, Any], shift: Dict[str, Any], seat: Di
     if role == "DRIVER":
         return can_drive_unit(member, get_shift_unit(shift, seat))
     if role == "ATTENDANT":
-        if cert == "NCLD":
+        if cert in {"NCLD", "EMR"}:
             return False
         if seat_requires_als(shift, seat, ctx):
             return cert == "ALS"
-        return cert in {"ALS", "EMT", "EMR"}
+        return cert in {"ALS", "EMT"}
     if role == "3RD_RIDER":
         return cert in {"ALS", "EMT", "EMR", "NCLD"}
     return True

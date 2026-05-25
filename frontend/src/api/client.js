@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = "https://sc-api.adr-fr.org";
+const DEFAULT_API_BASE = "http://localhost:8787";
 
 export function getApiBase() {
   if (typeof window !== "undefined") {
@@ -61,6 +61,10 @@ export function getBootstrap() {
   return apiGet("/bootstrap");
 }
 
+export function getHealth() {
+  return apiGet("/health");
+}
+
 export function getWallboardDisplay() {
   return apiGet("/wallboard_display");
 }
@@ -71,6 +75,19 @@ export function getSchedule() {
 
 export function getMembers() {
   return apiGet("/members");
+}
+
+export function getSettings() {
+  return apiGet("/settings");
+}
+
+export function getAvailability(memberId) {
+  const suffix = memberId ? `?member_id=${encodeURIComponent(memberId)}` : "";
+  return apiGet(`/availability${suffix}`);
+}
+
+export function saveAvailability(payload) {
+  return apiPost("/availability", payload);
 }
 
 export function getMemberAvailability(memberId) {
@@ -86,6 +103,14 @@ export function saveMemberAvailability(memberId, entries) {
 
 export function getMemberDashboard(memberId) {
   return apiGet(`/member_dashboard?member_id=${encodeURIComponent(memberId)}`);
+}
+
+export function getTransactions() {
+  return apiGet("/transactions");
+}
+
+export function createTransaction(payload) {
+  return apiPost("/transactions", payload);
 }
 
 export function getSession() {

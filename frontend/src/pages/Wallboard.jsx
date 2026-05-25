@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { format as fmtTime } from 'date-fns';
-import { Link } from 'react-router-dom';
-import { addDays, subWeeks, format, startOfWeek, endOfWeek, parseISO, differenceInCalendarWeeks } from 'date-fns';
+import { Link, useLocation } from 'react-router-dom';
+import { addDays, format, startOfWeek, endOfWeek, parseISO, differenceInCalendarWeeks } from 'date-fns';
 import { useWallboardDisplay } from '@/lib/useWallboardDisplay';
-import { WALLBOARD_FUTURE_WEEKS, TEMPORARY_WHITEBOARD_VISIBLE_THROUGH } from '@/lib/shiftDisplayRules';
+import { WALLBOARD_FUTURE_WEEKS } from '@/lib/shiftDisplayRules';
+import { getOperationalVisibleRange } from '@/lib/operationalRange';
 import WallboardHeader from '@/components/wallboard/WallboardHeader';
 import WallboardLegend from '@/components/wallboard/WallboardLegend';
 import DiagnosticsPanel from '@/components/wallboard/DiagnosticsPanel';
@@ -13,13 +14,24 @@ import MobileShiftFeed from '@/components/mobile/MobileShiftFeed';
 import HorizonView from '@/components/wallboard/HorizonView';
 import CompactView from '@/components/wallboard/CompactView';
 
-function chunkArray(arr, size) {
-  const chunks = [];
-  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
-  return chunks;
+const MIN_WEEK_OFFSET = -1;
+const MAX_WEEK_OFFSET = WALLBOARD_FUTURE_WEEKS;
+
+function clampWeekOffset(value) {
+  return Math.max(MIN_WEEK_OFFSET, Math.min(MAX_WEEK_OFFSET, value));
+}
+
+function safeReturnPath(search) {
+  const params = new URLSearchParams(search || '');
+  const requested = params.get('return');
+  if (requested && requested.startsWith('/') && !requested.startsWith('//')) {
+    return requested;
+  }
+  return '/member';
 }
 
 export default function Wallboard() {
+  const location = useLocation();
   const [displayMode, setDisplayMode] = useState(() => {
     try { return localStorage.getItem('sc_displayMode') || 'horizon'; } catch { return 'horizon'; }
   });
@@ -32,13 +44,15 @@ export default function Wallboard() {
     lastUpdatedAt, isStale, hasEverLoaded,
   } = useWallboardDisplay();
 
+  const memberReturnPath = useMemo(() => safeReturnPath(location.search), [location.search]);
+
   // Auto-jump to first loaded week if current week is empty
   useEffect(() => {
     if (loading || !allShifts || allShifts.length === 0) return;
 
     const today = format(new Date(), 'yyyy-MM-dd');
-    const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-    const currentWeekEnd = endOfWeek(new Date(), { weekStartsOn: 0 });
+    const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const currentWeekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
     const cwStartStr = format(currentWeekStart, 'yyyy-MM-dd');
     const cwEndStr = format(currentWeekEnd, 'yyyy-MM-dd');
 
@@ -52,12 +66,12 @@ export default function Wallboard() {
       const firstFutureDate = sortedDates.find(d => d >= today) || sortedDates[0];
       if (!firstFutureDate) return;
 
-      const firstShiftWeekStart = startOfWeek(parseISO(firstFutureDate), { weekStartsOn: 0 });
-      const offset = differenceInCalendarWeeks(firstShiftWeekStart, currentWeekStart, { weekStartsOn: 0 });
+      const firstShiftWeekStart = startOfWeek(parseISO(firstFutureDate), { weekStartsOn: 1 });
+      const offset = clampWeekOffset(differenceInCalendarWeeks(firstShiftWeekStart, currentWeekStart, { weekStartsOn: 1 }));
 
       if (offset !== 0) {
         setWeekOffset(offset);
-        const weekEndDate = endOfWeek(firstShiftWeekStart, { weekStartsOn: 0 });
+        const weekEndDate = endOfWeek(firstShiftWeekStart, { weekStartsOn: 1 });
         setAutoJumpNotice(
           `Current week has no loaded schedule data. Showing first loaded schedule week: ${format(firstShiftWeekStart, 'MMM d')} – ${format(weekEndDate, 'MMM d, yyyy')}.`
         );
@@ -68,11 +82,22 @@ export default function Wallboard() {
   // grouped is provided directly by useWallboardDisplay (keyed by date, { am, pm })
   const grouped = rawGrouped;
 
-  // Horizon: infer from loaded shift dates (backend controls what's loaded)
+  const operationalVisibleRange = useMemo(() => getOperationalVisibleRange(), []);
+  const operationalVisibleEndInclusive = useMemo(() => addDays(operationalVisibleRange.end, -1), [operationalVisibleRange]);
+
+  const fullVisibleDays = useMemo(() => {
+    const days = [];
+    for (let cursor = new Date(operationalVisibleRange.start); cursor < operationalVisibleRange.end; cursor = addDays(cursor, 1)) {
+      const d = format(cursor, 'yyyy-MM-dd');
+      days.push(grouped[d] || { date: d, am: null, pm: null });
+    }
+    return days;
+  }, [grouped, operationalVisibleRange]);
+
+  // Horizon is the exclusive six-week wallboard range, not the max loaded schedule date.
   const horizonDate = useMemo(() => {
-    if (!allShifts || allShifts.length === 0) return null;
-    return allShifts.map(s => s.date).sort().at(-1) || null;
-  }, [allShifts]);
+    return format(operationalVisibleEndInclusive, 'yyyy-MM-dd');
+  }, [operationalVisibleEndInclusive]);
   const horizonSource = isLive ? 'backend' : null;
 
   // ── WALLBOARD WINDOW POLICY ─────────────────────────────────────────────
@@ -80,26 +105,10 @@ export default function Wallboard() {
   // weekOffset shifts which week is "selected" for the week-per-screen view.
   // The full window is always whole weeks; data range does NOT drive the window.
   const currentWeekStart = useMemo(() => {
-    const base = startOfWeek(new Date(), { weekStartsOn: 0 });
-    return addDays(base, weekOffset * 7);
+    const base = startOfWeek(new Date(), { weekStartsOn: 1 });
+    return addDays(base, clampWeekOffset(weekOffset) * 7);
   }, [weekOffset]);
-  const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 0 });
-
-  // Wallboard visible window extents (for label only; navigation uses weekOffset)
-  const wallboardWindowStart = useMemo(() => {
-    const thisWeek = startOfWeek(new Date(), { weekStartsOn: 0 });
-    return subWeeks(thisWeek, 1); // always starts from previous week
-  }, []);
-
-  const wallboardWindowEnd = useMemo(() => {
-    const thisWeek = startOfWeek(new Date(), { weekStartsOn: 0 });
-    const normalEnd = endOfWeek(addDays(thisWeek, WALLBOARD_FUTURE_WEEKS * 7), { weekStartsOn: 0 });
-    if (TEMPORARY_WHITEBOARD_VISIBLE_THROUGH) {
-      const tempEnd = endOfWeek(parseISO(TEMPORARY_WHITEBOARD_VISIBLE_THROUGH), { weekStartsOn: 0 });
-      if (tempEnd > normalEnd) return tempEnd;
-    }
-    return normalEnd;
-  }, []);
+  const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
 
   // Full 7-day array for current selected week (always 7 whole days — no partial weeks)
   const weekDaysFull = useMemo(() => {
@@ -114,17 +123,10 @@ export default function Wallboard() {
   // weekDays = same as weekDaysFull (always render whole weeks; no odd strips)
   const weekDays = weekDaysFull;
 
-  // ── HORIZON: from earliest available shift (≥ today) through horizon date ──
-  // If all data is in the future, start from the first shift date rather than today
-  // so the horizon view isn't empty.
+  // ── HORIZON: last week + current week + four future weeks ──
   const horizonDays = useMemo(() => {
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const allDays = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
-    const horizonStart = allDays.length > 0 && allDays[0].date > today
-      ? allDays[0].date  // data starts in future — start from first shift
-      : today;
-    return allDays.filter(d => d.date >= horizonStart && (!horizonDate || d.date <= horizonDate));
-  }, [grouped, horizonDate]);
+    return fullVisibleDays;
+  }, [fullVisibleDays]);
 
   // ── COMPACT: all shift data, sorted ──
   const compactDays = useMemo(() => {
@@ -170,13 +172,8 @@ export default function Wallboard() {
     if (displayMode === 'horizon') {
       if (horizonDays.length === 0) return 'Horizon · no data loaded';
       const firstDate = horizonDays[0].date;
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const startLabel = firstDate > today
-        ? format(parseISO(firstDate), 'MMM d, yyyy')
-        : 'Today';
-      return horizonDate
-        ? `${startLabel} → ${format(parseISO(horizonDate), 'MMM d, yyyy')}`
-        : `${startLabel} → end of schedule`;
+      const lastDate = horizonDate || format(operationalVisibleEndInclusive, 'yyyy-MM-dd');
+      return `${format(parseISO(firstDate), 'MMM d, yyyy')} → ${format(parseISO(lastDate), 'MMM d, yyyy')}`;
     }
     if (displayMode === 'compact') {
       if (compactDays.length === 0) return 'Compact · no data';
@@ -184,25 +181,24 @@ export default function Wallboard() {
       const last = compactDays[compactDays.length - 1].date;
       return `All shifts: ${format(parseISO(first), 'MMM d')} – ${format(parseISO(last), 'MMM d, yyyy')}`;
     }
-    const windowMode = TEMPORARY_WHITEBOARD_VISIBLE_THROUGH ? 'Temporary whiteboard exposure' : `Standard rolling +${WALLBOARD_FUTURE_WEEKS} weeks`;
-    return `Week of ${format(currentWeekStart, 'MMM d')} – ${format(currentWeekEnd, 'MMM d, yyyy')} · ${windowMode}`;
-  }, [displayMode, currentWeekStart, currentWeekEnd, horizonDate, horizonDays, compactDays]);
+    return `Week of ${format(currentWeekStart, 'MMM d')} – ${format(currentWeekEnd, 'MMM d, yyyy')} · Last week + this week + ${WALLBOARD_FUTURE_WEEKS} future weeks`;
+  }, [displayMode, currentWeekStart, currentWeekEnd, horizonDate, horizonDays, compactDays, operationalVisibleEndInclusive]);
 
   const setDisplayModePersisted = (mode) => {
     try { localStorage.setItem('sc_displayMode', mode); } catch {}
     setDisplayMode(mode);
   };
 
-  const handlePrevWeek = () => { setDisplayModePersisted('wallboard'); setWeekOffset(o => o - 1); setAutoJumpNotice(null); };
-  const handleNextWeek = () => { setDisplayModePersisted('wallboard'); setWeekOffset(o => o + 1); setAutoJumpNotice(null); };
+  const handlePrevWeek = () => { setDisplayModePersisted('wallboard'); setWeekOffset(o => clampWeekOffset(o - 1)); setAutoJumpNotice(null); };
+  const handleNextWeek = () => { setDisplayModePersisted('wallboard'); setWeekOffset(o => clampWeekOffset(o + 1)); setAutoJumpNotice(null); };
   const handleToday = () => {
     setDisplayModePersisted('wallboard');
     setWeekOffset(0);
     setAutoJumpNotice(null);
     // Show a notice if today's week has no data
     if (allShifts && allShifts.length > 0) {
-      const cwStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-      const cwEnd = endOfWeek(new Date(), { weekStartsOn: 0 });
+      const cwStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const cwEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
       const hasData = allShifts.some(
         s => s.date >= format(cwStart, 'yyyy-MM-dd') && s.date <= format(cwEnd, 'yyyy-MM-dd')
       );
@@ -241,6 +237,7 @@ export default function Wallboard() {
           isLive={isLive}
           connectionIssue={connectionIssue}
           lastUpdatedAt={lastUpdatedAt}
+          memberReturnPath={memberReturnPath}
         />
         <WallboardLegend />
       </div>
@@ -254,13 +251,13 @@ export default function Wallboard() {
           <div className="flex-1">
             <h1 className="text-base font-bold text-foreground leading-none">ShiftCommander</h1>
             <p className="text-[10px] text-muted-foreground mt-0.5">
-              Unit 120 · Shift Feed
+              Shift Feed
               {connectionIssue ? ' · 🔴 Connection issue' : isLive ? ' · 🟢 Live' : ' · 🟡 Cached'}
               {lastUpdatedAt && !connectionIssue && ` · ${fmtTime(lastUpdatedAt, 'HH:mm:ss')}`}
             </p>
           </div>
           <div className="flex gap-1.5">
-            <Link to="/member" className="px-2.5 py-1.5 rounded-lg bg-secondary text-xs font-semibold text-foreground">
+            <Link to={memberReturnPath} className="px-2.5 py-1.5 rounded-lg bg-secondary text-xs font-semibold text-foreground">
               Portal
             </Link>
           </div>
