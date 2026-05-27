@@ -7,5 +7,13 @@
   "vars": {
     "SC_BUILD_CODE": "worker-local-seed-001",
     "SC_DATA_MODE": "local_json_seed"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "SC_DB",
+      "database_name": "shiftcommander-local-dev",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
 }

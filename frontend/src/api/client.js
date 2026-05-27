@@ -21,6 +21,34 @@ export function apiUrl(path) {
   return `${base}${apiPath(path)}`;
 }
 
+function warnCompatibilityRoute(route, reason) {
+  if (import.meta.env?.DEV) {
+    console.warn(`[ShiftCommander] Compatibility API route used: ${route}${reason ? ` (${reason})` : ""}`);
+  }
+}
+
+function shouldFallbackToCompatibility(error) {
+  if (!error?.status) return true;
+  return error.status === 404 || error.status === 405 || error.status >= 500;
+}
+
+function buildAvailabilityWritePayload(memberId, entries) {
+  const normalizedMemberId = String(memberId);
+  return {
+    operation: "upsert_member_availability",
+    actor_member_id: normalizedMemberId,
+    member_id: normalizedMemberId,
+    entries,
+    source: "frontend",
+    live_beta: true,
+    transactions_live: true,
+    requires_supervisor_review: true,
+    metadata: {
+      compatibility_origin: "saveMemberAvailability"
+    }
+  };
+}
+
 export async function apiFetch(path, options = {}) {
   const response = await fetch(apiUrl(path), {
     credentials: "include",
@@ -66,6 +94,7 @@ export function getHealth() {
 }
 
 export function getWallboardDisplay() {
+  warnCompatibilityRoute("/api/wallboard_display", "wallboard bootstrap fallback");
   return apiGet("/wallboard_display");
 }
 
@@ -91,17 +120,29 @@ export function saveAvailability(payload) {
 }
 
 export function getMemberAvailability(memberId) {
+  warnCompatibilityRoute("/api/member/availability", "availability read fallback");
   return apiGet(`/member/availability?member_id=${encodeURIComponent(memberId)}`);
 }
 
-export function saveMemberAvailability(memberId, entries) {
-  return apiPost("/member/availability", {
-    member_id: String(memberId),
-    entries
-  });
+export async function saveMemberAvailability(memberId, entries) {
+  const canonicalPayload = buildAvailabilityWritePayload(memberId, entries);
+  try {
+    return await apiPost("/availability", canonicalPayload);
+  } catch (error) {
+    if (!shouldFallbackToCompatibility(error)) {
+      throw error;
+    }
+
+    warnCompatibilityRoute("/api/member/availability", "availability write fallback after canonical route failed");
+    return apiPost("/member/availability", {
+      member_id: String(memberId),
+      entries
+    });
+  }
 }
 
 export function getMemberDashboard(memberId) {
+  warnCompatibilityRoute("/api/member_dashboard", "member dashboard compatibility route");
   return apiGet(`/member_dashboard?member_id=${encodeURIComponent(memberId)}`);
 }
 
@@ -114,6 +155,7 @@ export function createTransaction(payload) {
 }
 
 export function getSession() {
+  warnCompatibilityRoute("/api/auth/session", "auth bootstrap fallback");
   return apiGet("/auth/session");
 }
 

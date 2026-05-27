@@ -200,6 +200,13 @@ export function adaptMember(apiMember) {
     id:               apiMember.member_id,
     name:             apiMember.name,
     short_name:       apiMember.short_name || apiMember.callsign || null,
+    email:            apiMember.email || null,
+    google_email:     apiMember.google_email || apiMember.auth?.google_email || null,
+    auth_email:       apiMember.auth_email || apiMember.auth?.email || apiMember.auth?.google_email || null,
+    role:             apiMember.role || apiMember.sc_role || apiMember.auth?.role || null,
+    roles:            apiMember.roles || apiMember.auth?.roles || [],
+    access:           apiMember.access || null,
+    auth:             apiMember.auth || null,
     cert,
     canDrive,
     employment_type:  apiMember.employment?.status || null,
@@ -225,7 +232,8 @@ export function adaptBootstrapResponse(bootstrap) {
   const memberById = {};
   members.forEach(m => { if (m.id) memberById[m.id] = m; });
 
-  const shifts = adaptScheduleResponse(bootstrap?.schedule || {}, memberById);
+  const schedule = bootstrap?.schedule || { shifts: bootstrap?.shifts || [] };
+  const shifts = adaptScheduleResponse(schedule, memberById);
   const placeholderRoster = isPlaceholderRoster(members);
 
   return { shifts, members, placeholderRoster };

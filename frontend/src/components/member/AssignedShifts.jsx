@@ -1,28 +1,27 @@
 import React, { useMemo, useRef, useEffect } from 'react';
-import { getScheduleData } from '@/lib/scheduleData';
 import { format, parseISO } from 'date-fns';
 import { CalendarCheck, Clock, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-export default function AssignedShifts({ memberId, memberName }) {
+export default function AssignedShifts({ memberId, memberName, shifts = [] }) {
   const nextShiftRef = useRef(null);
 
-  const shifts = useMemo(() => {
-    return getScheduleData().filter(s => {
+  const assignedShifts = useMemo(() => {
+    return (shifts || []).filter(s => {
       const att = s.attendant?.name;
       const drv = s.driver?.name;
-      return (att === memberName || drv === memberName);
+      return (att === memberName || drv === memberName || s.attendant?.id === memberId || s.driver?.id === memberId);
     }).sort((a, b) => a.date.localeCompare(b.date) || (a.label === 'AM' ? -1 : 1));
-  }, [memberName]);
+  }, [memberId, memberName, shifts]);
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
   // Find next upcoming shift index
   const nextIdx = useMemo(() => {
-    const idx = shifts.findIndex(s => s.date > today || (s.date === today && s.label === 'AM') || s.date === today);
+    const idx = assignedShifts.findIndex(s => s.date > today || (s.date === today && s.label === 'AM') || s.date === today);
     if (idx !== -1) return idx;
-    return shifts.length - 1; // fall to last past shift
-  }, [shifts, today]);
+    return assignedShifts.length - 1; // fall to last past shift
+  }, [assignedShifts, today]);
 
   // Auto-scroll to next shift on mount / member change
   useEffect(() => {
@@ -31,7 +30,7 @@ export default function AssignedShifts({ memberId, memberName }) {
     }
   }, [memberName]);
 
-  if (shifts.length === 0) {
+  if (assignedShifts.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <CalendarCheck className="w-8 h-8 mx-auto mb-2 opacity-40" />
@@ -42,7 +41,7 @@ export default function AssignedShifts({ memberId, memberName }) {
 
   return (
     <div className="space-y-2">
-      {shifts.map((shift, idx) => {
+      {assignedShifts.map((shift, idx) => {
         const d           = parseISO(shift.date);
         const isAttendant = shift.attendant?.name === memberName;
         const role        = isAttendant ? 'Attendant' : 'Driver';

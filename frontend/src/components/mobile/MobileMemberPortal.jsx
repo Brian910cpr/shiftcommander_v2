@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { format, parseISO, addDays } from 'date-fns';
-import { getScheduleData } from '@/lib/scheduleData';
 import { CalendarCheck, Zap, CalendarDays, User, ArrowLeftRight, ArrowDownUp, Share2, AlertTriangle, Truck, UserCheck, Loader2, Star, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AvailabilityTools from '@/components/member/AvailabilityTools';
@@ -8,18 +7,9 @@ import GeneralPreferences from '@/components/member/GeneralPreferences';
 import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
 import { getAvailabilityVisibleRange } from '@/lib/availabilityRange';
 import { getMemberAvailability, saveMemberAvailability } from '@/api/client';
+import { entriesToAvailabilityMap } from '@/lib/availabilityAdapter';
 
 const LIVE_BETA_MEMBER_MESSAGE = 'ShiftCommander is live. The current May/June board reflects the known schedule, but availability, swaps, drops, and pickup requests submitted here are real and will be reported for supervisor review. Please focus especially on entering availability for August and beyond.';
-
-function entriesToMap(entries) {
-  const map = {};
-  (entries || []).forEach(e => {
-    if (e.date && e.period && e.member_intent) {
-      map[`${e.date}:${e.period}`] = e.member_intent;
-    }
-  });
-  return map;
-}
 
 const ALS_CERTS = ['ALS', 'AEMT', 'Paramedic'];
 // Fire-covered structural labels — these seats must not appear as requestable open driver slots
@@ -33,11 +23,11 @@ function isFireStructural(seat) {
 
 // ─── MY SHIFTS ────────────────────────────────────────────────────────────────
 
-function MyShiftsTab({ memberName }) {
+function MyShiftsTab({ memberName, shifts = [] }) {
   const nextShiftRef = useRef(null);
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const allShifts = useMemo(() => getScheduleData(), []);
+  const allShifts = useMemo(() => shifts || [], [shifts]);
   const myShifts = useMemo(() => {
     return allShifts
       .filter(s => {
@@ -172,11 +162,11 @@ function MyShiftsTab({ memberName }) {
 
 // ─── OPEN SHIFTS ──────────────────────────────────────────────────────────────
 
-function OpenShiftsTab({ member, availability, onAvailabilityChange }) {
+function OpenShiftsTab({ member, availability, onAvailabilityChange, shifts = [] }) {
   const [submitting, setSubmitting] = useState({});
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const allShifts = useMemo(() => getScheduleData(), []);
+  const allShifts = useMemo(() => shifts || [], [shifts]);
 
   const canAttend = ALS_CERTS.includes(member.cert);
   const canDrive  = member.canDrive;
@@ -312,8 +302,8 @@ const PREF_CYCLE = ['blank', 'prefer', 'available', 'do_not'];
 
 const AUTOSAVE_DEBOUNCE_MS = 3000;
 
-function AvailabilityTab({ member, displayWeeks, onDisplayWeeksChange, sourceWeeks, serverAvailability, localChanges, onToggle, onSave, saving, saveStatus }) {
-  const allShifts = useMemo(() => getScheduleData(), []);
+function AvailabilityTab({ member, displayWeeks, onDisplayWeeksChange, sourceWeeks, serverAvailability, localChanges, onToggle, onSave, saving, saveStatus, shifts = [] }) {
+  const allShifts = useMemo(() => shifts || [], [shifts]);
   const shiftsByDate = useMemo(() => {
     const map = {};
     allShifts.forEach(s => {
@@ -561,7 +551,7 @@ const TABS = [
   { id: 'account',      label: 'Account',      icon: User },
 ];
 
-export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplayWeeksChange, sourceWeeks = [] }) {
+export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplayWeeksChange, sourceWeeks = [], shifts = [], initialAvailability = null }) {
   const [activeTab, setActiveTab] = useState('shifts');
 
   // ── Availability state — lifted so OpenShifts + AvailabilityTab share it ──
@@ -576,7 +566,7 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
     if (!id) return;
     try {
       const data = await getMemberAvailability(id);
-      setServerAvailability(entriesToMap(data.entries));
+      setServerAvailability(entriesToAvailabilityMap(data.entries));
       setLocalChanges({});
       pendingChangesRef.current = {};
     } catch (err) {
@@ -590,8 +580,12 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
     pendingChangesRef.current = {};
     setSaveStatus('');
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    if (initialAvailability) {
+      setServerAvailability(initialAvailability);
+      return;
+    }
     fetchAvailability(member?.id);
-  }, [member?.id, fetchAvailability]);
+  }, [member?.id, initialAvailability, fetchAvailability]);
 
   const doSave = useCallback(async (changesToSave, memberId) => {
     if (!memberId || Object.keys(changesToSave).length === 0) return;
@@ -606,7 +600,10 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
       await saveMemberAvailability(memberId, entries);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(''), 3000);
-      await fetchAvailability(memberId);
+      setServerAvailability(prev => ({ ...prev, ...changesToSave }));
+      setLocalChanges({});
+      pendingChangesRef.current = {};
+      if (!initialAvailability) await fetchAvailability(memberId);
     } catch (err) {
       if (err?.status === 401 || err?.status === 403) {
         toast.error('Not authorized.');
@@ -617,7 +614,7 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
     } finally {
       setSaving(false);
     }
-  }, [fetchAvailability]);
+  }, [fetchAvailability, initialAvailability]);
 
   const handleToggle = useCallback((date, period, reset = false) => {
     if (reset) {
@@ -712,13 +709,14 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
         {activeTab === 'shifts' && (
-          <MyShiftsTab memberName={member.name} />
+          <MyShiftsTab memberName={member.name} shifts={shifts} />
         )}
         {activeTab === 'opps' && (
           <OpenShiftsTab
             member={member}
             availability={availability}
             onAvailabilityChange={handleOpenShiftIntentChange}
+            shifts={shifts}
           />
         )}
         {activeTab === 'availability' && (
@@ -733,6 +731,7 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
             onSave={handleManualSave}
             saving={saving}
             saveStatus={saveStatus}
+            shifts={shifts}
           />
         )}
         {activeTab === 'account' && (

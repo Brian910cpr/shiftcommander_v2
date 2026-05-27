@@ -19,9 +19,9 @@ import { saveMemberAvailability } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
 import { getAvailabilityVisibleRange } from '@/lib/availabilityRange';
+import { getMemberAvailabilityMap } from '@/lib/availabilityAdapter';
 
 // ── Desktop Open Shifts ───────────────────────────────────────────────────────
-import { getScheduleData } from '@/lib/scheduleData';
 import { format as fmtDate, parseISO } from 'date-fns';
 import { AlertTriangle, Truck, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -36,7 +36,7 @@ function isFireSeat(seat) {
   return seat.status === 'STRUCTURAL' && FIRE_LABELS_D.some(f => label.includes(f));
 }
 
-function DesktopOpenShifts({ member }) {
+function DesktopOpenShifts({ member, shifts = [] }) {
   const [intents, setIntents]       = useState({});
   const [submitting, setSubmitting] = useState({});
   const today = fmtDate(new Date(), 'yyyy-MM-dd');
@@ -45,7 +45,7 @@ function DesktopOpenShifts({ member }) {
   const canDrive  = member.canDrive;
 
   const openSlots = useMemo(() => {
-    const all   = getScheduleData();
+    const all   = shifts || [];
     const slots = [];
     all.forEach(shift => {
       if (shift.date < today) return;
@@ -62,7 +62,7 @@ function DesktopOpenShifts({ member }) {
       seen.add(k);
       return true;
     }).sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label));
-  }, [member, today]);
+  }, [canAttend, canDrive, shifts, today]);
 
   const getIntent = (date, label) => intents[`${date}:${label}`] || 'blank';
 
@@ -152,7 +152,7 @@ function buildSourceWeeks(numWeeks = 8) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function MemberPage() {
   const { status, currentMember, scRole, isSupervisorOrAdmin, navigateToLogin } = useSCAuth();
-  const { members } = useScheduleData();
+  const { members, shifts, availability } = useScheduleData();
 
   const [displayWeeks, setDisplayWeeks] = useState(8);
   const sourceWeeks = useMemo(() => buildSourceWeeks(displayWeeks), [displayWeeks]);
@@ -176,6 +176,8 @@ export default function MemberPage() {
         displayWeeks={displayWeeks}
         onDisplayWeeksChange={setDisplayWeeks}
         sourceWeeks={sourceWeeks}
+        shifts={shifts}
+        availability={availability}
       />
     </SCIdentityGate>
   );
@@ -185,9 +187,13 @@ export default function MemberPage() {
 function MemberPageContent({
   currentMember, activeMember, scRole, isSupervisorOrAdmin,
   members, viewAsMemberId, onViewAsMemberChange,
-  displayWeeks, onDisplayWeeksChange, sourceWeeks,
+  displayWeeks, onDisplayWeeksChange, sourceWeeks, shifts, availability,
 }) {
   const { logout } = useAuth();
+  const activeAvailability = useMemo(() => {
+    const normalized = getMemberAvailabilityMap(availability, activeMember?.id);
+    return normalized.hasData ? normalized.map : null;
+  }, [availability, activeMember?.id]);
 
   const NavLinks = () => (
     <div className="flex items-center gap-3">
@@ -232,6 +238,8 @@ function MemberPageContent({
           displayWeeks={displayWeeks}
           onDisplayWeeksChange={onDisplayWeeksChange}
           sourceWeeks={sourceWeeks}
+          shifts={shifts}
+          initialAvailability={activeAvailability}
         />
       </div>
 
@@ -309,7 +317,7 @@ function MemberPageContent({
                   <p className="text-xs text-muted-foreground">All scheduled shifts — scroll up for past, down for upcoming.</p>
                 </CardHeader>
                 <CardContent>
-                  <AssignedShifts memberId={activeMember.id} memberName={activeMember.name} />
+                  <AssignedShifts memberId={activeMember.id} memberName={activeMember.name} shifts={shifts} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -321,7 +329,7 @@ function MemberPageContent({
                   <p className="text-xs text-muted-foreground">Request open seats. Saves your intent to the schedule system.</p>
                 </CardHeader>
                 <CardContent>
-                  <DesktopOpenShifts member={activeMember} />
+                  <DesktopOpenShifts member={activeMember} shifts={shifts} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -344,6 +352,8 @@ function MemberPageContent({
                     memberCert={activeMember.cert}
                     memberCanDrive={activeMember.canDrive}
                     displayWeeks={displayWeeks}
+                    shifts={shifts}
+                    initialAvailability={activeAvailability}
                   />
                 </CardContent>
               </Card>

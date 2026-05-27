@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getWallboardDisplay } from '@/api/client';
+import { loadBootstrap } from '@/lib/bootstrapData';
 import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
 
 const FULL_REFRESH_MS    = 60 * 1000;
@@ -138,12 +139,19 @@ export function useWallboardDisplay() {
   // ── Full load ───────────────────────────────────────────────────────────────
   const loadFull = useCallback(async () => {
     try {
-      const data = await getWallboardDisplay();
-      console.log('[SC Wallboard] loadFull response keys:', data ? Object.keys(data) : 'null');
+      const bootstrap = await loadBootstrap();
+      const data = bootstrap?.wallboard_display;
+      console.log('[SC Wallboard] bootstrap wallboard response keys:', data ? Object.keys(data) : 'null');
       applySuccess(data?.wallboard || data, data?.integrity, data?.diag);
     } catch (err) {
-      console.warn('[ShiftCommander] wallboard fetch failed:', err.message);
-      applyFailure(err.message);
+      try {
+        const data = await getWallboardDisplay();
+        console.log('[SC Wallboard] fallback wallboard response keys:', data ? Object.keys(data) : 'null');
+        applySuccess(data?.wallboard || data, data?.integrity, data?.diag);
+      } catch (fallbackErr) {
+        console.warn('[ShiftCommander] wallboard fetch failed:', fallbackErr.message || err.message);
+        applyFailure(fallbackErr.message || err.message);
+      }
     }
   }, [applySuccess, applyFailure]);
 
@@ -151,7 +159,8 @@ export function useWallboardDisplay() {
   const checkVersion = useCallback(async () => {
     if (!hasLiveDataRef.current) return;
     try {
-      const data    = await getWallboardDisplay();
+      const bootstrap = await loadBootstrap();
+      const data    = bootstrap?.wallboard_display;
       const payload = data?.wallboard || data;
       const build   = payload?.build || null;
       const version = build?.updated_at || build?.version || build?.build_id || null;

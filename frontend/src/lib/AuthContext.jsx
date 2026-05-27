@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getSession, logout as backendLogout } from '@/api/client';
+import { loadBootstrap } from '@/lib/bootstrapData';
+import { getBootstrapSession, normalizeSession } from '@/lib/sessionAdapter';
 
 const AuthContext = createContext(null);
 
@@ -13,12 +15,25 @@ export function AuthProvider({ children }) {
     setAuthError(null);
 
     try {
-      const nextSession = await getSession();
+      const bootstrap = await loadBootstrap();
+      const bootstrapSession = getBootstrapSession(bootstrap);
+
+      if (bootstrapSession?.authenticated) {
+        setSession(bootstrapSession);
+        setIsLoadingAuth(false);
+        return bootstrapSession;
+      }
+    } catch (bootstrapError) {
+      console.warn('[ShiftCommander] Bootstrap session unavailable, falling back to /api/auth/session:', bootstrapError.message);
+    }
+
+    try {
+      const nextSession = normalizeSession(await getSession());
       setSession(nextSession);
       return nextSession;
-    } catch (error) {
+    } catch (sessionError) {
       setSession(null);
-      setAuthError(error?.status === 401 ? { type: 'auth_required', error } : null);
+      setAuthError(sessionError?.status === 401 ? { type: 'auth_required', error: sessionError } : null);
       return null;
     } finally {
       setIsLoadingAuth(false);
@@ -48,7 +63,9 @@ export function AuthProvider({ children }) {
     isLoadingAuth,
     isLoadingPublicSettings: false,
     authError,
+    authChecked: !isLoadingAuth,
     refreshSession,
+    checkUserAuth: refreshSession,
     logout,
     signOut: logout,
     navigateToLogin,

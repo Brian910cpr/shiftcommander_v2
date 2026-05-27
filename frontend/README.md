@@ -16,6 +16,13 @@ http://localhost:8787
 Do not move schedule, member, assignment, resolver, or availability ownership
 into the frontend. The frontend should call ShiftCommander backend endpoints.
 
+Startup data now prefers a single `GET /api/bootstrap` request through
+`src/lib/bootstrapData.js`, then normalizes members, schedule, settings,
+availability, transactions, wallboard display, and member dashboard state for
+frontend hooks. Individual API routes remain fallback/read-only compatibility
+routes. Availability writes are intentionally still on the existing member
+availability compatibility endpoint.
+
 Google auth is intentionally not implemented in this prep pass. The replacement
 `AuthContext` only preserves the expected hook shape and points at backend
 session/logout endpoints for later integration.

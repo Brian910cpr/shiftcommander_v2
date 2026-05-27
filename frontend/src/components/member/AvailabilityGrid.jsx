@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { format, parseISO, addDays } from 'date-fns';
-import { getScheduleData } from '@/lib/scheduleData';
 import { Button } from '@/components/ui/button';
 import { Save, RotateCcw, UserCheck, Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMemberAvailability, saveMemberAvailability } from '@/api/client';
 import { getAvailabilityVisibleRange } from '@/lib/availabilityRange';
+import { entriesToAvailabilityMap } from '@/lib/availabilityAdapter';
 
 const PREF_CYCLE = ['blank', 'prefer', 'available', 'do_not'];
 const PREF_CONFIG = {
@@ -25,17 +25,7 @@ function isFireStructural(seat) {
   return seat.status === 'STRUCTURAL' && FIRE_LABELS.some(f => label.includes(f));
 }
 
-function entriesToMap(entries) {
-  const map = {};
-  (entries || []).forEach(e => {
-    if (e.date && e.period && e.member_intent) {
-      map[`${e.date}:${e.period}`] = e.member_intent;
-    }
-  });
-  return map;
-}
-
-export default function AvailabilityGrid({ memberId, memberName, memberCert, memberCanDrive, displayWeeks = 8 }) {
+export default function AvailabilityGrid({ memberId, memberName, memberCert, memberCanDrive, displayWeeks = 8, shifts = [], initialAvailability = null }) {
   const [serverAvailability, setServerAvailability] = useState({});
   const [localChanges, setLocalChanges]             = useState({});
   const [loadingFetch, setLoadingFetch]             = useState(false);
@@ -44,7 +34,7 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
   const autosaveTimerRef  = useRef(null);
   const pendingChangesRef = useRef({});
 
-  const allShifts = useMemo(() => getScheduleData(), []);
+  const allShifts = useMemo(() => shifts || [], [shifts]);
   const shiftsByDate = useMemo(() => {
     const map = {};
     allShifts.forEach(s => {
@@ -69,7 +59,7 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
     setLoadingFetch(true);
     try {
       const data = await getMemberAvailability(id);
-      setServerAvailability(entriesToMap(data.entries));
+      setServerAvailability(entriesToAvailabilityMap(data.entries));
       setLocalChanges({});
       pendingChangesRef.current = {};
     } catch (err) {
@@ -85,8 +75,12 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
     pendingChangesRef.current = {};
     setSaveStatus('');
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    if (initialAvailability) {
+      setServerAvailability(initialAvailability);
+      return;
+    }
     fetchAvailability(memberId);
-  }, [memberId, fetchAvailability]);
+  }, [memberId, initialAvailability, fetchAvailability]);
 
   const availability = useMemo(() => ({ ...serverAvailability, ...localChanges }), [serverAvailability, localChanges]);
   const hasChanges   = Object.keys(localChanges).length > 0;
@@ -106,7 +100,10 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
       await saveMemberAvailability(memberId, entries);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(''), 3000);
-      await fetchAvailability(memberId);
+      setServerAvailability(prev => ({ ...prev, ...changesToSave }));
+      setLocalChanges({});
+      pendingChangesRef.current = {};
+      if (!initialAvailability) await fetchAvailability(memberId);
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
         toast.error('Not authorized.');
@@ -119,7 +116,7 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
     } finally {
       setSaving(false);
     }
-  }, [memberId, fetchAvailability]);
+  }, [memberId, fetchAvailability, initialAvailability]);
 
   const togglePref = (date, period) => {
     const key     = `${date}:${period}`;
