@@ -203,8 +203,9 @@ export function useWallboardDisplay() {
   const grouped = {};
   state.shifts.forEach(s => {
     if (!grouped[s.date]) grouped[s.date] = { date: s.date, am: null, pm: null };
-    if (s.period === 'AM') grouped[s.date].am = s;
-    if (s.period === 'PM') grouped[s.date].pm = s;
+    const period = s.period || s.label;
+    if (period === 'AM') grouped[s.date].am = s;
+    if (period === 'PM') grouped[s.date].pm = s;
   });
 
   // Staleness flag for banner wording

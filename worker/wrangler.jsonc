@@ -9,11 +9,10 @@
     "SC_DATA_MODE": "local_json_seed"
   },
   "d1_databases": [
-    {
-      "binding": "SC_DB",
-      "database_name": "shiftcommander-local-dev",
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
-    }
+{
+  "binding": "DB",
+  "database_name": "adr_fr_scheduler",
+  "database_id": "b8c79e7e-7513-453c-a73b-3cd6871bd146"
+}
   ]
 }

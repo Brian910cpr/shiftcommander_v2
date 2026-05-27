@@ -14,6 +14,7 @@ import OpenSeatsPanel from '@/components/supervisor/OpenSeatsPanel';
 import UpcomingShifts from '@/components/supervisor/UpcomingShifts';
 import HorizonControl from '@/components/supervisor/HorizonControl';
 import CareerFireControl from '@/components/supervisor/CareerFireControl';
+import MemberManagementPanel from '@/components/supervisor/MemberManagementPanel';
 
 export default function Supervisor() {
   const { status, isSupervisorOrAdmin, navigateToLogin } = useSCAuth();
@@ -134,6 +135,9 @@ export default function Supervisor() {
           <HorizonControl settings={settings} onSave={handleSaveSettings} />
           <CareerFireControl settings={settings} onSave={handleSaveSettings} />
         </div>
+
+        {/* ── Member Management ── */}
+        <MemberManagementPanel members={members} loading={loading} />
 
         {/* ── Upcoming Shifts + Open Seats ── */}
         <div className="grid lg:grid-cols-2 gap-4">

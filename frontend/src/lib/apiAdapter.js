@@ -66,6 +66,9 @@ function adaptSeat(seat, seatIndex, memberById = {}) {
     // Normalize structural driver label: "Career Fire Driver" → "Career Fire", etc.
     const displayLabel = getStructuralDriverLabel(rawName) || rawName || openLabel;
     return {
+      id: assignedId || null,
+      assigned: assignedId || null,
+      assigned_name: rawName,
       name: displayLabel,
       status: 'STRUCTURAL',
       cert: seat.cert || null,
@@ -79,6 +82,9 @@ function adaptSeat(seat, seatIndex, memberById = {}) {
 
   if (backendSaysOpen || nameIsPlaceholder) {
     return {
+      id: assignedId || null,
+      assigned: assignedId || null,
+      assigned_name: rawName,
       name: openLabel,
       status: 'OPEN',
       cert: seat.cert || null,
@@ -104,6 +110,9 @@ function adaptSeat(seat, seatIndex, memberById = {}) {
   }
 
   return {
+    id: assignedId || null,
+    assigned: assignedId || null,
+    assigned_name: rawName,
     name: resolvedName,
     status: 'ASSIGNED',
     cert: seat.cert || null,
@@ -209,8 +218,17 @@ export function adaptMember(apiMember) {
     auth:             apiMember.auth || null,
     cert,
     canDrive,
+    phone:            apiMember.phone || null,
+    notes:            apiMember.notes || apiMember.note || null,
+    preferences:      apiMember.preferences || null,
+    qualifications:   apiMember.qualifications || [],
+    qrv_certified:    Boolean(apiMember.qrv_certified),
+    rank:             apiMember.rank || null,
     employment_type:  apiMember.employment?.status || null,
+    employment:       apiMember.employment || null,
     active:           apiMember.active !== false,
+    supervisor:       Boolean(apiMember.access?.supervisor || apiMember.auth?.supervisor_access || (apiMember.roles || []).includes('supervisor') || apiMember.role === 'supervisor'),
+    admin:            Boolean(apiMember.access?.admin || apiMember.auth?.admin_access || (apiMember.roles || []).includes('admin') || apiMember.role === 'admin'),
     isPlaceholder:    isRolePlaceholder(apiMember.name) || isRolePlaceholder(apiMember.member_id),
   };
 }

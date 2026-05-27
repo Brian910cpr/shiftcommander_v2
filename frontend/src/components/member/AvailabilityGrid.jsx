@@ -31,6 +31,7 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
   const [loadingFetch, setLoadingFetch]             = useState(false);
   const [saving, setSaving]                         = useState(false);
   const [saveStatus, setSaveStatus]                 = useState(''); // '' | 'saving' | 'saved' | 'failed'
+  const [saveDetail, setSaveDetail]                 = useState('');
   const autosaveTimerRef  = useRef(null);
   const pendingChangesRef = useRef({});
 
@@ -59,7 +60,8 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
     setLoadingFetch(true);
     try {
       const data = await getMemberAvailability(id);
-      setServerAvailability(entriesToAvailabilityMap(data.entries));
+      const payload = data?.availability || data;
+      setServerAvailability(entriesToAvailabilityMap(payload?.entries));
       setLocalChanges({});
       pendingChangesRef.current = {};
     } catch (err) {
@@ -74,6 +76,7 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
     setLocalChanges({});
     pendingChangesRef.current = {};
     setSaveStatus('');
+    setSaveDetail('');
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     if (initialAvailability) {
       setServerAvailability(initialAvailability);
@@ -97,13 +100,16 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
     });
     console.log('[AvailabilityGrid] Autosave/save', { member_id: String(memberId), entries });
     try {
-      await saveMemberAvailability(memberId, entries);
+      const result = await saveMemberAvailability(memberId, entries);
       setSaveStatus('saved');
+      setSaveDetail(result?.persisted === false ? 'Accepted locally, persistence unavailable' : 'Saved to local D1');
+      toast.success(result?.persisted === false ? 'Availability accepted.' : 'Availability saved.');
       setTimeout(() => setSaveStatus(''), 3000);
+      setTimeout(() => setSaveDetail(''), 5000);
       setServerAvailability(prev => ({ ...prev, ...changesToSave }));
       setLocalChanges({});
       pendingChangesRef.current = {};
-      if (!initialAvailability) await fetchAvailability(memberId);
+      await fetchAvailability(memberId);
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
         toast.error('Not authorized.');
@@ -113,10 +119,11 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
         toast.error(err.message || 'Network error — save failed. Try again.');
       }
       setSaveStatus('failed');
+      setSaveDetail(err.message || 'Save failed');
     } finally {
       setSaving(false);
     }
-  }, [memberId, fetchAvailability, initialAvailability]);
+  }, [memberId, fetchAvailability]);
 
   const togglePref = (date, period) => {
     const key     = `${date}:${period}`;
@@ -220,8 +227,18 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
           const pmFire    = getFireContext(date, 'PM');
           const amShift   = shiftsByDate[date]?.AM;
           const pmShift   = shiftsByDate[date]?.PM;
-          const isSchedAM = memberName && (amShift?.attendant?.name === memberName || amShift?.driver?.name === memberName);
-          const isSchedPM = memberName && (pmShift?.attendant?.name === memberName || pmShift?.driver?.name === memberName);
+          const isSchedAM = memberName && (
+            amShift?.attendant?.name === memberName ||
+            amShift?.driver?.name === memberName ||
+            String(amShift?.attendant?.id || '') === String(memberId) ||
+            String(amShift?.driver?.id || '') === String(memberId)
+          );
+          const isSchedPM = memberName && (
+            pmShift?.attendant?.name === memberName ||
+            pmShift?.driver?.name === memberName ||
+            String(pmShift?.attendant?.id || '') === String(memberId) ||
+            String(pmShift?.driver?.id || '') === String(memberId)
+          );
           const amChanged = localChanges[`${date}:AM`] !== undefined;
           const pmChanged = localChanges[`${date}:PM`] !== undefined;
 
@@ -308,6 +325,9 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
             {saving ? 'Saving…' : 'Save Now'}
           </Button>
         </div>
+      )}
+      {saveDetail && (
+        <p className={`text-xs font-semibold ${statusColor}`}>{saveDetail}</p>
       )}
     </div>
   );
