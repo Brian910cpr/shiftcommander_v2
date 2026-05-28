@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
-import { CalendarDays, UserCheck, Truck, AlertCircle } from 'lucide-react';
+import { CalendarDays, UserCheck, Truck, AlertCircle, Lock, Unlock, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { updateShiftSeatLock } from '@/api/client';
 
 function statusBadge(crewStatus) {
   const s = (crewStatus || '').toLowerCase();
@@ -25,19 +28,104 @@ function dayLabel(dateStr) {
   return format(d, 'EEE MMM d');
 }
 
+function seatLabel(seat, fallback) {
+  return seat?.seat_id || fallback;
+}
+
+function seatWithLocked(seat, locked) {
+  return seat ? { ...seat, locked: Boolean(locked), d1_shift_overlay: true } : seat;
+}
+
 export default function UpcomingShifts({ shifts, loading }) {
+  const [localShifts, setLocalShifts] = useState([]);
+  const [savingSeatId, setSavingSeatId] = useState(null);
+  const [seatSaveState, setSeatSaveState] = useState({});
+
+  useEffect(() => {
+    setLocalShifts(shifts || []);
+  }, [shifts]);
+
   const upcoming = useMemo(() => {
-    if (!shifts?.length) return [];
+    if (!localShifts?.length) return [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return shifts
+    return localShifts
       .filter(s => !isPast(parseISO(s.date)) || isToday(parseISO(s.date)))
       .sort((a, b) => {
         if (a.date !== b.date) return a.date.localeCompare(b.date);
         return a.label.localeCompare(b.label);
       })
       .slice(0, 20);
-  }, [shifts]);
+  }, [localShifts]);
+
+  async function handleToggleLock(shift, seatKey, locked) {
+    const seat = shift?.[seatKey];
+    const seatId = seat?.seat_id;
+    if (!seatId) {
+      toast.error('Seat lock requires a seat_id.');
+      return;
+    }
+
+    setSavingSeatId(seatId);
+    setSeatSaveState((prev) => ({ ...prev, [seatId]: 'saving' }));
+
+    try {
+      const result = await updateShiftSeatLock(seatId, locked);
+      if (!result?.ok || !result?.saved || !result?.persisted) {
+        throw new Error(result?.error || 'Seat lock was not persisted.');
+      }
+
+      setLocalShifts((current) => current.map((row) => {
+        if (row?.[seatKey]?.seat_id !== seatId) return row;
+        return {
+          ...row,
+          [seatKey]: seatWithLocked(row[seatKey], result.locked),
+        };
+      }));
+      setSeatSaveState((prev) => ({ ...prev, [seatId]: 'saved' }));
+      toast.success(result.locked ? 'Seat locked.' : 'Seat unlocked.');
+    } catch (error) {
+      setSeatSaveState((prev) => ({ ...prev, [seatId]: 'error' }));
+      toast.error(error?.message || 'Seat lock save failed.');
+    } finally {
+      setSavingSeatId(null);
+    }
+  }
+
+  function renderLockButton(shift, seatKey, fallback) {
+    const seat = shift?.[seatKey];
+    const seatId = seat?.seat_id;
+    if (!seatId) return null;
+
+    const locked = Boolean(seat.locked);
+    const state = seatSaveState[seatId];
+    const saving = savingSeatId === seatId;
+    const title = `${locked ? 'Unlock' : 'Lock'} ${seatLabel(seat, fallback)}`;
+
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className={`h-7 w-7 ${locked ? 'border-red-500/30 bg-red-500/10 text-red-300' : 'border-border/60 text-muted-foreground'}`}
+          title={title}
+          aria-label={title}
+          disabled={saving}
+          onClick={() => handleToggleLock(shift, seatKey, !locked)}
+        >
+          {saving
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : locked
+              ? <Lock className="h-3.5 w-3.5" />
+              : <Unlock className="h-3.5 w-3.5" />
+          }
+        </Button>
+        {state === 'saved' && <span className="text-[9px] text-emerald-400">Saved</span>}
+        {state === 'error' && <span className="text-[9px] text-red-400">Save failed</span>}
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -112,7 +200,11 @@ export default function UpcomingShifts({ shifts, loading }) {
                     </div>
                   </div>
                   {/* Status badge */}
-                  <div className="flex-shrink-0 ml-2">
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                    <div className="hidden sm:flex items-center gap-1">
+                      {renderLockButton(shift, 'attendant', 'Attendant seat')}
+                      {renderLockButton(shift, 'driver', 'Driver seat')}
+                    </div>
                     {statusBadge(shift.crew_status)}
                   </div>
                 </div>

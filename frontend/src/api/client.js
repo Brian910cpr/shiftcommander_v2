@@ -121,6 +121,14 @@ export function updateMember(memberId, updates) {
   return apiPatch(`/members/${encodeURIComponent(memberId)}`, updates);
 }
 
+export function updateShiftSeatLock(seatId, locked) {
+  return apiPatch(`/shift-seat-overlays/${encodeURIComponent(seatId)}/lock`, {
+    seat_id: String(seatId),
+    locked: Boolean(locked),
+    updated_by: "stub-dev-supervisor"
+  });
+}
+
 export function getSettings() {
   return apiGet("/settings");
 }

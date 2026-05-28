@@ -101,6 +101,21 @@ export function seedSchedulePayload() {
   return cloneScheduleSeed();
 }
 
+export function findSeedSeatById(seatId) {
+  const target = String(seatId || "").trim();
+  if (!target) return null;
+
+  for (const shift of seedSchedulePayload().shifts || []) {
+    for (const seat of shift.seats || []) {
+      if (String(seat?.seat_id || "") === target) {
+        return { shift, seat };
+      }
+    }
+  }
+
+  return null;
+}
+
 export async function loadD1ShiftSeatOverlays(env) {
   const db = getD1(env);
   if (!db) {

@@ -1,6 +1,7 @@
 import {
   availabilityPayload,
   bootstrapPayload,
+  findSeedSeatById,
   localSessionPayload,
   membersPayloadWithOverlays,
   memberDashboardPayload,
@@ -138,6 +139,18 @@ function booleanFromPayload(value) {
   return null;
 }
 
+function requiredBooleanFromPayload(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") {
+    if (value === 1) return true;
+    if (value === 0) return false;
+  }
+  const key = String(value ?? "").trim().toLowerCase();
+  if (["true", "yes", "1", "locked", "lock"].includes(key)) return true;
+  if (["false", "no", "0", "unlocked", "unlock"].includes(key)) return false;
+  return null;
+}
+
 function currentSeedCanDrive(member) {
   if (Array.isArray(member?.qualifications)) return member.qualifications.includes("DRIVER");
   return Object.values(member?.drive || {}).some((value) => value === true);
@@ -268,6 +281,127 @@ async function persistMemberUpdate(request, env, memberIdFromPath = null) {
   );
 }
 
+async function persistSeatLockUpdate(request, env, seatIdFromPath = null) {
+  const db = getD1(env);
+  if (!db) {
+    return jsonResponse(
+      { ...seedMeta(env), ok: false, saved: false, persisted: false, error: "D1 binding unavailable" },
+      { status: 503 },
+      request,
+    );
+  }
+
+  const payload = await readJson(request);
+  if (payload === null) {
+    return jsonResponse({ ok: false, saved: false, error: "Invalid JSON body" }, { status: 400 }, request);
+  }
+
+  const seatId = String(seatIdFromPath || payload.seat_id || "").trim();
+  if (!seatId) {
+    return jsonResponse({ ok: false, saved: false, error: "seat_id is required" }, { status: 400 }, request);
+  }
+
+  const seedMatch = findSeedSeatById(seatId);
+  if (!seedMatch) {
+    return jsonResponse({ ok: false, saved: false, error: "Unknown seat_id", seat_id: seatId }, { status: 404 }, request);
+  }
+
+  const locked = requiredBooleanFromPayload(payload.locked);
+  if (locked === null) {
+    return jsonResponse({ ok: false, saved: false, error: "locked must be boolean-like", seat_id: seatId }, { status: 400 }, request);
+  }
+
+  const now = new Date().toISOString();
+  const updatedBy = String(payload.updated_by || payload.actor_member_id || "stub-dev-supervisor").trim();
+  const seedSeat = seedMatch.seat || {};
+  const seedSupervisorReview = Boolean(seedSeat.supervisor_review) ? 1 : 0;
+
+  try {
+    const existing = await db.prepare(
+      `
+      SELECT assigned_member_id, supervisor_review, open_reason, notes
+      FROM shift_seat_overlays
+      WHERE seat_id = ?
+      LIMIT 1
+      `,
+    ).bind(seatId).first();
+
+    const supervisorReview = existing
+      ? Number(existing.supervisor_review || 0)
+      : seedSupervisorReview;
+    const openReason = existing?.open_reason ?? seedSeat.open_reason ?? null;
+    const notes = payload.notes !== undefined
+      ? String(payload.notes || "")
+      : existing?.notes ?? seedSeat.notes ?? null;
+
+    await db.prepare(
+      `
+      INSERT INTO shift_seat_overlays (
+        seat_id,
+        assigned_member_id,
+        locked,
+        supervisor_review,
+        open_reason,
+        notes,
+        updated_at,
+        updated_by
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(seat_id) DO UPDATE SET
+        locked = excluded.locked,
+        supervisor_review = excluded.supervisor_review,
+        open_reason = excluded.open_reason,
+        notes = excluded.notes,
+        updated_at = excluded.updated_at,
+        updated_by = excluded.updated_by
+      `,
+    )
+      .bind(
+        seatId,
+        existing?.assigned_member_id ?? null,
+        locked ? 1 : 0,
+        supervisorReview,
+        openReason,
+        notes,
+        now,
+        updatedBy || "stub-dev-supervisor",
+      )
+      .run();
+  } catch (error) {
+    return jsonResponse(
+      {
+        ...seedMeta(env),
+        ok: false,
+        saved: false,
+        persisted: false,
+        error: "Seat lock persistence failed",
+        detail: error?.message || String(error),
+        seat_id: seatId,
+      },
+      { status: 500 },
+      request,
+    );
+  }
+
+  return jsonResponse(
+    {
+      ...seedMeta(env),
+      ok: true,
+      saved: true,
+      persisted: true,
+      member_assignment_changed: false,
+      seat_assignment_writes_supported: false,
+      seat_id: seatId,
+      locked,
+      storage: "d1:shift_seat_overlays",
+      updated_at: now,
+      updated_by: updatedBy || "stub-dev-supervisor",
+    },
+    { status: 200 },
+    request,
+  );
+}
+
 async function countD1Rows(db, tableName) {
   if (!db) return { count: 0, available: false, error: "D1 binding unavailable" };
   try {
@@ -321,12 +455,13 @@ async function persistenceStatusPayload(env) {
       worker_reads_d1_shifts: false,
       worker_reads_shift_seat_overlays: shiftSeatOverlays.available,
       seat_assignment_writes_supported: false,
-      lock_writes_supported: false,
+      lock_writes_supported: shiftSeatOverlays.available,
       open_seat_status: "generated_from_seed_schedule",
       notes: [
         "Bootstrap and schedule endpoints currently read shift data from data-seed/schedule.json.",
         "adr_fr_scheduler.shifts exists but is not used by the Worker schedule read path.",
-        "No Worker endpoint currently writes shift seats, assignments, locks, or open-seat status.",
+        "Lock/unlock writes are persisted to shift_seat_overlays by seat_id when that D1 table is available.",
+        "No Worker endpoint currently writes seat assignments or open-seat status.",
       ],
     },
     checks: {
@@ -738,6 +873,15 @@ export default {
 
     if (request.method === "POST" && path === "/api/member/update") {
       return persistMemberUpdate(request, env);
+    }
+
+    if (request.method === "PATCH" && path.startsWith("/api/shift-seat-overlays/") && path.endsWith("/lock")) {
+      const seatId = decodeURIComponent(path.slice("/api/shift-seat-overlays/".length, -"/lock".length));
+      return persistSeatLockUpdate(request, env, seatId);
+    }
+
+    if (request.method === "POST" && path === "/api/shift-seat/lock") {
+      return persistSeatLockUpdate(request, env);
     }
 
     if (request.method === "GET" && path === "/api/schedule") {

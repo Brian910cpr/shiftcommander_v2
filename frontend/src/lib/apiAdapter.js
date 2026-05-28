@@ -48,6 +48,17 @@ export function isRolePlaceholder(value) {
 function adaptSeat(seat, seatIndex, memberById = {}) {
   if (!seat) return null;
 
+  const overlayFields = {
+    seat_id: seat.seat_id || null,
+    locked: Boolean(seat.locked),
+    supervisor_review: Boolean(seat.supervisor_review),
+    open_reason: seat.open_reason || null,
+    notes: seat.notes || null,
+    d1_shift_overlay: Boolean(seat.d1_shift_overlay),
+    d1_shift_overlay_updated_at: seat.d1_shift_overlay_updated_at || null,
+    d1_shift_overlay_updated_by: seat.d1_shift_overlay_updated_by || null,
+  };
+
   const assignedId = seat.assigned;
   const rawName    = seat.assigned_name || null;
 
@@ -66,6 +77,7 @@ function adaptSeat(seat, seatIndex, memberById = {}) {
     // Normalize structural driver label: "Career Fire Driver" → "Career Fire", etc.
     const displayLabel = getStructuralDriverLabel(rawName) || rawName || openLabel;
     return {
+      ...overlayFields,
       id: assignedId || null,
       assigned: assignedId || null,
       assigned_name: rawName,
@@ -82,6 +94,7 @@ function adaptSeat(seat, seatIndex, memberById = {}) {
 
   if (backendSaysOpen || nameIsPlaceholder) {
     return {
+      ...overlayFields,
       id: assignedId || null,
       assigned: assignedId || null,
       assigned_name: rawName,
@@ -101,6 +114,7 @@ function adaptSeat(seat, seatIndex, memberById = {}) {
 
   if (!resolvedName || resolvedName.startsWith('unresolved member:')) {
     return {
+      ...overlayFields,
       name: openLabel,
       status: 'OPEN',
       cert: seat.cert || null,
@@ -110,6 +124,7 @@ function adaptSeat(seat, seatIndex, memberById = {}) {
   }
 
   return {
+    ...overlayFields,
     id: assignedId || null,
     assigned: assignedId || null,
     assigned_name: rawName,

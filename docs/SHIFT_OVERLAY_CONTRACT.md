@@ -4,7 +4,7 @@
 
 ShiftCommander currently treats `data-seed/schedule.json` as the baseline schedule read model. During migration, supervisor changes should be stored as D1 overlays instead of destructively replacing the seed schedule.
 
-This document defines the contract for shift and seat overlays. The Worker read path can merge `shift_seat_overlays` into the seed schedule, but supervisor seat editing remains out of scope.
+This document defines the contract for shift and seat overlays. The Worker read path can merge `shift_seat_overlays` into the seed schedule. Supervisor lock/unlock writes are supported by a narrow Phase 8 endpoint, while assignment editing remains out of scope.
 
 ## Current State
 
@@ -113,7 +113,7 @@ It may be useful later as a coarse shift status table, but it should not drive s
 
 ## Out Of Scope
 
-- Full supervisor seat editing UI.
+- Full supervisor seat assignment editing UI.
 - Real auth and authorization.
 - Destructive replacement of seed schedule data.
-- Supervisor seat write endpoints.
+- Seat assignment or clear-assignment write endpoints.
