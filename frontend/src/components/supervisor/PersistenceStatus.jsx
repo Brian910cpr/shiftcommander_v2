@@ -115,6 +115,12 @@ export default function PersistenceStatus() {
               </div>
 
               <div className="grid gap-2 md:grid-cols-3">
+                <DataPoint label="Overlay contract" value={shiftStatus.shift_overlay_contract || 'not_wired'} />
+                <DataPoint label="Overlay key" value={shiftStatus.shift_overlay_key || 'seat_id'} />
+                <DataPoint label="Rows applied" value={loading ? 'Loading...' : shiftStatus.shift_overlay_rows_applied ?? 0} />
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-3">
                 <DataPoint label="Seat assignment writes" value={shiftStatus.seat_assignment_writes_supported ? 'Wired' : 'Not wired'} />
                 <DataPoint label="Lock writes" value={shiftStatus.lock_writes_supported ? 'Wired' : 'Not wired'} />
                 <DataPoint label="Open-seat status" value={shiftStatus.open_seat_status || 'generated_from_seed_schedule'} />
