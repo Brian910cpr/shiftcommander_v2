@@ -93,12 +93,139 @@ export async function membersPayloadWithOverlays(env) {
   return { members: await membersList(env) };
 }
 
-export function schedulePayload() {
-  return scheduleSeed && typeof scheduleSeed === "object" ? scheduleSeed : { shifts: [] };
+function cloneScheduleSeed() {
+  return JSON.parse(JSON.stringify(scheduleSeed && typeof scheduleSeed === "object" ? scheduleSeed : { shifts: [] }));
 }
 
-export function shiftRows() {
-  return schedulePayload().shifts || [];
+export function seedSchedulePayload() {
+  return cloneScheduleSeed();
+}
+
+export async function loadD1ShiftSeatOverlays(env) {
+  const db = getD1(env);
+  if (!db) {
+    return {
+      rows: [],
+      available: false,
+      error: "D1 binding unavailable",
+    };
+  }
+
+  try {
+    const result = await db.prepare(
+      `
+      SELECT seat_id, assigned_member_id, locked, supervisor_review,
+             open_reason, notes, updated_at, updated_by
+      FROM shift_seat_overlays
+      ORDER BY updated_at DESC
+      `,
+    ).all();
+
+    return {
+      rows: result.results || [],
+      available: true,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      rows: [],
+      available: false,
+      error: error?.message || String(error),
+    };
+  }
+}
+
+function applySeatOverlay(seat, overlay) {
+  const next = { ...seat };
+
+  if (overlay.assigned_member_id !== null && overlay.assigned_member_id !== undefined && String(overlay.assigned_member_id).trim()) {
+    next.assigned = String(overlay.assigned_member_id).trim();
+    next.assignment_status = "ASSIGNED";
+    next.display_open_alert = false;
+  }
+
+  next.locked = Boolean(overlay.locked);
+  next.supervisor_review = Boolean(overlay.supervisor_review);
+
+  if (overlay.open_reason !== null && overlay.open_reason !== undefined) {
+    next.open_reason = String(overlay.open_reason);
+  }
+
+  if (overlay.notes !== null && overlay.notes !== undefined) {
+    next.notes = String(overlay.notes);
+  }
+
+  next.d1_shift_overlay = true;
+  next.d1_shift_overlay_updated_at = overlay.updated_at || null;
+  next.d1_shift_overlay_updated_by = overlay.updated_by || null;
+  return next;
+}
+
+export function applyShiftSeatOverlays(schedule, overlayRows = []) {
+  const overlaysBySeatId = new Map((overlayRows || []).map((row) => [String(row.seat_id || ""), row]));
+  const seenSeatIds = new Set();
+  let applied = 0;
+
+  const shifts = (schedule.shifts || []).map((shift) => {
+    const seats = (shift.seats || []).map((seat) => {
+      const seatId = String(seat?.seat_id || "");
+      if (!seatId) return seat;
+      const overlay = overlaysBySeatId.get(seatId);
+      if (!overlay) return seat;
+      seenSeatIds.add(seatId);
+      applied += 1;
+      return applySeatOverlay(seat, overlay);
+    });
+
+    return {
+      ...shift,
+      seats,
+      d1_shift_overlay_applied: seats.some((seat) => seat?.d1_shift_overlay === true),
+    };
+  });
+
+  const total = overlayRows.length;
+  const ignored = total - seenSeatIds.size;
+
+  return {
+    schedule: {
+      ...schedule,
+      shifts,
+      shift_overlay: {
+        table: "shift_seat_overlays",
+        key: "seat_id",
+        rows_total: total,
+        rows_applied: applied,
+        rows_ignored: ignored,
+      },
+    },
+    stats: {
+      table: "shift_seat_overlays",
+      key: "seat_id",
+      rows_total: total,
+      rows_applied: applied,
+      rows_ignored: ignored,
+    },
+  };
+}
+
+export async function shiftSeatOverlayStats(env) {
+  const overlay = await loadD1ShiftSeatOverlays(env);
+  const merged = applyShiftSeatOverlays(seedSchedulePayload(), overlay.rows);
+  return {
+    available: overlay.available,
+    error: overlay.error,
+    ...merged.stats,
+  };
+}
+
+export async function schedulePayload(env) {
+  const overlay = await loadD1ShiftSeatOverlays(env);
+  return applyShiftSeatOverlays(seedSchedulePayload(), overlay.rows).schedule;
+}
+
+export async function shiftRows(env) {
+  return (await schedulePayload(env)).shifts || [];
 }
 
 export function settingsPayload() {
@@ -435,19 +562,20 @@ export async function availabilityPayload(env, urlOrMemberId) {
   };
 }
 
-export function wallboardDisplayPayload(env) {
+export async function wallboardDisplayPayload(env) {
+  const schedule = await schedulePayload(env);
   return {
     ...seedMeta(env),
     wallboard: {
-      build: schedulePayload().build || {
+      build: schedule.build || {
         source: "data-seed/schedule.json",
         updated_at: new Date().toISOString(),
       },
-      shifts: shiftRows(),
+      shifts: schedule.shifts || [],
     },
-    shifts: shiftRows(),
-    wallboard_shifts: shiftRows(),
-    rows: shiftRows(),
+    shifts: schedule.shifts || [],
+    wallboard_shifts: schedule.shifts || [],
+    rows: schedule.shifts || [],
     integrity: null,
     diag: {
       source: "worker-data-seed",
@@ -471,7 +599,7 @@ export async function memberDashboardPayload(env, urlOrMemberId) {
     ...seedMeta(env),
     member_id: memberId ? String(memberId) : null,
     member: member || null,
-    schedule: schedulePayload(),
+    schedule: await schedulePayload(env),
     availability: await availabilityPayload(env, memberId || undefined),
     transactions: await transactionsPayload(env),
     scaffold: true,
@@ -480,17 +608,19 @@ export async function memberDashboardPayload(env, urlOrMemberId) {
 
 export async function bootstrapPayload(env) {
   const members = await membersList(env);
+  const schedule = await schedulePayload(env);
+  const shifts = schedule.shifts || [];
   return {
     ...seedMeta(env),
     session: localSessionPayload(env),
     members,
-    schedule: schedulePayload(),
+    schedule,
     settings: settingsPayload(),
     availability: await availabilityPayload(env),
     transactions: await transactionsPayload(env),
-    wallboard_display: wallboardDisplayPayload(env),
+    wallboard_display: await wallboardDisplayPayload(env),
     member_dashboard: await memberDashboardPayload(env),
-    shifts: shiftRows(),
+    shifts,
     mirrors: {
       may_2026_whiteboard: mayWhiteboardSeed,
       june_2026_google_calendar: juneMirrorSeed,

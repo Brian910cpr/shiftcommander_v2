@@ -7,6 +7,7 @@ import {
   seedMembersList,
   schedulePayload,
   seedMeta,
+  shiftSeatOverlayStats,
   settingsPayload,
   transactionsPayload,
   wallboardDisplayPayload,
@@ -282,36 +283,43 @@ async function persistenceStatusPayload(env) {
   const availability = await countD1Rows(db, "availability");
   const users = await countD1Rows(db, "users");
   const shifts = await countD1Rows(db, "shifts");
+  const shiftSeatOverlays = await countD1Rows(db, "shift_seat_overlays");
+  const shiftOverlay = await shiftSeatOverlayStats(env);
 
   return {
     ...seedMeta(env),
     backend: "cloudflare_worker",
     availability_persistence: availability.available,
     member_overlay_persistence: users.available,
-    shift_persistence: false,
+    shift_persistence: shiftSeatOverlays.available,
     auth_mode: "stub/dev",
     d1_binding: db ? "DB" : null,
     d1_tables: {
       availability: "availability",
       member_overlays: "users",
       shifts: "shifts",
+      shift_seat_overlays: "shift_seat_overlays",
     },
     row_counts: {
       availability: availability.count,
       users: users.count,
       shifts: shifts.count,
+      shift_seat_overlays: shiftSeatOverlays.count,
     },
     shift_persistence_status: {
       schedule_source: "data-seed/schedule.json",
       d1_table: "shifts",
       d1_table_available: shifts.available,
       d1_row_count: shifts.count,
-      shift_overlay_contract: "documented_not_wired",
+      shift_overlay_contract: shiftSeatOverlays.available ? "wired_read_only" : "documented_not_wired",
+      shift_overlay_table: "shift_seat_overlays",
       shift_overlay_key: "seat_id",
-      shift_overlay_rows_applied: 0,
-      shift_overlay_rows_ignored: shifts.count,
+      shift_overlay_rows_total: shiftOverlay.rows_total || 0,
+      shift_overlay_rows_applied: shiftOverlay.rows_applied || 0,
+      shift_overlay_rows_ignored: shiftOverlay.rows_ignored || 0,
       existing_shifts_table_safe_for_seat_overlays: false,
       worker_reads_d1_shifts: false,
+      worker_reads_shift_seat_overlays: shiftSeatOverlays.available,
       seat_assignment_writes_supported: false,
       lock_writes_supported: false,
       open_seat_status: "generated_from_seed_schedule",
@@ -325,6 +333,7 @@ async function persistenceStatusPayload(env) {
       availability,
       users,
       shifts,
+      shift_seat_overlays: shiftSeatOverlays,
     },
     warnings: [
       "Dev/stub auth only",
@@ -732,7 +741,7 @@ export default {
     }
 
     if (request.method === "GET" && path === "/api/schedule") {
-      return send({ ...seedMeta(env), ...schedulePayload() });
+      return send({ ...seedMeta(env), ...(await schedulePayload(env)) });
     }
 
     if (request.method === "GET" && path === "/api/settings") {
@@ -756,7 +765,7 @@ export default {
     }
 
     if (request.method === "GET" && path === "/api/wallboard_display") {
-      return send(wallboardDisplayPayload(env));
+      return send(await wallboardDisplayPayload(env));
     }
 
     if (request.method === "GET" && path === "/api/member_dashboard") {

@@ -4,7 +4,7 @@
 
 ShiftCommander currently treats `data-seed/schedule.json` as the baseline schedule read model. During migration, supervisor changes should be stored as D1 overlays instead of destructively replacing the seed schedule.
 
-This document defines the proposed contract for shift and seat overlays. It is documentation only; it does not apply a migration or enable supervisor seat editing.
+This document defines the contract for shift and seat overlays. The Worker read path can merge `shift_seat_overlays` into the seed schedule, but supervisor seat editing remains out of scope.
 
 ## Current State
 
@@ -18,6 +18,7 @@ This document defines the proposed contract for shift and seat overlays. It is d
   - `status`
 - The existing `shifts` table is shift-level, not seat-level.
 - The existing `shifts` rows do not match the active seed schedule horizon.
+- `shift_seat_overlays` is the intended seat-level overlay table.
 
 ## Overlay Key
 
@@ -55,26 +56,43 @@ Supported overlay fields should be intentionally narrow:
 6. Preserve all unsupported seed fields exactly as generated.
 7. Never replace the full seed schedule from an overlay table during this migration phase.
 
-## Proposed D1 Shape
+## D1 Shape
 
 ```sql
 CREATE TABLE IF NOT EXISTS shift_seat_overlays (
   seat_id TEXT PRIMARY KEY,
-  shift_date TEXT NOT NULL,
-  shift_label TEXT NOT NULL CHECK (shift_label IN ('AM', 'PM')),
-  unit TEXT,
-  seat_role TEXT,
   assigned_member_id TEXT,
-  locked INTEGER,
-  supervisor_review INTEGER,
+  locked INTEGER NOT NULL DEFAULT 0,
+  supervisor_review INTEGER NOT NULL DEFAULT 0,
   open_reason TEXT,
   notes TEXT,
   updated_at TEXT NOT NULL,
   updated_by TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_shift_seat_overlays_shift
-  ON shift_seat_overlays (shift_date, shift_label, unit);
+CREATE INDEX IF NOT EXISTS idx_shift_seat_overlays_updated_at
+  ON shift_seat_overlays (updated_at);
+```
+
+## Manual Test Overlay
+
+Apply the migration:
+
+```powershell
+cd E:\GitHub\shiftcommander_v2\worker
+npx wrangler d1 migrations apply adr_fr_scheduler --remote
+```
+
+Insert one test overlay for a current seed seat:
+
+```powershell
+npx wrangler d1 execute adr_fr_scheduler --remote --command "INSERT INTO shift_seat_overlays (seat_id, assigned_member_id, locked, supervisor_review, open_reason, notes, updated_at, updated_by) VALUES ('2026-05-18:AM:ATTENDANT:0', NULL, 1, 1, 'Codex shift overlay test', 'Manual read-path proof', datetime('now'), 'codex-dev') ON CONFLICT(seat_id) DO UPDATE SET locked = excluded.locked, supervisor_review = excluded.supervisor_review, open_reason = excluded.open_reason, notes = excluded.notes, updated_at = excluded.updated_at, updated_by = excluded.updated_by;"
+```
+
+Remove the test overlay:
+
+```powershell
+npx wrangler d1 execute adr_fr_scheduler --remote --command "DELETE FROM shift_seat_overlays WHERE seat_id = '2026-05-18:AM:ATTENDANT:0';"
 ```
 
 ## Existing `adr_fr_scheduler.shifts` Decision
@@ -98,4 +116,4 @@ It may be useful later as a coarse shift status table, but it should not drive s
 - Full supervisor seat editing UI.
 - Real auth and authorization.
 - Destructive replacement of seed schedule data.
-- Applying a migration to remote D1.
+- Supervisor seat write endpoints.
