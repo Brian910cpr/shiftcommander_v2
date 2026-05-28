@@ -281,25 +281,45 @@ async function persistenceStatusPayload(env) {
   const db = getD1(env);
   const availability = await countD1Rows(db, "availability");
   const users = await countD1Rows(db, "users");
+  const shifts = await countD1Rows(db, "shifts");
 
   return {
     ...seedMeta(env),
     backend: "cloudflare_worker",
     availability_persistence: availability.available,
     member_overlay_persistence: users.available,
+    shift_persistence: false,
     auth_mode: "stub/dev",
     d1_binding: db ? "DB" : null,
     d1_tables: {
       availability: "availability",
       member_overlays: "users",
+      shifts: "shifts",
     },
     row_counts: {
       availability: availability.count,
       users: users.count,
+      shifts: shifts.count,
+    },
+    shift_persistence_status: {
+      schedule_source: "data-seed/schedule.json",
+      d1_table: "shifts",
+      d1_table_available: shifts.available,
+      d1_row_count: shifts.count,
+      worker_reads_d1_shifts: false,
+      seat_assignment_writes_supported: false,
+      lock_writes_supported: false,
+      open_seat_status: "generated_from_seed_schedule",
+      notes: [
+        "Bootstrap and schedule endpoints currently read shift data from data-seed/schedule.json.",
+        "adr_fr_scheduler.shifts exists but is not used by the Worker schedule read path.",
+        "No Worker endpoint currently writes shift seats, assignments, locks, or open-seat status.",
+      ],
     },
     checks: {
       availability,
       users,
+      shifts,
     },
     warnings: [
       "Dev/stub auth only",

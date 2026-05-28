@@ -51,6 +51,8 @@ export default function PersistenceStatus() {
 
   const availabilityTable = status?.d1_tables?.availability || 'availability';
   const usersTable = status?.d1_tables?.member_overlays || 'users';
+  const shiftStatus = status?.shift_persistence_status || {};
+  const shiftsTable = status?.d1_tables?.shifts || shiftStatus.d1_table || 'shifts';
 
   return (
     <Card>
@@ -93,6 +95,30 @@ export default function PersistenceStatus() {
               <DataPoint label="Availability rows" value={loading ? 'Loading...' : status?.row_counts?.availability ?? 0} />
               <DataPoint label="Member table" value={usersTable} />
               <DataPoint label="Member rows" value={loading ? 'Loading...' : status?.row_counts?.users ?? 0} />
+            </div>
+
+            <div className="rounded-lg border border-border/40 bg-muted/20 p-3 space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Shift Persistence</p>
+                  <p className="text-[10px] text-muted-foreground">Schedule and seat write readiness.</p>
+                </div>
+                <Badge variant="outline" className="w-fit text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20">
+                  Shift edits read-only
+                </Badge>
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-3">
+                <DataPoint label="Schedule source" value={shiftStatus.schedule_source || 'data-seed/schedule.json'} />
+                <DataPoint label="Shift table" value={shiftsTable} />
+                <DataPoint label="Shift rows" value={loading ? 'Loading...' : status?.row_counts?.shifts ?? shiftStatus.d1_row_count ?? 0} />
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-3">
+                <DataPoint label="Seat assignment writes" value={shiftStatus.seat_assignment_writes_supported ? 'Wired' : 'Not wired'} />
+                <DataPoint label="Lock writes" value={shiftStatus.lock_writes_supported ? 'Wired' : 'Not wired'} />
+                <DataPoint label="Open-seat status" value={shiftStatus.open_seat_status || 'generated_from_seed_schedule'} />
+              </div>
             </div>
 
             <div className="grid gap-2 md:grid-cols-3">
