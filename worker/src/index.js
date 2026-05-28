@@ -2,8 +2,9 @@ import {
   availabilityPayload,
   bootstrapPayload,
   localSessionPayload,
+  membersPayloadWithOverlays,
   memberDashboardPayload,
-  membersPayload,
+  seedMembersList,
   schedulePayload,
   seedMeta,
   settingsPayload,
@@ -27,14 +28,14 @@ function corsHeaders(request) {
     "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Credentials": "true",
     "Vary": "Origin",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type,Authorization",
   };
 }
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type,Authorization",
 };
 
@@ -55,6 +56,10 @@ function jsonResponse(payload, init = {}, request = null) {
       ...(init.headers || {}),
     },
   });
+}
+
+function getD1(env) {
+  return env?.SC_DB || env?.DB || null;
 }
 
 function notFound(pathname, request) {
@@ -91,6 +96,13 @@ function metadataForAvailabilityRow(normalized, entry) {
   });
 }
 
+function toSchedulerAvailabilityState(intent) {
+  const key = String(intent || "").trim().toLowerCase();
+  if (key === "blank" || key === "") return "unset";
+  if (key === "do_not") return "no";
+  return key;
+}
+
 function transactionRowId(normalized) {
   if (normalized.idempotency_key) return `transaction:${normalized.idempotency_key}`;
   const randomId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -109,6 +121,193 @@ function toJsonOrNull(value) {
   return value === null || value === undefined ? null : JSON.stringify(value);
 }
 
+function booleanFromPayload(value) {
+  if (typeof value === "boolean") return value;
+  if (Array.isArray(value)) return value.length > 0;
+  const key = String(value || "").trim().toLowerCase();
+  try {
+    const parsed = JSON.parse(key);
+    if (Array.isArray(parsed)) return parsed.length > 0;
+    if (typeof parsed === "boolean") return parsed;
+  } catch {
+    // Fall through to scalar handling.
+  }
+  if (["true", "yes", "1", "driver"].includes(key)) return true;
+  if (["false", "no", "0", "non_driver"].includes(key)) return false;
+  return null;
+}
+
+function currentSeedCanDrive(member) {
+  if (Array.isArray(member?.qualifications)) return member.qualifications.includes("DRIVER");
+  return Object.values(member?.drive || {}).some((value) => value === true);
+}
+
+function d1CanDriveValue(value) {
+  return JSON.stringify(value ? ["DRIVER"] : []);
+}
+
+async function persistMemberUpdate(request, env, memberIdFromPath = null) {
+  const db = getD1(env);
+  if (!db) {
+    return jsonResponse(
+      { ...seedMeta(env), ok: false, saved: false, persisted: false, error: "D1 binding unavailable" },
+      { status: 503 },
+      request,
+    );
+  }
+
+  const payload = await readJson(request);
+  if (payload === null) {
+    return jsonResponse({ ok: false, saved: false, error: "Invalid JSON body" }, { status: 400 }, request);
+  }
+
+  const memberId = String(memberIdFromPath || payload.member_id || payload.id || "").trim();
+  if (!memberId) {
+    return jsonResponse({ ok: false, saved: false, error: "member_id is required" }, { status: 400 }, request);
+  }
+
+  const seedMember = seedMembersList().find((member) => String(member?.member_id || member?.id || "") === memberId);
+  if (!seedMember) {
+    return jsonResponse({ ok: false, saved: false, error: "Unknown member_id", member_id: memberId }, { status: 404 }, request);
+  }
+
+  const existing = await db.prepare("SELECT id, name, role, can_drive, notes FROM users WHERE id = ? LIMIT 1").bind(memberId).first();
+  const updates = payload.updates && typeof payload.updates === "object" ? payload.updates : payload;
+  const allowed = {};
+  const ignoredFields = [];
+
+  for (const key of Object.keys(updates || {})) {
+    if (["role", "can_drive", "notes"].includes(key)) {
+      allowed[key] = updates[key];
+    } else if (!["member_id", "id", "updates"].includes(key)) {
+      ignoredFields.push(key);
+    }
+  }
+
+  if (Object.keys(allowed).length === 0) {
+    return jsonResponse(
+      {
+        ok: false,
+        saved: false,
+        error: "No supported fields supplied",
+        supported_fields: ["role", "can_drive", "notes"],
+        ignored_fields: ignoredFields,
+      },
+      { status: 400 },
+      request,
+    );
+  }
+
+  const role = allowed.role !== undefined
+    ? String(allowed.role || "").trim()
+    : existing?.role || seedMember.role || "member";
+  if (!role) {
+    return jsonResponse({ ok: false, saved: false, error: "role cannot be blank" }, { status: 400 }, request);
+  }
+
+  const canDrive = allowed.can_drive !== undefined
+    ? booleanFromPayload(allowed.can_drive)
+    : existing
+      ? booleanFromPayload(existing.can_drive)
+      : currentSeedCanDrive(seedMember);
+  if (allowed.can_drive !== undefined && canDrive === null) {
+    return jsonResponse({ ok: false, saved: false, error: "can_drive must be boolean-like" }, { status: 400 }, request);
+  }
+
+  const notes = allowed.notes !== undefined ? String(allowed.notes || "") : existing?.notes || seedMember.notes || "";
+  const name = existing?.name || seedMember.name || memberId;
+  const canDriveStored = d1CanDriveValue(Boolean(canDrive));
+
+  try {
+    await db.prepare(
+      `
+      INSERT INTO users (id, name, role, can_drive, notes)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        name = excluded.name,
+        role = excluded.role,
+        can_drive = excluded.can_drive,
+        notes = excluded.notes
+      `,
+    )
+      .bind(memberId, name, role, canDriveStored, notes)
+      .run();
+  } catch (error) {
+    return jsonResponse(
+      {
+        ...seedMeta(env),
+        ok: false,
+        saved: false,
+        persisted: false,
+        error: "Member persistence failed",
+        detail: error?.message || String(error),
+      },
+      { status: 500 },
+      request,
+    );
+  }
+
+  return jsonResponse(
+    {
+      ...seedMeta(env),
+      ok: true,
+      saved: true,
+      persisted: true,
+      member_id: memberId,
+      storage: "d1:users",
+      fields: {
+        role,
+        can_drive: Boolean(canDrive),
+        notes,
+      },
+      ignored_fields: ignoredFields,
+    },
+    { status: 200 },
+    request,
+  );
+}
+
+async function countD1Rows(db, tableName) {
+  if (!db) return { count: 0, available: false, error: "D1 binding unavailable" };
+  try {
+    const row = await db.prepare(`SELECT COUNT(*) AS count FROM ${tableName}`).first();
+    return { count: Number(row?.count || 0), available: true, error: null };
+  } catch (error) {
+    return { count: 0, available: false, error: error?.message || String(error) };
+  }
+}
+
+async function persistenceStatusPayload(env) {
+  const db = getD1(env);
+  const availability = await countD1Rows(db, "availability");
+  const users = await countD1Rows(db, "users");
+
+  return {
+    ...seedMeta(env),
+    backend: "cloudflare_worker",
+    availability_persistence: availability.available,
+    member_overlay_persistence: users.available,
+    auth_mode: "stub/dev",
+    d1_binding: db ? "DB" : null,
+    d1_tables: {
+      availability: "availability",
+      member_overlays: "users",
+    },
+    row_counts: {
+      availability: availability.count,
+      users: users.count,
+    },
+    checks: {
+      availability,
+      users,
+    },
+    warnings: [
+      "Dev/stub auth only",
+      "Persistence counts reflect the D1 database bound to the running Worker.",
+    ],
+  };
+}
+
 function metadataForTransactionRow(normalized) {
   return JSON.stringify({
     ...(normalized.metadata || {}),
@@ -119,12 +318,13 @@ function metadataForTransactionRow(normalized) {
 }
 
 async function persistAvailabilityEntries(env, normalized, now) {
-  if (!env.SC_DB || !normalized?.canonical || !Array.isArray(normalized.entries)) {
+  const db = getD1(env);
+  if (!db || !normalized?.canonical || !Array.isArray(normalized.entries)) {
     return {
       persisted: false,
       upserted_count: 0,
       row_ids: [],
-      storage: env.SC_DB ? "d1_skipped" : "none",
+      storage: db ? "d1_skipped" : "none",
     };
   }
 
@@ -134,52 +334,86 @@ async function persistAvailabilityEntries(env, normalized, now) {
   const requiresSupervisorReview = normalized.requires_supervisor_review !== false ? 1 : 0;
   const rowIds = [];
 
-  for (const entry of normalized.entries) {
-    const rowId = availabilityRowId(normalized.member_id, entry.date, entry.period);
-    rowIds.push(rowId);
-    await env.SC_DB.prepare(
-      `
-      INSERT INTO availability_entries (
-        id,
-        member_id,
-        date,
-        period,
-        member_intent,
-        source,
-        actor_member_id,
-        requires_supervisor_review,
-        live_beta,
-        metadata_json,
-        created_at,
-        updated_at
+  try {
+    for (const entry of normalized.entries) {
+      const rowId = availabilityRowId(normalized.member_id, entry.date, entry.period);
+      rowIds.push(rowId);
+      await db.prepare(
+        `
+        INSERT INTO availability_entries (
+          id,
+          member_id,
+          date,
+          period,
+          member_intent,
+          source,
+          actor_member_id,
+          requires_supervisor_review,
+          live_beta,
+          metadata_json,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(member_id, date, period) DO UPDATE SET
+          id = excluded.id,
+          member_intent = excluded.member_intent,
+          source = excluded.source,
+          actor_member_id = excluded.actor_member_id,
+          requires_supervisor_review = excluded.requires_supervisor_review,
+          live_beta = excluded.live_beta,
+          metadata_json = excluded.metadata_json,
+          updated_at = excluded.updated_at
+        `,
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(member_id, date, period) DO UPDATE SET
-        id = excluded.id,
-        member_intent = excluded.member_intent,
-        source = excluded.source,
-        actor_member_id = excluded.actor_member_id,
-        requires_supervisor_review = excluded.requires_supervisor_review,
-        live_beta = excluded.live_beta,
-        metadata_json = excluded.metadata_json,
-        updated_at = excluded.updated_at
-      `,
-    )
-      .bind(
-        rowId,
-        normalized.member_id,
-        entry.date,
-        entry.period,
-        entry.member_intent,
-        entry.source || source,
-        actorMemberId,
-        requiresSupervisorReview,
-        liveBeta,
-        metadataForAvailabilityRow(normalized, entry),
-        now,
-        now,
+        .bind(
+          rowId,
+          normalized.member_id,
+          entry.date,
+          entry.period,
+          entry.member_intent,
+          entry.source || source,
+          actorMemberId,
+          requiresSupervisorReview,
+          liveBeta,
+          metadataForAvailabilityRow(normalized, entry),
+          now,
+          now,
+        )
+        .run();
+    }
+  } catch (error) {
+    if (!String(error?.message || error).includes("no such table: availability_entries")) {
+      throw error;
+    }
+
+    rowIds.length = 0;
+    for (const entry of normalized.entries) {
+      const rowId = `availability:${normalized.member_id}:${entry.date}:${entry.period}`;
+      rowIds.push(rowId);
+      await db.prepare(
+        `
+        INSERT INTO availability (user_id, date, half, state)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id, date, half) DO UPDATE SET
+          state = excluded.state
+        `,
       )
-      .run();
+        .bind(normalized.member_id, entry.date, entry.period, toSchedulerAvailabilityState(entry.member_intent))
+        .run();
+    }
+
+    devLog("[ShiftCommander Worker] D1 availability upsert via availability table", {
+      row_ids: rowIds,
+      upserted_count: rowIds.length,
+    });
+
+    return {
+      persisted: true,
+      upserted_count: rowIds.length,
+      row_ids: rowIds,
+      storage: "d1:availability",
+    };
   }
 
   devLog("[ShiftCommander Worker] D1 availability upsert", {
@@ -191,7 +425,7 @@ async function persistAvailabilityEntries(env, normalized, now) {
     persisted: true,
     upserted_count: rowIds.length,
     row_ids: rowIds,
-    storage: "d1",
+    storage: "d1:availability_entries",
   };
 }
 
@@ -405,7 +639,11 @@ async function acceptAvailabilityContract(request, env, type, normalize) {
       ...seedMeta(env),
       ok: true,
       status: "accepted",
+      saved: persistence.persisted === true,
       persisted: persistence.persisted,
+      storage: persistence.storage || null,
+      upserted_count: persistence.upserted_count || 0,
+      row_ids: persistence.row_ids || [],
       type,
       normalized,
       transaction: {
@@ -447,12 +685,25 @@ export default {
       });
     }
 
+    if (request.method === "GET" && path === "/api/persistence/status") {
+      return send(await persistenceStatusPayload(env));
+    }
+
     if (request.method === "GET" && path === "/api/bootstrap") {
       return send(await bootstrapPayload(env));
     }
 
     if (request.method === "GET" && path === "/api/members") {
-      return send({ ...seedMeta(env), ...membersPayload() });
+      return send({ ...seedMeta(env), ...(await membersPayloadWithOverlays(env)) });
+    }
+
+    if (request.method === "PATCH" && path.startsWith("/api/members/")) {
+      const memberId = decodeURIComponent(path.slice("/api/members/".length));
+      return persistMemberUpdate(request, env, memberId);
+    }
+
+    if (request.method === "POST" && path === "/api/member/update") {
+      return persistMemberUpdate(request, env);
     }
 
     if (request.method === "GET" && path === "/api/schedule") {

@@ -85,12 +85,23 @@ export function apiPost(path, payload) {
   });
 }
 
+export function apiPatch(path, payload) {
+  return apiFetch(path, {
+    method: "PATCH",
+    body: JSON.stringify(payload || {})
+  });
+}
+
 export function getBootstrap() {
   return apiGet("/bootstrap");
 }
 
 export function getHealth() {
   return apiGet("/health");
+}
+
+export function getPersistenceStatus() {
+  return apiGet("/persistence/status");
 }
 
 export function getWallboardDisplay() {
@@ -104,6 +115,10 @@ export function getSchedule() {
 
 export function getMembers() {
   return apiGet("/members");
+}
+
+export function updateMember(memberId, updates) {
+  return apiPatch(`/members/${encodeURIComponent(memberId)}`, updates);
 }
 
 export function getSettings() {

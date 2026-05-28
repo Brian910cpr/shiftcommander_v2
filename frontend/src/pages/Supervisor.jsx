@@ -15,6 +15,7 @@ import UpcomingShifts from '@/components/supervisor/UpcomingShifts';
 import HorizonControl from '@/components/supervisor/HorizonControl';
 import CareerFireControl from '@/components/supervisor/CareerFireControl';
 import MemberManagementPanel from '@/components/supervisor/MemberManagementPanel';
+import PersistenceStatus from '@/components/supervisor/PersistenceStatus';
 
 export default function Supervisor() {
   const { status, isSupervisorOrAdmin, navigateToLogin } = useSCAuth();
@@ -126,6 +127,9 @@ export default function Supervisor() {
           members={members}
           loadedAt={loadedAt}
         />
+
+        {/* ── Persistence Status ── */}
+        <PersistenceStatus />
 
         {/* ── Staffing Overview ── */}
         <StaffingSummary shifts={shifts} />

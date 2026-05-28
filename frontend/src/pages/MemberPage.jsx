@@ -343,7 +343,7 @@ function MemberPageContent({
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Set Your Availability</CardTitle>
-                  <p className="text-xs text-muted-foreground">Tell us which shifts you prefer, can work, or cannot. Autosaves after 3s.</p>
+                  <p className="text-xs text-muted-foreground">Tell us which shifts you prefer, can work, or cannot. Changes save after 3s when the Worker confirms D1 persistence.</p>
                 </CardHeader>
                 <CardContent>
                   <AvailabilityGrid

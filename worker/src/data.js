@@ -22,8 +22,75 @@ export function membersPayload() {
   return Array.isArray(membersSeed) ? { members: membersSeed } : membersSeed;
 }
 
-export function membersList() {
+export function seedMembersList() {
   return membersPayload().members || [];
+}
+
+function parseCanDrive(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  const raw = String(value || "").trim();
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.length > 0;
+    if (typeof parsed === "boolean") return parsed;
+  } catch {
+    // Fall through to string handling below.
+  }
+  return raw !== "[]" && raw !== "false" && raw !== "0";
+}
+
+function applyMemberOverlay(member, row) {
+  if (!row) return member;
+  const canDrive = parseCanDrive(row.can_drive);
+  const qualifications = Array.isArray(member.qualifications) ? [...member.qualifications] : [];
+  const hasDriver = qualifications.includes("DRIVER");
+  const nextQualifications = canDrive
+    ? hasDriver ? qualifications : [...qualifications, "DRIVER"]
+    : qualifications.filter((item) => item !== "DRIVER");
+
+  return {
+    ...member,
+    role: row.role || member.role || null,
+    notes: row.notes ?? member.notes ?? null,
+    qualifications: nextQualifications,
+    d1_member_overlay: true,
+    d1_member_overlay_fields: {
+      role: row.role || null,
+      can_drive: row.can_drive || null,
+      notes: row.notes ?? null,
+    },
+  };
+}
+
+export async function loadD1MemberOverlays(env) {
+  const db = getD1(env);
+  if (!db) return new Map();
+
+  try {
+    const result = await db.prepare(
+      `
+      SELECT id, name, role, can_drive, notes
+      FROM users
+      ORDER BY id
+      `,
+    ).all();
+    return new Map((result.results || []).map((row) => [String(row.id), row]));
+  } catch {
+    return new Map();
+  }
+}
+
+export async function membersList(env) {
+  const overlays = await loadD1MemberOverlays(env);
+  return seedMembersList().map((member) => {
+    const memberId = String(member?.member_id || member?.id || "");
+    return applyMemberOverlay(member, overlays.get(memberId));
+  });
+}
+
+export async function membersPayloadWithOverlays(env) {
+  return { members: await membersList(env) };
 }
 
 export function schedulePayload() {
@@ -49,6 +116,10 @@ function parseJsonMaybe(value, fallback = null) {
   } catch {
     return fallback;
   }
+}
+
+function getD1(env) {
+  return env?.SC_DB || env?.DB || null;
 }
 
 function transactionFromD1Row(row) {
@@ -152,8 +223,8 @@ function normalizeStoredIntent(value) {
   const key = String(value || "").trim().toLowerCase();
   if (key === "preferred" || key === "prefer") return "prefer";
   if (key === "available") return "available";
-  if (key === "do_not_schedule" || key === "do_not" || key === "not_available") return "do_not";
-  if (key === "blank") return "blank";
+  if (key === "do_not_schedule" || key === "do_not" || key === "not_available" || key === "no") return "do_not";
+  if (key === "blank" || key === "unset") return "blank";
   return key || "blank";
 }
 
@@ -206,8 +277,24 @@ function addAvailabilityRow(payload, row) {
   });
 }
 
+function addLegacyAvailabilityRow(payload, row) {
+  addAvailabilityRow(payload, {
+    member_id: row.user_id,
+    date: row.date,
+    period: row.half,
+    member_intent: row.state,
+    source: "d1:availability",
+    actor_member_id: row.user_id,
+    requires_supervisor_review: 1,
+    live_beta: 1,
+    updated_at: null,
+    metadata_json: null,
+  });
+}
+
 export async function loadD1AvailabilityOverlay(env, memberId = null) {
-  if (!env?.SC_DB) {
+  const db = getD1(env);
+  if (!db) {
     return {
       months: {},
       entries: [],
@@ -218,7 +305,7 @@ export async function loadD1AvailabilityOverlay(env, memberId = null) {
 
   const memberKey = memberId ? String(memberId) : null;
   const statement = memberKey
-    ? env.SC_DB.prepare(
+    ? db.prepare(
         `
         SELECT member_id, date, period, member_intent, source, actor_member_id,
                requires_supervisor_review, live_beta, metadata_json, updated_at
@@ -227,7 +314,7 @@ export async function loadD1AvailabilityOverlay(env, memberId = null) {
         ORDER BY date, period
         `,
       ).bind(memberKey)
-    : env.SC_DB.prepare(
+    : db.prepare(
         `
         SELECT member_id, date, period, member_intent, source, actor_member_id,
                requires_supervisor_review, live_beta, metadata_json, updated_at
@@ -236,13 +323,69 @@ export async function loadD1AvailabilityOverlay(env, memberId = null) {
         `,
       );
 
-  const result = await statement.all();
+  let result;
+  try {
+    result = await statement.all();
+  } catch (error) {
+    if (!String(error?.message || error).includes("no such table: availability_entries")) {
+      return {
+        months: {},
+        entries: [],
+        intent_metadata: {},
+        d1_overlay: false,
+        d1_overlay_count: 0,
+        d1_overlay_error: error?.message || String(error),
+      };
+    }
+
+    const legacyStatement = memberKey
+      ? db.prepare(
+          `
+          SELECT user_id, date, half, state
+          FROM availability
+          WHERE user_id = ?
+          ORDER BY date, half
+          `,
+        ).bind(memberKey)
+      : db.prepare(
+          `
+          SELECT user_id, date, half, state
+          FROM availability
+          ORDER BY user_id, date, half
+          `,
+        );
+
+    try {
+      const legacyResult = await legacyStatement.all();
+      const overlay = {
+        months: {},
+        entries: [],
+        intent_metadata: {},
+        d1_overlay: true,
+        d1_overlay_count: legacyResult.results?.length || 0,
+        d1_overlay_storage: "availability",
+      };
+
+      (legacyResult.results || []).forEach((row) => addLegacyAvailabilityRow(overlay, row));
+      return overlay;
+    } catch (legacyError) {
+      return {
+        months: {},
+        entries: [],
+        intent_metadata: {},
+        d1_overlay: false,
+        d1_overlay_count: 0,
+        d1_overlay_error: legacyError?.message || String(legacyError),
+      };
+    }
+  }
   const overlay = {
     months: {},
     entries: [],
     intent_metadata: {},
     d1_overlay: true,
     d1_overlay_count: result.results?.length || 0,
+    d1_overlay_storage: "availability_entries",
   };
 
   (result.results || []).forEach((row) => addAvailabilityRow(overlay, row));
@@ -322,7 +465,7 @@ export async function memberDashboardPayload(env, urlOrMemberId) {
       ? urlOrMemberId
       : urlOrMemberId?.searchParams?.get("member_id") || urlOrMemberId?.searchParams?.get("selected_member_id");
 
-  const member = membersList().find((row) => String(row?.member_id || row?.id || "") === String(memberId || ""));
+  const member = (await membersList(env)).find((row) => String(row?.member_id || row?.id || "") === String(memberId || ""));
 
   return {
     ...seedMeta(env),
@@ -336,10 +479,11 @@ export async function memberDashboardPayload(env, urlOrMemberId) {
 }
 
 export async function bootstrapPayload(env) {
+  const members = await membersList(env);
   return {
     ...seedMeta(env),
     session: localSessionPayload(env),
-    members: membersList(),
+    members,
     schedule: schedulePayload(),
     settings: settingsPayload(),
     availability: await availabilityPayload(env),
@@ -356,8 +500,8 @@ export async function bootstrapPayload(env) {
 
 export function localSessionPayload(env) {
   const preferred =
-    membersList().find((member) => String(member?.name || "").toLowerCase().includes("brian ennis")) ||
-    membersList().find((member) => member?.active !== false) ||
+    seedMembersList().find((member) => String(member?.name || "").toLowerCase().includes("brian ennis")) ||
+    seedMembersList().find((member) => member?.active !== false) ||
     null;
 
   return {

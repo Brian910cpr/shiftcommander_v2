@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AlertCircle, Search, Save, SlidersHorizontal, UserCog } from 'lucide-react';
+import { AlertCircle, Loader2, Search, Save, SlidersHorizontal, UserCog } from 'lucide-react';
+import { updateMember } from '@/api/client';
 
 const ALL = 'all';
 
@@ -45,25 +46,65 @@ function memberSearchText(member) {
 }
 
 function EditableMemberRow({ member }) {
+  const [savedFields, setSavedFields] = useState({
+    role: member.role || '',
+    canDrive: member.canDrive ? 'yes' : 'no',
+    notes: member.notes || '',
+  });
   const [draft, setDraft] = useState({
     role: member.role || '',
-    cert: member.cert || '',
-    active: member.active ? 'active' : 'inactive',
     canDrive: member.canDrive ? 'yes' : 'no',
-    supervisor: member.supervisor ? 'yes' : 'no',
-    admin: member.admin ? 'yes' : 'no',
+    notes: member.notes || '',
   });
+  const [saveStatus, setSaveStatus] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
 
-  const dirty = Object.entries(draft).some(([key, value]) => {
-    if (key === 'active') return value !== (member.active ? 'active' : 'inactive');
-    if (key === 'canDrive') return value !== (member.canDrive ? 'yes' : 'no');
-    if (key === 'supervisor') return value !== (member.supervisor ? 'yes' : 'no');
-    if (key === 'admin') return value !== (member.admin ? 'yes' : 'no');
-    return value !== String(member[key] || '');
-  });
+  useEffect(() => {
+    const next = {
+      role: member.role || '',
+      canDrive: member.canDrive ? 'yes' : 'no',
+      notes: member.notes || '',
+    };
+    setSavedFields(next);
+    setDraft(next);
+    setSaveStatus('');
+    setSaveMessage('');
+  }, [member]);
+
+  const dirty = Object.entries(draft).some(([key, value]) => value !== savedFields[key]);
+  const saving = saveStatus === 'saving';
+
+  const handleSave = async () => {
+    if (!dirty || saving) return;
+    setSaveStatus('saving');
+    setSaveMessage('');
+
+    try {
+      const result = await updateMember(member.id, {
+        role: draft.role,
+        can_drive: draft.canDrive === 'yes',
+        notes: draft.notes,
+      });
+      if (result?.saved !== true || result?.persisted !== true) {
+        setSaveStatus('failed');
+        setSaveMessage(result?.error || 'Worker did not confirm persistence.');
+        return;
+      }
+      setSavedFields(draft);
+      setSaveStatus('saved');
+      setSaveMessage('Saved');
+      setTimeout(() => {
+        setSaveStatus('');
+        setSaveMessage('');
+      }, 3000);
+    } catch (error) {
+      setSaveStatus('failed');
+      setSaveMessage(error?.message || 'Save failed');
+    }
+  };
 
   return (
-    <div className="grid grid-cols-[minmax(190px,1.4fr)_repeat(5,minmax(104px,0.75fr))_minmax(130px,0.8fr)] gap-2 items-center px-3 py-2 rounded-lg border border-border/30 bg-background/60">
+    <div className="grid grid-cols-[minmax(190px,1.2fr)_minmax(100px,0.55fr)_minmax(104px,0.55fr)_minmax(180px,1fr)_minmax(190px,0.9fr)_minmax(130px,0.7fr)] gap-2 items-center px-3 py-2 rounded-lg border border-border/30 bg-background/60">
       <div className="min-w-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-semibold text-sm text-foreground truncate">{member.name}</span>
@@ -85,13 +126,6 @@ function EditableMemberRow({ member }) {
         className="h-8 text-xs"
         placeholder="Role"
       />
-      <Input
-        value={draft.cert}
-        onChange={(event) => setDraft(prev => ({ ...prev, cert: event.target.value }))}
-        className="h-8 text-xs"
-        placeholder="Cert"
-      />
-
       <Select value={draft.canDrive} onValueChange={(value) => setDraft(prev => ({ ...prev, canDrive: value }))}>
         <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
         <SelectContent>
@@ -100,35 +134,37 @@ function EditableMemberRow({ member }) {
         </SelectContent>
       </Select>
 
-      <Select value={draft.active} onValueChange={(value) => setDraft(prev => ({ ...prev, active: value }))}>
-        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="active">Active</SelectItem>
-          <SelectItem value="inactive">Inactive</SelectItem>
-        </SelectContent>
-      </Select>
+      <Input
+        value={draft.notes}
+        onChange={(event) => setDraft(prev => ({ ...prev, notes: event.target.value }))}
+        className="h-8 text-xs"
+        placeholder="Notes"
+      />
 
-      <div className="grid grid-cols-2 gap-1">
-        <Select value={draft.supervisor} onValueChange={(value) => setDraft(prev => ({ ...prev, supervisor: value }))}>
-          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="yes">Sup</SelectItem>
-            <SelectItem value="no">No sup</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={draft.admin} onValueChange={(value) => setDraft(prev => ({ ...prev, admin: value }))}>
-          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="yes">Admin</SelectItem>
-            <SelectItem value="no">No admin</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
+        <Badge variant="outline" className="text-[9px]">Cert: {member.cert || 'n/a'}</Badge>
+        <Badge variant="outline" className="text-[9px]">{member.active ? 'Active' : 'Inactive'}</Badge>
+        {member.supervisor && <Badge variant="outline" className="text-[9px]">Supervisor</Badge>}
+        {member.admin && <Badge variant="outline" className="text-[9px]">Admin</Badge>}
       </div>
 
-      <Button disabled size="sm" variant="outline" className="h-8 text-[10px]" title="No member persistence endpoint is wired yet.">
-        <Save className="w-3 h-3" />
-        {dirty ? 'Local only' : 'No save'}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          disabled={!dirty || saving}
+          size="sm"
+          variant={dirty ? 'default' : 'outline'}
+          className="h-8 text-[10px]"
+          onClick={handleSave}
+        >
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          {saving ? 'Saving' : saveStatus === 'saved' ? 'Saved' : saveStatus === 'failed' ? 'Retry' : 'Save'}
+        </Button>
+        {saveMessage && (
+          <span className={`text-[10px] font-semibold ${saveStatus === 'failed' ? 'text-red-400' : 'text-emerald-400'}`}>
+            {saveMessage}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -171,11 +207,11 @@ export default function MemberManagementPanel({ members = [], loading = false })
               Member Management
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Review bootstrap member data. Edits stay local until member persistence is wired.
+              Persist supported member overlays to D1. Unsupported fields remain read-only.
             </p>
           </div>
-          <Badge variant="outline" className="w-fit text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20">
-            Persistence not wired yet
+          <Badge variant="outline" className="w-fit text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+            D1 member overlays
           </Badge>
         </div>
       </CardHeader>
@@ -241,7 +277,7 @@ export default function MemberManagementPanel({ members = [], loading = false })
             <SlidersHorizontal className="w-3 h-3" />
             Showing {filteredMembers.length} of {members.length} members
           </span>
-          <span>Save buttons are disabled until a member write endpoint exists.</span>
+          <span>Persists role, driver eligibility, and notes. Cert/status/access are read-only.</span>
         </div>
 
         {loading ? (

@@ -566,7 +566,8 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
     if (!id) return;
     try {
       const data = await getMemberAvailability(id);
-      setServerAvailability(entriesToAvailabilityMap(data.entries));
+      const payload = data?.availability || data;
+      setServerAvailability(entriesToAvailabilityMap(payload?.entries));
       setLocalChanges({});
       pendingChangesRef.current = {};
     } catch (err) {
@@ -597,13 +598,19 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
     });
     console.log('[MobileMemberPortal] Saving availability', { member_id: String(memberId), entries });
     try {
-      await saveMemberAvailability(memberId, entries);
+      const result = await saveMemberAvailability(memberId, entries);
+      const confirmedSaved = result?.saved === true || result?.persisted === true;
+      if (!confirmedSaved) {
+        setSaveStatus('failed');
+        toast.error('Availability was not saved to D1.');
+        return;
+      }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(''), 3000);
       setServerAvailability(prev => ({ ...prev, ...changesToSave }));
       setLocalChanges({});
       pendingChangesRef.current = {};
-      if (!initialAvailability) await fetchAvailability(memberId);
+      await fetchAvailability(memberId);
     } catch (err) {
       if (err?.status === 401 || err?.status === 403) {
         toast.error('Not authorized.');

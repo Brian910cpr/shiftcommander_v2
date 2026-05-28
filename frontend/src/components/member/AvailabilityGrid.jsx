@@ -101,9 +101,16 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
     console.log('[AvailabilityGrid] Autosave/save', { member_id: String(memberId), entries });
     try {
       const result = await saveMemberAvailability(memberId, entries);
+      const confirmedSaved = result?.saved === true || result?.persisted === true;
+      if (!confirmedSaved) {
+        setSaveStatus('failed');
+        setSaveDetail(result?.note || 'Worker accepted the request but did not confirm D1 persistence.');
+        toast.error('Availability was not saved to D1.');
+        return;
+      }
       setSaveStatus('saved');
-      setSaveDetail(result?.persisted === false ? 'Accepted locally, persistence unavailable' : 'Saved to local D1');
-      toast.success(result?.persisted === false ? 'Availability accepted.' : 'Availability saved.');
+      setSaveDetail('Saved to D1');
+      toast.success('Availability saved.');
       setTimeout(() => setSaveStatus(''), 3000);
       setTimeout(() => setSaveDetail(''), 5000);
       setServerAvailability(prev => ({ ...prev, ...changesToSave }));
@@ -202,7 +209,7 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Tap a cell to cycle: Blank → Prefer → Available → Do Not · autosaves after 3s
+        Tap a cell to cycle: Blank → Prefer → Available → Do Not · saves after 3s; wait for Saved
       </p>
 
       {loadingFetch && (
