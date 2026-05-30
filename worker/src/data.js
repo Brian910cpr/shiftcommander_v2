@@ -6,6 +6,13 @@ import juneMirrorSeed from "../../data-seed/google_calendar_june_2026_mirror.jso
 import mayWhiteboardSeed from "../../data-seed/may_whiteboard_override.json";
 import transactionsSeed from "../../data-seed/transactions.json";
 
+export const SCHEDULE_SOURCES = Object.freeze({
+  BOOTSTRAP: "bootstrap",
+  RESOLVER: "resolver",
+  SUPERVISOR: "supervisor",
+  CANONICAL: "canonical",
+});
+
 export function seedMeta(env) {
   return {
     ok: true,
@@ -243,9 +250,24 @@ export async function shiftSeatOverlayStats(env) {
   };
 }
 
-export async function schedulePayload(env) {
+export async function canonicalScheduleProvider(env) {
   const overlay = await loadD1ShiftSeatOverlays(env);
-  return applyShiftSeatOverlays(seedSchedulePayload(), overlay.rows).schedule;
+  const merged = applyShiftSeatOverlays(seedSchedulePayload(), overlay.rows);
+  return {
+    source: SCHEDULE_SOURCES.BOOTSTRAP,
+    priority: [
+      SCHEDULE_SOURCES.CANONICAL,
+      SCHEDULE_SOURCES.SUPERVISOR,
+      SCHEDULE_SOURCES.RESOLVER,
+      SCHEDULE_SOURCES.BOOTSTRAP,
+    ],
+    schedule: merged.schedule,
+    overlay_stats: merged.stats,
+  };
+}
+
+export async function schedulePayload(env) {
+  return (await canonicalScheduleProvider(env)).schedule;
 }
 
 export async function shiftRows(env) {
@@ -587,7 +609,7 @@ export async function availabilityPayload(env, urlOrMemberId) {
 }
 
 export async function wallboardDisplayPayload(env) {
-  const schedule = await schedulePayload(env);
+  const { schedule } = await canonicalScheduleProvider(env);
   return {
     ...seedMeta(env),
     wallboard: {
@@ -623,7 +645,7 @@ export async function memberDashboardPayload(env, urlOrMemberId) {
     ...seedMeta(env),
     member_id: memberId ? String(memberId) : null,
     member: member || null,
-    schedule: await schedulePayload(env),
+    schedule: (await canonicalScheduleProvider(env)).schedule,
     availability: await availabilityPayload(env, memberId || undefined),
     transactions: await transactionsPayload(env),
     scaffold: true,
@@ -632,7 +654,8 @@ export async function memberDashboardPayload(env, urlOrMemberId) {
 
 export async function bootstrapPayload(env) {
   const members = await membersList(env);
-  const schedule = await schedulePayload(env);
+  const canonicalSchedule = await canonicalScheduleProvider(env);
+  const schedule = canonicalSchedule.schedule;
   const shifts = schedule.shifts || [];
   return {
     ...seedMeta(env),

@@ -17,6 +17,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getWallboardDisplay } from '@/api/client';
 import { loadBootstrap } from '@/lib/bootstrapData';
+import { canonicalScheduleProvider } from '@/lib/canonicalScheduleProvider';
 import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
 
 const FULL_REFRESH_MS    = 60 * 1000;
@@ -140,7 +141,7 @@ export function useWallboardDisplay() {
   const loadFull = useCallback(async () => {
     try {
       const bootstrap = await loadBootstrap();
-      const data = bootstrap?.wallboard_display;
+      const data = canonicalScheduleProvider(bootstrap).wallboardDisplay;
       console.log('[SC Wallboard] bootstrap wallboard response keys:', data ? Object.keys(data) : 'null');
       applySuccess(data?.wallboard || data, data?.integrity, data?.diag);
     } catch (err) {
@@ -160,7 +161,7 @@ export function useWallboardDisplay() {
     if (!hasLiveDataRef.current) return;
     try {
       const bootstrap = await loadBootstrap();
-      const data    = bootstrap?.wallboard_display;
+      const data    = canonicalScheduleProvider(bootstrap).wallboardDisplay;
       const payload = data?.wallboard || data;
       const build   = payload?.build || null;
       const version = build?.updated_at || build?.version || build?.build_id || null;

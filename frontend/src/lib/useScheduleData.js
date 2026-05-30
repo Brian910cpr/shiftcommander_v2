@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { loadBootstrap } from '@/lib/bootstrapData';
+import { canonicalScheduleProvider } from '@/lib/canonicalScheduleProvider';
 import { adaptBootstrapResponse } from './apiAdapter';
 import {
   getScheduleData as getStaticSchedule,
@@ -52,14 +53,19 @@ export function useScheduleData() {
       try {
         // Single shared bootstrap call — use bootstrap.schedule.shifts (resolved) not bootstrap.shifts (seed)
         const bootstrap = await loadBootstrap();
+        const canonicalSchedule = canonicalScheduleProvider(bootstrap);
 
         if (cancelled) return;
 
-        const { shifts: liveShifts, members: liveMembers, placeholderRoster: isPlaceholder } = adaptBootstrapResponse(bootstrap);
+        const { shifts: liveShifts, members: liveMembers, placeholderRoster: isPlaceholder } = adaptBootstrapResponse({
+          ...bootstrap,
+          schedule: canonicalSchedule.schedule,
+          shifts: canonicalSchedule.shifts,
+        });
 
         // Horizon: prefer schedule.build.summary.end_date (backend-provided),
         // fall back to max shift date (inferred from data).
-        const backendHorizon = bootstrap?.schedule?.build?.summary?.end_date || null;
+        const backendHorizon = canonicalSchedule.schedule?.build?.summary?.end_date || null;
         const shiftDates = liveShifts.map(s => s.date).sort();
         const inferredHorizon = shiftDates.length ? shiftDates[shiftDates.length - 1] : null;
         const horizonObj = backendHorizon
