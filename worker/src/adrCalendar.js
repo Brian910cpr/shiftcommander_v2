@@ -257,6 +257,20 @@ function eventMemberTokens(event) {
   return text.split(" ").filter((token) => token.length >= 3 && !["emt", "day", "night", "driver", "attendant"].includes(token));
 }
 
+function eventDiagnostics(event) {
+  const text = `${event?.summary || ""} ${event?.description || ""}`;
+  return {
+    calendar_event_id: event?.calendar_event_id || null,
+    calendar_title: event?.summary || "",
+    calendar_start: event?.start || null,
+    calendar_end: event?.end || null,
+    date: dateFromValue(event?.start),
+    period_hint: periodFromEvent(event),
+    parsed_role_hints: roleHintsFromText(text),
+    parsed_member_hints: eventMemberTokens(event),
+  };
+}
+
 function seatAssignedName(seat) {
   return seat?.assigned_name || seat?.name || seat?.assigned || null;
 }
@@ -294,31 +308,109 @@ function scoreCalendarSeatMatch(event, seat) {
 
   let score = 4;
   const reasons = ["date"];
+  const mismatchReasons = [];
 
   if (eventPeriod && seat.period && eventPeriod === seat.period) {
     score += 3;
     reasons.push("period");
   } else if (eventPeriod && seat.period && eventPeriod !== seat.period) {
     score -= 2;
-    reasons.push("period_mismatch");
+    mismatchReasons.push("period_mismatch");
+  } else {
+    mismatchReasons.push("missing_period_hint");
   }
 
   if (roleHints.includes(String(seat.role || "").toUpperCase())) {
     score += 2;
     reasons.push("role_hint");
+  } else if (roleHints.length) {
+    mismatchReasons.push("role_mismatch");
+  } else {
+    mismatchReasons.push("missing_seat_hint");
   }
 
   const tokenHits = memberTokens.filter((token) => assignedText.includes(token));
   if (tokenHits.length) {
     score += Math.min(3, tokenHits.length);
     reasons.push("member_name_hint");
+  } else if (memberTokens.length && assignedText) {
+    mismatchReasons.push("member_mismatch");
+  } else {
+    mismatchReasons.push("missing_member_hint");
   }
 
   return {
     score,
+    confidence_score: score,
     reasons,
+    mismatch_reasons: mismatchReasons,
     event_period: eventPeriod,
     role_hints: roleHints,
+    member_hints: memberTokens,
+  };
+}
+
+function candidateDiagnostics(candidate) {
+  return {
+    candidate_shift_id: candidate.seat.shift_id,
+    candidate_seat_id: candidate.seat.seat_id,
+    candidate_shift_date: candidate.seat.date,
+    candidate_shift_period: candidate.seat.period,
+    candidate_shift_unit: candidate.seat.unit,
+    candidate_seat_role: candidate.seat.role,
+    candidate_assigned_member_id: candidate.seat.assigned_member_id,
+    candidate_assigned_member: candidate.seat.assigned_name,
+    assignment_status: candidate.seat.assignment_status,
+    confidence_score: candidate.confidence_score,
+    match_reasons: candidate.reasons,
+    mismatch_reasons: candidate.mismatch_reasons,
+  };
+}
+
+function conflictReason(candidateCount, strongCount, bestCandidate) {
+  if (strongCount > 1) return "ambiguous_multiple_candidates";
+  if (!bestCandidate) return "date_match_only";
+  const reasons = new Set(bestCandidate.reasons || []);
+  const mismatches = new Set(bestCandidate.mismatch_reasons || []);
+  if (reasons.has("date") && reasons.has("period") && bestCandidate.score >= 5) return "date_plus_ampm_match";
+  if (mismatches.has("role_mismatch")) return "role_mismatch";
+  if (mismatches.has("member_mismatch")) return "member_mismatch";
+  if (mismatches.has("missing_member_hint")) return "missing_member_hint";
+  if (mismatches.has("missing_seat_hint")) return "missing_seat_hint";
+  if (candidateCount > 1) return "ambiguous_multiple_candidates";
+  return "date_match_only";
+}
+
+function incrementSummary(summary, key) {
+  summary[key] = (summary[key] || 0) + 1;
+}
+
+function comparisonSamples(possibleConflicts) {
+  const allCandidates = [];
+  for (const conflict of possibleConflicts) {
+    for (const candidate of conflict.candidates || []) {
+      allCandidates.push({
+        calendar_event_id: conflict.calendar_event_id,
+        calendar_title: conflict.calendar_title,
+        calendar_start: conflict.calendar_start,
+        calendar_end: conflict.calendar_end,
+        conflict_reason: conflict.reason,
+        ...candidate,
+      });
+    }
+  }
+
+  return {
+    top_10_highest_confidence_candidates: [...allCandidates]
+      .sort((left, right) => right.confidence_score - left.confidence_score)
+      .slice(0, 10),
+    top_10_lowest_confidence_candidates: [...allCandidates]
+      .sort((left, right) => left.confidence_score - right.confidence_score)
+      .slice(0, 10),
+    top_10_ambiguous_candidates: possibleConflicts
+      .filter((conflict) => (conflict.candidates || []).length > 1 || conflict.reason === "ambiguous_multiple_candidates")
+      .sort((left, right) => (right.candidates?.[0]?.confidence_score || 0) - (left.candidates?.[0]?.confidence_score || 0))
+      .slice(0, 10),
   };
 }
 
@@ -326,6 +418,15 @@ export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
   const seats = flattenShiftCommanderSeats(shifts);
   const matches = [];
   const possibleConflicts = [];
+  const conflictSummary = {
+    date_match_only: 0,
+    date_plus_ampm_match: 0,
+    role_mismatch: 0,
+    member_mismatch: 0,
+    missing_member_hint: 0,
+    missing_seat_hint: 0,
+    ambiguous_multiple_candidates: 0,
+  };
   const matchedEventIds = new Set();
   const matchedSeatIds = new Set();
 
@@ -344,34 +445,18 @@ export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
     if (strong.length === 1) {
       const match = strong[0];
       matches.push({
-        calendar_event_id: event.calendar_event_id,
-        calendar_summary: event.summary,
-        date: dateFromValue(event.start),
-        calendar_start: event.start,
-        shift_id: match.seat.shift_id,
-        seat_id: match.seat.seat_id,
-        role: match.seat.role,
-        assigned_name: match.seat.assigned_name,
-        score: match.score,
-        reasons: match.reasons,
+        ...eventDiagnostics(event),
+        ...candidateDiagnostics(match),
       });
       matchedEventIds.add(eventId);
       if (match.seat.seat_id) matchedSeatIds.add(match.seat.seat_id);
     } else if (strong.length > 1 || candidates.some((candidate) => candidate.score >= 5)) {
+      const reason = conflictReason(candidates.length, strong.length, candidates[0]);
+      incrementSummary(conflictSummary, reason);
       possibleConflicts.push({
-        calendar_event_id: event.calendar_event_id,
-        calendar_summary: event.summary,
-        date: dateFromValue(event.start),
-        calendar_start: event.start,
-        reason: strong.length > 1 ? "multiple_strong_candidates" : "weak_or_ambiguous_candidates",
-        candidates: candidates.slice(0, 5).map((candidate) => ({
-          shift_id: candidate.seat.shift_id,
-          seat_id: candidate.seat.seat_id,
-          role: candidate.seat.role,
-          assigned_name: candidate.seat.assigned_name,
-          score: candidate.score,
-          reasons: candidate.reasons,
-        })),
+        ...eventDiagnostics(event),
+        reason,
+        candidates: candidates.slice(0, 5).map((candidate) => candidateDiagnostics(candidate)),
       });
     }
   }
@@ -386,6 +471,7 @@ export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
       date: dateFromValue(event.start),
       period_hint: periodFromEvent(event),
       role_hints: roleHintsFromText(`${event.summary || ""} ${event.description || ""}`),
+      member_hints: eventMemberTokens(event),
     }));
 
   const unmatchedShiftCommanderShifts = seats
@@ -407,6 +493,8 @@ export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
     unmatched_calendar_events: unmatchedCalendarEvents,
     unmatched_shiftcommander_shifts: unmatchedShiftCommanderShifts,
     possible_conflicts: possibleConflicts,
+    possible_conflicts_summary: conflictSummary,
+    samples: comparisonSamples(possibleConflicts),
     sample_matches: matches.slice(0, 20),
   };
 }
