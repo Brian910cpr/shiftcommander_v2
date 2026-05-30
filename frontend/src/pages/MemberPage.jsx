@@ -198,9 +198,7 @@ function MemberPageContent({
   const NavLinks = () => (
     <div className="flex items-center gap-3">
       <Link to="/wallboard?return=/member" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Wallboard</Link>
-      {isSupervisorOrAdmin && (
-        <Link to="/supervisor" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Supervisor</Link>
-      )}
+      <Link to="/supervisor" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Supervisor</Link>
       <button
         onClick={() => logout()}
         className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"

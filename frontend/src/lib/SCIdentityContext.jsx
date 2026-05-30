@@ -5,7 +5,7 @@
  * the entire app. Sits above the router so all pages can call useSCAuth().
  *
  * Identity chain:
- *   Base44/Google → user.email → SC member match → currentMember + scRole
+ *   backend session user.email → SC member match → currentMember + scRole
  */
 import React, { createContext, useContext } from 'react';
 import { useAuth } from '@/lib/AuthContext';

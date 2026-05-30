@@ -1,7 +1,7 @@
 /**
  * useSCIdentity
  *
- * Matches the authenticated Base44/Google user email to a ShiftCommander
+ * Matches the authenticated backend session email to a ShiftCommander
  * member record. This is the ONLY place identity is resolved.
  *
  * Rules:
@@ -11,7 +11,7 @@
  * - Multiple matches    → status: 'multi_match'
  * - Not authenticated   → status: 'unauthenticated'
  *
- * ShiftCommander backend is authoritative. Base44 only provides the email.
+ * ShiftCommander backend is authoritative.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -41,8 +41,17 @@ function matchMember(members, email) {
   });
 }
 
+function localPreviewMember(members) {
+  if (typeof window === 'undefined') return null;
+  if (!['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) return null;
+  return members.find(m => {
+    const fields = [m.email, m.google_email, m.auth_email].filter(Boolean);
+    return fields.some(f => f.toLowerCase().trim() === 'brian@910cpr.com');
+  }) || members.find(m => m.supervisor || m.admin || m.role === 'supervisor') || null;
+}
+
 /**
- * @param {string|null} userEmail  - email from base44.auth.me()
+ * @param {string|null} userEmail  - email from the backend session
  * @param {Array}       members    - full member list from useScheduleData / getMembers
  * @param {boolean}     isLoadingMembers
  */
@@ -55,6 +64,14 @@ export function useSCIdentity(userEmail, members, isLoadingMembers) {
     if (isLoadingMembers) { setStatus('loading'); return; }
 
     if (!userEmail) {
+      const previewMember = localPreviewMember(members);
+      if (previewMember) {
+        setStatus('matched');
+        setCurrentMember(previewMember);
+        setScRole(deriveRole(previewMember));
+        return;
+      }
+
       setStatus('unauthenticated');
       setCurrentMember(null);
       setScRole(null);

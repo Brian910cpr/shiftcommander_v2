@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CalendarDays, Radio, LayoutList, Monitor, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, Radio, LayoutList, Monitor, Shield, User } from 'lucide-react';
 import { format as fmtTime } from 'date-fns';
 import { Link } from 'react-router-dom';
 
@@ -83,6 +83,14 @@ export default function WallboardHeader({ dateRange, displayMode, onSetDisplayMo
               >
                 <User className="w-3.5 h-3.5" />
                 Member Page
+              </Link>
+              <div className="w-px h-5 bg-border" />
+              <Link
+                to="/supervisor"
+                className="h-8 px-3 text-xs font-semibold flex items-center gap-1.5 transition-colors bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Supervisor
               </Link>
             </div>
 

@@ -26,3 +26,14 @@ availability compatibility endpoint.
 Google auth is intentionally not implemented in this prep pass. The replacement
 `AuthContext` only preserves the expected hook shape and points at backend
 session/logout endpoints for later integration.
+
+## Local SPA Preview
+
+The migrated frontend uses React Router `BrowserRouter`. Vite is configured as
+an SPA (`appType: 'spa'`) so local dev and preview fall back to `index.html`
+for deep links such as `/wallboard`, `/member`, and `/supervisor`.
+
+For Cloudflare Pages, keep `BrowserRouter` and configure a rewrite fallback to
+serve `/index.html` for application routes. For GitHub Pages without custom
+rewrite support, `HashRouter` is the simpler static-hosting fallback, but it
+changes URLs to `/#/member` style routes.

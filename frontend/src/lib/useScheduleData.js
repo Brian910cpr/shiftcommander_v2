@@ -1,7 +1,7 @@
 /**
  * useScheduleData.js
  * React hook that fetches live schedule + member data from the ShiftCommander backend
- * via Base44 proxy functions. Falls back to static data if the API is unavailable.
+ * via ShiftCommander backend endpoints. Falls back to static data if the API is unavailable.
  */
 
 import { useState, useEffect } from 'react';

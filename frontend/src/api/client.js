@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = "http://localhost:8787";
+const DEFAULT_API_BASE = "";
 
 export function getApiBase() {
   if (typeof window !== "undefined") {
