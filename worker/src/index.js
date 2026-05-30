@@ -13,7 +13,7 @@ import {
   transactionsPayload,
   wallboardDisplayPayload,
 } from "./data.js";
-import { adrCalendarPreviewPayload } from "./adrCalendar.js";
+import { adrCalendarComparisonPreviewPayload, adrCalendarPreviewPayload } from "./adrCalendar.js";
 import {
   normalizeAvailabilityWrite,
   normalizeTransactionWrite,
@@ -996,6 +996,10 @@ export default {
 
     if (request.method === "GET" && path === "/api/canonical/adr-calendar-preview") {
       return send(await adrCalendarPreviewPayload(env));
+    }
+
+    if (request.method === "GET" && path === "/api/canonical/adr-calendar-comparison-preview") {
+      return send(await adrCalendarComparisonPreviewPayload(env));
     }
 
     if (request.method === "GET" && path === "/api/bootstrap") {

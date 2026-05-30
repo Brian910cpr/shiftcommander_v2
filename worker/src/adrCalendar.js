@@ -1,4 +1,4 @@
-import { SCHEDULE_SOURCES, seedMeta } from "./data.js";
+import { SCHEDULE_SOURCES, schedulePayload, seedMeta } from "./data.js";
 
 const ADR_CALENDAR_EMBED_URL =
   "https://calendar.google.com/calendar/embed?src=2fbc3612e56a0a2ce28fe826443e20a88c500e1c5b3c56b126cb4afb88fd233e%40group.calendar.google.com&ctz=America%2FNew_York";
@@ -211,4 +211,219 @@ export async function adrCalendarPreviewPayload(env, fetchImpl = fetch) {
       event_count: 0,
     };
   }
+}
+
+function dateFromValue(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  return raw.slice(0, 10);
+}
+
+function minutesFromValue(value) {
+  const raw = String(value || "").trim();
+  const match = raw.match(/T(\d{2}):?(\d{2})/);
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function periodFromEvent(event) {
+  const text = `${event?.summary || ""} ${event?.description || ""}`.toLowerCase();
+  if (/\b(am|day|0600|0700|0800|morning)\b/.test(text)) return "AM";
+  if (/\b(pm|night|1800|1900|2000|evening)\b/.test(text)) return "PM";
+
+  const startMinutes = minutesFromValue(event?.start);
+  if (startMinutes === null) return null;
+  return startMinutes >= 12 * 60 ? "PM" : "AM";
+}
+
+function roleHintsFromText(text) {
+  const normalized = String(text || "").toLowerCase();
+  const roles = new Set();
+  if (/\b(driver|chauffeur|drive|emt night|emt day)\b/.test(normalized)) roles.add("DRIVER");
+  if (/\b(attendant|als|aemt|paramedic|medic|care|emt)\b/.test(normalized)) roles.add("ATTENDANT");
+  return Array.from(roles);
+}
+
+function normalizeNameText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function eventMemberTokens(event) {
+  const text = normalizeNameText(`${event?.summary || ""} ${event?.description || ""}`);
+  return text.split(" ").filter((token) => token.length >= 3 && !["emt", "day", "night", "driver", "attendant"].includes(token));
+}
+
+function seatAssignedName(seat) {
+  return seat?.assigned_name || seat?.name || seat?.assigned || null;
+}
+
+function flattenShiftCommanderSeats(shifts) {
+  const rows = [];
+  for (const shift of shifts || []) {
+    for (const seat of shift?.seats || []) {
+      rows.push({
+        shift_id: shift.id || `${shift.date}:${shift.label || shift.period || ""}`,
+        date: shift.date || null,
+        period: shift.label || shift.period || null,
+        unit: shift.unit || null,
+        seat_id: seat.seat_id || null,
+        role: seat.role || null,
+        assigned_member_id: seat.assigned || null,
+        assigned_name: seatAssignedName(seat),
+        assignment_status: seat.assignment_status || null,
+        locked: Boolean(seat.locked),
+      });
+    }
+  }
+  return rows;
+}
+
+function scoreCalendarSeatMatch(event, seat) {
+  const eventDate = dateFromValue(event.start);
+  if (!eventDate || eventDate !== seat.date) return null;
+
+  const eventPeriod = periodFromEvent(event);
+  const text = `${event.summary || ""} ${event.description || ""}`;
+  const roleHints = roleHintsFromText(text);
+  const memberTokens = eventMemberTokens(event);
+  const assignedText = normalizeNameText(seat.assigned_name || "");
+
+  let score = 4;
+  const reasons = ["date"];
+
+  if (eventPeriod && seat.period && eventPeriod === seat.period) {
+    score += 3;
+    reasons.push("period");
+  } else if (eventPeriod && seat.period && eventPeriod !== seat.period) {
+    score -= 2;
+    reasons.push("period_mismatch");
+  }
+
+  if (roleHints.includes(String(seat.role || "").toUpperCase())) {
+    score += 2;
+    reasons.push("role_hint");
+  }
+
+  const tokenHits = memberTokens.filter((token) => assignedText.includes(token));
+  if (tokenHits.length) {
+    score += Math.min(3, tokenHits.length);
+    reasons.push("member_name_hint");
+  }
+
+  return {
+    score,
+    reasons,
+    event_period: eventPeriod,
+    role_hints: roleHints,
+  };
+}
+
+export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
+  const seats = flattenShiftCommanderSeats(shifts);
+  const matches = [];
+  const possibleConflicts = [];
+  const matchedEventIds = new Set();
+  const matchedSeatIds = new Set();
+
+  for (const event of calendarEvents || []) {
+    const candidates = seats
+      .map((seat) => {
+        const scored = scoreCalendarSeatMatch(event, seat);
+        return scored ? { seat, ...scored } : null;
+      })
+      .filter(Boolean)
+      .sort((left, right) => right.score - left.score);
+
+    const strong = candidates.filter((candidate) => candidate.score >= 7);
+    const eventId = event.calendar_event_id || `${event.start}:${event.summary}`;
+
+    if (strong.length === 1) {
+      const match = strong[0];
+      matches.push({
+        calendar_event_id: event.calendar_event_id,
+        calendar_summary: event.summary,
+        date: dateFromValue(event.start),
+        calendar_start: event.start,
+        shift_id: match.seat.shift_id,
+        seat_id: match.seat.seat_id,
+        role: match.seat.role,
+        assigned_name: match.seat.assigned_name,
+        score: match.score,
+        reasons: match.reasons,
+      });
+      matchedEventIds.add(eventId);
+      if (match.seat.seat_id) matchedSeatIds.add(match.seat.seat_id);
+    } else if (strong.length > 1 || candidates.some((candidate) => candidate.score >= 5)) {
+      possibleConflicts.push({
+        calendar_event_id: event.calendar_event_id,
+        calendar_summary: event.summary,
+        date: dateFromValue(event.start),
+        calendar_start: event.start,
+        reason: strong.length > 1 ? "multiple_strong_candidates" : "weak_or_ambiguous_candidates",
+        candidates: candidates.slice(0, 5).map((candidate) => ({
+          shift_id: candidate.seat.shift_id,
+          seat_id: candidate.seat.seat_id,
+          role: candidate.seat.role,
+          assigned_name: candidate.seat.assigned_name,
+          score: candidate.score,
+          reasons: candidate.reasons,
+        })),
+      });
+    }
+  }
+
+  const unmatchedCalendarEvents = (calendarEvents || [])
+    .filter((event) => !matchedEventIds.has(event.calendar_event_id || `${event.start}:${event.summary}`))
+    .map((event) => ({
+      calendar_event_id: event.calendar_event_id,
+      summary: event.summary,
+      start: event.start,
+      end: event.end,
+      date: dateFromValue(event.start),
+      period_hint: periodFromEvent(event),
+      role_hints: roleHintsFromText(`${event.summary || ""} ${event.description || ""}`),
+    }));
+
+  const unmatchedShiftCommanderShifts = seats
+    .filter((seat) => !matchedSeatIds.has(seat.seat_id))
+    .map((seat) => ({
+      shift_id: seat.shift_id,
+      seat_id: seat.seat_id,
+      date: seat.date,
+      period: seat.period,
+      role: seat.role,
+      assigned_name: seat.assigned_name,
+      assignment_status: seat.assignment_status,
+    }));
+
+  return {
+    calendar_event_count: (calendarEvents || []).length,
+    shiftcommander_shift_count: seats.length,
+    matched_count: matches.length,
+    unmatched_calendar_events: unmatchedCalendarEvents,
+    unmatched_shiftcommander_shifts: unmatchedShiftCommanderShifts,
+    possible_conflicts: possibleConflicts,
+    sample_matches: matches.slice(0, 20),
+  };
+}
+
+export async function adrCalendarComparisonPreviewPayload(env, fetchImpl = fetch) {
+  const calendarPreview = await adrCalendarPreviewPayload(env, fetchImpl);
+  const schedule = await schedulePayload(env);
+  const comparison = compareAdrCalendarToShiftCommander(calendarPreview.events || [], schedule.shifts || []);
+
+  return {
+    ...seedMeta(env),
+    source: ADR_CALENDAR_SOURCE,
+    schedule_source: SCHEDULE_SOURCES.CANONICAL,
+    read_only: true,
+    applied_to_active_schedule: false,
+    calendar_available: calendarPreview.available === true,
+    calendar_error: calendarPreview.error || null,
+    ...comparison,
+  };
 }
