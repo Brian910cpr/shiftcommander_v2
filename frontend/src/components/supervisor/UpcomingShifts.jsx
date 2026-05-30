@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
 import { CalendarDays, UserCheck, Truck, AlertCircle, Lock, Unlock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { updateShiftSeatLock } from '@/api/client';
+import { updateShiftSeatAssignment, updateShiftSeatLock } from '@/api/client';
 
 function statusBadge(crewStatus) {
   const s = (crewStatus || '').toLowerCase();
@@ -36,10 +36,39 @@ function seatWithLocked(seat, locked) {
   return seat ? { ...seat, locked: Boolean(locked), d1_shift_overlay: true } : seat;
 }
 
-export default function UpcomingShifts({ shifts, loading }) {
+function seatWithAssignment(seat, member) {
+  if (!seat) return seat;
+  if (!member) {
+    return {
+      ...seat,
+      id: null,
+      assigned: null,
+      assigned_name: null,
+      name: 'OPEN',
+      status: 'OPEN',
+      isPlaceholder: false,
+      d1_shift_overlay: true,
+    };
+  }
+
+  return {
+    ...seat,
+    id: member.id,
+    assigned: member.id,
+    assigned_name: member.name,
+    name: member.name,
+    status: 'ASSIGNED',
+    cert: member.cert || seat.cert || null,
+    isPlaceholder: false,
+    d1_shift_overlay: true,
+  };
+}
+
+export default function UpcomingShifts({ shifts, members = [], loading }) {
   const [localShifts, setLocalShifts] = useState([]);
   const [savingSeatId, setSavingSeatId] = useState(null);
   const [seatSaveState, setSeatSaveState] = useState({});
+  const [assignmentDrafts, setAssignmentDrafts] = useState({});
 
   useEffect(() => {
     setLocalShifts(shifts || []);
@@ -92,6 +121,44 @@ export default function UpcomingShifts({ shifts, loading }) {
     }
   }
 
+  async function handleAssignmentSave(shift, seatKey) {
+    const seat = shift?.[seatKey];
+    const seatId = seat?.seat_id;
+    if (!seatId) {
+      toast.error('Seat assignment requires a seat_id.');
+      return;
+    }
+
+    const draftValue = assignmentDrafts[seatId] ?? seat?.assigned ?? '';
+    const member = draftValue ? members.find((row) => String(row.id) === String(draftValue)) : null;
+
+    setSavingSeatId(seatId);
+    setSeatSaveState((prev) => ({ ...prev, [seatId]: 'saving' }));
+
+    try {
+      const result = await updateShiftSeatAssignment(seatId, draftValue || null);
+      if (!result?.ok || !result?.saved || !result?.persisted) {
+        throw new Error(result?.error || 'Seat assignment was not persisted.');
+      }
+
+      setLocalShifts((current) => current.map((row) => {
+        if (row?.[seatKey]?.seat_id !== seatId) return row;
+        return {
+          ...row,
+          [seatKey]: seatWithAssignment(row[seatKey], result.cleared ? null : member),
+        };
+      }));
+      setAssignmentDrafts((prev) => ({ ...prev, [seatId]: result.cleared ? '' : result.assigned_member_id || draftValue }));
+      setSeatSaveState((prev) => ({ ...prev, [seatId]: 'saved' }));
+      toast.success(result.cleared ? 'Seat cleared.' : 'Seat assigned.');
+    } catch (error) {
+      setSeatSaveState((prev) => ({ ...prev, [seatId]: 'error' }));
+      toast.error(error?.message || 'Seat assignment save failed.');
+    } finally {
+      setSavingSeatId(null);
+    }
+  }
+
   function renderLockButton(shift, seatKey, fallback) {
     const seat = shift?.[seatKey];
     const seatId = seat?.seat_id;
@@ -123,6 +190,45 @@ export default function UpcomingShifts({ shifts, loading }) {
         </Button>
         {state === 'saved' && <span className="text-[9px] text-emerald-400">Saved</span>}
         {state === 'error' && <span className="text-[9px] text-red-400">Save failed</span>}
+      </div>
+    );
+  }
+
+  function renderAssignmentControl(shift, seatKey) {
+    const seat = shift?.[seatKey];
+    const seatId = seat?.seat_id;
+    if (!seatId) return null;
+
+    const saving = savingSeatId === seatId;
+    const value = assignmentDrafts[seatId] ?? seat.assigned ?? '';
+
+    return (
+      <div className="flex items-center gap-1">
+        <select
+          value={value || ''}
+          disabled={saving}
+          onChange={(event) => setAssignmentDrafts((prev) => ({ ...prev, [seatId]: event.target.value }))}
+          className="h-7 w-[155px] rounded-md border border-input bg-background px-2 text-[10px] text-foreground disabled:opacity-50"
+          aria-label={`Assign ${seatId}`}
+        >
+          <option value="">Open / clear</option>
+          {members.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.name} ({member.cert || 'n/a'})
+            </option>
+          ))}
+        </select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-[10px]"
+          disabled={saving || String(value || '') === String(seat.assigned || '')}
+          onClick={() => handleAssignmentSave(shift, seatKey)}
+        >
+          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+          Save
+        </Button>
       </div>
     );
   }
@@ -181,22 +287,28 @@ export default function UpcomingShifts({ shifts, loading }) {
                       }`}>{shift.label}</span>
                     </div>
                     {/* Crew */}
-                    <div className="flex items-center gap-2 flex-wrap min-w-0">
-                      <span className={`flex items-center gap-1 text-xs ${attOpen ? 'text-red-400' : 'text-foreground'}`}>
-                        {attOpen
-                          ? <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                          : <UserCheck className="w-3 h-3 flex-shrink-0 text-primary" />
-                        }
-                        <span className="truncate max-w-[100px]">{attName}</span>
-                      </span>
-                      <span className="text-muted-foreground/40">·</span>
-                      <span className={`flex items-center gap-1 text-xs ${drvOpen ? 'text-amber-400' : 'text-foreground'}`}>
-                        {drvOpen
-                          ? <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                          : <Truck className="w-3 h-3 flex-shrink-0 text-muted-foreground" />
-                        }
-                        <span className="truncate max-w-[100px]">{drvName}</span>
-                      </span>
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <span className={`flex items-center gap-1 text-xs ${attOpen ? 'text-red-400' : 'text-foreground'}`}>
+                          {attOpen
+                            ? <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                            : <UserCheck className="w-3 h-3 flex-shrink-0 text-primary" />
+                          }
+                          <span className="truncate max-w-[100px]">{attName}</span>
+                        </span>
+                        <span className="text-muted-foreground/40">·</span>
+                        <span className={`flex items-center gap-1 text-xs ${drvOpen ? 'text-amber-400' : 'text-foreground'}`}>
+                          {drvOpen
+                            ? <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                            : <Truck className="w-3 h-3 flex-shrink-0 text-muted-foreground" />
+                          }
+                          <span className="truncate max-w-[100px]">{drvName}</span>
+                        </span>
+                      </div>
+                      <div className="hidden xl:flex items-center gap-2">
+                        {renderAssignmentControl(shift, 'attendant')}
+                        {renderAssignmentControl(shift, 'driver')}
+                      </div>
                     </div>
                   </div>
                   {/* Status badge */}

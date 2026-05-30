@@ -153,10 +153,19 @@ export async function loadD1ShiftSeatOverlays(env) {
 function applySeatOverlay(seat, overlay) {
   const next = { ...seat };
 
-  if (overlay.assigned_member_id !== null && overlay.assigned_member_id !== undefined && String(overlay.assigned_member_id).trim()) {
-    next.assigned = String(overlay.assigned_member_id).trim();
-    next.assignment_status = "ASSIGNED";
-    next.display_open_alert = false;
+  if (overlay.assigned_member_id !== null && overlay.assigned_member_id !== undefined) {
+    const assignedMemberId = String(overlay.assigned_member_id).trim();
+    if (assignedMemberId) {
+      next.assigned = assignedMemberId;
+      next.assigned_name = null;
+      next.assignment_status = "ASSIGNED";
+      next.display_open_alert = false;
+    } else {
+      next.assigned = null;
+      next.assigned_name = null;
+      next.assignment_status = "OPEN";
+      next.display_open_alert = true;
+    }
   }
 
   next.locked = Boolean(overlay.locked);

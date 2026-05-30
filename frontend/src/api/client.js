@@ -129,6 +129,16 @@ export function updateShiftSeatLock(seatId, locked) {
   });
 }
 
+export function updateShiftSeatAssignment(seatId, memberId) {
+  const clear = memberId === null || memberId === undefined || String(memberId).trim() === "";
+  return apiPatch(`/shift-seat-overlays/${encodeURIComponent(seatId)}/assignment`, {
+    seat_id: String(seatId),
+    member_id: clear ? null : String(memberId),
+    clear,
+    updated_by: "stub-dev-supervisor"
+  });
+}
+
 export function getSettings() {
   return apiGet("/settings");
 }

@@ -145,7 +145,7 @@ export default function Supervisor() {
 
         {/* ── Upcoming Shifts + Open Seats ── */}
         <div className="grid lg:grid-cols-2 gap-4">
-          <UpcomingShifts shifts={shifts} loading={loading} />
+          <UpcomingShifts shifts={shifts} members={members} loading={loading} />
           <OpenSeatsPanel shifts={shifts} />
         </div>
 
