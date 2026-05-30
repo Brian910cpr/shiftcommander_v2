@@ -1,4 +1,4 @@
-import { SCHEDULE_SOURCES, schedulePayload, seedMeta } from "./data.js";
+import { SCHEDULE_SOURCES, schedulePayload, seedMembersList, seedMeta } from "./data.js";
 
 const ADR_CALENDAR_EMBED_URL =
   "https://calendar.google.com/calendar/embed?src=2fbc3612e56a0a2ce28fe826443e20a88c500e1c5b3c56b126cb4afb88fd233e%40group.calendar.google.com&ctz=America%2FNew_York";
@@ -237,10 +237,12 @@ function periodFromEvent(event) {
 }
 
 function roleHintsFromText(text) {
-  const normalized = String(text || "").toLowerCase();
+  const normalized = normalizeNameText(text);
   const roles = new Set();
-  if (/\b(driver|chauffeur|drive|emt night|emt day)\b/.test(normalized)) roles.add("DRIVER");
-  if (/\b(attendant|als|aemt|paramedic|medic|care|emt)\b/.test(normalized)) roles.add("ATTENDANT");
+  if (/\b(driver|chauffeur|drive)\b/.test(normalized)) roles.add("DRIVER");
+  if (/\b(emt|attendant|als|aemt|paramedic|medic|care)\b/.test(normalized)) roles.add("ATTENDANT");
+  if (/\b(medic|als|paramedic|aemt)\b/.test(normalized)) roles.add("ALS");
+  if (/\b(ems supervisor|supervisor|112)\b/.test(normalized)) roles.add("EMS_SUPERVISOR");
   return Array.from(roles);
 }
 
@@ -254,20 +256,106 @@ function normalizeNameText(value) {
 
 function eventMemberTokens(event) {
   const text = normalizeNameText(`${event?.summary || ""} ${event?.description || ""}`);
-  return text.split(" ").filter((token) => token.length >= 3 && !["emt", "day", "night", "driver", "attendant"].includes(token));
+  return text
+    .split(" ")
+    .filter((token) => token.length >= 3 && ![
+      "emt",
+      "ems",
+      "day",
+      "night",
+      "driver",
+      "attendant",
+      "medic",
+      "supervisor",
+      "company",
+      "volunteer",
+      "career",
+      "fire",
+      "duty",
+    ].includes(token));
 }
 
-function eventDiagnostics(event) {
+function parsedCalendarTitle(event, memberIndex = null) {
+  const title = normalizeNameText(event?.summary || "");
+  const period = /\b(day|0600|0700|0800)\b/.test(title)
+    ? "AM"
+    : /\b(night|1800|1900|2000)\b/.test(title)
+      ? "PM"
+      : null;
+  const roleHints = roleHintsFromText(title);
+  const memberTokens = eventMemberTokens(event);
+  const memberMatches = memberIndex ? resolveMemberHints(memberTokens, memberIndex) : [];
+
+  return {
+    period,
+    role_hints: roleHints,
+    member_tokens: memberTokens,
+    member_matches: memberMatches,
+  };
+}
+
+function buildMemberHintIndex(members = []) {
+  const tokenMap = new Map();
+  for (const member of members || []) {
+    const id = String(member?.member_id || member?.id || "");
+    const name = String(member?.name || "").trim();
+    if (!id || !name) continue;
+
+    const first = normalizeNameText(member.first_name || name.split(/\s+/)[0]);
+    const full = normalizeNameText(name);
+    const tokens = new Set([first, ...full.split(" ").filter((token) => token.length >= 3)]);
+
+    for (const token of tokens) {
+      if (!token) continue;
+      if (!tokenMap.has(token)) tokenMap.set(token, []);
+      tokenMap.get(token).push({ member_id: id, name });
+    }
+  }
+
+  return tokenMap;
+}
+
+function resolveMemberHints(tokens, memberIndex) {
+  const matches = [];
+  for (const token of tokens || []) {
+    const exact = memberIndex.get(token) || [];
+    let candidates = exact;
+
+    if (!candidates.length) {
+      candidates = Array.from(memberIndex.entries())
+        .filter(([knownToken]) => knownToken.startsWith(token) || token.startsWith(knownToken))
+        .flatMap(([, rows]) => rows);
+    }
+
+    const uniqueById = new Map(candidates.map((member) => [member.member_id, member]));
+    matches.push({
+      token,
+      status: uniqueById.size === 1 ? "unique" : uniqueById.size > 1 ? "ambiguous" : "unmatched",
+      candidates: Array.from(uniqueById.values()).slice(0, 5),
+    });
+  }
+  return matches;
+}
+
+function uniqueMemberMatch(memberMatches) {
+  const unique = (memberMatches || []).filter((match) => match.status === "unique");
+  if (unique.length !== 1) return null;
+  return unique[0].candidates[0] || null;
+}
+
+function eventDiagnostics(event, memberIndex = null) {
   const text = `${event?.summary || ""} ${event?.description || ""}`;
+  const parsed = parsedCalendarTitle(event, memberIndex);
   return {
     calendar_event_id: event?.calendar_event_id || null,
     calendar_title: event?.summary || "",
     calendar_start: event?.start || null,
     calendar_end: event?.end || null,
     date: dateFromValue(event?.start),
-    period_hint: periodFromEvent(event),
-    parsed_role_hints: roleHintsFromText(text),
-    parsed_member_hints: eventMemberTokens(event),
+    period_hint: parsed.period || periodFromEvent(event),
+    parsed_role_hints: Array.from(new Set([...parsed.role_hints, ...roleHintsFromText(text)])),
+    parsed_member_hints: parsed.member_tokens,
+    parsed_member_matches: parsed.member_matches,
   };
 }
 
@@ -296,15 +384,19 @@ function flattenShiftCommanderSeats(shifts) {
   return rows;
 }
 
-function scoreCalendarSeatMatch(event, seat) {
+function scoreCalendarSeatMatch(event, seat, memberIndex = null) {
   const eventDate = dateFromValue(event.start);
   if (!eventDate || eventDate !== seat.date) return null;
 
-  const eventPeriod = periodFromEvent(event);
+  const parsed = parsedCalendarTitle(event, memberIndex);
+  const eventPeriod = parsed.period || periodFromEvent(event);
   const text = `${event.summary || ""} ${event.description || ""}`;
-  const roleHints = roleHintsFromText(text);
-  const memberTokens = eventMemberTokens(event);
+  const roleHints = Array.from(new Set([...parsed.role_hints, ...roleHintsFromText(text)]));
+  const memberTokens = parsed.member_tokens;
+  const memberMatches = parsed.member_matches;
+  const uniqueMember = uniqueMemberMatch(memberMatches);
   const assignedText = normalizeNameText(seat.assigned_name || "");
+  const seatRole = String(seat.role || "").toUpperCase();
 
   let score = 4;
   const reasons = ["date"];
@@ -320,9 +412,14 @@ function scoreCalendarSeatMatch(event, seat) {
     mismatchReasons.push("missing_period_hint");
   }
 
-  if (roleHints.includes(String(seat.role || "").toUpperCase())) {
+  if (
+    roleHints.includes(seatRole) ||
+    (seatRole === "ATTENDANT" && (roleHints.includes("ALS") || roleHints.includes("EMS_SUPERVISOR")))
+  ) {
     score += 2;
     reasons.push("role_hint");
+    if (roleHints.includes("ALS")) reasons.push("als_or_medic_hint");
+    if (roleHints.includes("EMS_SUPERVISOR")) reasons.push("ems_supervisor_hint");
   } else if (roleHints.length) {
     mismatchReasons.push("role_mismatch");
   } else {
@@ -330,9 +427,17 @@ function scoreCalendarSeatMatch(event, seat) {
   }
 
   const tokenHits = memberTokens.filter((token) => assignedText.includes(token));
-  if (tokenHits.length) {
+  if (uniqueMember && String(seat.assigned_member_id || "") === String(uniqueMember.member_id)) {
+    score += 5;
+    reasons.push("member_name_hint");
+    reasons.push("known_member_id_match");
+  } else if (tokenHits.length) {
     score += Math.min(3, tokenHits.length);
     reasons.push("member_name_hint");
+  } else if ((memberMatches || []).some((match) => match.status === "ambiguous")) {
+    mismatchReasons.push("ambiguous_member_hint");
+  } else if (uniqueMember && String(seat.assigned_member_id || "") !== String(uniqueMember.member_id)) {
+    mismatchReasons.push("member_mismatch");
   } else if (memberTokens.length && assignedText) {
     mismatchReasons.push("member_mismatch");
   } else {
@@ -347,6 +452,7 @@ function scoreCalendarSeatMatch(event, seat) {
     event_period: eventPeriod,
     role_hints: roleHints,
     member_hints: memberTokens,
+    member_matches: memberMatches,
   };
 }
 
@@ -414,8 +520,9 @@ function comparisonSamples(possibleConflicts) {
   };
 }
 
-export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
+export function compareAdrCalendarToShiftCommander(calendarEvents, shifts, members = []) {
   const seats = flattenShiftCommanderSeats(shifts);
+  const memberIndex = buildMemberHintIndex(members);
   const matches = [];
   const possibleConflicts = [];
   const conflictSummary = {
@@ -433,19 +540,25 @@ export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
   for (const event of calendarEvents || []) {
     const candidates = seats
       .map((seat) => {
-        const scored = scoreCalendarSeatMatch(event, seat);
+        const scored = scoreCalendarSeatMatch(event, seat, memberIndex);
         return scored ? { seat, ...scored } : null;
       })
       .filter(Boolean)
       .sort((left, right) => right.score - left.score);
 
     const strong = candidates.filter((candidate) => candidate.score >= 7);
+    const topCandidate = candidates[0] || null;
+    const secondCandidate = candidates[1] || null;
+    const uniqueHighConfidence =
+      topCandidate &&
+      topCandidate.score >= 9 &&
+      (!secondCandidate || topCandidate.score > secondCandidate.score);
     const eventId = event.calendar_event_id || `${event.start}:${event.summary}`;
 
-    if (strong.length === 1) {
-      const match = strong[0];
+    if (strong.length === 1 || uniqueHighConfidence) {
+      const match = uniqueHighConfidence ? topCandidate : strong[0];
       matches.push({
-        ...eventDiagnostics(event),
+        ...eventDiagnostics(event, memberIndex),
         ...candidateDiagnostics(match),
       });
       matchedEventIds.add(eventId);
@@ -454,7 +567,7 @@ export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
       const reason = conflictReason(candidates.length, strong.length, candidates[0]);
       incrementSummary(conflictSummary, reason);
       possibleConflicts.push({
-        ...eventDiagnostics(event),
+        ...eventDiagnostics(event, memberIndex),
         reason,
         candidates: candidates.slice(0, 5).map((candidate) => candidateDiagnostics(candidate)),
       });
@@ -472,6 +585,7 @@ export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
       period_hint: periodFromEvent(event),
       role_hints: roleHintsFromText(`${event.summary || ""} ${event.description || ""}`),
       member_hints: eventMemberTokens(event),
+      member_matches: parsedCalendarTitle(event, memberIndex).member_matches,
     }));
 
   const unmatchedShiftCommanderShifts = seats
@@ -502,7 +616,7 @@ export function compareAdrCalendarToShiftCommander(calendarEvents, shifts) {
 export async function adrCalendarComparisonPreviewPayload(env, fetchImpl = fetch) {
   const calendarPreview = await adrCalendarPreviewPayload(env, fetchImpl);
   const schedule = await schedulePayload(env);
-  const comparison = compareAdrCalendarToShiftCommander(calendarPreview.events || [], schedule.shifts || []);
+  const comparison = compareAdrCalendarToShiftCommander(calendarPreview.events || [], schedule.shifts || [], seedMembersList());
 
   return {
     ...seedMeta(env),
