@@ -13,6 +13,7 @@ import {
   transactionsPayload,
   wallboardDisplayPayload,
 } from "./data.js";
+import { adrCalendarPreviewPayload } from "./adrCalendar.js";
 import {
   normalizeAvailabilityWrite,
   normalizeTransactionWrite,
@@ -991,6 +992,10 @@ export default {
 
     if (request.method === "GET" && path === "/api/persistence/status") {
       return send(await persistenceStatusPayload(env));
+    }
+
+    if (request.method === "GET" && path === "/api/canonical/adr-calendar-preview") {
+      return send(await adrCalendarPreviewPayload(env));
     }
 
     if (request.method === "GET" && path === "/api/bootstrap") {
