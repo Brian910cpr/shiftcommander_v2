@@ -13,7 +13,11 @@ import {
   transactionsPayload,
   wallboardDisplayPayload,
 } from "./data.js";
-import { adrCalendarComparisonPreviewPayload, adrCalendarPreviewPayload } from "./adrCalendar.js";
+import {
+  adrCalendarComparisonPreviewPayload,
+  adrCalendarDiagnosticsPreviewHtml,
+  adrCalendarPreviewPayload,
+} from "./adrCalendar.js";
 import {
   normalizeAvailabilityWrite,
   normalizeTransactionWrite,
@@ -55,6 +59,18 @@ function jsonResponse(payload, init = {}, request = null) {
     ...init,
     headers: {
       ...JSON_HEADERS,
+      ...(request ? corsHeaders(request) : CORS_HEADERS),
+      ...(init.headers || {}),
+    },
+  });
+}
+
+function htmlResponse(markup, init = {}, request = null) {
+  return new Response(markup, {
+    ...init,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
       ...(request ? corsHeaders(request) : CORS_HEADERS),
       ...(init.headers || {}),
     },
@@ -1000,6 +1016,10 @@ export default {
 
     if (request.method === "GET" && path === "/api/canonical/adr-calendar-comparison-preview") {
       return send(await adrCalendarComparisonPreviewPayload(env));
+    }
+
+    if (request.method === "GET" && path === "/api/canonical/adr-calendar-diagnostics-preview") {
+      return htmlResponse(await adrCalendarDiagnosticsPreviewHtml(env), {}, request);
     }
 
     if (request.method === "GET" && path === "/api/bootstrap") {

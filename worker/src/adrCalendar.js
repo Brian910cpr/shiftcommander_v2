@@ -629,3 +629,145 @@ export async function adrCalendarComparisonPreviewPayload(env, fetchImpl = fetch
     ...comparison,
   };
 }
+
+function htmlEscape(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function listText(value) {
+  return Array.isArray(value) && value.length ? value.join(", ") : "-";
+}
+
+function formatCandidateRow(calendar, candidate, kind = "candidate") {
+  return `
+    <tr>
+      <td>${htmlEscape(calendar.calendar_title || calendar.summary || "")}</td>
+      <td>${htmlEscape(calendar.calendar_start || calendar.start || "")}<br><small>${htmlEscape(calendar.calendar_end || calendar.end || "")}</small></td>
+      <td>${htmlEscape(listText(calendar.parsed_role_hints || calendar.role_hints))}</td>
+      <td>${htmlEscape(listText(calendar.parsed_member_hints || calendar.member_hints))}</td>
+      <td>${htmlEscape(candidate.candidate_shift_id || candidate.shift_id || "")}<br><small>${htmlEscape(candidate.candidate_seat_id || candidate.seat_id || "")}</small></td>
+      <td>${htmlEscape(candidate.candidate_seat_role || candidate.role || "")}</td>
+      <td>${htmlEscape(candidate.candidate_assigned_member || candidate.assigned_name || "")}</td>
+      <td>${htmlEscape(candidate.confidence_score ?? "-")}</td>
+      <td>${htmlEscape(listText(candidate.match_reasons))}</td>
+      <td>${htmlEscape(listText(candidate.mismatch_reasons))}</td>
+      <td>${htmlEscape(kind)}</td>
+    </tr>
+  `;
+}
+
+function table(title, rows) {
+  return `
+    <section>
+      <h2>${htmlEscape(title)}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Calendar title</th>
+            <th>Calendar time</th>
+            <th>Role hint</th>
+            <th>Member hint</th>
+            <th>SC shift / seat</th>
+            <th>Seat role</th>
+            <th>Assigned member</th>
+            <th>Score</th>
+            <th>Match reasons</th>
+            <th>Mismatch reasons</th>
+            <th>Kind</th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="11">None</td></tr>'}</tbody>
+      </table>
+    </section>
+  `;
+}
+
+function conflictRows(conflicts) {
+  return (conflicts || [])
+    .map((conflict) => {
+      const candidate = conflict.candidates?.[0] || {};
+      return formatCandidateRow(conflict, candidate, conflict.reason || "ambiguous");
+    })
+    .join("");
+}
+
+function unmatchedCalendarRows(events) {
+  return (events || [])
+    .map((event) => formatCandidateRow({
+      calendar_title: event.summary,
+      calendar_start: event.start,
+      calendar_end: event.end,
+      parsed_role_hints: event.role_hints,
+      parsed_member_hints: event.member_hints,
+    }, {}, "unmatched_calendar"))
+    .join("");
+}
+
+function unmatchedShiftRows(shifts) {
+  return (shifts || [])
+    .map((shift) => formatCandidateRow({}, {
+      candidate_shift_id: shift.shift_id,
+      candidate_seat_id: shift.seat_id,
+      candidate_seat_role: shift.role,
+      candidate_assigned_member: shift.assigned_name,
+      confidence_score: "-",
+      match_reasons: [],
+      mismatch_reasons: [shift.assignment_status || "unmatched_shiftcommander"],
+    }, "unmatched_shiftcommander"))
+    .join("");
+}
+
+export async function adrCalendarDiagnosticsPreviewHtml(env, fetchImpl = fetch) {
+  const comparison = await adrCalendarComparisonPreviewPayload(env, fetchImpl);
+  const strongRows = (comparison.sample_matches || [])
+    .slice(0, 10)
+    .map((match) => formatCandidateRow(match, match, "strong_match"))
+    .join("");
+  const ambiguousRows = conflictRows((comparison.samples?.top_10_ambiguous_candidates || []).slice(0, 10));
+  const unmatchedCalendar = unmatchedCalendarRows((comparison.unmatched_calendar_events || []).slice(0, 10));
+  const unmatchedShifts = unmatchedShiftRows((comparison.unmatched_shiftcommander_shifts || []).slice(0, 10));
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ADR Calendar Diagnostics Preview</title>
+  <style>
+    :root { color-scheme: dark; font-family: Arial, sans-serif; background: #0b1020; color: #e5eefc; }
+    body { margin: 24px; }
+    h1 { margin-bottom: 4px; }
+    h2 { margin-top: 28px; }
+    .meta { color: #9fb3cf; margin-bottom: 18px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 18px 0; }
+    .card { border: 1px solid #27324a; border-radius: 6px; padding: 12px; background: #111827; }
+    .value { font-size: 24px; font-weight: 700; }
+    .label { color: #9fb3cf; font-size: 12px; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border: 1px solid #27324a; padding: 7px; vertical-align: top; }
+    th { background: #172033; text-align: left; color: #bfdbfe; }
+    tr:nth-child(even) td { background: #0f172a; }
+    small { color: #9fb3cf; }
+    code { color: #93c5fd; }
+  </style>
+</head>
+<body>
+  <h1>ADR Calendar Diagnostics Preview</h1>
+  <div class="meta">Read-only debug view. Active ShiftCommander schedule and UI are not changed.</div>
+  <div class="cards">
+    <div class="card"><div class="value">${htmlEscape(comparison.calendar_event_count)}</div><div class="label">Calendar events</div></div>
+    <div class="card"><div class="value">${htmlEscape(comparison.shiftcommander_shift_count)}</div><div class="label">SC seats</div></div>
+    <div class="card"><div class="value">${htmlEscape(comparison.matched_count)}</div><div class="label">Strong matches</div></div>
+    <div class="card"><div class="value">${htmlEscape((comparison.possible_conflicts || []).length)}</div><div class="label">Possible conflicts</div></div>
+  </div>
+  <p class="meta">Source: <code>${htmlEscape(comparison.source)}</code> · schedule_source: <code>${htmlEscape(comparison.schedule_source)}</code></p>
+  ${table("Top Strong Matches", strongRows)}
+  ${table("Top Ambiguous Candidates", ambiguousRows)}
+  ${table("Unmatched Calendar Examples", unmatchedCalendar)}
+  ${table("Unmatched ShiftCommander Examples", unmatchedShifts)}
+</body>
+</html>`;
+}
