@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -15,7 +15,19 @@ import AdrCalendarDiagnostics from '@/pages/AdrCalendarDiagnostics';
 import { SCIdentityProvider } from '@/lib/SCIdentityContext';
 
 const AuthenticatedApp = () => {
+  const location = useLocation();
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+  const legacyRedirects = {
+    '/index.html': '/',
+    '/wallboard.html': '/wallboard',
+    '/member.html': '/member',
+    '/supervisor.html': '/supervisor',
+  };
+  const legacyTarget = legacyRedirects[location.pathname];
+
+  if (legacyTarget) {
+    return <Navigate to={legacyTarget} replace />;
+  }
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
