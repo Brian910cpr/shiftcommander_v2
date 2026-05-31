@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { format as fmtTime } from 'date-fns';
-import { Link, useLocation } from 'react-router-dom';
 import { addDays, format, startOfWeek, endOfWeek, parseISO, differenceInCalendarWeeks } from 'date-fns';
 import { useWallboardDisplay } from '@/lib/useWallboardDisplay';
 import { WALLBOARD_FUTURE_WEEKS } from '@/lib/shiftDisplayRules';
@@ -25,17 +24,7 @@ function clampWeekOffset(value) {
   return Math.max(MIN_WEEK_OFFSET, Math.min(MAX_WEEK_OFFSET, value));
 }
 
-function safeReturnPath(search) {
-  const params = new URLSearchParams(search || '');
-  const requested = params.get('return');
-  if (requested && requested.startsWith('/') && !requested.startsWith('//')) {
-    return requested;
-  }
-  return '/member';
-}
-
 export default function Wallboard() {
-  const location = useLocation();
   const [displayMode, setDisplayMode] = useState(() => {
     try { return localStorage.getItem('sc_displayMode') || 'horizon'; } catch { return 'horizon'; }
   });
@@ -47,8 +36,6 @@ export default function Wallboard() {
     loading, error, isLive, connectionIssue, connectionStatus,
     lastUpdatedAt, isStale, hasEverLoaded,
   } = useWallboardDisplay();
-
-  const memberReturnPath = useMemo(() => safeReturnPath(location.search), [location.search]);
 
   // Auto-jump to first loaded week if current week is empty
   useEffect(() => {
@@ -244,7 +231,6 @@ export default function Wallboard() {
           isLive={isLive}
           connectionIssue={connectionIssue}
           lastUpdatedAt={lastUpdatedAt}
-          memberReturnPath={memberReturnPath}
         />
         <WallboardLegend />
       </div>
@@ -262,11 +248,6 @@ export default function Wallboard() {
               {connectionIssue ? ' · 🔴 Connection issue' : isLive ? ' · 🟢 Live' : ' · 🟡 Cached'}
               {lastUpdatedAt && !connectionIssue && ` · ${fmtTime(lastUpdatedAt, 'HH:mm:ss')}`}
             </p>
-          </div>
-          <div className="flex gap-1.5">
-            <Link to={memberReturnPath} className="px-2.5 py-1.5 rounded-lg bg-secondary text-xs font-semibold text-foreground">
-              Portal
-            </Link>
           </div>
         </header>
         {connectionIssue && hasEverLoaded && (
