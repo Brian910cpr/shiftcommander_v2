@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import BackendWakeupNotice from '@/components/BackendWakeupNotice';
 
 import Wallboard from '@/pages/Wallboard';
 import MemberPage from '@/pages/MemberPage';
@@ -33,6 +34,18 @@ const AuthenticatedApp = () => {
     } else if (authError.type === 'auth_required') {
       navigateToLogin();
       return null;
+    } else if (authError.type === 'backend_unavailable') {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center bg-background px-4">
+          <div className="max-w-md w-full space-y-5 text-center">
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-foreground">ShiftCommander</h1>
+              <p className="text-sm text-muted-foreground mt-1">Public backend status</p>
+            </div>
+            <BackendWakeupNotice detail={authError.error?.message} />
+          </div>
+        </div>
+      );
     }
   }
 

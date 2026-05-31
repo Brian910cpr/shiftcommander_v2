@@ -13,6 +13,10 @@ import WeekGrid from '@/components/wallboard/WeekGrid';
 import MobileShiftFeed from '@/components/mobile/MobileShiftFeed';
 import HorizonView from '@/components/wallboard/HorizonView';
 import CompactView from '@/components/wallboard/CompactView';
+import {
+  BACKEND_WAKEUP_MESSAGE,
+  BACKEND_WAKEUP_TITLE,
+} from '@/lib/backendUnavailableMessage';
 
 const MIN_WEEK_OFFSET = -1;
 const MAX_WEEK_OFFSET = WALLBOARD_FUTURE_WEEKS;
@@ -215,8 +219,11 @@ export default function Wallboard() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           <span className="text-xs text-muted-foreground">
-            {connectionStatus === 'error' ? 'Unable to load wallboard data. Retrying…' : 'Loading schedule…'}
+            {connectionStatus === 'error' ? BACKEND_WAKEUP_TITLE : 'Loading schedule…'}
           </span>
+          {connectionStatus === 'error' && (
+            <span className="max-w-xs text-center text-[11px] text-muted-foreground">{BACKEND_WAKEUP_MESSAGE}</span>
+          )}
         </div>
       </div>
     );
@@ -265,10 +272,10 @@ export default function Wallboard() {
         {connectionIssue && hasEverLoaded && (
           <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border-b border-red-500/20 text-[10px]">
             <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse flex-shrink-0" />
-            <span className="text-red-300">
+            <span className="text-amber-100">
               {isStale
-                ? `Schedule may be stale. Last updated: ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`
-                : `Connection error. Showing schedule as of ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`}
+                ? `${BACKEND_WAKEUP_TITLE}. Showing the last schedule update from ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`
+                : `${BACKEND_WAKEUP_TITLE}. Showing schedule as of ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`}
             </span>
           </div>
         )}
@@ -287,12 +294,12 @@ export default function Wallboard() {
       <main className="hidden sm:block max-w-[1800px] mx-auto p-4">
         {/* Connection error banner — non-blocking, shows stale-data context */}
         {connectionIssue && hasEverLoaded && (
-          <div className="flex items-center gap-3 mb-3 px-4 py-2.5 rounded-lg border border-red-500/30 bg-red-500/8 text-[11px]">
-            <span className="flex-shrink-0 w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-            <span className="text-red-300 flex-1">
+          <div className="flex items-center gap-3 mb-3 px-4 py-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-[11px]">
+            <span className="flex-shrink-0 w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
+            <span className="text-amber-100 flex-1">
               {isStale
-                ? `Connection error. Schedule may be stale. Last updated: ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`
-                : `Connection error. Showing last loaded schedule. Current as of: ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`}
+                ? `${BACKEND_WAKEUP_TITLE}. Showing the last schedule update from ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`
+                : `${BACKEND_WAKEUP_TITLE}. Showing last loaded schedule from ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`}
             </span>
           </div>
         )}

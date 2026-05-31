@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { getApiBase } from '@/api/client';
+import {
+  BACKEND_WAKEUP_MESSAGE,
+  BACKEND_WAKEUP_TITLE,
+  backendDiagnosticsUrl,
+} from '@/lib/backendUnavailableMessage';
 
 export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, error, diag, lastUpdatedAt }) {
   const [open, setOpen] = useState(false);
@@ -94,7 +99,12 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
           {/* Error */}
           {error && (
             <Section label="Last Error">
-              <span className="text-red-400 break-all">{error}</span>
+              <div className="text-amber-300 font-semibold">{BACKEND_WAKEUP_TITLE}</div>
+              <div className="text-muted-foreground mt-1">{BACKEND_WAKEUP_MESSAGE}</div>
+              <div className="text-muted-foreground mt-1">
+                Backend: <span className="font-mono break-all">{backendDiagnosticsUrl() || 'same origin'}</span>
+                <span className="font-mono break-all"> · {error}</span>
+              </div>
             </Section>
           )}
         </div>

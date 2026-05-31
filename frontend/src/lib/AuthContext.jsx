@@ -76,7 +76,9 @@ export function AuthProvider({ children }) {
       return nextSession;
     } catch (sessionError) {
       setSession(null);
-      setAuthError(sessionError?.status === 401 ? { type: 'auth_required', error: sessionError } : null);
+      setAuthError(sessionError?.status === 401
+        ? { type: 'auth_required', error: sessionError }
+        : { type: 'backend_unavailable', error: sessionError });
       return null;
     } finally {
       setIsLoadingAuth(false);
