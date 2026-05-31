@@ -6,6 +6,7 @@ dist/
 .wrangler/
 
 debug/
+ops/logs/
 data/shifts.json
 data/schedule.json
 .smoke_test_backup/
