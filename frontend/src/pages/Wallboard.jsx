@@ -74,16 +74,20 @@ export default function Wallboard() {
   const grouped = rawGrouped;
 
   const operationalVisibleRange = useMemo(() => getOperationalVisibleRange(), []);
+  const wallboardVisibleStart = useMemo(() => {
+    const currentSundayWeekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
+    return addDays(currentSundayWeekStart, -7);
+  }, []);
   const operationalVisibleEndInclusive = useMemo(() => addDays(operationalVisibleRange.end, -1), [operationalVisibleRange]);
 
   const fullVisibleDays = useMemo(() => {
     const days = [];
-    for (let cursor = new Date(operationalVisibleRange.start); cursor < operationalVisibleRange.end; cursor = addDays(cursor, 1)) {
+    for (let cursor = new Date(wallboardVisibleStart); cursor < operationalVisibleRange.end; cursor = addDays(cursor, 1)) {
       const d = format(cursor, 'yyyy-MM-dd');
       days.push(grouped[d] || { date: d, am: null, pm: null });
     }
     return days;
-  }, [grouped, operationalVisibleRange]);
+  }, [grouped, operationalVisibleRange, wallboardVisibleStart]);
 
   // Horizon is the exclusive six-week wallboard range, not the max loaded schedule date.
   const horizonDate = useMemo(() => {

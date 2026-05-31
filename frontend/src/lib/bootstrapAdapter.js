@@ -1,7 +1,7 @@
 export function normalizeBootstrap(raw) {
   const schedule = raw?.schedule || {};
   const shifts = schedule?.shifts || raw?.shifts || [];
-  const wallboardDisplay = raw?.wallboard_display || raw?.wallboard || null;
+  const wallboardDisplay = raw?.wallboard_display || raw?.display || raw?.wallboard || null;
   const wallboard = wallboardDisplay?.wallboard || wallboardDisplay || { shifts };
 
   return {

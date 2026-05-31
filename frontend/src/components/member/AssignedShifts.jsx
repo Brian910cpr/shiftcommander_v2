@@ -3,14 +3,31 @@ import { format, parseISO } from 'date-fns';
 import { CalendarCheck, Clock, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+function normalizeName(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
 export default function AssignedShifts({ memberId, memberName, shifts = [] }) {
   const nextShiftRef = useRef(null);
 
   const assignedShifts = useMemo(() => {
+    const selectedMemberId = String(memberId || '');
+    const selectedName = normalizeName(memberName);
+
     return (shifts || []).filter(s => {
-      const att = s.attendant?.name;
-      const drv = s.driver?.name;
-      return (att === memberName || drv === memberName || s.attendant?.id === memberId || s.driver?.id === memberId);
+      const attendantId = String(s.attendant?.id || s.attendant?.assigned || '');
+      const driverId = String(s.driver?.id || s.driver?.assigned || '');
+
+      if (selectedMemberId && (attendantId === selectedMemberId || driverId === selectedMemberId)) {
+        return true;
+      }
+
+      const attendantName = normalizeName(s.attendant?.name || s.attendant?.assigned_name);
+      const driverName = normalizeName(s.driver?.name || s.driver?.assigned_name);
+      return Boolean(selectedName && (attendantName === selectedName || driverName === selectedName));
     }).sort((a, b) => a.date.localeCompare(b.date) || (a.label === 'AM' ? -1 : 1));
   }, [memberId, memberName, shifts]);
 
@@ -43,7 +60,10 @@ export default function AssignedShifts({ memberId, memberName, shifts = [] }) {
     <div className="space-y-2">
       {assignedShifts.map((shift, idx) => {
         const d           = parseISO(shift.date);
-        const isAttendant = shift.attendant?.name === memberName;
+        const selectedMemberId = String(memberId || '');
+        const selectedName = normalizeName(memberName);
+        const isAttendant = String(shift.attendant?.id || shift.attendant?.assigned || '') === selectedMemberId
+          || normalizeName(shift.attendant?.name || shift.attendant?.assigned_name) === selectedName;
         const role        = isAttendant ? 'Attendant' : 'Driver';
         const isPastShift = shift.date < today;
         const isNext      = idx === nextIdx && !isPastShift;
