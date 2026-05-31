@@ -10,6 +10,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Wallboard from '@/pages/Wallboard';
 import MemberPage from '@/pages/MemberPage';
 import Supervisor from '@/pages/Supervisor';
+import AdrCalendarDiagnostics from '@/pages/AdrCalendarDiagnostics';
 import { SCIdentityProvider } from '@/lib/SCIdentityContext';
 
 const AuthenticatedApp = () => {
@@ -41,6 +42,7 @@ const AuthenticatedApp = () => {
       <Route path="/wallboard" element={<Wallboard />} />
       <Route path="/member" element={<MemberPage />} />
       <Route path="/supervisor" element={<Supervisor />} />
+      <Route path="/supervisor/adr-calendar-diagnostics" element={<AdrCalendarDiagnostics />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

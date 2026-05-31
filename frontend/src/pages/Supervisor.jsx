@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Radio, Shield, LayoutDashboard, User, Lock } from 'lucide-react';
+import { CalendarSearch, Radio, Shield, LayoutDashboard, User, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useScheduleData } from '@/lib/useScheduleData';
 import { useSCAuth } from '@/lib/SCIdentityContext';
@@ -104,6 +104,9 @@ export default function Supervisor() {
               </Link>
               <Link to="/member" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                 <User className="w-3.5 h-3.5" /> Member
+              </Link>
+              <Link to="/supervisor/adr-calendar-diagnostics" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                <CalendarSearch className="w-3.5 h-3.5" /> ADR Diagnostics
               </Link>
               <button
                 onClick={() => logout()}

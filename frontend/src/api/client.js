@@ -104,6 +104,10 @@ export function getPersistenceStatus() {
   return apiGet("/persistence/status");
 }
 
+export function getAdrCalendarComparisonPreview() {
+  return apiGet("/canonical/adr-calendar-comparison-preview");
+}
+
 export function getWallboardDisplay() {
   warnCompatibilityRoute("/api/wallboard_display", "wallboard bootstrap fallback");
   return apiGet("/wallboard_display");
