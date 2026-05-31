@@ -67,11 +67,30 @@ export async function apiFetch(path, options = {}) {
   });
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+  let parseError = null;
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      parseError = error;
+      data = {
+        message: text.slice(0, 200)
+      };
+    }
+  }
 
   if (!response.ok) {
     const message = data?.error || data?.detail || data?.message || `HTTP ${response.status}`;
     const error = new Error(message);
+    error.status = response.status;
+    error.payload = data;
+    throw error;
+  }
+
+  if (parseError) {
+    const error = new Error(parseError.message);
     error.status = response.status;
     error.payload = data;
     throw error;
@@ -108,6 +127,18 @@ export function getHealth() {
 
 export function getPersistenceStatus() {
   return apiGet("/persistence/status");
+}
+
+export function getScheduleLifecycle() {
+  return apiGet("/schedule/lifecycle");
+}
+
+export function getScheduleCommitPreview() {
+  return apiGet("/schedule/commit-preview");
+}
+
+export function getSupervisorScheduleQueue() {
+  return apiGet("/supervisor/schedule-queue");
 }
 
 export function getAdrCalendarComparisonPreview() {

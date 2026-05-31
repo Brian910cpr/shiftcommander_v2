@@ -1,0 +1,275 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, CalendarClock, CheckCircle2, Eye, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { getScheduleCommitPreview, getScheduleLifecycle, getSupervisorScheduleQueue } from '@/api/client';
+
+const QUEUE_GROUPS = [
+  ['upcoming_commit_preview', 'Upcoming commit preview'],
+  ['open_committed_seats', 'Open committed seats'],
+  ['coverage_requests', 'Coverage requests'],
+  ['swap_requests', 'Swap requests'],
+  ['named_replacement_requests', 'Named replacement requests'],
+  ['stale_open_seats', 'Stale open seats'],
+  ['urgent_within_fallback_window', 'Urgent fallback window'],
+  ['conflicts_or_ot_review', 'Conflicts / OT review'],
+];
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    }).format(new Date(value));
+  } catch {
+    return String(value);
+  }
+}
+
+function shortDate(value) {
+  if (!value) return '-';
+  try {
+    return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`));
+  } catch {
+    return String(value);
+  }
+}
+
+function seatLabel(seat) {
+  if (!seat) return '-';
+  const name = seat.member_name || seat.assigned_name || seat.name;
+  const id = seat.member_id ? ` #${seat.member_id}` : '';
+  if (name) return `${name}${id}`;
+  return seat.assignment_status || 'OPEN';
+}
+
+function CountTile({ label, value, tone = 'default' }) {
+  const toneClass = tone === 'warn'
+    ? 'text-amber-300'
+    : tone === 'danger'
+      ? 'text-red-300'
+      : 'text-foreground';
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2 min-w-0">
+      <p className={`text-lg font-black leading-tight ${toneClass}`}>{value ?? 0}</p>
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{label}</p>
+    </div>
+  );
+}
+
+function WarningBanner({ failures }) {
+  if (!failures.length) return null;
+  return (
+    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100 flex gap-2">
+      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-300" />
+      <div>
+        <p className="font-semibold">Schedule lifecycle data is partially unavailable.</p>
+        <p className="text-amber-100/80">
+          {failures.map(failure => `${failure.endpoint}: ${failure.message}`).join(' / ')}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PreviewRows({ rows = [] }) {
+  if (!rows.length) {
+    return <p className="text-xs text-muted-foreground py-3">No shifts in the next commit preview.</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-left text-muted-foreground border-b border-border/60">
+            <th className="py-2 pr-3 font-semibold">Shift</th>
+            <th className="py-2 pr-3 font-semibold">Attendant</th>
+            <th className="py-2 pr-3 font-semibold">Driver</th>
+            <th className="py-2 pr-3 font-semibold">Source</th>
+            <th className="py-2 pr-3 font-semibold">Review</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => {
+            const warnings = row.warnings || [];
+            const clean = warnings.length === 0;
+            return (
+              <tr key={`${row.date}:${row.period}:${index}`} className="border-b border-border/30 last:border-0">
+                <td className="py-2 pr-3 whitespace-nowrap font-semibold text-foreground">
+                {shortDate(row.date)} / {row.period || '-'}
+                </td>
+                <td className="py-2 pr-3 text-muted-foreground">{seatLabel(row.attendant)}</td>
+                <td className="py-2 pr-3 text-muted-foreground">{seatLabel(row.driver)}</td>
+                <td className="py-2 pr-3 text-muted-foreground">{row.source || '-'}</td>
+                <td className="py-2 pr-3">
+                  {clean ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-300 font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Clean
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-amber-300 font-semibold">
+                      <AlertTriangle className="w-3.5 h-3.5" /> {warnings.join(', ')}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function QueueGroup({ label, value }) {
+  const items = Array.isArray(value)
+    ? value
+    : value?.would_commit
+      ? value.would_commit
+      : [];
+  return (
+    <div className="rounded-lg border border-border/50 bg-background/30 px-3 py-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold text-foreground">{label}</p>
+        <span className="text-[10px] rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{items.length}</span>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground mt-2">None</p>
+      ) : (
+        <div className="mt-2 space-y-1.5 max-h-28 overflow-y-auto pr-1">
+          {items.slice(0, 8).map((item, index) => (
+            <div key={item.request_id || `${label}:${index}`} className="text-[11px] text-muted-foreground flex justify-between gap-2">
+              <span className="truncate">
+                {item.reason || item.status || item.type || item.source || 'Queued item'}
+              </span>
+              <span className="text-foreground/80 whitespace-nowrap">
+            {item.shift?.date ? `${shortDate(item.shift.date)} ${item.shift.period || ''}` : item.date ? `${shortDate(item.date)} ${item.period || ''}` : ''}
+              </span>
+            </div>
+          ))}
+          {items.length > 8 && <p className="text-[10px] text-muted-foreground">+{items.length - 8} more</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ScheduleCommandCenter() {
+  const [lifecycle, setLifecycle] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [queue, setQueue] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [failures, setFailures] = useState([]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const nextFailures = [];
+    const loadOne = async (endpoint, fn, setter) => {
+      try {
+        setter(await fn());
+      } catch (error) {
+        nextFailures.push({ endpoint, status: error?.status, message: error?.status ? `HTTP ${error.status}` : error?.message || 'Failed to fetch' });
+      }
+    };
+
+    await Promise.all([
+      loadOne('/api/schedule/lifecycle', getScheduleLifecycle, setLifecycle),
+      loadOne('/api/schedule/commit-preview', getScheduleCommitPreview, setPreview),
+      loadOne('/api/supervisor/schedule-queue', getSupervisorScheduleQueue, setQueue),
+    ]);
+    setFailures(nextFailures);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const commitWindow = preview?.commit_window || lifecycle?.current_commit_window || {};
+  const policy = lifecycle?.schedule_commit || preview?.commit_policy || {};
+  const previewRows = preview?.would_commit || [];
+  const reviewCount = preview?.requires_supervisor_review?.length || 0;
+  const openCount = preview?.open_after_commit?.length || 0;
+  const mode = lifecycle?.counts
+    ? Object.entries(lifecycle.counts).map(([key, value]) => `${key}: ${value}`).join(' / ')
+    : 'Loading lifecycle counts';
+
+  const queueCounts = useMemo(() => {
+    const counts = {};
+    QUEUE_GROUPS.forEach(([key]) => {
+      const value = queue?.[key];
+      counts[key] = Array.isArray(value) ? value.length : value?.would_commit?.length || 0;
+    });
+    return counts;
+  }, [queue]);
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-4 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <CalendarClock className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-bold text-foreground">Schedule Command Center</h2>
+            <span className="text-[10px] rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-300 font-semibold">Read only</span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Draft intent, commit preview, and supervisor queue visibility. No schedule writes are available here.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={load} disabled={loading}>
+          {loading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+          Refresh
+        </Button>
+      </div>
+
+      <WarningBanner failures={failures} />
+
+      <div className="grid md:grid-cols-4 gap-3">
+        <div className="md:col-span-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Next commit</p>
+          <p className="text-sm font-semibold text-foreground">{formatDateTime(lifecycle?.next_commit_at || commitWindow.commit_at)}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Window {commitWindow.starts || '-'} through {commitWindow.ends || '-'}
+          </p>
+        </div>
+        <CountTile label="Preview shifts" value={previewRows.length} />
+        <CountTile label="Needs review" value={reviewCount} tone={reviewCount ? 'warn' : 'default'} />
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-3">
+        <CountTile label="Open after preview" value={openCount} tone={openCount ? 'danger' : 'default'} />
+        <div className="md:col-span-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Policy / lifecycle mode</p>
+          <p className="text-xs font-semibold text-foreground mt-1">
+            {policy.cadence || 'weekly'} / {policy.day_of_week || 'Wednesday'} {policy.time || '23:45'} / {policy.timezone || 'America/New_York'} / {policy.commit_block_days || 7} day block
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">{mode}</p>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border/60 bg-background/30 p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Eye className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-bold text-foreground">Commit Preview</h3>
+        </div>
+        <PreviewRows rows={previewRows} />
+      </div>
+
+      <div className="rounded-lg border border-border/60 bg-background/30 p-3">
+        <h3 className="text-sm font-bold text-foreground mb-2">Supervisor Queue</h3>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-2">
+          {QUEUE_GROUPS.map(([key, label]) => (
+            <QueueGroup key={key} label={label} value={key === 'upcoming_commit_preview' ? queue?.upcoming_commit_preview : queue?.[key]} />
+          ))}
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-3">
+          Queue counts: {Object.entries(queueCounts).map(([key, count]) => `${key} ${count}`).join(' / ')}
+        </p>
+      </div>
+    </section>
+  );
+}

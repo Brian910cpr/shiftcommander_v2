@@ -16,6 +16,7 @@ import HorizonControl from '@/components/supervisor/HorizonControl';
 import CareerFireControl from '@/components/supervisor/CareerFireControl';
 import MemberManagementPanel from '@/components/supervisor/MemberManagementPanel';
 import PersistenceStatus from '@/components/supervisor/PersistenceStatus';
+import ScheduleCommandCenter from '@/components/supervisor/ScheduleCommandCenter';
 
 export default function Supervisor() {
   const { status, isSupervisorOrAdmin, navigateToLogin } = useSCAuth();
@@ -130,6 +131,9 @@ export default function Supervisor() {
           members={members}
           loadedAt={loadedAt}
         />
+
+        {/* Schedule Lifecycle / Commit Preview */}
+        <ScheduleCommandCenter />
 
         {/* ── Persistence Status ── */}
         <PersistenceStatus />
