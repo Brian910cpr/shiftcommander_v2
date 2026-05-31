@@ -173,7 +173,7 @@
     </section>
 
     <div class="flash" id="flash"></div>
-    <div class="startup-line" id="startupLine">API base: checking...</div>
+    <div class="startup-line" id="startupLine">Checking ShiftCommander...</div>
 
     <section class="intro-banner" id="memberIntroBanner" aria-live="polite">
       <div class="intro-copy">
@@ -407,6 +407,8 @@
     const STORAGE_VIEW_MODE_KEY = "sc_member_availability_view_mode";
     const STORAGE_FORWARD_RANGE_KEY = "sc_member_forward_range";
     const FETCH_TIMEOUT_MS = 12000;
+    const BACKEND_WAKEUP_TITLE = "ShiftCommander is waking up";
+    const BACKEND_WAKEUP_MESSAGE = "The public backend may take up to a minute to respond after being idle. Please wait briefly, then refresh.";
     const appState = {
       session: null,
       member: null,
@@ -808,10 +810,24 @@
       node.textContent = message;
     }
 
+    function shouldShowBackendDiagnostics(){
+      const host = window.location.hostname;
+      return host === "localhost" || host === "127.0.0.1" || host === "::1" || /[?&]debug=1\b/.test(window.location.search);
+    }
+
+    function backendWakeupDetail(detail=""){
+      if(!shouldShowBackendDiagnostics()) return BACKEND_WAKEUP_MESSAGE;
+      const base = API_BASE || "(same origin)";
+      return `${BACKEND_WAKEUP_MESSAGE} Backend: ${base}${detail ? ` · ${detail}` : ""}`;
+    }
+
     function startupMessageFor(entry){
       const status = entry.status ? `status ${entry.status}` : (entry.error || "pending");
       const target = entry.url || "(no URL)";
-      return `API base: ${API_BASE || "(same origin)"} · ${entry.method || "GET"} ${target} · ${status}`;
+      if(entry.ok) return `Connected to ShiftCommander · ${entry.method || "GET"} ${target} · ${status}`;
+      return shouldShowBackendDiagnostics()
+        ? `${BACKEND_WAKEUP_TITLE} · Backend: ${API_BASE || "(same origin)"} · ${entry.method || "GET"} ${target} · ${status}`
+        : BACKEND_WAKEUP_MESSAGE;
     }
 
     function initIntroBanner(){
@@ -899,7 +915,7 @@
       setMemberFallback("Member page waiting", message);
       setAssignmentsFallback(message);
       setCalendarFallback(message);
-      updateStartupLine(`API base: ${API_BASE || "(same origin)"} · ${message}`);
+      updateStartupLine(message);
       setInteractiveEnabled(false);
     }
 
@@ -1313,13 +1329,14 @@
       renderDiagnostics();
 
       if(!health.ok){
-        const message = `${health.entry?.url || apiPath("/api/health")} · ${health.entry?.status || 0} · ${health.entry?.error || "API unavailable"}`;
-        setSessionBadge("API unavailable");
-        setMemberFallback("Member backend unavailable", "Static shell detected");
-        setAssignmentsFallback(message);
-        setCalendarFallback(message);
-        updateStartupLine(`API base: ${API_BASE || "(same origin)"} · ${message}`, "fail");
-        showFlash(message, "error");
+        const message = `${health.entry?.url || apiPath("/api/health")} · ${health.entry?.status || 0} · ${health.entry?.error || "Backend did not respond"}`;
+        const friendlyDetail = backendWakeupDetail(message);
+        setSessionBadge(BACKEND_WAKEUP_TITLE);
+        setMemberFallback(BACKEND_WAKEUP_TITLE, friendlyDetail);
+        setAssignmentsFallback(BACKEND_WAKEUP_MESSAGE);
+        setCalendarFallback(BACKEND_WAKEUP_MESSAGE);
+        updateStartupLine(friendlyDetail, "fail");
+        showFlash(BACKEND_WAKEUP_MESSAGE, "error");
         renderDiagnostics();
         return;
       }
@@ -1345,7 +1362,7 @@
         setMemberFallback("Session failed", detail);
         setAssignmentsFallback(detail);
         setCalendarFallback(detail);
-        updateStartupLine(`API base: ${API_BASE || "(same origin)"} · ${detail}`, "fail");
+        updateStartupLine(shouldShowBackendDiagnostics() ? `Backend: ${API_BASE || "(same origin)"} · ${detail}` : message, "fail");
         showFlash(message, "error");
         return;
       }
