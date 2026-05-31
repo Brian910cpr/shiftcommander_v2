@@ -16,6 +16,14 @@ from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
 from engine.display_normalizer import normalize_wallboard_display
 from engine.member_dashboard import build_member_dashboard
+from engine.schedule_lifecycle import (
+    build_supervisor_schedule_queue,
+    classify_shift_lifecycle,
+    current_commit_window,
+    get_commit_policy,
+    get_next_commit_at,
+    preview_schedule_commit,
+)
 
 SERVER_IMPORT_STARTED = time.perf_counter()
 
@@ -2697,6 +2705,81 @@ def preview_resolver(shifts_override=None):
         }
     }
     return resolve_rule_based(ctx)
+
+
+def request_now_param():
+    value = request.args.get("now")
+    if value:
+        return value
+    return datetime.now(LOCAL_TZ).isoformat()
+
+
+def load_change_requests_for_queue():
+    payload = load_json(SWAP_REQUESTS_FILE, {})
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        for key in ("requests", "change_requests", "items"):
+            if isinstance(payload.get(key), list):
+                return payload[key]
+    return []
+
+
+@app.route("/api/schedule/lifecycle", methods=["GET"])
+@require_role("supervisor")
+def get_schedule_lifecycle():
+    settings = load_settings()
+    policy = get_commit_policy(settings)
+    now_value = request_now_param()
+    schedule = load_schedule_payload()
+    shifts = schedule.get("shifts", []) if isinstance(schedule, dict) else []
+    counts = {"draft": 0, "committed": 0, "visible": 0, "past": 0}
+    samples = {}
+    for shift in shifts:
+        if not isinstance(shift, dict):
+            continue
+        state = classify_shift_lifecycle(shift, shift.get("label") or shift.get("period"), now_value, settings)
+        counts[state] = counts.get(state, 0) + 1
+        samples.setdefault(state, {
+            "date": str(shift.get("date") or shift.get("shift_date") or "")[:10],
+            "period": normalize_shift_label(shift.get("label") or shift.get("period")),
+            "state": state,
+        })
+    return jsonify({
+        "status": "ok",
+        "read_only": True,
+        "schedule_commit": policy,
+        "now": now_value,
+        "next_commit_at": get_next_commit_at(now_value, settings),
+        "current_commit_window": current_commit_window(now_value, settings),
+        "counts": counts,
+        "samples": samples,
+    })
+
+
+@app.route("/api/schedule/commit-preview", methods=["GET"])
+@require_role("supervisor")
+def get_schedule_commit_preview():
+    return jsonify(preview_schedule_commit(
+        load_schedule_payload(),
+        load_members(),
+        load_availability_payload(),
+        load_settings(),
+        request_now_param(),
+    ))
+
+
+@app.route("/api/supervisor/schedule-queue", methods=["GET"])
+@require_role("supervisor")
+def get_supervisor_schedule_queue():
+    return jsonify(build_supervisor_schedule_queue(
+        load_schedule_payload(),
+        load_availability_payload(),
+        load_change_requests_for_queue(),
+        load_settings(),
+        request_now_param(),
+        members=load_members(),
+    ))
 
 
 # =========================
