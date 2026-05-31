@@ -2139,7 +2139,435 @@
         "availability_seeded": false,
         "member_submitted": true
       }
+    },
+    {
+      "id": "live_beta_1780025989519_8a9b44e7",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "189",
+      "created_at": "2026-05-29T03:39:49.519444Z",
+      "affected": {
+        "member_id": "189",
+        "date": "2026-06-30",
+        "shift": "AM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "blank",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "preferred",
+        "member_intent": "prefer",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025993581_b8c0da3e",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "186",
+      "created_at": "2026-05-29T03:39:53.581905Z",
+      "affected": {
+        "member_id": "186",
+        "date": "2026-06-30",
+        "shift": "PM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "blank",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "available",
+        "member_intent": "available",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025994208_546fe8c3",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "186",
+      "created_at": "2026-05-29T03:39:54.208255Z",
+      "affected": {
+        "member_id": "186",
+        "date": "2026-06-30",
+        "shift": "PM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "available",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "available",
+        "member_intent": "available",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025995899_be2df22c",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "188",
+      "created_at": "2026-05-29T03:39:55.899538Z",
+      "affected": {
+        "member_id": "188",
+        "date": "2026-06-09",
+        "shift": "AM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "do_not_schedule",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "available",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025995903_6acde59d",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "188",
+      "created_at": "2026-05-29T03:39:55.903538Z",
+      "affected": {
+        "member_id": "188",
+        "date": "2026-06-09",
+        "shift": "PM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "do_not_schedule",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "preferred",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025996534_bfffdab7",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "188",
+      "created_at": "2026-05-29T03:39:56.534277Z",
+      "affected": {
+        "member_id": "188",
+        "date": "2026-06-09",
+        "shift": "AM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "available",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "blank",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025996538_b62151e4",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "188",
+      "created_at": "2026-05-29T03:39:56.538854Z",
+      "affected": {
+        "member_id": "188",
+        "date": "2026-06-09",
+        "shift": "PM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "preferred",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "blank",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025997172_1322bf62",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "146",
+      "created_at": "2026-05-29T03:39:57.172186Z",
+      "affected": {
+        "member_id": "146",
+        "date": "2026-06-09",
+        "shift": "AM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "do_not_schedule",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "blank",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025997176_b37cae67",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "146",
+      "created_at": "2026-05-29T03:39:57.176729Z",
+      "affected": {
+        "member_id": "146",
+        "date": "2026-06-09",
+        "shift": "PM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "do_not_schedule",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "blank",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025997859_7a4a0804",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "188",
+      "created_at": "2026-05-29T03:39:57.859475Z",
+      "affected": {
+        "member_id": "188",
+        "date": "2026-06-10",
+        "shift": "AM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "preferred",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "preferred",
+        "member_intent": "prefer",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780025998944_8a4fd69a",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "188",
+      "created_at": "2026-05-29T03:39:58.944809Z",
+      "affected": {
+        "member_id": "188",
+        "date": "2026-06-10",
+        "shift": "AM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "preferred",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "available",
+        "member_intent": "available",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780026000000_14a80dad",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "188",
+      "created_at": "2026-05-29T03:40:00.000531Z",
+      "affected": {
+        "member_id": "188",
+        "date": "2026-06-10",
+        "shift": "AM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "available",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "do_not_schedule",
+        "member_intent": "do_not",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780026001068_e38be437",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "188",
+      "created_at": "2026-05-29T03:40:01.068355Z",
+      "affected": {
+        "member_id": "188",
+        "date": "2026-06-10",
+        "shift": "AM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "do_not_schedule",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "blank",
+        "member_intent": "blank",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
+    },
+    {
+      "id": "live_beta_1780026002490_3557b0a4",
+      "live_beta": true,
+      "transactions_live": true,
+      "requires_supervisor_review": true,
+      "action_type": "availability_intent",
+      "source": "member_portal",
+      "actor_member_id": "186",
+      "created_at": "2026-05-29T03:40:02.490577Z",
+      "affected": {
+        "member_id": "186",
+        "date": "2026-06-30",
+        "shift": "PM",
+        "seat": null
+      },
+      "before": {
+        "availability_value": "available",
+        "seeded_value": null,
+        "source": null,
+        "logic_mode": null,
+        "availability_seeded": false,
+        "seed_type": null,
+        "member_submitted": null
+      },
+      "after": {
+        "availability_value": "available",
+        "member_intent": "available",
+        "availability_seeded": false,
+        "member_submitted": true
+      }
     }
   ],
-  "updated_at": "2026-05-25T19:13:32.934463Z"
+  "updated_at": "2026-05-29T03:40:02.490577Z"
 }

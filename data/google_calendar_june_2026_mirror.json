@@ -3,7 +3,7 @@
     "source": "google_calendar_mirror",
     "calendar_id": "2fbc3612e56a0a2ce28fe826443e20a88c500e1c5b3c56b126cb4afb88fd233e@group.calendar.google.com",
     "calendar_name": "ADR Employee Schedule",
-    "generated_at": "2026-05-25T19:32:23.154494Z",
+    "generated_at": "2026-05-30T02:42:30.131005Z",
     "month": "2026-06",
     "shift_count": 60,
     "feed_status": "ok"
@@ -131,18 +131,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Lynnsey",
-          "uid": "72pqet270govnoia1tvf4kjo79@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
-        {
           "summary": "Gracie",
           "uid": "6bv2o1c7aunarnlvrduoaprfts@google.com",
           "role": "ATTENDANT",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "Lynnsey",
+          "uid": "72pqet270govnoia1tvf4kjo79@google.com",
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         }
       ]
     },
@@ -186,18 +186,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sidney",
-          "uid": "67ehearihrq2omj412jfs13s5o@google.com",
-          "role": "DRIVER",
-          "assigned": "185",
-          "assigned_name": "Sidney DuBois"
-        },
-        {
           "summary": "Lynnsey",
           "uid": "12463qird1s1nf79tiqco1bfoa@google.com",
           "role": "ATTENDANT",
           "assigned": "186",
           "assigned_name": "Lynnsey Benson"
+        },
+        {
+          "summary": "Sidney",
+          "uid": "67ehearihrq2omj412jfs13s5o@google.com",
+          "role": "DRIVER",
+          "assigned": "185",
+          "assigned_name": "Sidney DuBois"
         }
       ]
     },
@@ -241,18 +241,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Barbara",
-          "uid": "4cfeusmc3ud2udh72450a4j0rs@google.com",
-          "role": "ATTENDANT",
-          "assigned": "190",
-          "assigned_name": "Barbara"
-        },
-        {
           "summary": "Brian",
           "uid": "26ou4banlghhivs0kjj1dk2hpl@google.com",
           "role": "DRIVER",
           "assigned": "188",
           "assigned_name": "Brian Ennis"
+        },
+        {
+          "summary": "Barbara",
+          "uid": "4cfeusmc3ud2udh72450a4j0rs@google.com",
+          "role": "ATTENDANT",
+          "assigned": "190",
+          "assigned_name": "Barbara"
         }
       ]
     },
@@ -296,18 +296,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Barbara",
-          "uid": "284lop3uab421snksd9mkrl6ls@google.com",
-          "role": "ATTENDANT",
-          "assigned": "190",
-          "assigned_name": "Barbara"
-        },
-        {
           "summary": "AJ",
           "uid": "2f1q8t0dg85iporvhppj93hhhj@google.com",
           "role": "DRIVER",
           "assigned": "163",
           "assigned_name": "AJ Smith"
+        },
+        {
+          "summary": "Barbara",
+          "uid": "284lop3uab421snksd9mkrl6ls@google.com",
+          "role": "ATTENDANT",
+          "assigned": "190",
+          "assigned_name": "Barbara"
         }
       ]
     },
@@ -393,18 +393,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
-          "uid": "4sepitglphq6akimisnfhg57d5@google.com",
-          "role": "DRIVER",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER"
-        },
-        {
           "summary": "Sophie",
           "uid": "2kd4c9m97v391bcdjmhkla12p5@google.com",
           "role": "ATTENDANT",
           "assigned": "180",
           "assigned_name": "Sophia Williams"
+        },
+        {
+          "summary": "OPEN",
+          "uid": "4sepitglphq6akimisnfhg57d5@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "OPEN DRIVER"
         }
       ]
     },
@@ -418,49 +418,34 @@
       "calendar_name": "ADR Employee Schedule",
       "seats": [
         {
-          "role": "ATTENDANT",
+          "role": "DRIVER",
           "hours": 12.0,
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson",
+          "assigned": null,
+          "assigned_name": "Elizabeth",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
           "calendar_uid": "17emcru3tl8l47d978r6dc9939@google.com",
-          "calendar_summary": "Lynnsey",
+          "calendar_summary": "Elizabeth",
           "calendar_start": "2026-06-05T06:00:00-04:00",
-          "seat_id": "2026-06-05:AM:ATTENDANT:0"
-        },
-        {
-          "role": "DRIVER",
-          "hours": 12.0,
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_on_board": true,
-          "source": "google_calendar_mirror",
-          "logic_mode": "mirror_only",
-          "calendar_uid": "6anvg753109u500mjc2dh24pll@google.com",
-          "calendar_summary": "OPEN",
-          "calendar_start": "2026-06-05T06:00:00-04:00",
-          "display_open_alert": true,
-          "seat_id": "2026-06-05:AM:DRIVER:1"
+          "seat_id": "2026-06-05:AM:DRIVER:0"
         }
       ],
       "calendar_events": [
-        {
-          "summary": "Lynnsey",
-          "uid": "17emcru3tl8l47d978r6dc9939@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
         {
           "summary": "OPEN",
           "uid": "6anvg753109u500mjc2dh24pll@google.com",
           "role": "DRIVER",
           "assigned": null,
           "assigned_name": "OPEN DRIVER"
+        },
+        {
+          "summary": "Elizabeth",
+          "uid": "17emcru3tl8l47d978r6dc9939@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "Elizabeth"
         }
       ]
     },
@@ -474,48 +459,34 @@
       "calendar_name": "ADR Employee Schedule",
       "seats": [
         {
-          "role": "ATTENDANT",
-          "hours": 12.0,
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson",
-          "assignment_status": "ASSIGNED",
-          "display_on_board": true,
-          "source": "google_calendar_mirror",
-          "logic_mode": "mirror_only",
-          "calendar_uid": "5d90v068uaogu1p2qqk7m7sd79@google.com",
-          "calendar_summary": "Lynnsey",
-          "calendar_start": "2026-06-05T18:00:00-04:00",
-          "seat_id": "2026-06-05:PM:ATTENDANT:0"
-        },
-        {
           "role": "DRIVER",
           "hours": 12.0,
-          "assigned": "188",
-          "assigned_name": "Brian Ennis",
+          "assigned": null,
+          "assigned_name": "Elizabeth",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
-          "calendar_uid": "3beqk51us1trv2isd1ivm1khbo@google.com",
-          "calendar_summary": "Brian",
+          "calendar_uid": "0mqeddqn0ld8f8c6bje4gi58p5@google.com",
+          "calendar_summary": "Elizabeth",
           "calendar_start": "2026-06-05T18:00:00-04:00",
-          "seat_id": "2026-06-05:PM:DRIVER:1"
+          "seat_id": "2026-06-05:PM:DRIVER:0"
         }
       ],
       "calendar_events": [
+        {
+          "summary": "Elizabeth",
+          "uid": "0mqeddqn0ld8f8c6bje4gi58p5@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "Elizabeth"
+        },
         {
           "summary": "Brian",
           "uid": "3beqk51us1trv2isd1ivm1khbo@google.com",
           "role": "DRIVER",
           "assigned": "188",
           "assigned_name": "Brian Ennis"
-        },
-        {
-          "summary": "Lynnsey",
-          "uid": "5d90v068uaogu1p2qqk7m7sd79@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
         }
       ]
     },
@@ -662,18 +633,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Brian",
-          "uid": "52l88208n5n2frjabnhfin2rk5@google.com",
-          "role": "DRIVER",
-          "assigned": "188",
-          "assigned_name": "Brian Ennis"
-        },
-        {
           "summary": "Barbara",
           "uid": "7lhdvc395flm45d1qpe7lsedb4@google.com",
           "role": "ATTENDANT",
           "assigned": "190",
           "assigned_name": "Barbara"
+        },
+        {
+          "summary": "Brian",
+          "uid": "52l88208n5n2frjabnhfin2rk5@google.com",
+          "role": "DRIVER",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis"
         }
       ]
     },
@@ -703,18 +674,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Gracie",
-          "uid": "5i5hako3rskplmg7965pfijsdh@google.com",
-          "role": "ATTENDANT",
-          "assigned": "107",
-          "assigned_name": "Gracie Toney"
-        },
-        {
           "summary": "Sophie",
           "uid": "67qh632ski6r0pnakqasf4ftj8@google.com",
           "role": "ATTENDANT",
           "assigned": "180",
           "assigned_name": "Sophia Williams"
+        },
+        {
+          "summary": "Gracie",
+          "uid": "5i5hako3rskplmg7965pfijsdh@google.com",
+          "role": "ATTENDANT",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney"
         }
       ]
     },
@@ -744,32 +715,32 @@
         {
           "role": "DRIVER",
           "hours": 12.0,
-          "assigned": "189",
-          "assigned_name": "Collin Harrison",
+          "assigned": "185",
+          "assigned_name": "Sidney DuBois",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
           "calendar_uid": "173b7n77g02tn5t76csrugegi3@google.com",
-          "calendar_summary": "Collin",
+          "calendar_summary": "Sidney",
           "calendar_start": "2026-06-08T18:00:00-04:00",
           "seat_id": "2026-06-08:PM:DRIVER:1"
         }
       ],
       "calendar_events": [
         {
-          "summary": "Collin",
-          "uid": "173b7n77g02tn5t76csrugegi3@google.com",
-          "role": "DRIVER",
-          "assigned": "189",
-          "assigned_name": "Collin Harrison"
-        },
-        {
           "summary": "Sophie",
           "uid": "6ml4qg1u5iv3vgpgeamn61mrrn@google.com",
           "role": "ATTENDANT",
           "assigned": "180",
           "assigned_name": "Sophia Williams"
+        },
+        {
+          "summary": "Sidney",
+          "uid": "173b7n77g02tn5t76csrugegi3@google.com",
+          "role": "DRIVER",
+          "assigned": "185",
+          "assigned_name": "Sidney DuBois"
         }
       ]
     },
@@ -799,18 +770,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Lynnsey",
-          "uid": "18jlhcatu7f18vavb03dlf88fp@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
-        {
           "summary": "Gracie",
           "uid": "4n8ais4sjngf6llvdgu2kftfdf@google.com",
           "role": "ATTENDANT",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "Lynnsey",
+          "uid": "18jlhcatu7f18vavb03dlf88fp@google.com",
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         }
       ]
     },
@@ -881,32 +852,32 @@
         {
           "role": "DRIVER",
           "hours": 12.0,
-          "assigned": null,
-          "assigned_name": "Biscuit",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
-          "calendar_uid": "0db55kfqn4jvi7a5enibdq787o@google.com",
-          "calendar_summary": "Biscuit",
+          "calendar_uid": "60mpms3d85lfsuna5mhf6gb1fj@google.com",
+          "calendar_summary": "Brian",
           "calendar_start": "2026-06-10T06:00:00-04:00",
           "seat_id": "2026-06-10:AM:DRIVER:0"
         }
       ],
       "calendar_events": [
         {
-          "summary": "Biscuit",
-          "uid": "0db55kfqn4jvi7a5enibdq787o@google.com",
-          "role": "DRIVER",
-          "assigned": null,
-          "assigned_name": "Biscuit"
-        },
-        {
           "summary": "Brian",
           "uid": "60mpms3d85lfsuna5mhf6gb1fj@google.com",
           "role": "DRIVER",
           "assigned": "188",
           "assigned_name": "Brian Ennis"
+        },
+        {
+          "summary": "Biscuit",
+          "uid": "0db55kfqn4jvi7a5enibdq787o@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "Biscuit"
         }
       ]
     },
@@ -920,6 +891,20 @@
       "calendar_name": "ADR Employee Schedule",
       "seats": [
         {
+          "role": "ATTENDANT",
+          "hours": 12.0,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_on_board": true,
+          "source": "google_calendar_mirror",
+          "logic_mode": "mirror_only",
+          "calendar_uid": "268e6tl7jh9k2mhjgpoin1d0t4@google.com",
+          "calendar_summary": "Lynnsey",
+          "calendar_start": "2026-06-10T18:00:00-04:00",
+          "seat_id": "2026-06-10:PM:ATTENDANT:0"
+        },
+        {
           "role": "DRIVER",
           "hours": 12.0,
           "assigned": "163",
@@ -931,16 +916,16 @@
           "calendar_uid": "5vs7acpro3ju2en4f0l1l611i0@google.com",
           "calendar_summary": "AJ",
           "calendar_start": "2026-06-10T18:00:00-04:00",
-          "seat_id": "2026-06-10:PM:DRIVER:0"
+          "seat_id": "2026-06-10:PM:DRIVER:1"
         }
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
+          "summary": "Lynnsey",
           "uid": "268e6tl7jh9k2mhjgpoin1d0t4@google.com",
-          "role": "DRIVER",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER"
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         },
         {
           "summary": "AJ",
@@ -977,18 +962,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Barbara",
-          "uid": "478vt98frc3pbt2d55vsa25g3q@google.com",
-          "role": "ATTENDANT",
-          "assigned": "190",
-          "assigned_name": "Barbara"
-        },
-        {
           "summary": "Gracie",
           "uid": "4jqjdo9j378mnj3lm3t0b0g74a@google.com",
           "role": "ATTENDANT",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "Barbara",
+          "uid": "478vt98frc3pbt2d55vsa25g3q@google.com",
+          "role": "ATTENDANT",
+          "assigned": "190",
+          "assigned_name": "Barbara"
         }
       ]
     },
@@ -1032,18 +1017,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Brian",
-          "uid": "2cdr52tirkc36i4vf5f8j1mdbr@google.com",
-          "role": "DRIVER",
-          "assigned": "188",
-          "assigned_name": "Brian Ennis"
-        },
-        {
           "summary": "Barbara",
           "uid": "6qqfaspfnqdilqgclju93luu50@google.com",
           "role": "ATTENDANT",
           "assigned": "190",
           "assigned_name": "Barbara"
+        },
+        {
+          "summary": "Brian",
+          "uid": "2cdr52tirkc36i4vf5f8j1mdbr@google.com",
+          "role": "DRIVER",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis"
         }
       ]
     },
@@ -1057,20 +1042,6 @@
       "calendar_name": "ADR Employee Schedule",
       "seats": [
         {
-          "role": "ATTENDANT",
-          "hours": 12.0,
-          "assigned": "180",
-          "assigned_name": "Sophia Williams",
-          "assignment_status": "ASSIGNED",
-          "display_on_board": true,
-          "source": "google_calendar_mirror",
-          "logic_mode": "mirror_only",
-          "calendar_uid": "2pcc5kemdlckkf1khlvu333rdm@google.com",
-          "calendar_summary": "Sophie",
-          "calendar_start": "2026-06-12T06:00:00-04:00",
-          "seat_id": "2026-06-12:AM:ATTENDANT:0"
-        },
-        {
           "role": "DRIVER",
           "hours": 12.0,
           "assigned": "188",
@@ -1082,7 +1053,7 @@
           "calendar_uid": "32ldo52brrvvl8no5ejdvski9p@google.com",
           "calendar_summary": "Brian",
           "calendar_start": "2026-06-12T06:00:00-04:00",
-          "seat_id": "2026-06-12:AM:DRIVER:1"
+          "seat_id": "2026-06-12:AM:DRIVER:0"
         }
       ],
       "calendar_events": [
@@ -1094,11 +1065,11 @@
           "assigned_name": "Brian Ennis"
         },
         {
-          "summary": "Sophie",
+          "summary": "Elizabeth",
           "uid": "2pcc5kemdlckkf1khlvu333rdm@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "Elizabeth"
         }
       ]
     },
@@ -1112,48 +1083,34 @@
       "calendar_name": "ADR Employee Schedule",
       "seats": [
         {
-          "role": "ATTENDANT",
+          "role": "DRIVER",
           "hours": 12.0,
-          "assigned": "180",
-          "assigned_name": "Sophia Williams",
+          "assigned": null,
+          "assigned_name": "Elizabeth",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
           "calendar_uid": "3rp2hgve409h6mlg1598itmrlq@google.com",
-          "calendar_summary": "Sophie",
+          "calendar_summary": "Elizabeth",
           "calendar_start": "2026-06-12T18:00:00-04:00",
-          "seat_id": "2026-06-12:PM:ATTENDANT:0"
-        },
-        {
-          "role": "DRIVER",
-          "hours": 12.0,
-          "assigned": "185",
-          "assigned_name": "Sidney DuBois",
-          "assignment_status": "ASSIGNED",
-          "display_on_board": true,
-          "source": "google_calendar_mirror",
-          "logic_mode": "mirror_only",
-          "calendar_uid": "591jmbcpf210uot28067jorq1n@google.com",
-          "calendar_summary": "Sidney",
-          "calendar_start": "2026-06-12T18:00:00-04:00",
-          "seat_id": "2026-06-12:PM:DRIVER:1"
+          "seat_id": "2026-06-12:PM:DRIVER:0"
         }
       ],
       "calendar_events": [
+        {
+          "summary": "Elizabeth",
+          "uid": "3rp2hgve409h6mlg1598itmrlq@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "Elizabeth"
+        },
         {
           "summary": "Sidney",
           "uid": "591jmbcpf210uot28067jorq1n@google.com",
           "role": "DRIVER",
           "assigned": "185",
           "assigned_name": "Sidney DuBois"
-        },
-        {
-          "summary": "Sophie",
-          "uid": "3rp2hgve409h6mlg1598itmrlq@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -1300,18 +1257,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Collin",
-          "uid": "7eodndemepkdkaej9hd22q8knm@google.com",
-          "role": "DRIVER",
-          "assigned": "189",
-          "assigned_name": "Collin Harrison"
-        },
-        {
           "summary": "Serenity",
           "uid": "6v8l7b9rv44cgi98migvko1kbf@google.com",
           "role": "ATTENDANT",
           "assigned": "183",
           "assigned_name": "Serenity Joyner"
+        },
+        {
+          "summary": "Collin",
+          "uid": "7eodndemepkdkaej9hd22q8knm@google.com",
+          "role": "DRIVER",
+          "assigned": "189",
+          "assigned_name": "Collin Harrison"
         }
       ]
     },
@@ -1396,18 +1353,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Barbara",
-          "uid": "2mksesop2c4vdt4bf288i8ohsv@google.com",
-          "role": "ATTENDANT",
-          "assigned": "190",
-          "assigned_name": "Barbara"
-        },
-        {
           "summary": "Sidney",
           "uid": "5d5covp8heo1i9ql7rap5v6001@google.com",
           "role": "DRIVER",
           "assigned": "185",
           "assigned_name": "Sidney DuBois"
+        },
+        {
+          "summary": "Barbara",
+          "uid": "2mksesop2c4vdt4bf288i8ohsv@google.com",
+          "role": "ATTENDANT",
+          "assigned": "190",
+          "assigned_name": "Barbara"
         }
       ]
     },
@@ -1423,32 +1380,47 @@
         {
           "role": "ATTENDANT",
           "hours": 12.0,
-          "assigned": "180",
-          "assigned_name": "Sophia Williams",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
-          "calendar_uid": "06etgpkmhetoskq8el3k7gsjo6@google.com",
-          "calendar_summary": "Sophie",
-          "calendar_start": "2026-06-16T06:00:00-04:00",
+          "calendar_uid": "6r4a0llpvof32rjnpiipgk087q@google.com",
+          "calendar_summary": "Gracie",
+          "calendar_start": "2026-06-16T09:00:00-04:00",
           "seat_id": "2026-06-16:AM:ATTENDANT:0"
+        },
+        {
+          "role": "DRIVER",
+          "hours": 12.0,
+          "assigned": null,
+          "assigned_name": "OPEN DRIVER",
+          "assignment_status": "OPEN",
+          "display_on_board": true,
+          "source": "google_calendar_mirror",
+          "logic_mode": "mirror_only",
+          "calendar_uid": "06etgpkmhetoskq8el3k7gsjo6@google.com",
+          "calendar_summary": "OPEN",
+          "calendar_start": "2026-06-16T06:00:00-04:00",
+          "display_open_alert": true,
+          "seat_id": "2026-06-16:AM:DRIVER:1"
         }
       ],
       "calendar_events": [
+        {
+          "summary": "OPEN",
+          "uid": "06etgpkmhetoskq8el3k7gsjo6@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "OPEN DRIVER"
+        },
         {
           "summary": "Gracie",
           "uid": "6r4a0llpvof32rjnpiipgk087q@google.com",
           "role": "ATTENDANT",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
-        },
-        {
-          "summary": "Sophie",
-          "uid": "06etgpkmhetoskq8el3k7gsjo6@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -1462,20 +1434,6 @@
       "calendar_name": "ADR Employee Schedule",
       "seats": [
         {
-          "role": "ATTENDANT",
-          "hours": 12.0,
-          "assigned": "180",
-          "assigned_name": "Sophia Williams",
-          "assignment_status": "ASSIGNED",
-          "display_on_board": true,
-          "source": "google_calendar_mirror",
-          "logic_mode": "mirror_only",
-          "calendar_uid": "0h11kpcbmakoo62mdjhukl9ssd@google.com",
-          "calendar_summary": "Sophie",
-          "calendar_start": "2026-06-16T18:00:00-04:00",
-          "seat_id": "2026-06-16:PM:ATTENDANT:0"
-        },
-        {
           "role": "DRIVER",
           "hours": 12.0,
           "assigned": "189",
@@ -1487,23 +1445,23 @@
           "calendar_uid": "3c9oqk86u3vcqole03srkculuu@google.com",
           "calendar_summary": "Collin",
           "calendar_start": "2026-06-16T18:00:00-04:00",
-          "seat_id": "2026-06-16:PM:DRIVER:1"
+          "seat_id": "2026-06-16:PM:DRIVER:0"
         }
       ],
       "calendar_events": [
+        {
+          "summary": "OPEN",
+          "uid": "0h11kpcbmakoo62mdjhukl9ssd@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "OPEN DRIVER"
+        },
         {
           "summary": "Collin",
           "uid": "3c9oqk86u3vcqole03srkculuu@google.com",
           "role": "DRIVER",
           "assigned": "189",
           "assigned_name": "Collin Harrison"
-        },
-        {
-          "summary": "Sophie",
-          "uid": "0h11kpcbmakoo62mdjhukl9ssd@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -1685,16 +1643,15 @@
         {
           "role": "ATTENDANT",
           "hours": 12.0,
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
+          "assigned": "180",
+          "assigned_name": "Sophia Williams",
+          "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
           "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "calendar_summary": "OPEN",
+          "calendar_summary": "Sophie",
           "calendar_start": "2026-06-18T18:00:00-04:00",
-          "display_open_alert": true,
           "seat_id": "2026-06-18:PM:ATTENDANT:0"
         },
         {
@@ -1714,11 +1671,11 @@
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
+          "summary": "Sophie",
           "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
           "role": "ATTENDANT",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT"
+          "assigned": "180",
+          "assigned_name": "Sophia Williams"
         },
         {
           "summary": "Collin",
@@ -1982,18 +1939,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Brian",
-          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
-          "role": "DRIVER",
-          "assigned": "188",
-          "assigned_name": "Brian Ennis"
-        },
-        {
           "summary": "Lynnsey",
           "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
           "role": "ATTENDANT",
           "assigned": "186",
           "assigned_name": "Lynnsey Benson"
+        },
+        {
+          "summary": "Brian",
+          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+          "role": "DRIVER",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis"
         }
       ]
     },
@@ -2093,18 +2050,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Collin",
-          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
-          "role": "DRIVER",
-          "assigned": "189",
-          "assigned_name": "Collin Harrison"
-        },
-        {
           "summary": "OPEN",
           "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
           "role": "ATTENDANT",
           "assigned": null,
           "assigned_name": "OPEN ATTENDANT"
+        },
+        {
+          "summary": "Collin",
+          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+          "role": "DRIVER",
+          "assigned": "189",
+          "assigned_name": "Collin Harrison"
         }
       ]
     },
@@ -2148,18 +2105,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Gracie",
-          "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
-          "role": "DRIVER",
-          "assigned": "107",
-          "assigned_name": "Gracie Toney"
-        },
-        {
           "summary": "Barbara",
           "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
           "role": "ATTENDANT",
           "assigned": "190",
           "assigned_name": "Barbara"
+        },
+        {
+          "summary": "Gracie",
+          "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+          "role": "DRIVER",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney"
         }
       ]
     },
@@ -2230,15 +2187,16 @@
         {
           "role": "ATTENDANT",
           "hours": 12.0,
-          "assigned": "180",
-          "assigned_name": "Sophia Williams",
-          "assignment_status": "ASSIGNED",
+          "assigned": null,
+          "assigned_name": "OPEN ATTENDANT",
+          "assignment_status": "OPEN",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
           "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
-          "calendar_summary": "Sophie",
+          "calendar_summary": "OPEN",
           "calendar_start": "2026-06-24T06:00:00-04:00",
+          "display_open_alert": true,
           "seat_id": "2026-06-24:AM:ATTENDANT:0"
         },
         {
@@ -2258,18 +2216,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sophie",
-          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
-        },
-        {
           "summary": "Brian",
           "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
           "role": "DRIVER",
           "assigned": "188",
           "assigned_name": "Brian Ennis"
+        },
+        {
+          "summary": "OPEN",
+          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+          "role": "ATTENDANT",
+          "assigned": null,
+          "assigned_name": "OPEN ATTENDANT"
         }
       ]
     },
@@ -2285,14 +2243,14 @@
         {
           "role": "ATTENDANT",
           "hours": 12.0,
-          "assigned": "180",
-          "assigned_name": "Sophia Williams",
+          "assigned": "182",
+          "assigned_name": "Nikki Meeks",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
           "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "calendar_summary": "Sophie",
+          "calendar_summary": "Nikki",
           "calendar_start": "2026-06-24T18:00:00-04:00",
           "seat_id": "2026-06-24:PM:ATTENDANT:0"
         },
@@ -2313,18 +2271,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sophie",
-          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
-        },
-        {
           "summary": "AJ",
           "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
           "role": "DRIVER",
           "assigned": "163",
           "assigned_name": "AJ Smith"
+        },
+        {
+          "summary": "Nikki",
+          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+          "role": "ATTENDANT",
+          "assigned": "182",
+          "assigned_name": "Nikki Meeks"
         }
       ]
     },
@@ -2423,18 +2381,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Lynnsey",
-          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
-        {
           "summary": "Sidney",
           "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
           "role": "DRIVER",
           "assigned": "185",
           "assigned_name": "Sidney DuBois"
+        },
+        {
+          "summary": "Lynnsey",
+          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         }
       ]
     },
@@ -2450,16 +2408,15 @@
         {
           "role": "ATTENDANT",
           "hours": 12.0,
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
+          "assigned": "180",
+          "assigned_name": "Sophia Williams",
+          "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
           "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
-          "calendar_summary": "OPEN",
+          "calendar_summary": "Sophie",
           "calendar_start": "2026-06-26T06:00:00-04:00",
-          "display_open_alert": true,
           "seat_id": "2026-06-26:AM:ATTENDANT:0"
         },
         {
@@ -2479,11 +2436,11 @@
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
+          "summary": "Sophie",
           "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
           "role": "ATTENDANT",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT"
+          "assigned": "180",
+          "assigned_name": "Sophia Williams"
         },
         {
           "summary": "Collin",
@@ -2506,16 +2463,15 @@
         {
           "role": "ATTENDANT",
           "hours": 12.0,
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
+          "assigned": "180",
+          "assigned_name": "Sophia Williams",
+          "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
           "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "calendar_summary": "OPEN",
+          "calendar_summary": "Sophie",
           "calendar_start": "2026-06-26T18:00:00-04:00",
-          "display_open_alert": true,
           "seat_id": "2026-06-26:PM:ATTENDANT:0"
         },
         {
@@ -2542,11 +2498,11 @@
           "assigned_name": "Brian Ennis"
         },
         {
-          "summary": "OPEN",
+          "summary": "Sophie",
           "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
           "role": "ATTENDANT",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT"
+          "assigned": "180",
+          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -2692,18 +2648,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sophie",
-          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
-        },
-        {
           "summary": "Collin",
           "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
           "role": "DRIVER",
           "assigned": "189",
           "assigned_name": "Collin Harrison"
+        },
+        {
+          "summary": "Sophie",
+          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+          "role": "ATTENDANT",
+          "assigned": "180",
+          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -2802,18 +2758,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Brian",
-          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
-          "role": "DRIVER",
-          "assigned": "188",
-          "assigned_name": "Brian Ennis"
-        },
-        {
           "summary": "Lynnsey",
           "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
           "role": "ATTENDANT",
           "assigned": "186",
           "assigned_name": "Lynnsey Benson"
+        },
+        {
+          "summary": "Brian",
+          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+          "role": "DRIVER",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis"
         }
       ]
     },
@@ -2858,18 +2814,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
-          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
-          "role": "ATTENDANT",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT"
-        },
-        {
           "summary": "Gracie",
           "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
           "role": "DRIVER",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "OPEN",
+          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+          "role": "ATTENDANT",
+          "assigned": null,
+          "assigned_name": "OPEN ATTENDANT"
         }
       ]
     },
