@@ -32,6 +32,12 @@ function shouldFallbackToCompatibility(error) {
   return error.status === 404 || error.status === 405 || error.status >= 500;
 }
 
+function shouldFallbackToMemberAvailability(error) {
+  if (shouldFallbackToCompatibility(error)) return true;
+  const message = `${error?.message || ""} ${error?.payload?.error || ""}`.toLowerCase();
+  return error?.status === 400 && message.includes("months object");
+}
+
 function buildAvailabilityWritePayload(memberId, entries) {
   const normalizedMemberId = String(memberId);
   return {
@@ -166,7 +172,7 @@ export async function saveMemberAvailability(memberId, entries) {
   try {
     return await apiPost("/availability", canonicalPayload);
   } catch (error) {
-    if (!shouldFallbackToCompatibility(error)) {
+    if (!shouldFallbackToMemberAvailability(error)) {
       throw error;
     }
 

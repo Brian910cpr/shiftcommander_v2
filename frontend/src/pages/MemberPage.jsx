@@ -36,7 +36,7 @@ function isFireSeat(seat) {
   return seat.status === 'STRUCTURAL' && FIRE_LABELS_D.some(f => label.includes(f));
 }
 
-function DesktopOpenShifts({ member, shifts = [] }) {
+function DesktopOpenShifts({ member, shifts = [], availability = {} }) {
   const [intents, setIntents]       = useState({});
   const [submitting, setSubmitting] = useState({});
   const today = fmtDate(new Date(), 'yyyy-MM-dd');
@@ -64,7 +64,7 @@ function DesktopOpenShifts({ member, shifts = [] }) {
     }).sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label));
   }, [canAttend, canDrive, shifts, today]);
 
-  const getIntent = (date, label) => intents[`${date}:${label}`] || 'blank';
+  const getIntent = (date, label) => intents[`${date}:${label}`] || availability[`${date}:${label}`] || 'blank';
 
   const handleRequest = useCallback(async (slot) => {
     const key       = `${slot.date}:${slot.label}`;
@@ -327,7 +327,7 @@ function MemberPageContent({
                   <p className="text-xs text-muted-foreground">Request open seats. Saves your intent to the schedule system.</p>
                 </CardHeader>
                 <CardContent>
-                  <DesktopOpenShifts member={activeMember} shifts={shifts} />
+              <DesktopOpenShifts member={activeMember} shifts={shifts} availability={activeAvailability || {}} />
                 </CardContent>
               </Card>
             </TabsContent>

@@ -23,7 +23,7 @@ function isFireStructural(seat) {
 
 // ─── MY SHIFTS ────────────────────────────────────────────────────────────────
 
-function MyShiftsTab({ memberName, shifts = [] }) {
+function MyShiftsTab({ memberId, memberName, shifts = [] }) {
   const nextShiftRef = useRef(null);
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -31,15 +31,15 @@ function MyShiftsTab({ memberName, shifts = [] }) {
   const myShifts = useMemo(() => {
     return allShifts
       .filter(s => {
-        const isAttendant = s.attendant?.name === memberName && s.attendant?.status === 'ASSIGNED';
-        const isDriver    = s.driver?.name    === memberName && s.driver?.status    === 'ASSIGNED';
+        const isAttendant = (s.attendant?.name === memberName || String(s.attendant?.id || '') === String(memberId)) && s.attendant?.status === 'ASSIGNED';
+        const isDriver    = (s.driver?.name    === memberName || String(s.driver?.id || '')    === String(memberId)) && s.driver?.status    === 'ASSIGNED';
         return isAttendant || isDriver;
       })
       .sort((a, b) => {
         if (a.date !== b.date) return a.date.localeCompare(b.date);
         return a.label.localeCompare(b.label);
       });
-  }, [allShifts, memberName]);
+  }, [allShifts, memberId, memberName]);
 
   // Next upcoming shift index
   const nextIdx = useMemo(() => {
@@ -716,7 +716,7 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
         {activeTab === 'shifts' && (
-          <MyShiftsTab memberName={member.name} shifts={shifts} />
+          <MyShiftsTab memberId={member.id} memberName={member.name} shifts={shifts} />
         )}
         {activeTab === 'opps' && (
           <OpenShiftsTab

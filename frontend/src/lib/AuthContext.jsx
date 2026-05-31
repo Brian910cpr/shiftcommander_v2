@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getSession, logout as backendLogout } from '@/api/client';
+import { getApiBase, getSession, logout as backendLogout } from '@/api/client';
 import { loadBootstrap } from '@/lib/bootstrapData';
 import { getBootstrapSession, normalizeSession } from '@/lib/sessionAdapter';
 
@@ -10,8 +10,26 @@ function isLocalPreviewHost() {
   return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
 }
 
+function isQuickTestModeEnabled() {
+  const configured = import.meta.env?.VITE_SC_QUICK_TEST_MODE;
+  if (configured !== undefined) {
+    return String(configured).toLowerCase() === 'true';
+  }
+
+  return isLocalPreviewHost();
+}
+
+function sessionUsesQuickTestBypass(session) {
+  return Boolean(session?.quick_test_mode || session?.demo_supervisor_bypass || session?.local_preview_session);
+}
+
+function allowSession(session) {
+  if (!sessionUsesQuickTestBypass(session)) return true;
+  return isQuickTestModeEnabled();
+}
+
 function localPreviewSessionFromBootstrap(bootstrap) {
-  if (!isLocalPreviewHost()) return null;
+  if (!isQuickTestModeEnabled()) return null;
   const members = Array.isArray(bootstrap?.members) ? bootstrap.members : [];
   const member = members.find((row) => String(row?.email || row?.auth_email || '').toLowerCase() === 'brian@910cpr.com')
     || members.find((row) => row?.access?.supervisor || row?.auth?.supervisor_access || row?.role === 'supervisor')
@@ -47,7 +65,7 @@ export function AuthProvider({ children }) {
       const bootstrap = await loadBootstrap();
       const bootstrapSession = getBootstrapSession(bootstrap);
 
-      if (bootstrapSession?.authenticated) {
+      if (bootstrapSession?.authenticated && allowSession(bootstrapSession)) {
         setSession(bootstrapSession);
         setIsLoadingAuth(false);
         return bootstrapSession;
@@ -72,6 +90,11 @@ export function AuthProvider({ children }) {
           return localPreviewSession;
         }
       }
+      if (nextSession?.authenticated && !allowSession(nextSession)) {
+        setSession(null);
+        setAuthError({ type: 'auth_required', error: new Error('Quick Test Mode is disabled for this frontend build.') });
+        return null;
+      }
       setSession(nextSession);
       return nextSession;
     } catch (sessionError) {
@@ -95,7 +118,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const navigateToLogin = useCallback(() => {
-    window.location.href = '/login';
+    const base = getApiBase().replace(/\/+$/, '');
+    window.location.href = base ? `${base}/login` : '/login';
   }, []);
 
   const user = session?.user || session?.member || null;

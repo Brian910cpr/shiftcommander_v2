@@ -43,7 +43,11 @@ function matchMember(members, email) {
 
 function localPreviewMember(members) {
   if (typeof window === 'undefined') return null;
-  if (!['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) return null;
+  const configured = import.meta.env?.VITE_SC_QUICK_TEST_MODE;
+  const quickTestEnabled = configured !== undefined
+    ? String(configured).toLowerCase() === 'true'
+    : ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+  if (!quickTestEnabled) return null;
   return members.find(m => {
     const fields = [m.email, m.google_email, m.auth_email].filter(Boolean);
     return fields.some(f => f.toLowerCase().trim() === 'brian@910cpr.com');

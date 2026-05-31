@@ -29,9 +29,7 @@ export default function GeneralPreferences() {
   const mark = setter => val => { setter(val); setDirty(true); };
 
   const handleSave = () => {
-    // No live backend write endpoint — display only, pre-beta
-    toast.info('Preferences noted (pre-beta — not yet saved to backend)', { duration: 4000 });
-    setDirty(false);
+    toast.warning('General Preferences are not saved yet. Backend preference persistence is not wired.', { duration: 5000 });
   };
 
   const Row = ({ label, value, onChange, options }) => (
@@ -62,14 +60,16 @@ export default function GeneralPreferences() {
       <div className="px-4 py-3 border-t border-border/50">
         <button
           onClick={handleSave}
+          disabled
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
             dirty
-              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+              ? 'bg-muted text-muted-foreground cursor-not-allowed'
               : 'bg-muted text-muted-foreground cursor-default'
           }`}
+          title="General Preferences are display-only until a backend preference endpoint is added."
         >
           <Save className="w-3.5 h-3.5" />
-          Save Preferences
+          Preferences not saved yet
         </button>
       </div>
     </div>
