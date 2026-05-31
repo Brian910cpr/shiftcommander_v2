@@ -13,6 +13,7 @@ import urllib.request
 from copy import deepcopy
 from datetime import date, datetime, timedelta, UTC
 from functools import wraps
+from zoneinfo import ZoneInfo
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
 from engine.display_normalizer import normalize_wallboard_display
 from engine.member_dashboard import build_member_dashboard
@@ -44,6 +45,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DOCS_DIR = os.path.join(BASE_DIR, "docs")
 DEBUG_DIR = os.path.join(BASE_DIR, "debug")
+LOCAL_TZ = ZoneInfo("America/New_York")
 
 MEMBERS_FILE = os.path.join(DATA_DIR, "members.json")
 SHIFTS_FILE = os.path.join(DATA_DIR, "shifts.json")
