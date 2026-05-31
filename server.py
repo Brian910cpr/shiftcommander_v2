@@ -129,12 +129,29 @@ SC_ALLOWED_ORIGINS = parse_csv_env(
         "https://adr-fr.org",
         "https://www.adr-fr.org",
         "https://sc.adr-fr.org",
+        "https://sc-api.adr-fr.org",
+        "https://shiftcommander.pages.dev",
+        "https://06266bdf.shiftcommander.pages.dev",
+        "https://base44.com",
+        "https://app.base44.com",
+        "http://127.0.0.1:4173",
+        "http://localhost:4173",
         "http://127.0.0.1:5000",
         "http://localhost:5000",
         "http://127.0.0.1:8001",
         "http://localhost:8001",
     ],
 )
+for required_origin in [
+    "https://shiftcommander.pages.dev",
+    "https://06266bdf.shiftcommander.pages.dev",
+    "https://sc.adr-fr.org",
+    "http://127.0.0.1:4173",
+    "http://localhost:4173",
+]:
+    if required_origin not in SC_ALLOWED_ORIGINS:
+        SC_ALLOWED_ORIGINS.append(required_origin)
+SC_ALLOWED_ORIGIN_SUFFIXES = tuple(parse_csv_env("SC_ALLOWED_ORIGIN_SUFFIXES", [".base44.app", ".base44.com"]))
 SC_PUBLIC_BASE_URL = str(os.environ.get("SC_PUBLIC_BASE_URL") or "").strip().rstrip("/")
 SC_FLASK_DEBUG = env_flag("FLASK_DEBUG", False)
 
