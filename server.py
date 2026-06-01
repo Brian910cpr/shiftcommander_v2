@@ -662,8 +662,7 @@ def quick_test_supervisor_allowed():
         except Exception:
             return False
     host = str(request.host or "").split(":", 1)[0].strip().lower()
-    remote = str(request.remote_addr or "").strip()
-    return host in {"127.0.0.1", "localhost", "::1"} or remote in {"127.0.0.1", "::1"}
+    return host in {"127.0.0.1", "localhost", "::1"}
 
 
 def local_testing_login_allowed():
