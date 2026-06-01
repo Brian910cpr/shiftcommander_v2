@@ -265,6 +265,10 @@ export function getSession() {
   return apiGet("/auth/session");
 }
 
+export function redeemBetaSessionToken(token) {
+  return apiPost("/auth/beta-session", { token });
+}
+
 export function logout() {
   return apiPost("/auth/logout", {});
 }

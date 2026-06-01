@@ -24,6 +24,21 @@ export const SC_ROLES = {
 
 function deriveRole(member) {
   if (!member) return null;
+  const roles = Array.isArray(member.roles) ? member.roles : [];
+  const authRoles = Array.isArray(member.auth?.roles) ? member.auth.roles : [];
+  const roleValues = [
+    member.role,
+    member.sc_role,
+    member.auth?.role,
+    ...roles,
+    ...authRoles,
+  ].map(value => String(value || '').toLowerCase().trim());
+  if (member.access?.admin || member.auth?.admin_access || member.admin || roleValues.includes('admin')) {
+    return SC_ROLES.ADMIN;
+  }
+  if (member.access?.supervisor || member.auth?.supervisor_access || member.supervisor || roleValues.includes('supervisor')) {
+    return SC_ROLES.SUPERVISOR;
+  }
   const rt = (member.role || member.sc_role || '').toLowerCase();
   if (rt === 'admin')      return SC_ROLES.ADMIN;
   if (rt === 'supervisor') return SC_ROLES.SUPERVISOR;
@@ -36,7 +51,7 @@ function matchMember(members, email) {
   if (!email) return [];
   const norm = email.toLowerCase().trim();
   return members.filter(m => {
-    const fields = [m.email, m.google_email, m.auth_email].filter(Boolean);
+    const fields = [m.email, m.google_email, m.auth_email, m.auth?.email, m.auth?.google_email].filter(Boolean);
     return fields.some(f => f.toLowerCase().trim() === norm);
   });
 }

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getApiBase, getSession, logout as backendLogout } from '@/api/client';
+import { getApiBase, getSession, logout as backendLogout, redeemBetaSessionToken } from '@/api/client';
 import { loadBootstrap } from '@/lib/bootstrapData';
 import { getBootstrapSession, normalizeSession } from '@/lib/sessionAdapter';
 
@@ -24,8 +24,32 @@ function sessionUsesQuickTestBypass(session) {
 }
 
 function allowSession(session) {
+  if (session?.beta_auth_bridge || session?.auth_mode === 'beta_login_bridge') return true;
   if (!sessionUsesQuickTestBypass(session)) return true;
   return isQuickTestModeEnabled();
+}
+
+const BETA_SESSION_STORAGE_KEY = 'sc_beta_session_token';
+
+function readBetaSessionTokenFromUrl() {
+  if (typeof window === 'undefined') return null;
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get('sc_beta_session');
+  if (!token) return null;
+  url.searchParams.delete('sc_beta_session');
+  window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+  window.sessionStorage?.setItem(BETA_SESSION_STORAGE_KEY, token);
+  return token;
+}
+
+function readStoredBetaSessionToken() {
+  if (typeof window === 'undefined') return null;
+  return window.sessionStorage?.getItem(BETA_SESSION_STORAGE_KEY) || null;
+}
+
+function clearStoredBetaSessionToken() {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage?.removeItem(BETA_SESSION_STORAGE_KEY);
 }
 
 function localPreviewSessionFromBootstrap(bootstrap) {
@@ -60,6 +84,21 @@ export function AuthProvider({ children }) {
   const refreshSession = useCallback(async () => {
     setIsLoadingAuth(true);
     setAuthError(null);
+
+    const betaToken = readBetaSessionTokenFromUrl() || readStoredBetaSessionToken();
+    if (betaToken) {
+      try {
+        const betaSession = normalizeSession(await redeemBetaSessionToken(betaToken));
+        if (betaSession?.authenticated && allowSession(betaSession)) {
+          setSession(betaSession);
+          setIsLoadingAuth(false);
+          return betaSession;
+        }
+      } catch (betaError) {
+        clearStoredBetaSessionToken();
+        console.warn('[ShiftCommander] Beta session bridge unavailable:', betaError.message);
+      }
+    }
 
     try {
       const bootstrap = await loadBootstrap();
@@ -113,13 +152,17 @@ export function AuthProvider({ children }) {
   }, [refreshSession]);
 
   const logout = useCallback(async () => {
+    clearStoredBetaSessionToken();
     await backendLogout().catch(() => null);
     setSession(null);
   }, []);
 
   const navigateToLogin = useCallback(() => {
     const base = getApiBase().replace(/\/+$/, '');
-    window.location.href = base ? `${base}/login` : '/login';
+    const next = typeof window !== 'undefined'
+      ? `${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`
+      : '/member';
+    window.location.href = base ? `${base}/login.html?next=${encodeURIComponent(next)}` : `/login.html?next=${encodeURIComponent(next)}`;
   }, []);
 
   const user = session?.user || session?.member || null;
