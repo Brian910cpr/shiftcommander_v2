@@ -10,6 +10,15 @@ import {
 export default function BackendWakeupNotice({ detail = null, compact = false }) {
   const showDiagnostics = shouldShowBackendDiagnostics();
   const backendUrl = backendDiagnosticsUrl();
+  const endpoint = detail?.endpoint || null;
+  const attempt = detail?.attempt || null;
+  const maxAttempts = detail?.maxAttempts || null;
+  const lastError = typeof detail === 'string' ? detail : detail?.lastError || null;
+  const detailText = [
+    endpoint ? `Endpoint: ${endpoint}` : null,
+    attempt ? `Attempt: ${attempt}${maxAttempts ? `/${maxAttempts}` : ''}` : null,
+    lastError ? `Last: ${lastError}` : null,
+  ].filter(Boolean).join(' · ');
 
   return (
     <div className={`rounded-lg border border-amber-500/25 bg-amber-500/10 ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}>
@@ -21,7 +30,7 @@ export default function BackendWakeupNotice({ detail = null, compact = false }) 
           {showDiagnostics && (
             <div className="text-[10px] leading-relaxed text-amber-100/70">
               Backend: <span className="font-mono break-all">{backendUrl || 'same origin'}</span>
-              {detail ? <span className="font-mono break-all"> · {detail}</span> : null}
+              {detailText ? <span className="font-mono break-all"> · {detailText}</span> : null}
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 const DEFAULT_API_BASE = "";
+const DEFAULT_TIMEOUT_MS = 30000;
 
 export function getApiBase() {
   if (typeof window !== "undefined") {
@@ -19,6 +20,13 @@ export function apiPath(path) {
 export function apiUrl(path) {
   const base = getApiBase().replace(/\/+$/, "");
   return `${base}${apiPath(path)}`;
+}
+
+function abortError(timeoutMs) {
+  const error = new Error(`Timeout after ${Math.round(timeoutMs / 1000)} seconds`);
+  error.name = "AbortError";
+  error.timeoutMs = timeoutMs;
+  return error;
 }
 
 function warnCompatibilityRoute(route, reason) {
@@ -56,14 +64,36 @@ function buildAvailabilityWritePayload(memberId, entries) {
 }
 
 export async function apiFetch(path, options = {}) {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, signal, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const timeout = timeoutMs > 0
+    ? setTimeout(() => controller.abort(abortError(timeoutMs)), timeoutMs)
+    : null;
+
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort(signal.reason);
+    } else {
+      signal.addEventListener("abort", () => controller.abort(signal.reason), { once: true });
+    }
+  }
+
   const response = await fetch(apiUrl(path), {
     credentials: "include",
-    ...options,
+    ...fetchOptions,
+    signal: controller.signal,
     headers: {
       Accept: "application/json",
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...(options.headers || {})
+      ...(fetchOptions.body ? { "Content-Type": "application/json" } : {}),
+      ...(fetchOptions.headers || {})
     }
+  }).catch((error) => {
+    if (controller.signal.aborted && controller.signal.reason) {
+      throw controller.signal.reason;
+    }
+    throw error;
+  }).finally(() => {
+    if (timeout) clearTimeout(timeout);
   });
 
   const text = await response.text();
@@ -99,30 +129,32 @@ export async function apiFetch(path, options = {}) {
   return data;
 }
 
-export function apiGet(path) {
-  return apiFetch(path);
+export function apiGet(path, options = {}) {
+  return apiFetch(path, options);
 }
 
-export function apiPost(path, payload) {
+export function apiPost(path, payload, options = {}) {
   return apiFetch(path, {
+    ...options,
     method: "POST",
     body: JSON.stringify(payload || {})
   });
 }
 
-export function apiPatch(path, payload) {
+export function apiPatch(path, payload, options = {}) {
   return apiFetch(path, {
+    ...options,
     method: "PATCH",
     body: JSON.stringify(payload || {})
   });
 }
 
-export function getBootstrap() {
-  return apiGet("/bootstrap");
+export function getBootstrap(options = {}) {
+  return apiGet("/bootstrap", options);
 }
 
-export function getHealth() {
-  return apiGet("/health");
+export function getHealth(options = {}) {
+  return apiGet("/health", options);
 }
 
 export function getPersistenceStatus() {

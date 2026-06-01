@@ -52,7 +52,7 @@ export function useScheduleData() {
 
       try {
         // Single shared bootstrap call — use bootstrap.schedule.shifts (resolved) not bootstrap.shifts (seed)
-        const bootstrap = await loadBootstrap();
+        const bootstrap = await loadBootstrap({ force: true, wakeRetry: true });
         const canonicalSchedule = canonicalScheduleProvider(bootstrap);
 
         if (cancelled) return;

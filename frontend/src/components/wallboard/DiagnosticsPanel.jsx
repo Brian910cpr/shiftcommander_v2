@@ -7,7 +7,7 @@ import {
   backendDiagnosticsUrl,
 } from '@/lib/backendUnavailableMessage';
 
-export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, error, diag, lastUpdatedAt }) {
+export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, error, diag, wakeStatus, lastUpdatedAt }) {
   const [open, setOpen] = useState(false);
 
   const shiftCount = shifts?.length ?? 0;
@@ -40,6 +40,8 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
           {/* API status */}
           <Section label="Endpoint Health">
             <Row label="API base"           value={diag?.api_base || apiBase} />
+            <Row label="Wake endpoint"      value={wakeStatus?.endpoint || '—'} />
+            <Row label="Wake attempt"       value={wakeStatus?.attempt ? `${wakeStatus.attempt}${wakeStatus.maxAttempts ? `/${wakeStatus.maxAttempts}` : ''}` : '—'} />
             <Row label="GET /api/health"           value={diag?.health_status    ?? '—'} cls={statusCls(diag?.health_status)} />
             <Row label="GET /api/wallboard_display" value={diag?.wallboard_status ?? '—'} cls={statusCls(diag?.wallboard_status)} />
             <Row label="GET /api/schedule_integrity" value={diag?.integrity_status ?? '—'} cls={statusCls(diag?.integrity_status)} />
@@ -104,6 +106,7 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
               <div className="text-muted-foreground mt-1">
                 Backend: <span className="font-mono break-all">{backendDiagnosticsUrl() || 'same origin'}</span>
                 <span className="font-mono break-all"> · {error}</span>
+                {wakeStatus?.lastError && <span className="font-mono break-all"> · {wakeStatus.lastError}</span>}
               </div>
             </Section>
           )}

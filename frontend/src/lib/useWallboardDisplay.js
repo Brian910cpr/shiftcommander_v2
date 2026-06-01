@@ -24,6 +24,7 @@ const FULL_REFRESH_MS    = 60 * 1000;
 const VERSION_CHECK_MS   = 10 * 1000;
 const STALE_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
 const LS_KEY             = 'sc_wallboard_cache';
+const WALLBOARD_WAKE_RETRY_MS = 30 * 1000;
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
 
@@ -66,13 +67,14 @@ export function useWallboardDisplay() {
         connectionStatus: 'ok',
         lastUpdatedAt:   loadedAt,
         fromCache:       true,
+        wakeStatus:      null,
       };
     }
     return {
       shifts: [], integrity: null, meta: null, diag: null,
       loading: true, error: null,
       isLive: false, connectionStatus: 'ok',
-      lastUpdatedAt: null, fromCache: false,
+      lastUpdatedAt: null, fromCache: false, wakeStatus: null,
     };
   });
 
@@ -122,25 +124,42 @@ export function useWallboardDisplay() {
       connectionStatus: 'ok',
       lastUpdatedAt:   now,
       fromCache:       false,
+      wakeStatus:      null,
     }));
   }, []);
 
   // ── Apply a failure (keep last good data) ───────────────────────────────────
-  const applyFailure = useCallback((errMsg) => {
+  const applyFailure = useCallback((errMsg, wakeStatus = null) => {
     setState(prev => ({
       ...prev,
       loading:         false,
       error:           errMsg,
       isLive:          false,
       connectionStatus: 'error',
+      wakeStatus:      wakeStatus || prev.wakeStatus,
       // lastUpdatedAt intentionally NOT updated — we show when data was last good
+    }));
+  }, []);
+
+  const applyWakeStatus = useCallback((wakeStatus) => {
+    setState(prev => ({
+      ...prev,
+      wakeStatus,
+      connectionStatus: wakeStatus?.status === 'ok' ? 'ok' : prev.connectionStatus,
+      error: wakeStatus?.lastError || prev.error,
     }));
   }, []);
 
   // ── Full load ───────────────────────────────────────────────────────────────
   const loadFull = useCallback(async () => {
+    let latestWakeStatus = null;
+    const onWakeStatus = (nextStatus) => {
+      latestWakeStatus = nextStatus;
+      applyWakeStatus(nextStatus);
+    };
+
     try {
-      const bootstrap = await loadBootstrap();
+      const bootstrap = await loadBootstrap({ force: true, wakeRetry: true, onWakeStatus });
       const data = canonicalScheduleProvider(bootstrap).wallboardDisplay;
       console.log('[SC Wallboard] bootstrap wallboard response keys:', data ? Object.keys(data) : 'null');
       applySuccess(data?.wallboard || data, data?.integrity, data?.diag);
@@ -151,16 +170,16 @@ export function useWallboardDisplay() {
         applySuccess(data?.wallboard || data, data?.integrity, data?.diag);
       } catch (fallbackErr) {
         console.warn('[ShiftCommander] wallboard fetch failed:', fallbackErr.message || err.message);
-        applyFailure(fallbackErr.message || err.message);
+        applyFailure(fallbackErr.message || err.message, latestWakeStatus);
       }
     }
-  }, [applySuccess, applyFailure]);
+  }, [applySuccess, applyFailure, applyWakeStatus]);
 
   // ── Version check (cheap) ───────────────────────────────────────────────────
   const checkVersion = useCallback(async () => {
     if (!hasLiveDataRef.current) return;
     try {
-      const bootstrap = await loadBootstrap();
+      const bootstrap = await loadBootstrap({ timeoutMs: 15000 });
       const data    = canonicalScheduleProvider(bootstrap).wallboardDisplay;
       const payload = data?.wallboard || data;
       const build   = payload?.build || null;
@@ -192,13 +211,17 @@ export function useWallboardDisplay() {
 
     const fullTimer    = setInterval(doLoad,  FULL_REFRESH_MS);
     const versionTimer = setInterval(doCheck, VERSION_CHECK_MS);
+    const wakeTimer    = setInterval(() => {
+      if (!cancelled && state.connectionStatus === 'error') loadFull();
+    }, WALLBOARD_WAKE_RETRY_MS);
 
     return () => {
       cancelled = true;
       clearInterval(fullTimer);
       clearInterval(versionTimer);
+      clearInterval(wakeTimer);
     };
-  }, [loadFull, checkVersion]);
+  }, [loadFull, checkVersion, state.connectionStatus]);
 
   // ── Group shifts by date ────────────────────────────────────────────────────
   const grouped = {};
@@ -225,6 +248,7 @@ export function useWallboardDisplay() {
     isLive:           state.isLive,
     connectionStatus: state.connectionStatus,
     connectionIssue:  state.connectionStatus === 'error',
+    wakeStatus:       state.wakeStatus,
     lastUpdatedAt:    state.lastUpdatedAt,
     isStale,
     hasEverLoaded:    hasLiveDataRef.current || state.shifts.length > 0,

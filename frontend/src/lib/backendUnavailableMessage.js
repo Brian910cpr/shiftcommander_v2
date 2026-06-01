@@ -1,7 +1,7 @@
 import { getApiBase } from '@/api/client';
 
 export const BACKEND_WAKEUP_TITLE = 'ShiftCommander is waking up';
-export const BACKEND_WAKEUP_MESSAGE = 'The public backend may take up to a minute to respond after being idle. Please wait briefly, then refresh.';
+export const BACKEND_WAKEUP_MESSAGE = 'The public backend may take up to a minute to respond after being idle. ShiftCommander will keep retrying automatically.';
 
 export function shouldShowBackendDiagnostics() {
   if (import.meta.env?.DEV) return true;

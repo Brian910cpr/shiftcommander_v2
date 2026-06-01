@@ -34,7 +34,7 @@ export default function Wallboard() {
   const {
     shifts: allShifts, grouped: rawGrouped, integrity, meta, diag,
     loading, error, isLive, connectionIssue, connectionStatus,
-    lastUpdatedAt, isStale, hasEverLoaded,
+    wakeStatus, lastUpdatedAt, isStale, hasEverLoaded,
   } = useWallboardDisplay();
 
   // Auto-jump to first loaded week if current week is empty
@@ -213,7 +213,11 @@ export default function Wallboard() {
             {connectionStatus === 'error' ? BACKEND_WAKEUP_TITLE : 'Loading schedule…'}
           </span>
           {connectionStatus === 'error' && (
-            <span className="max-w-xs text-center text-[11px] text-muted-foreground">{BACKEND_WAKEUP_MESSAGE}</span>
+            <span className="max-w-xs text-center text-[11px] text-muted-foreground">
+              {BACKEND_WAKEUP_MESSAGE}
+              {wakeStatus?.endpoint ? ` Retrying ${wakeStatus.endpoint}, attempt ${wakeStatus.attempt || 1}${wakeStatus.maxAttempts ? `/${wakeStatus.maxAttempts}` : ''}.` : ''}
+              {wakeStatus?.lastError ? ` Last result: ${wakeStatus.lastError}.` : ''}
+            </span>
           )}
         </div>
       </div>
@@ -261,6 +265,7 @@ export default function Wallboard() {
               {isStale
                 ? `${BACKEND_WAKEUP_TITLE}. Showing the last schedule update from ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`
                 : `${BACKEND_WAKEUP_TITLE}. Showing schedule as of ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`}
+              {wakeStatus?.endpoint ? ` Retrying ${wakeStatus.endpoint} (${wakeStatus.attempt || 1}${wakeStatus.maxAttempts ? `/${wakeStatus.maxAttempts}` : ''}).` : ''}
             </span>
           </div>
         )}
@@ -285,6 +290,8 @@ export default function Wallboard() {
               {isStale
                 ? `${BACKEND_WAKEUP_TITLE}. Showing the last schedule update from ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`
                 : `${BACKEND_WAKEUP_TITLE}. Showing last loaded schedule from ${lastUpdatedAt ? fmtTime(lastUpdatedAt, 'h:mm aa') : '—'}.`}
+              {wakeStatus?.endpoint ? ` Retrying ${wakeStatus.endpoint} (${wakeStatus.attempt || 1}${wakeStatus.maxAttempts ? `/${wakeStatus.maxAttempts}` : ''}).` : ''}
+              {wakeStatus?.lastError ? ` Last result: ${wakeStatus.lastError}.` : ''}
             </span>
           </div>
         )}
@@ -330,6 +337,7 @@ export default function Wallboard() {
         isLive={isLive}
         error={error}
         diag={diag}
+        wakeStatus={wakeStatus}
         lastUpdatedAt={lastUpdatedAt}
       />
     </div>
