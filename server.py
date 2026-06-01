@@ -2566,6 +2566,90 @@ def member_change_requests(member_id):
     return rows
 
 
+def coverage_candidate_payload(candidate):
+    if not isinstance(candidate, dict):
+        return None
+    intent = str(candidate.get("bid_strength") or "").strip().upper()
+    if intent not in {"PREFER", "AVAILABLE"}:
+        return None
+    return {
+        "member_id": str(candidate.get("member_id") or "").strip(),
+        "name": candidate.get("member_name") or candidate.get("name"),
+        "intent": "Prefer" if intent == "PREFER" else "Available",
+        "bid_strength": intent,
+        "intent_rank": 1 if intent == "PREFER" else 2,
+        "cert": candidate.get("cert"),
+        "qualification_match": candidate.get("qualification_match") is not False,
+        "eligible_low_risk": candidate.get("eligible_low_risk") is True,
+        "warnings": candidate.get("warnings", []) if isinstance(candidate.get("warnings"), list) else [],
+    }
+
+
+def coverage_request_candidate_summary(request_row, schedule=None, members=None, availability=None):
+    schedule = schedule if isinstance(schedule, dict) else load_schedule_payload()
+    members = members if members is not None else load_members()
+    availability = availability if isinstance(availability, dict) else load_availability_payload()
+    validation = review_shift_change_request(schedule, members, availability, request_row)
+    raw_candidates = validation.get("candidate_summary", []) if isinstance(validation, dict) else []
+    candidates = [row for row in (coverage_candidate_payload(candidate) for candidate in raw_candidates) if row]
+    candidates.sort(key=lambda row: (row["intent_rank"], 0 if row["eligible_low_risk"] else 1, str(row.get("name") or "")))
+    prefer_count = sum(1 for row in candidates if row["intent"] == "Prefer")
+    available_count = sum(1 for row in candidates if row["intent"] == "Available")
+    clean_prefer_count = sum(1 for row in candidates if row["intent"] == "Prefer" and row["eligible_low_risk"])
+    warnings = []
+    for candidate in candidates:
+        warnings.extend(candidate.get("warnings") or [])
+    if isinstance(validation.get("warnings"), list):
+        warnings.extend(validation["warnings"])
+    if not candidates:
+        recommendation = "No candidates yet"
+    elif clean_prefer_count == 1 and len(candidates) == 1:
+        recommendation = "Clean candidate"
+    else:
+        recommendation = "Supervisor review"
+    coverage_before = validation.get("coverage_before") if isinstance(validation.get("coverage_before"), dict) else {}
+    original = request_row.get("original_assignment") if isinstance(request_row.get("original_assignment"), dict) else {}
+    current_assigned = {
+        "member_id": coverage_before.get("member_id") or original.get("member_id") or request_row.get("original_member_id"),
+        "name": coverage_before.get("member_name") or original.get("member_name"),
+    }
+    return {
+        "validation": validation,
+        "candidates": candidates,
+        "candidate_count": len(candidates),
+        "prefer_count": prefer_count,
+        "available_count": available_count,
+        "recommendation_label": recommendation,
+        "warnings": list(dict.fromkeys(str(warning) for warning in warnings if warning)),
+        "review_reasons": validation.get("reasons", []) if isinstance(validation.get("reasons"), list) else [],
+        "current_assigned_member": current_assigned,
+    }
+
+
+def enrich_coverage_request_for_queue(request_row, schedule=None, members=None, availability=None):
+    row = deepcopy(request_row)
+    original = row.get("original_assignment") if isinstance(row.get("original_assignment"), dict) else {}
+    summary = coverage_request_candidate_summary(row, schedule, members, availability)
+    members = members if members is not None else load_members()
+    member_by_id = {
+        str(member.get("member_id") or member.get("id") or "").strip(): member
+        for member in members
+        if isinstance(member, dict)
+    }
+    original_member_id = str(row.get("original_member_id") or row.get("created_by_member_id") or original.get("member_id") or "").strip()
+    original_member = member_by_id.get(original_member_id) or {}
+    row["request_id"] = row.get("request_id")
+    row["original_member"] = {
+        "member_id": original_member_id,
+        "name": original.get("member_name") or original_member.get("name"),
+    }
+    row["date"] = str(row.get("date") or original.get("date") or "")[:10]
+    row["period"] = normalize_shift_label(row.get("period") or original.get("period"))
+    row["seat_role"] = str(row.get("seat_role") or original.get("role") or "").strip().upper()
+    row.update(summary)
+    return row
+
+
 def request_record_for_assigned_seat(actor_member_id, shift, seat, index, comment=None):
     date_iso = str(shift.get("date") or shift.get("shift_date") or "")[:10]
     period = shift_period_value(shift)
@@ -3221,14 +3305,24 @@ def get_schedule_commit_preview():
 @app.route("/api/supervisor/schedule-queue", methods=["GET"])
 @require_role("supervisor")
 def get_supervisor_schedule_queue():
-    return jsonify(build_supervisor_schedule_queue(
-        load_schedule_payload(),
-        load_availability_payload(),
+    schedule = load_schedule_payload()
+    availability = load_availability_payload()
+    members = load_members()
+    raw_queue = build_supervisor_schedule_queue(
+        schedule,
+        availability,
         load_change_requests_for_queue(),
         load_settings(),
         request_now_param(),
-        members=load_members(),
-    ))
+        members=members,
+    )
+    raw_queue["coverage_requests"] = [
+        enrich_coverage_request_for_queue(row, schedule, members, availability)
+        if isinstance(row, dict) and str(row.get("type") or "") == "drop_coverage_request" and row.get("request_id")
+        else row
+        for row in raw_queue.get("coverage_requests", [])
+    ]
+    return jsonify(raw_queue)
 
 
 # =========================
