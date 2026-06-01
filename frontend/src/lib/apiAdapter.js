@@ -160,8 +160,8 @@ export function adaptShift(apiShift, memberById = {}) {
   );
 
   // Structural seats MUST always land in the driver slot — never the attendant slot.
-  const explicitDriver    = seats.find(s => (s.seat_role || '').toUpperCase() === 'DRIVER');
-  const explicitAttendant = seats.find(s => (s.seat_role || '').toUpperCase() === 'ATTENDANT');
+  const explicitDriver    = seats.find(s => ((s.seat_role || s.role || s.seat_type || '')).toUpperCase() === 'DRIVER');
+  const explicitAttendant = seats.find(s => ((s.seat_role || s.role || s.seat_type || '')).toUpperCase() === 'ATTENDANT');
   const structuralSeat    = seats.find(s => isStructuralSeat(s));
 
   // Driver: explicit DRIVER tag > structural seat > index 0
