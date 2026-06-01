@@ -2043,6 +2043,96 @@ def save_member_availability_entries(member_id, entries, actor_member_id=None):
     return saved
 
 
+def save_supervisor_availability_intent_override(payload):
+    member_id = str(payload.get("member_id") or "").strip()
+    member = member_record_by_id(member_id)
+    if member is None:
+        raise ValueError("Member record not found")
+    if member.get("active") is False:
+        raise ValueError("Target member is inactive")
+
+    entry = validate_availability_entry(member_id, payload)
+    reason = str(payload.get("reason") or "").strip()
+    if not reason:
+        raise ValueError("reason is required")
+
+    auth = current_auth()
+    now_value = now_iso()
+    month_key = entry["date"][:7]
+    value = availability_value_for_intent(entry["member_intent"])
+    full_payload = load_availability_payload()
+    full_payload.setdefault("months", {}).setdefault(month_key, {}).setdefault(member_id, {}).setdefault(entry["date"], {})
+    before_value = full_payload["months"][month_key][member_id][entry["date"]].get(entry["period"])
+    seeded_value_fn = globals().get("june_seeded_availability_value")
+    seeded_before_value = None
+    if before_value is None and callable(seeded_value_fn):
+        seeded_before_value = seeded_value_fn(member_id, member, entry["date"], entry["period"])
+    effective_before_value = before_value if before_value is not None else seeded_before_value
+    full_payload["months"][month_key][member_id][entry["date"]][entry["period"]] = value
+
+    meta = {
+        "member_id": member_id,
+        "date": entry["date"],
+        "period": entry["period"],
+        "member_intent": entry["member_intent"],
+        "updated_at": now_value,
+        "updated_by": str(auth.get("member_id") or auth.get("email") or auth.get("role") or "supervisor"),
+        "changed_by_supervisor_id": auth.get("member_id"),
+        "changed_by_auth_email": auth.get("email"),
+        "changed_by_role": auth.get("role"),
+        "source": "supervisor_locked_cycle_override",
+        "logic_mode": "supervisor_override",
+        "reason": reason,
+        "availability_seeded": False,
+        "seed_type": None,
+        "member_submitted": False,
+        "supervisor_submitted": True,
+        "live_beta": True,
+        "transactions_live": True,
+        "requires_supervisor_review": False,
+    }
+    if seeded_before_value is not None:
+        meta["previous_seeded_value"] = seeded_before_value
+        meta["previous_seeded_source"] = "google_calendar_mirror"
+        meta["previous_seeded_logic_mode"] = "mirror_only"
+        meta["previous_seeded_type"] = "assigned_schedule_to_availability"
+    full_payload.setdefault("intent_metadata", {}).setdefault(member_id, {}).setdefault(entry["date"], {})[entry["period"]] = meta
+    record_live_beta_transaction(
+        "supervisor_locked_cycle_availability_intent",
+        actor_member_id=meta["updated_by"],
+        affected={
+            "member_id": member_id,
+            "date": entry["date"],
+            "shift": entry["period"],
+            "seat": None,
+        },
+        before={
+            "availability_value": effective_before_value,
+            "seeded_value": seeded_before_value,
+            "source": "google_calendar_mirror" if seeded_before_value is not None else None,
+            "logic_mode": "mirror_only" if seeded_before_value is not None else None,
+            "availability_seeded": seeded_before_value is not None,
+            "seed_type": "assigned_schedule_to_availability" if seeded_before_value is not None else None,
+        },
+        after={
+            "availability_value": value,
+            "member_intent": entry["member_intent"],
+            "source": "supervisor_locked_cycle_override",
+            "reason": reason,
+        },
+        source="supervisor_locked_cycle_override",
+    )
+    save_availability_payload(full_payload)
+    return {
+        "member_id": member_id,
+        "date": entry["date"],
+        "period": entry["period"],
+        "member_intent": entry["member_intent"],
+        "availability_value": value,
+        "metadata": meta,
+    }
+
+
 def apply_member_profile_update(member, payload):
     employment = member.setdefault("employment", {}) if isinstance(member, dict) else {}
     preferences = member.setdefault("preferences", {}) if isinstance(member, dict) else {}
@@ -3469,6 +3559,23 @@ def get_supervisor_schedule_queue():
         for row in raw_queue.get("coverage_requests", [])
     ]
     return jsonify(raw_queue)
+
+
+@app.route("/api/supervisor/member-availability-intent", methods=["POST"])
+@require_role("supervisor")
+def supervisor_member_availability_intent():
+    payload = request.get_json(silent=True) or {}
+    try:
+        saved = save_supervisor_availability_intent_override(payload)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if message == "Member record not found" else 400
+        return auth_json_error(message, status_code)
+    return jsonify({
+        "status": "ok",
+        "saved": True,
+        "availability": saved,
+    })
 
 
 @app.route("/api/supervisor/coverage-request/approve", methods=["POST"])
