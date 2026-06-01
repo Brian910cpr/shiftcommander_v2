@@ -50,6 +50,7 @@ function adaptSeat(seat, seatIndex, memberById = {}) {
 
   const overlayFields = {
     seat_id: seat.seat_id || null,
+    role: seat.role || seat.seat_role || seat.seat_type || seat.display_role || null,
     locked: Boolean(seat.locked),
     supervisor_review: Boolean(seat.supervisor_review),
     open_reason: seat.open_reason || null,

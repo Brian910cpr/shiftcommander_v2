@@ -315,7 +315,12 @@ function MemberPageContent({
                   <p className="text-xs text-muted-foreground">All scheduled shifts — scroll up for past, down for upcoming.</p>
                 </CardHeader>
                 <CardContent>
-                  <AssignedShifts memberId={activeMember.id} memberName={activeMember.name} shifts={shifts} />
+                  <AssignedShifts
+                    memberId={activeMember.id}
+                    memberName={activeMember.name}
+                    currentMemberId={currentMember.id}
+                    shifts={shifts}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
