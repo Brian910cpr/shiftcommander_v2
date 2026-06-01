@@ -15,6 +15,7 @@ from datetime import date, datetime, timedelta, UTC
 from functools import wraps
 from zoneinfo import ZoneInfo
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from engine.display_normalizer import normalize_wallboard_display
 from engine.member_dashboard import build_member_dashboard
 from engine.schedule_lifecycle import (
@@ -692,7 +693,14 @@ def member_record_by_email(email):
         (
             member
             for member in load_members()
-            if member.get("active") is not False and str(member.get("email") or "").strip().lower() == email
+            if member.get("active") is not False
+            and email in {
+                str(member.get("email") or "").strip().lower(),
+                str(member.get("auth_email") or "").strip().lower(),
+                str(member.get("google_email") or "").strip().lower(),
+                str((member.get("auth") or {}).get("email") or "").strip().lower() if isinstance(member.get("auth"), dict) else "",
+                str((member.get("auth") or {}).get("google_email") or "").strip().lower() if isinstance(member.get("auth"), dict) else "",
+            }
         ),
         None,
     )
@@ -709,17 +717,125 @@ def start_supervisor_session():
     session["auth_role"] = "supervisor"
 
 
+def beta_session_token_secret():
+    return str(app.secret_key or "shiftcommander-local-dev-secret-key").encode("utf-8")
+
+
+def base64url_encode(raw):
+    return base64.urlsafe_b64encode(raw).decode("utf-8").rstrip("=")
+
+
+def base64url_decode(value):
+    padding = "=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode((value + padding).encode("utf-8"))
+
+
+def member_auth_email(member):
+    if not isinstance(member, dict):
+        return None
+    auth = member.get("auth") if isinstance(member.get("auth"), dict) else {}
+    for key in ("email", "auth_email", "google_email"):
+        value = str(member.get(key) or "").strip().lower()
+        if value:
+            return value
+    for key in ("email", "google_email"):
+        value = str(auth.get(key) or "").strip().lower()
+        if value:
+            return value
+    return None
+
+
+def beta_role_for_member(member):
+    if member_has_supervisor_access(member):
+        return "supervisor"
+    return "member"
+
+
+def create_beta_session_token(member_id, lifetime_seconds=12 * 60 * 60):
+    member = member_record_by_id(member_id)
+    if not member:
+        return None
+    now = int(time.time())
+    payload = {
+        "typ": "shiftcommander-beta-session",
+        "iat": now,
+        "exp": now + int(lifetime_seconds),
+        "nonce": secrets.token_hex(8),
+        "member_id": str(member.get("member_id", member.get("id")) or "").strip(),
+        "email": member_auth_email(member),
+        "name": member.get("name") or f"Member {member_id}",
+        "role": beta_role_for_member(member),
+    }
+    payload_b64 = base64url_encode(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"))
+    sig = hmac.new(beta_session_token_secret(), payload_b64.encode("utf-8"), hashlib.sha256).digest()
+    return f"{payload_b64}.{base64url_encode(sig)}"
+
+
+def verify_beta_session_token(token):
+    token = str(token or "").strip()
+    if "." not in token:
+        return None
+    payload_b64, sig_b64 = token.rsplit(".", 1)
+    expected = hmac.new(beta_session_token_secret(), payload_b64.encode("utf-8"), hashlib.sha256).digest()
+    try:
+        actual = base64url_decode(sig_b64)
+    except Exception:
+        return None
+    if not hmac.compare_digest(expected, actual):
+        return None
+    try:
+        payload = json.loads(base64url_decode(payload_b64).decode("utf-8"))
+    except Exception:
+        return None
+    if payload.get("typ") != "shiftcommander-beta-session":
+        return None
+    if int(payload.get("exp") or 0) < int(time.time()):
+        return None
+    member = member_record_by_id(payload.get("member_id"))
+    if not member:
+        return None
+    email = str(payload.get("email") or member_auth_email(member) or "").strip().lower()
+    return {
+        "authenticated": True,
+        "role": beta_role_for_member(member),
+        "member_id": str(member.get("member_id", member.get("id")) or "").strip(),
+        "email": email,
+        "member_name": member.get("name") or payload.get("name") or f"Member {payload.get('member_id')}",
+        "member": member,
+        "auth_mode": "beta_login_bridge",
+        "beta_auth_bridge": True,
+        "expires_at": datetime.fromtimestamp(int(payload.get("exp")), UTC).isoformat().replace("+00:00", "Z"),
+        "build_code": BUILD_CODE,
+    }
+
+
+def append_beta_token_to_redirect(redirect_to, token):
+    redirect_to = str(redirect_to or "/member").strip() or "/member"
+    if not token:
+        return redirect_to
+    parsed = urlparse(redirect_to)
+    query = parse_qsl(parsed.query, keep_blank_values=True)
+    query = [(key, value) for key, value in query if key != "sc_beta_session"]
+    query.append(("sc_beta_session", token))
+    return urlunparse(parsed._replace(query=urlencode(query)))
+
+
 def member_login_success_payload(member_id, redirect_to="/member"):
     member = member_record_by_id(member_id)
+    token = create_beta_session_token(member_id)
     return {
         "status": "ok",
         "authenticated": True,
-        "role": "member",
+        "role": beta_role_for_member(member),
         "member_id": str(member_id or "").strip(),
         "member_name": (member or {}).get("name") or f"Member {member_id}",
-        "redirect": redirect_to,
-        # Existing Flask session cookie remains authoritative. This token is a client-side marker.
-        "session_token": f"member:{member_id}:{secrets.token_hex(8)}",
+        "email": member_auth_email(member),
+        "redirect": append_beta_token_to_redirect(redirect_to, token),
+        # Existing Flask session cookie remains authoritative on same-origin pages.
+        # The signed token bridges the standalone beta frontend without trusting
+        # cross-site cookies or exposing open impersonation.
+        "session_token": token,
+        "beta_auth_bridge": True,
     }
 
 
@@ -2613,6 +2729,15 @@ def auth_session():
         if member:
             payload["member_name"] = member.get("name") or f"Member {auth['member_id']}"
     return jsonify(payload)
+
+
+@app.route("/api/auth/beta-session", methods=["POST"])
+def auth_beta_session():
+    payload = request.get_json(silent=True) or {}
+    session_payload = verify_beta_session_token(payload.get("token"))
+    if not session_payload:
+        return auth_json_error("Invalid or expired beta session", 401)
+    return jsonify(session_payload)
 
 
 @app.route("/api/testing/members", methods=["GET"])
