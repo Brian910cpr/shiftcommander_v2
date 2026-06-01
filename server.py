@@ -603,7 +603,7 @@ def current_auth():
     beta_auth = beta_auth_from_request()
     if beta_auth:
         return beta_auth
-    if demo_supervisor_bypass_enabled():
+    if demo_supervisor_bypass_enabled() and quick_test_request_is_local():
         return {"authenticated": True, "role": "supervisor", "member_id": None}
     role = session.get("auth_role")
     if role in {"supervisor", "admin"}:
@@ -651,6 +651,19 @@ def demo_supervisor_bypass_enabled():
     return quick_test_mode_enabled() and SC_DEMO_SUPERVISOR_BYPASS
 
 
+def quick_test_request_is_local():
+    origin = str(request.headers.get("Origin") or "").strip().rstrip("/")
+    if origin:
+        try:
+            parsed = urlparse(origin)
+            if str(parsed.hostname or "").strip().lower() not in {"127.0.0.1", "localhost", "::1"}:
+                return False
+        except Exception:
+            return False
+    host = str(request.host or "").split(":", 1)[0].strip().lower()
+    return host in {"127.0.0.1", "localhost", "::1"}
+
+
 def current_public_base_url():
     if SC_PUBLIC_BASE_URL:
         return SC_PUBLIC_BASE_URL
@@ -686,16 +699,7 @@ def allowed_request_origin():
 def quick_test_supervisor_allowed():
     if not quick_test_mode_enabled() or not request.path.startswith("/api/"):
         return False
-    origin = str(request.headers.get("Origin") or "").strip().rstrip("/")
-    if origin:
-        try:
-            parsed = urlparse(origin)
-            if str(parsed.hostname or "").strip().lower() not in {"127.0.0.1", "localhost", "::1"}:
-                return False
-        except Exception:
-            return False
-    host = str(request.host or "").split(":", 1)[0].strip().lower()
-    return host in {"127.0.0.1", "localhost", "::1"}
+    return quick_test_request_is_local()
 
 
 def local_testing_login_allowed():
