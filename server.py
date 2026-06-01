@@ -3282,6 +3282,46 @@ def enrich_coverage_request_for_queue(request_row, schedule=None, members=None, 
     return row
 
 
+def coverage_queue_item_as_request(queue_row):
+    if not isinstance(queue_row, dict):
+        return None
+    if queue_row.get("request_id") and str(queue_row.get("type") or "") == "drop_coverage_request":
+        return queue_row
+    if str(queue_row.get("reason") or "") != "assigned_member_marked_do_not_after_commit":
+        return None
+    shift = queue_row.get("shift") if isinstance(queue_row.get("shift"), dict) else {}
+    seat = queue_row.get("seat") if isinstance(queue_row.get("seat"), dict) else {}
+    date_iso = str(shift.get("date") or "")[:10]
+    period = normalize_shift_label(shift.get("period"))
+    role = str(seat.get("role") or "").strip().upper()
+    member_id = str(seat.get("member_id") or "").strip()
+    seat_id = str(seat.get("seat_id") or "").strip()
+    if not date_iso or not period or not role or not member_id:
+        return None
+    return {
+        "request_id": f"derived_coverage_{date_iso}_{period}_{role}_{member_id}",
+        "request_type": "coverage_request",
+        "type": "drop_coverage_request",
+        "status": "pending",
+        "derived": True,
+        "reason": queue_row.get("reason"),
+        "original_member_id": member_id,
+        "date": date_iso,
+        "period": period,
+        "seat_role": role,
+        "original_assignment": {
+            "seat_key": seat_id,
+            "seat_id": seat_id,
+            "date": date_iso,
+            "period": period,
+            "role": role,
+            "member_id": member_id,
+            "member_name": seat.get("member_name"),
+            "assignment_status": seat.get("assignment_status"),
+        },
+    }
+
+
 def request_record_for_assigned_seat(actor_member_id, shift, seat, index, comment=None):
     date_iso = str(shift.get("date") or shift.get("shift_date") or "")[:10]
     period = shift_period_value(shift)
@@ -3952,8 +3992,8 @@ def get_supervisor_schedule_queue():
         members=members,
     )
     raw_queue["coverage_requests"] = [
-        enrich_coverage_request_for_queue(row, schedule, members, availability)
-        if isinstance(row, dict) and str(row.get("type") or "") == "drop_coverage_request" and row.get("request_id")
+        enrich_coverage_request_for_queue(request_like, schedule, members, availability)
+        if (request_like := coverage_queue_item_as_request(row))
         else row
         for row in raw_queue.get("coverage_requests", [])
     ]
