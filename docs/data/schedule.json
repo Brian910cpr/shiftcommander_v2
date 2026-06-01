@@ -3328,10 +3328,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-01:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -5448,7 +5448,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-21",
           "interest_collecting": true,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "16rpnfnd6n43v1n50bfii772jk@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -5510,10 +5516,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-02:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -6930,7 +6936,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-22",
           "interest_collecting": true,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "72pqet270govnoia1tvf4kjo79@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -6988,10 +7000,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-02:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -8408,16 +8420,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-22",
           "interest_collecting": true,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "12463qird1s1nf79tiqco1bfoa@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-02:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "185",
+          "assigned_name": "Sidney DuBois",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -10534,7 +10552,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-22",
           "interest_collecting": true,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "67ehearihrq2omj412jfs13s5o@google.com",
+            "calendar_summary": "Sidney",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -10584,10 +10608,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-03:AM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -11584,7 +11608,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-20",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "26ou4banlghhivs0kjj1dk2hpl@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -11634,10 +11664,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-03:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "163",
+          "assigned_name": "AJ Smith",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -12634,7 +12664,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-20",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "2f1q8t0dg85iporvhppj93hhhj@google.com",
+            "calendar_summary": "AJ",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -14984,10 +15020,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-06:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "183",
+          "assigned_name": "Serenity Joyner",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -15007,7 +15043,13 @@
           "open_reason": "Open on June forming board; available for open-shift workflow after import.",
           "next_selection_run": "2026-05-23",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: Open on June forming board; available for open-shift workflow after import.."
+          "selection_statement": "OPEN ATTENDANT: Open on June forming board; available for open-shift workflow after import..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "4o1p3flnivf2fvahgh8ro94r8f@google.com",
+            "calendar_summary": "SERENITY",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -15056,10 +15098,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-07:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "190",
+          "assigned_name": "Barbara",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -15636,7 +15678,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-24",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1r3jef7dl8jt47jdli3ue7vsc2@google.com",
+            "calendar_summary": "Barbara",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -15685,10 +15733,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-07:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "190",
+          "assigned_name": "Barbara",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -16265,16 +16313,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-24",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "7lhdvc395flm45d1qpe7lsedb4@google.com",
+            "calendar_summary": "Barbara",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-07:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -17271,7 +17325,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-24",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "52l88208n5n2frjabnhfin2rk5@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -18195,10 +18255,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-10:AM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -18218,7 +18278,13 @@
           "open_reason": "Open on June forming board; available for open-shift workflow after import.",
           "next_selection_run": "2026-05-27",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: Open on June forming board; available for open-shift workflow after import.."
+          "selection_statement": "OPEN DRIVER: Open on June forming board; available for open-shift workflow after import..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "60mpms3d85lfsuna5mhf6gb1fj@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -18236,10 +18302,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-10:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -18816,16 +18882,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-27",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "268e6tl7jh9k2mhjgpoin1d0t4@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-10:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "163",
+          "assigned_name": "AJ Smith",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -18845,7 +18917,13 @@
           "open_reason": "Open on June forming board; available for open-shift workflow after import.",
           "next_selection_run": "2026-05-27",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: Open on June forming board; available for open-shift workflow after import.."
+          "selection_statement": "OPEN DRIVER: Open on June forming board; available for open-shift workflow after import..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "5vs7acpro3ju2en4f0l1l611i0@google.com",
+            "calendar_summary": "AJ",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -18979,10 +19057,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-11:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -19979,7 +20057,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-28",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "2cdr52tirkc36i4vf5f8j1mdbr@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -20928,10 +21012,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-14:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "183",
+          "assigned_name": "Serenity Joyner",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -21508,16 +21592,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-31",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "6v8l7b9rv44cgi98migvko1kbf@google.com",
+            "calendar_summary": "Serenity",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-14:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "189",
+          "assigned_name": "Collin Harrison",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -22514,7 +22604,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-05-31",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "7eodndemepkdkaej9hd22q8knm@google.com",
+            "calendar_summary": "Collin",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -22648,10 +22744,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-15:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "185",
+          "assigned_name": "Sidney DuBois",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -23648,7 +23744,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-01",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "5d5covp8heo1i9ql7rap5v6001@google.com",
+            "calendar_summary": "Sidney",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -24908,10 +25010,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-17:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "163",
+          "assigned_name": "AJ Smith",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -25908,7 +26010,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-03",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "AJ",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -26514,9 +26622,9 @@
           "seat_id": "2026-06-18:AM:DRIVER:1",
           "display_role": "CAREER FIRE DRIVER",
           "external_coverage_label": "Career Fire Driver",
-          "assigned": null,
-          "assigned_name": "Career Fire Driver",
-          "assignment_status": "STRUCTURAL_COVERAGE",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney",
+          "assignment_status": "ASSIGNED",
           "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
@@ -26546,7 +26654,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-04",
           "interest_collecting": false,
-          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift.."
+          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+            "calendar_summary": "Gracie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -26564,10 +26678,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-18:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "180",
+          "assigned_name": "Sophia Williams",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -27144,16 +27258,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-04",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Sophie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-18:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "189",
+          "assigned_name": "Collin Harrison",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -28150,7 +28270,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-04",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Collin",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -28244,10 +28370,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-19:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "190",
+          "assigned_name": "Barbara",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -28824,7 +28950,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-05",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Barbara",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -29998,10 +30130,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-21:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -30578,7 +30710,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-07",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -30627,10 +30765,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-21:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -31207,16 +31345,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-07",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-21:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -32213,7 +32357,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-07",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -32819,9 +32969,9 @@
           "seat_id": "2026-06-22:AM:DRIVER:1",
           "display_role": "CAREER FIRE DRIVER",
           "external_coverage_label": "Career Fire Driver",
-          "assigned": null,
-          "assigned_name": "Career Fire Driver",
-          "assignment_status": "STRUCTURAL_COVERAGE",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney",
+          "assignment_status": "ASSIGNED",
           "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
@@ -32851,7 +33001,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-08",
           "interest_collecting": false,
-          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift.."
+          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+            "calendar_summary": "Gracie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -33455,10 +33611,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-22:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "189",
+          "assigned_name": "Collin Harrison",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -34455,7 +34611,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-08",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Collin",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -34473,10 +34635,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-23:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "190",
+          "assigned_name": "Barbara",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -35053,7 +35215,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-09",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+            "calendar_summary": "Barbara",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -35061,9 +35229,9 @@
           "seat_id": "2026-06-23:AM:DRIVER:1",
           "display_role": "CAREER FIRE DRIVER",
           "external_coverage_label": "Career Fire Driver",
-          "assigned": null,
-          "assigned_name": "Career Fire Driver",
-          "assignment_status": "STRUCTURAL_COVERAGE",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney",
+          "assignment_status": "ASSIGNED",
           "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
@@ -35093,7 +35261,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-09",
           "interest_collecting": false,
-          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift.."
+          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+            "calendar_summary": "Gracie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -35111,10 +35285,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-23:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "190",
+          "assigned_name": "Barbara",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -35691,16 +35865,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-09",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Barbara",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-23:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "189",
+          "assigned_name": "Collin Harrison",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -36697,7 +36877,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-09",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Collin",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -37301,10 +37487,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-24:AM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -38301,7 +38487,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-10",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -38319,10 +38511,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-24:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "182",
+          "assigned_name": "Nikki Meeks",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -38899,16 +39091,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-10",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Nikki",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-24:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "163",
+          "assigned_name": "AJ Smith",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -39905,7 +40103,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-10",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "AJ",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -39923,10 +40127,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-25:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -40503,7 +40707,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-11",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -40511,9 +40721,9 @@
           "seat_id": "2026-06-25:AM:DRIVER:1",
           "display_role": "CAREER FIRE DRIVER",
           "external_coverage_label": "Career Fire Driver",
-          "assigned": null,
-          "assigned_name": "Career Fire Driver",
-          "assignment_status": "STRUCTURAL_COVERAGE",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney",
+          "assignment_status": "ASSIGNED",
           "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
@@ -40543,7 +40753,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-11",
           "interest_collecting": false,
-          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift.."
+          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+            "calendar_summary": "Gracie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -40561,10 +40777,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-25:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -41141,16 +41357,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-11",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-25:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "185",
+          "assigned_name": "Sidney DuBois",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -42147,7 +42369,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-11",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Sidney",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -42165,10 +42393,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-26:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "180",
+          "assigned_name": "Sophia Williams",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -42745,16 +42973,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-12",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+            "calendar_summary": "Sophie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-26:AM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "189",
+          "assigned_name": "Collin Harrison",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -43751,7 +43985,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-12",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+            "calendar_summary": "Collin",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -43769,10 +44009,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-26:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "180",
+          "assigned_name": "Sophia Williams",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -44349,16 +44589,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-12",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Sophie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-26:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -45355,7 +45601,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-12",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -45373,10 +45625,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-27:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "190",
+          "assigned_name": "Barbara",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -45953,7 +46205,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-13",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+            "calendar_summary": "Barbara",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -46002,10 +46260,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-27:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "190",
+          "assigned_name": "Barbara",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -46582,7 +46840,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-13",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Barbara",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -46631,10 +46895,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-28:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "180",
+          "assigned_name": "Sophia Williams",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -47211,7 +47475,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-14",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+            "calendar_summary": "Sophie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -47260,10 +47530,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-28:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "180",
+          "assigned_name": "Sophia Williams",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -47840,16 +48110,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-14",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Sophie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-28:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "189",
+          "assigned_name": "Collin Harrison",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -48846,7 +49122,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-14",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Collin",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -48864,10 +49146,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-29:AM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -49444,7 +49726,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-15",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
@@ -49452,9 +49740,9 @@
           "seat_id": "2026-06-29:AM:DRIVER:1",
           "display_role": "CAREER FIRE DRIVER",
           "external_coverage_label": "Career Fire Driver",
-          "assigned": null,
-          "assigned_name": "Career Fire Driver",
-          "assignment_status": "STRUCTURAL_COVERAGE",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney",
+          "assignment_status": "ASSIGNED",
           "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
@@ -49484,7 +49772,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-15",
           "interest_collecting": false,
-          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift.."
+          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+            "calendar_summary": "Gracie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -49502,10 +49796,10 @@
           "role": "ATTENDANT",
           "hours": 12.0,
           "seat_id": "2026-06-29:PM:ATTENDANT:0",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -50082,16 +50376,22 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-15",
           "interest_collecting": false,
-          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived."
+          "selection_statement": "OPEN ATTENDANT: no non-OT attendant candidate survived.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+            "calendar_summary": "Lynnsey",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         },
         {
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-29:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -51088,7 +51388,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-15",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -51694,9 +52000,9 @@
           "seat_id": "2026-06-30:AM:DRIVER:1",
           "display_role": "CAREER FIRE DRIVER",
           "external_coverage_label": "Career Fire Driver",
-          "assigned": null,
-          "assigned_name": "Career Fire Driver",
-          "assignment_status": "STRUCTURAL_COVERAGE",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney",
+          "assignment_status": "ASSIGNED",
           "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
@@ -51726,7 +52032,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-16",
           "interest_collecting": false,
-          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift.."
+          "selection_statement": "Career Fire Driver: Career Fire Driver covers the configured driver-capable interval for this shift..",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+            "calendar_summary": "Gracie",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
@@ -52330,10 +52642,10 @@
           "role": "DRIVER",
           "hours": 12.0,
           "seat_id": "2026-06-30:PM:DRIVER:1",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER",
-          "assignment_status": "OPEN",
-          "display_open_alert": true,
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
+          "assignment_status": "ASSIGNED",
+          "display_open_alert": false,
           "display_on_board": true,
           "ot_classification": "none",
           "resolver_phase": null,
@@ -53330,7 +53642,13 @@
           "actionable_open_shift": false,
           "next_selection_run": "2026-06-16",
           "interest_collecting": false,
-          "selection_statement": "OPEN DRIVER: OPEN DRIVER."
+          "selection_statement": "OPEN DRIVER: OPEN DRIVER.",
+          "calendar_mirror_import": {
+            "source": "google_calendar_june_2026_mirror",
+            "calendar_uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+            "calendar_summary": "Brian",
+            "imported_at": "2026-06-01T13:07:03.795464+00:00"
+          }
         }
       ],
       "resolver": {
