@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CalendarClock, CheckCircle2, Eye, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getScheduleCommitPreview, getScheduleLifecycle, getSupervisorScheduleQueue } from '@/api/client';
+import { approveCoverageRequest, getScheduleCommitPreview, getScheduleLifecycle, getSupervisorScheduleQueue } from '@/api/client';
 
 const QUEUE_GROUPS = [
   ['upcoming_commit_preview', 'Upcoming commit preview'],
@@ -138,8 +138,9 @@ function memberLabel(member) {
   return name ? `${name}${id}` : member.member_id || '-';
 }
 
-function CoverageRequestItem({ item }) {
+function CoverageRequestItem({ item, onApprove, approvingKey }) {
   const candidates = Array.isArray(item.candidates) ? item.candidates : [];
+  const isPending = String(item.status || 'pending').toLowerCase() === 'pending';
   return (
     <div className="rounded-md border border-border/50 bg-card/60 p-2 space-y-2">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -168,6 +169,8 @@ function CoverageRequestItem({ item }) {
           {candidates.map(candidate => {
             const warnings = Array.isArray(candidate.warnings) ? candidate.warnings : [];
             const hasWarnings = warnings.length > 0 || candidate.qualification_match === false;
+            const actionKey = `${item.request_id}:${candidate.member_id}`;
+            const actionLabel = hasWarnings ? 'Review Required' : 'Approve Replacement';
             return (
               <div key={`${item.request_id}:${candidate.member_id}:${candidate.intent}`} className="rounded border border-border/40 bg-background/40 px-2 py-1.5">
                 <div className="flex items-center justify-between gap-2">
@@ -180,6 +183,19 @@ function CoverageRequestItem({ item }) {
                   <span>{candidate.cert || 'Cert unknown'}</span>
                   <span className={hasWarnings ? 'text-amber-300' : 'text-emerald-300'}>{formatWarnings(warnings)}</span>
                 </div>
+                {isPending && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 h-7 w-full text-[11px]"
+                    disabled={Boolean(approvingKey)}
+                    onClick={() => onApprove?.(item, candidate)}
+                  >
+                    {approvingKey === actionKey ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : null}
+                    {actionLabel}
+                  </Button>
+                )}
               </div>
             );
           })}
@@ -189,7 +205,7 @@ function CoverageRequestItem({ item }) {
   );
 }
 
-function QueueGroup({ groupKey, label, value }) {
+function QueueGroup({ groupKey, label, value, onApproveCoverage, approvingKey }) {
   const items = Array.isArray(value)
     ? value
     : value?.would_commit
@@ -209,7 +225,7 @@ function QueueGroup({ groupKey, label, value }) {
         <div className={`${isCoverageGroup ? 'max-h-96' : 'max-h-28'} mt-2 space-y-1.5 overflow-y-auto pr-1`}>
           {items.slice(0, visibleLimit).map((item, index) => (
             isCoverageGroup ? (
-              <CoverageRequestItem key={item.request_id || `${label}:${index}`} item={item} />
+              <CoverageRequestItem key={item.request_id || `${label}:${index}`} item={item} onApprove={onApproveCoverage} approvingKey={approvingKey} />
             ) : (
               <div key={item.request_id || `${label}:${index}`} className="text-[11px] text-muted-foreground flex justify-between gap-2">
                 <span className="truncate">
@@ -234,6 +250,8 @@ export default function ScheduleCommandCenter() {
   const [queue, setQueue] = useState(null);
   const [loading, setLoading] = useState(false);
   const [failures, setFailures] = useState([]);
+  const [approvalMessage, setApprovalMessage] = useState(null);
+  const [approvingKey, setApprovingKey] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -257,6 +275,71 @@ export default function ScheduleCommandCenter() {
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  const handleApproveCoverage = useCallback(async (item, candidate) => {
+    const warnings = Array.isArray(candidate?.warnings) ? candidate.warnings : [];
+    const summary = [
+      `Approve ${candidate?.name || candidate?.member_id} for ${shortDate(item.date)} ${item.period || ''} ${item.seat_role || ''}?`,
+      `Original assignment: ${memberLabel(item.current_assigned_member)}`,
+      warnings.length ? `Warnings: ${formatWarnings(warnings)}` : 'Warnings: none',
+    ].join('\n');
+    if (!window.confirm(summary)) return;
+
+    let overrideReason = null;
+    if (warnings.length || candidate?.qualification_match === false) {
+      overrideReason = window.prompt('Warnings are present. Enter supervisor override reason to continue:');
+      if (!overrideReason || !overrideReason.trim()) {
+        setApprovalMessage({ type: 'warn', text: 'Approval cancelled: override reason is required for warnings.' });
+        return;
+      }
+    }
+
+    const actionKey = `${item.request_id}:${candidate.member_id}`;
+    setApprovingKey(actionKey);
+    setApprovalMessage(null);
+    try {
+      const result = await approveCoverageRequest({
+        request_id: item.request_id,
+        replacement_member_id: candidate.member_id,
+        override: Boolean(overrideReason),
+        override_reason: overrideReason,
+      });
+      setApprovalMessage({
+        type: 'ok',
+        text: `Approved ${result?.assignment?.replacement_member_name || candidate.name || candidate.member_id} for ${shortDate(result?.assignment?.date || item.date)} ${result?.assignment?.period || item.period}.`,
+      });
+      await load();
+    } catch (error) {
+      const errorPayload = error?.payload || error?.data || {};
+      if (errorPayload?.status === 'requires_override') {
+        const reason = window.prompt(`Supervisor override required: ${formatWarnings(errorPayload.warnings)}\nEnter override reason:`);
+        if (reason && reason.trim()) {
+          try {
+            const result = await approveCoverageRequest({
+              request_id: item.request_id,
+              replacement_member_id: candidate.member_id,
+              override: true,
+              override_reason: reason.trim(),
+            });
+            setApprovalMessage({
+              type: 'ok',
+              text: `Approved ${result?.assignment?.replacement_member_name || candidate.name || candidate.member_id} with supervisor override.`,
+            });
+            await load();
+          } catch (retryError) {
+            const retryPayload = retryError?.payload || retryError?.data || {};
+            setApprovalMessage({ type: 'error', text: retryPayload?.error || retryError?.message || 'Approval failed.' });
+          }
+        } else {
+          setApprovalMessage({ type: 'warn', text: 'Approval cancelled: override reason is required.' });
+        }
+      } else {
+        setApprovalMessage({ type: 'error', text: errorPayload?.error || error?.message || 'Approval failed.' });
+      }
+    } finally {
+      setApprovingKey(null);
+    }
   }, [load]);
 
   const commitWindow = preview?.commit_window || lifecycle?.current_commit_window || {};
@@ -297,6 +380,17 @@ export default function ScheduleCommandCenter() {
       </div>
 
       <WarningBanner failures={failures} />
+      {approvalMessage && (
+        <div className={`rounded-lg border px-3 py-2 text-xs ${
+          approvalMessage.type === 'ok'
+            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'
+            : approvalMessage.type === 'warn'
+              ? 'border-amber-500/30 bg-amber-500/10 text-amber-100'
+              : 'border-red-500/30 bg-red-500/10 text-red-100'
+        }`}>
+          {approvalMessage.text}
+        </div>
+      )}
 
       <div className="grid md:grid-cols-4 gap-3">
         <div className="md:col-span-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2">
@@ -333,7 +427,14 @@ export default function ScheduleCommandCenter() {
         <h3 className="text-sm font-bold text-foreground mb-2">Supervisor Queue</h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-2">
           {QUEUE_GROUPS.map(([key, label]) => (
-            <QueueGroup key={key} groupKey={key} label={label} value={key === 'upcoming_commit_preview' ? queue?.upcoming_commit_preview : queue?.[key]} />
+            <QueueGroup
+              key={key}
+              groupKey={key}
+              label={label}
+              value={key === 'upcoming_commit_preview' ? queue?.upcoming_commit_preview : queue?.[key]}
+              onApproveCoverage={handleApproveCoverage}
+              approvingKey={approvingKey}
+            />
           ))}
         </div>
         <p className="text-[10px] text-muted-foreground mt-3">

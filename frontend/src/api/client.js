@@ -265,6 +265,10 @@ export function requestCoverage(payload) {
   return apiPost("/member/request-coverage", payload);
 }
 
+export function approveCoverageRequest(payload) {
+  return apiPost("/supervisor/coverage-request/approve", payload);
+}
+
 export function getTransactions() {
   return apiGet("/transactions");
 }

@@ -42,6 +42,10 @@ class AppSmokeTests(unittest.TestCase):
             ROOT / "data" / "settings.json",
             ROOT / "docs" / "data" / "settings.json",
             ROOT / "data" / "availability.json",
+            ROOT / "data" / "shift_change_requests.json",
+            ROOT / "data" / "supervisor_state.json",
+            ROOT / "data" / "schedule_locked.json",
+            ROOT / "data" / "live_beta_transactions.json",
             ROOT / "debug" / "latest_run_summary.json",
             ROOT / "debug" / "latest_run_supervisor_cards.json",
             ROOT / "debug" / "latest_run_full_audit.json",
@@ -81,6 +85,8 @@ class AppSmokeTests(unittest.TestCase):
             if backup_path.exists():
                 path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(backup_path, path)
+            elif path.exists():
+                path.unlink()
         shutil.rmtree(cls.backup_dir, ignore_errors=True)
 
     def test_docs_routes_serve_without_error(self):
@@ -618,6 +624,115 @@ class AppSmokeTests(unittest.TestCase):
             response.close()
         finally:
             self.server.SC_QUICK_TEST_MODE = original
+
+    def test_supervisor_can_approve_coverage_request_with_required_override(self):
+        schedule = {
+            "shifts": [
+                {
+                    "date": "2026-06-02",
+                    "label": "PM",
+                    "unit": "120",
+                    "seats": [
+                        {
+                            "seat_id": "2026-06-02:PM:DRIVER:1",
+                            "role": "DRIVER",
+                            "assigned": "190",
+                            "assigned_name": "Barbara",
+                            "assignment_status": "ASSIGNED",
+                            "hours": 12,
+                        }
+                    ],
+                },
+                {
+                    "date": "2026-06-03",
+                    "label": "AM",
+                    "unit": "120",
+                    "seats": [
+                        {
+                            "seat_id": "2026-06-03:AM:DRIVER:1",
+                            "role": "DRIVER",
+                            "assigned": "188",
+                            "assigned_name": "Brian Ennis",
+                            "assignment_status": "ASSIGNED",
+                            "hours": 12,
+                        }
+                    ],
+                },
+            ]
+        }
+        availability = {"months": {"2026-06": {"190": {"2026-06-03": {"AM": "prefer"}}}}}
+        request_row = {
+            "request_id": "test_cov_approval",
+            "request_type": "coverage_request",
+            "type": "drop_coverage_request",
+            "status": "pending",
+            "original_member_id": "188",
+            "date": "2026-06-03",
+            "period": "AM",
+            "seat_role": "DRIVER",
+            "original_assignment": {
+                "seat_key": "2026-06-03:AM:DRIVER:1",
+                "seat_id": "2026-06-03:AM:DRIVER:1",
+                "date": "2026-06-03",
+                "period": "AM",
+                "role": "DRIVER",
+                "member_id": "188",
+                "member_name": "Brian Ennis",
+                "assignment_status": "ASSIGNED",
+            },
+        }
+        self.server.save_json(self.server.SCHEDULE_FILE, schedule)
+        self.server.save_json(self.server.PUBLIC_SCHEDULE_FILE, schedule)
+        self.server.save_json(self.server.AVAILABILITY_FILE, availability)
+        self.server.save_json(self.server.SHIFT_CHANGE_REQUESTS_FILE, {"requests": [request_row]})
+        self.server.save_json(self.server.SUPERVISOR_STATE_FILE, {"entries": []})
+        self.server.save_json(self.server.SCHEDULE_LOCKED_FILE, {"shifts": []})
+
+        self.login_member("107")
+        response = self.client.post(
+            "/api/supervisor/coverage-request/approve",
+            json={"request_id": "test_cov_approval", "replacement_member_id": "190"},
+        )
+        self.assertEqual(response.status_code, 403)
+        response.close()
+
+        self.login_supervisor()
+        response = self.client.post(
+            "/api/supervisor/coverage-request/approve",
+            json={"request_id": "test_cov_approval", "replacement_member_id": "190"},
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.get_json()["status"], "requires_override")
+        response.close()
+        current = self.server.load_json(self.server.SCHEDULE_FILE, {})
+        target = current["shifts"][1]["seats"][0]
+        self.assertEqual(target["assigned"], "188")
+
+        response = self.client.post(
+            "/api/supervisor/coverage-request/approve",
+            json={
+                "request_id": "test_cov_approval",
+                "replacement_member_id": "190",
+                "override": True,
+                "override_reason": "Supervisor accepts rest warning for beta test.",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload["approved"])
+        self.assertTrue(payload["override_used"])
+        response.close()
+
+        active = self.server.load_json(self.server.SCHEDULE_FILE, {})
+        public = self.server.load_json(self.server.PUBLIC_SCHEDULE_FILE, {})
+        self.assertEqual(active["shifts"][1]["seats"][0]["assigned"], "190")
+        self.assertEqual(public["shifts"][1]["seats"][0]["assigned"], "190")
+        requests_payload = self.server.load_json(self.server.SHIFT_CHANGE_REQUESTS_FILE, {})
+        approved = requests_payload["requests"][0]
+        self.assertEqual(approved["status"], "approved")
+        self.assertEqual(approved["replacement_member_id"], "190")
+        self.assertEqual(approved["original_member_id"], "188")
+        self.assertTrue(approved["audit"])
 
     def test_generate_writes_schedule_and_debug_outputs(self):
         self.login_supervisor()

@@ -319,6 +319,12 @@ def save_live_schedule(schedule):
     save_json(PUBLIC_SCHEDULE_FILE, schedule)
 
 
+def member_id_from_record(member):
+    if not isinstance(member, dict):
+        return ""
+    return str(member.get("member_id") or member.get("id") or "").strip()
+
+
 def load_live_schedule_shifts():
     schedule = load_json(SCHEDULE_FILE, {})
     shifts = schedule.get("shifts") if isinstance(schedule, dict) else None
@@ -3334,6 +3340,93 @@ def coverage_queue_item_as_request(queue_row):
     }
 
 
+def find_shift_change_request(payload, request_id):
+    request_id = str(request_id or "").strip()
+    if not request_id:
+        return None, None
+    requests = payload.get("requests", []) if isinstance(payload, dict) else []
+    for index, row in enumerate(requests):
+        if isinstance(row, dict) and str(row.get("request_id") or "").strip() == request_id:
+            return row, index
+    return None, None
+
+
+def derived_coverage_request_by_id(request_id, schedule=None, availability=None, members=None):
+    schedule = schedule if isinstance(schedule, dict) else load_schedule_payload()
+    availability = availability if isinstance(availability, dict) else load_availability_payload()
+    members = members if members is not None else load_members()
+    queue = build_supervisor_schedule_queue(
+        schedule,
+        availability,
+        active_shift_change_requests(),
+        load_settings(),
+        request_now_param(),
+        members=members,
+    )
+    for row in queue.get("coverage_requests", []):
+        request_like = coverage_queue_item_as_request(row)
+        if isinstance(request_like, dict) and str(request_like.get("request_id") or "") == str(request_id or ""):
+            return request_like
+    return None
+
+
+def coverage_approval_blocking_warnings(candidate):
+    warnings = set(candidate.get("warnings", []) if isinstance(candidate, dict) else [])
+    blocked = []
+    if candidate.get("qualification_match") is False:
+        blocked.append("wrong_cert")
+    for warning in ("wrong_cert", "schedule_conflict"):
+        if warning in warnings and warning not in blocked:
+            blocked.append(warning)
+    return blocked
+
+
+def apply_coverage_replacement_to_schedule(schedule, request_row, replacement_member, validation, override_used=False, override_reason=None):
+    assignment = request_row.get("original_assignment") if isinstance(request_row.get("original_assignment"), dict) else {}
+    seat_key = str(assignment.get("seat_key") or assignment.get("seat_id") or "").strip()
+    seat_info = find_schedule_seat(schedule, seat_key)
+    if seat_info is None:
+        return None, "seat_key not found in current schedule"
+    original_member_id = str(assignment.get("member_id") or request_row.get("original_member_id") or "").strip()
+    if str(seat_info.get("assigned_member_id") or "").strip() != original_member_id:
+        return None, "original assignment has changed"
+
+    seat = seat_info["seat"]
+    before = deepcopy(seat)
+    replacement_id = member_id_from_record(replacement_member)
+    replacement_name = member_display_name(replacement_member)
+    seat["assigned"] = replacement_id
+    seat["assigned_name"] = replacement_name
+    seat["cert"] = replacement_member.get("ops_cert") or replacement_member.get("cert") or replacement_member.get("raw_cert") or seat.get("cert")
+    seat["assignment_status"] = "ASSIGNED"
+    seat["assignment_reason"] = "Coverage request approved by supervisor"
+    seat["assignment_source"] = "coverage_request_approval"
+    seat["coverage_request_id"] = request_row.get("request_id")
+    seat["previous_assigned_member_id"] = original_member_id
+    seat["previous_assigned_name"] = assignment.get("member_name")
+    seat["updated_at"] = now_iso()
+    if override_used:
+        seat["coverage_override_used"] = True
+        seat["coverage_override_reason"] = override_reason
+    return {
+        "seat_key": seat_info["seat_key"],
+        "date": seat_info["date"],
+        "period": seat_info["label"],
+        "seat_role": seat_info["role"],
+        "unit": seat_info["unit"],
+        "seat_index": seat_info["seat_index"],
+        "before": before,
+        "after": deepcopy(seat),
+        "validation": validation,
+    }, None
+
+
+def approval_request_status_payload(message, status_code, **extra):
+    payload = {"status": message}
+    payload.update(extra)
+    return jsonify(payload), status_code
+
+
 def request_record_for_assigned_seat(actor_member_id, shift, seat, index, comment=None):
     date_iso = str(shift.get("date") or shift.get("shift_date") or "")[:10]
     period = shift_period_value(shift)
@@ -3446,7 +3539,7 @@ def request_member_coverage():
     if shift_day < datetime.now(LOCAL_TZ).date():
         return auth_json_error("Coverage requests are only available for current or future shifts", 400)
 
-    schedule = load_schedule_payload()
+    schedule = load_base_schedule_payload()
     shift, seat, index = find_assigned_shift_seat(schedule, actor_member_id, date_iso, period, seat_role, seat_id)
     if not shift or not seat:
         return auth_json_error("Assigned seat not found for this member/date/period", 404)
@@ -4010,6 +4103,171 @@ def get_supervisor_schedule_queue():
         for row in raw_queue.get("coverage_requests", [])
     ]
     return jsonify(raw_queue)
+
+
+@app.route("/api/supervisor/coverage-request/approve", methods=["POST"])
+@require_role("supervisor")
+def approve_coverage_request():
+    payload = request.get_json(silent=True) or {}
+    request_id = str(payload.get("request_id") or "").strip()
+    replacement_member_id = str(payload.get("replacement_member_id") or "").strip()
+    override = bool(payload.get("override"))
+    override_reason = str(payload.get("override_reason") or "").strip()
+    if not request_id:
+        return approval_request_status_payload("error", 400, error="request_id is required")
+    if not replacement_member_id:
+        return approval_request_status_payload("error", 400, error="replacement_member_id is required")
+    if override and not override_reason:
+        return approval_request_status_payload("error", 400, error="override_reason is required when override is true")
+
+    schedule = load_base_schedule_payload()
+    availability = load_availability_payload()
+    members = load_members()
+    replacement_member = next((member for member in members if member_id_from_record(member) == replacement_member_id), None)
+    if replacement_member is None:
+        return approval_request_status_payload("error", 404, error="replacement member not found")
+
+    requests_payload = load_shift_change_requests_payload()
+    request_row, request_index = find_shift_change_request(requests_payload, request_id)
+    derived = False
+    if request_row is None:
+        request_row = derived_coverage_request_by_id(request_id, schedule, availability, members)
+        derived = True
+    if request_row is None:
+        return approval_request_status_payload("error", 404, error="coverage request not found")
+    if str(request_row.get("type") or "") != "drop_coverage_request":
+        return approval_request_status_payload("error", 400, error="request is not a coverage request")
+    if str(request_row.get("status") or "pending").strip().lower() != "pending":
+        return approval_request_status_payload("error", 409, error="coverage request is not pending", request_status=request_row.get("status"))
+
+    validation = review_shift_change_request(schedule, members, availability, request_row)
+    if validation.get("decision") == "denied":
+        return approval_request_status_payload("denied", 409, error="coverage request validation failed", validation_result=validation)
+    candidates = validation.get("candidate_summary", []) if isinstance(validation.get("candidate_summary"), list) else []
+    candidate = next((row for row in candidates if str(row.get("member_id") or "").strip() == replacement_member_id), None)
+    if candidate is None:
+        return approval_request_status_payload(
+            "denied",
+            409,
+            error="replacement member is not an eligible Prefer or Available candidate",
+            validation_result=validation,
+        )
+    blocking = coverage_approval_blocking_warnings(candidate)
+    if blocking:
+        return approval_request_status_payload(
+            "denied",
+            409,
+            error="replacement candidate has blocking warnings",
+            warnings=blocking,
+            candidate=candidate,
+            validation_result=validation,
+        )
+    warnings = candidate.get("warnings", []) if isinstance(candidate.get("warnings"), list) else []
+    if warnings and not override:
+        return approval_request_status_payload(
+            "requires_override",
+            409,
+            warnings=warnings,
+            candidate=candidate,
+            validation_result=validation,
+        )
+
+    apply_result, error = apply_coverage_replacement_to_schedule(
+        schedule,
+        request_row,
+        replacement_member,
+        validation,
+        override_used=bool(warnings),
+        override_reason=override_reason if warnings else None,
+    )
+    if error:
+        return approval_request_status_payload("denied", 409, error=error, validation_result=validation)
+
+    approved_at = now_iso()
+    auth = current_auth()
+    approved_by = auth.get("member_id") or auth.get("email") or auth.get("role")
+    approved_record = deepcopy(request_row)
+    approved_record.update({
+        "status": "approved",
+        "replacement_member_id": replacement_member_id,
+        "replacement_member_name": member_display_name(replacement_member),
+        "approved_by_member_id": approved_by,
+        "approved_at": approved_at,
+        "updated_at": approved_at,
+        "derived": bool(approved_record.get("derived") or derived),
+    })
+    approved_record.setdefault("audit", [])
+    if not isinstance(approved_record["audit"], list):
+        approved_record["audit"] = [approved_record["audit"]]
+    approved_record["audit"].append({
+        "event": "coverage_request_approved",
+        "at": approved_at,
+        "approved_by_member_id": approved_by,
+        "original_member_id": approved_record.get("original_member_id"),
+        "replacement_member_id": replacement_member_id,
+        "date": apply_result["date"],
+        "period": apply_result["period"],
+        "seat_role": apply_result["seat_role"],
+        "validation_result": validation,
+        "override_used": bool(warnings),
+        "override_reason": override_reason if warnings else None,
+    })
+    if request_index is None:
+        requests_payload["requests"].append(approved_record)
+    else:
+        requests_payload["requests"][request_index] = approved_record
+
+    state = load_supervisor_state()
+    state = upsert_supervisor_entry(
+        state,
+        {
+            "seat_key": apply_result["seat_key"],
+            "date": apply_result["date"],
+            "label": apply_result["period"],
+            "role": apply_result["seat_role"],
+            "unit": apply_result["unit"],
+            "seat_index": apply_result["seat_index"],
+            "state": "DISPLAYED_FROZEN",
+            "assigned_member_id": replacement_member_id,
+            "assigned_name": member_display_name(replacement_member),
+            "updated_at": approved_at,
+        },
+    )
+    save_live_schedule(schedule)
+    save_shift_change_requests_payload(requests_payload)
+    save_supervisor_state(state)
+    persist_schedule_locked_from_state(schedule, state)
+    record_live_beta_transaction(
+        "coverage_request_approval",
+        actor_member_id=approved_by,
+        affected={
+            "request_id": request_id,
+            "seat_key": apply_result["seat_key"],
+            "date": apply_result["date"],
+            "period": apply_result["period"],
+            "seat_role": apply_result["seat_role"],
+        },
+        before=apply_result["before"],
+        after=apply_result["after"],
+        source="supervisor_action",
+    )
+    return jsonify({
+        "status": "ok",
+        "approved": True,
+        "request": approved_record,
+        "assignment": {
+            "seat_key": apply_result["seat_key"],
+            "date": apply_result["date"],
+            "period": apply_result["period"],
+            "seat_role": apply_result["seat_role"],
+            "original_member_id": approved_record.get("original_member_id"),
+            "replacement_member_id": replacement_member_id,
+            "replacement_member_name": member_display_name(replacement_member),
+        },
+        "validation_result": validation,
+        "override_used": bool(warnings),
+        "warnings": warnings,
+    })
 
 
 # =========================
