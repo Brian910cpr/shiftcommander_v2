@@ -2739,6 +2739,8 @@ def auth_session():
         "authenticated": auth["authenticated"],
         "role": auth["role"],
         "member_id": auth["member_id"],
+        "email": auth.get("email"),
+        "beta_auth_bridge": auth.get("beta_auth_bridge") is True,
         "quick_test_mode": quick_test_mode_enabled(),
         "demo_supervisor_bypass": demo_supervisor_bypass_enabled(),
         "auth_mode": "quick_test" if quick_test_mode_enabled() and not auth["authenticated"] else "real_login",
