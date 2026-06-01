@@ -936,6 +936,85 @@ class AppSmokeTests(unittest.TestCase):
         finally:
             self.server.SC_QUICK_TEST_MODE = original
 
+    def test_supervisor_locked_cycle_availability_intent_override(self):
+        original = self.server.SC_QUICK_TEST_MODE
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            edit_start = self.server.member_availability_edit_start_date()
+            locked_date = edit_start - timedelta(days=1)
+            date_iso = locked_date.isoformat()
+            month = locked_date.strftime("%Y-%m")
+            target_member_id = "145"
+            other_member_id = "188"
+            schedule_before = (ROOT / "data" / "schedule.json").read_bytes()
+
+            base_payload = {
+                "member_id": target_member_id,
+                "date": date_iso,
+                "period": "AM",
+                "member_intent": "prefer",
+                "reason": "Supervisor beta coverage workflow test; Roger confirmed willing to cover Brian's driver seat.",
+            }
+
+            with self.client.session_transaction() as session:
+                session.clear()
+            response = self.client.post("/api/supervisor/member-availability-intent", json=base_payload)
+            self.assertEqual(response.status_code, 401)
+            response.close()
+
+            self.login_member(other_member_id)
+            response = self.client.post("/api/supervisor/member-availability-intent", json=base_payload)
+            self.assertEqual(response.status_code, 403)
+            response.close()
+
+            response = self.client.post("/api/member/availability", json={
+                "member_id": other_member_id,
+                "entries": [{"date": date_iso, "period": "AM", "member_intent": "prefer"}],
+            })
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("current Thursday cycle", response.get_data(as_text=True))
+            response.close()
+
+            self.login_supervisor()
+            cases = [
+                ("prefer", "preferred"),
+                ("available", "available"),
+                ("do_not", "do_not_schedule"),
+                ("blank", "blank"),
+            ]
+            for intent, stored_value in cases:
+                response = self.client.post("/api/supervisor/member-availability-intent", json={
+                    **base_payload,
+                    "member_intent": intent,
+                })
+                self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+                payload = response.get_json()
+                saved = payload["availability"]
+                self.assertTrue(payload["saved"])
+                self.assertEqual(saved["member_id"], target_member_id)
+                self.assertEqual(saved["date"], date_iso)
+                self.assertEqual(saved["period"], "AM")
+                self.assertEqual(saved["member_intent"], intent)
+                self.assertEqual(saved["availability_value"], stored_value)
+                self.assertEqual(saved["metadata"]["source"], "supervisor_locked_cycle_override")
+                self.assertEqual(saved["metadata"]["reason"], base_payload["reason"])
+                response.close()
+
+                availability = json.loads((ROOT / "data" / "availability.json").read_text(encoding="utf-8"))
+                self.assertEqual(availability["months"][month][target_member_id][date_iso]["AM"], stored_value)
+                self.assertEqual(
+                    availability["intent_metadata"][target_member_id][date_iso]["AM"]["source"],
+                    "supervisor_locked_cycle_override",
+                )
+                self.assertEqual(
+                    availability["intent_metadata"][target_member_id][date_iso]["AM"]["member_intent"],
+                    intent,
+                )
+                self.assertNotIn(date_iso, availability.get("months", {}).get(month, {}).get(other_member_id, {}))
+                self.assertEqual((ROOT / "data" / "schedule.json").read_bytes(), schedule_before)
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original
+
     def test_debug_endpoints_serve_after_generation(self):
         self.login_supervisor()
         self.client.post("/api/generate")
