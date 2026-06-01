@@ -178,7 +178,7 @@ def apply_cors_headers(response):
     origin = allowed_request_origin()
     if request.path.startswith("/api/"):
         response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-ShiftCommander-Beta-Session"
         response.headers["Access-Control-Allow-Credentials"] = "true"
         if origin:
             response.headers["Access-Control-Allow-Origin"] = origin
@@ -446,6 +446,9 @@ def sync_auth_members():
 
 
 def current_auth():
+    beta_auth = beta_auth_from_request()
+    if beta_auth:
+        return beta_auth
     if demo_supervisor_bypass_enabled():
         return {"authenticated": True, "role": "supervisor", "member_id": None}
     role = session.get("auth_role")
@@ -709,6 +712,24 @@ def verify_beta_session_token(token):
         "beta_auth_bridge": True,
         "expires_at": datetime.fromtimestamp(int(payload.get("exp")), UTC).isoformat().replace("+00:00", "Z"),
         "build_code": BUILD_CODE,
+    }
+
+
+def beta_auth_from_request():
+    token = str(request.headers.get("X-ShiftCommander-Beta-Session") or "").strip()
+    if not token:
+        auth_header = str(request.headers.get("Authorization") or "").strip()
+        if auth_header.lower().startswith("bearer "):
+            token = auth_header[7:].strip()
+    payload = verify_beta_session_token(token)
+    if not payload:
+        return None
+    return {
+        "authenticated": True,
+        "role": payload.get("role") or "member",
+        "member_id": str(payload.get("member_id") or "").strip() or None,
+        "email": str(payload.get("email") or "").strip().lower() or None,
+        "beta_auth_bridge": True,
     }
 
 
