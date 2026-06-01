@@ -601,6 +601,10 @@ class AppSmokeTests(unittest.TestCase):
 
             self.server.SC_QUICK_TEST_MODE = True
             response = self.client.post("/api/build_shifts", headers={"Origin": "https://adr-fr.org"})
+            self.assertEqual(response.status_code, 401)
+            response.close()
+
+            response = self.client.post("/api/build_shifts", headers={"Origin": "http://localhost:5173"})
             self.assertEqual(response.status_code, 200)
             payload = response.get_json()
             self.assertEqual(payload.get("status"), "ok")

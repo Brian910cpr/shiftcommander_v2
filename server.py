@@ -687,7 +687,16 @@ def quick_test_supervisor_allowed():
     if not quick_test_mode_enabled() or not request.path.startswith("/api/"):
         return False
     origin = str(request.headers.get("Origin") or "").strip().rstrip("/")
-    return not origin or allowed_request_origin() is not None
+    if origin:
+        try:
+            parsed = urlparse(origin)
+            if str(parsed.hostname or "").strip().lower() not in {"127.0.0.1", "localhost", "::1"}:
+                return False
+        except Exception:
+            return False
+    host = str(request.host or "").split(":", 1)[0].strip().lower()
+    remote = str(request.remote_addr or "").strip()
+    return host in {"127.0.0.1", "localhost", "::1"} or remote in {"127.0.0.1", "::1"}
 
 
 def local_testing_login_allowed():
