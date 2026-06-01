@@ -26,6 +26,7 @@ from engine.schedule_lifecycle import (
     get_next_commit_at,
     preview_schedule_commit,
 )
+from engine.shift_change_review import review_shift_change_request
 
 SERVER_IMPORT_STARTED = time.perf_counter()
 
@@ -60,6 +61,7 @@ SCHEDULE_LOCKED_FILE = os.path.join(DATA_DIR, "schedule_locked.json")
 ROLLOUT_IMPORT_FILE = os.path.join(DATA_DIR, "rollout_import.json")
 ROTATION_TEMPLATES_FILE = os.path.join(DATA_DIR, "rotation_templates.json")
 SWAP_REQUESTS_FILE = os.path.join(DATA_DIR, "swap_requests.json")
+SHIFT_CHANGE_REQUESTS_FILE = os.path.join(DATA_DIR, "shift_change_requests.json")
 SUPERVISOR_STATE_FILE = os.path.join(DATA_DIR, "supervisor_state.json")
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
 CALENDAR_MARKERS_FILE = os.path.join(DATA_DIR, "calendar_markers.json")
@@ -208,6 +210,97 @@ def save_json(path, data):
     os.replace(temp_path, path)
 
 
+def load_live_beta_transactions():
+    payload = load_json(LIVE_BETA_TRANSACTIONS_FILE, {"transactions": []})
+    if not isinstance(payload, dict):
+        payload = {"transactions": []}
+    if not isinstance(payload.get("transactions"), list):
+        payload["transactions"] = []
+    return payload
+
+
+def rollout_status_payload():
+    return {
+        "live_beta": True,
+        "transactions_live": True,
+        "may_24_31": {
+            "source": "whiteboard_manual_override",
+            "logic_mode": "mirror_only",
+            "transactions_live": True,
+        },
+        "june_2026": {
+            "source": "google_calendar_mirror",
+            "logic_mode": "mirror_only",
+            "transactions_live": True,
+        },
+        "july_forward": {
+            "source": "shiftcommander",
+            "logic_mode": "normal",
+            "transactions_live": True,
+        },
+        "august_and_beyond": {
+            "priority_focus": True,
+            "availability_collection": True,
+            "resolver_training_or_planning_allowed": True,
+            "requires_actual_member_submitted_availability": True,
+        },
+        "member_message": (
+            "ShiftCommander is live. The current May/June board reflects the known schedule, "
+            "but availability, swaps, drops, and pickup requests submitted here are real and "
+            "will be reported for supervisor review. Please focus especially on entering "
+            "availability for August and beyond."
+        ),
+    }
+
+
+def record_live_beta_transaction(action_type, actor_member_id=None, affected=None, before=None, after=None, source="member_portal"):
+    payload = load_live_beta_transactions()
+    transaction = {
+        "id": f"live_beta_{int(time.time() * 1000)}_{secrets.token_hex(4)}",
+        "live_beta": True,
+        "transactions_live": True,
+        "requires_supervisor_review": True,
+        "action_type": str(action_type or "unknown"),
+        "source": source,
+        "actor_member_id": str(actor_member_id or "").strip() or None,
+        "created_at": now_iso(),
+        "affected": affected or {},
+        "before": before,
+        "after": after,
+    }
+    payload["transactions"].append(transaction)
+    payload["updated_at"] = transaction["created_at"]
+    save_json(LIVE_BETA_TRANSACTIONS_FILE, payload)
+    return transaction
+
+
+def load_shift_change_requests_payload():
+    payload = load_json(SHIFT_CHANGE_REQUESTS_FILE, {"requests": []})
+    if isinstance(payload, list):
+        payload = {"requests": payload}
+    if not isinstance(payload, dict):
+        payload = {"requests": []}
+    if not isinstance(payload.get("requests"), list):
+        payload["requests"] = []
+    return payload
+
+
+def save_shift_change_requests_payload(payload):
+    if not isinstance(payload, dict):
+        payload = {"requests": []}
+    if not isinstance(payload.get("requests"), list):
+        payload["requests"] = []
+    payload["updated_at"] = now_iso()
+    save_json(SHIFT_CHANGE_REQUESTS_FILE, payload)
+    return payload
+
+
+def active_shift_change_requests():
+    requests_payload = load_shift_change_requests_payload()
+    requests = [row for row in requests_payload.get("requests", []) if isinstance(row, dict)]
+    return [row for row in requests if str(row.get("status") or "").strip().lower() not in {"cancelled", "declined", "expired", "applied"}]
+
+
 def save_live_schedule(schedule):
     save_json(SCHEDULE_FILE, schedule)
     save_json(PUBLIC_SCHEDULE_FILE, schedule)
@@ -316,6 +409,50 @@ def schedule_assignment_signature(shift):
             "cert": seat.get("cert"),
         })
     return sorted(signature, key=lambda item: item["role"])
+
+
+def shift_period_value(shift):
+    return normalize_shift_label(shift.get("label") or shift.get("period") or shift.get("shift"))
+
+
+def seat_role_value(seat):
+    return str(seat.get("role") or seat.get("seat_role") or seat.get("seat_type") or seat.get("display_role") or "").strip().upper()
+
+
+def seat_key_for_request(shift, seat, index):
+    explicit = str(seat.get("seat_id") or seat.get("seat_key") or "").strip()
+    if explicit:
+        return explicit
+    return f"{str(shift.get('date') or shift.get('shift_date') or '')[:10]}:{shift_period_value(shift)}:{seat_role_value(seat) or 'SEAT'}:{index}"
+
+
+def assigned_member_id_for_seat(seat):
+    return str(seat.get("assigned") or seat.get("assigned_member_id") or seat.get("member_id") or "").strip()
+
+
+def find_assigned_shift_seat(schedule, member_id, date_iso, period, seat_role=None, seat_id=None):
+    member_id = str(member_id or "").strip()
+    date_iso = str(date_iso or "")[:10]
+    period = normalize_shift_label(period)
+    seat_role = str(seat_role or "").strip().upper()
+    seat_id = str(seat_id or "").strip()
+    if not member_id or not date_iso or not period:
+        return None, None, None
+    for shift in schedule.get("shifts", []) if isinstance(schedule, dict) else []:
+        if str(shift.get("date") or shift.get("shift_date") or "")[:10] != date_iso:
+            continue
+        if shift_period_value(shift) != period:
+            continue
+        seats = shift.get("seats") if isinstance(shift.get("seats"), list) else []
+        for index, seat in enumerate(seats):
+            key = seat_key_for_request(shift, seat, index)
+            if seat_id and key != seat_id and str(seat.get("seat_id") or "").strip() != seat_id:
+                continue
+            if seat_role and seat_role_value(seat) != seat_role:
+                continue
+            if assigned_member_id_for_seat(seat) == member_id:
+                return shift, seat, index
+    return None, None, None
 
 
 def schedule_display_path(path):
@@ -2381,6 +2518,7 @@ def get_member_context():
             "roster": member_roster_payload(),
             "availability": extract_member_availability(member_id),
             "schedule": load_schedule_payload(),
+            "change_requests": member_change_requests(member_id),
             "availability_edit_start_date": member_availability_edit_start_date().isoformat(),
             "member_page_settings": {
                 "availability_max_forward_weeks": member_page_settings.get("availability_max_forward_weeks"),
@@ -2405,7 +2543,7 @@ def get_member_dashboard():
         availability_payload=load_availability_payload(),
         settings=load_settings(),
         rotation_templates=load_json(ROTATION_TEMPLATES_FILE, {}),
-        change_requests_payload=load_json(SWAP_REQUESTS_FILE, {}),
+        change_requests_payload=load_change_requests_for_queue(),
         start_date=request.args.get("start") or request.args.get("start_date"),
         end_date=request.args.get("end") or request.args.get("end_date"),
     )
@@ -2414,6 +2552,164 @@ def get_member_dashboard():
     dashboard["auth_mode"] = "quick_test" if quick_test_mode_enabled() else "real_login"
     dashboard["quick_test_mode"] = quick_test_mode_enabled()
     return jsonify(dashboard)
+
+
+def member_change_requests(member_id):
+    member_id = str(member_id or "").strip()
+    rows = []
+    for row in load_change_requests_for_queue():
+        if not isinstance(row, dict):
+            continue
+        original = row.get("original_assignment") if isinstance(row.get("original_assignment"), dict) else {}
+        if str(row.get("original_member_id") or row.get("created_by_member_id") or original.get("member_id") or "").strip() == member_id:
+            rows.append(row)
+    return rows
+
+
+def request_record_for_assigned_seat(actor_member_id, shift, seat, index, comment=None):
+    date_iso = str(shift.get("date") or shift.get("shift_date") or "")[:10]
+    period = shift_period_value(shift)
+    role = seat_role_value(seat)
+    seat_key = seat_key_for_request(shift, seat, index)
+    member_id = str(actor_member_id or "").strip()
+    member_name = seat.get("assigned_name") or member_display_name(member_record_by_id(member_id) or {})
+    created_at = now_iso()
+    return {
+        "request_id": f"scr_cov_{int(time.time() * 1000)}_{secrets.token_hex(4)}",
+        "request_type": "coverage_request",
+        "type": "drop_coverage_request",
+        "status": "pending",
+        "original_member_id": member_id,
+        "created_by_member_id": member_id,
+        "replacement_member_id": None,
+        "requested_replacement_member_id": None,
+        "supervisor_review_required": True,
+        "date": date_iso,
+        "period": period,
+        "seat_role": role,
+        "comment": str(comment or "").strip() or None,
+        "created_at": created_at,
+        "updated_at": created_at,
+        "original_assignment": {
+            "seat_key": seat_key,
+            "seat_id": str(seat.get("seat_id") or seat_key),
+            "date": date_iso,
+            "period": period,
+            "role": role,
+            "member_id": member_id,
+            "member_name": member_name,
+            "assignment_status": seat.get("assignment_status") or "ASSIGNED",
+        },
+        "bid_overlay": {
+            "opens_for_bidding": True,
+            "seat_key": seat_key,
+        },
+        "audit": [
+            {
+                "event": "coverage_request_created",
+                "at": created_at,
+                "actor_member_id": member_id,
+                "note": "Original assignment preserved; assigned member remains responsible until supervisor approval.",
+            }
+        ],
+    }
+
+
+def matching_pending_coverage_request(rows, member_id, date_iso, period, role):
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        original = row.get("original_assignment") if isinstance(row.get("original_assignment"), dict) else {}
+        if str(row.get("type") or "") != "drop_coverage_request":
+            continue
+        if str(row.get("status") or "").strip().lower() not in {"pending", "pending_supervisor_review", "pending_bids"}:
+            continue
+        if str(row.get("original_member_id") or row.get("created_by_member_id") or original.get("member_id") or "").strip() != member_id:
+            continue
+        if str(original.get("date") or row.get("date") or "")[:10] != date_iso:
+            continue
+        if str(original.get("period") or row.get("period") or "").strip().upper() != period:
+            continue
+        if role and str(original.get("role") or row.get("seat_role") or "").strip().upper() != role:
+            continue
+        return row
+    return None
+
+
+@app.route("/api/member/change-requests", methods=["GET"])
+def get_member_change_requests():
+    auth = current_auth()
+    requested_id = str(request.args.get("member_id") or "").strip()
+    if not auth.get("authenticated"):
+        return auth_json_error("Authentication required", 401)
+    if auth.get("role") == "supervisor":
+        if not requested_id:
+            return jsonify({"requests": load_change_requests_for_queue(), "generated_at": now_iso()})
+        return jsonify({"requests": member_change_requests(requested_id), "member_id": requested_id, "generated_at": now_iso()})
+    auth_member_id = str(auth.get("member_id") or "").strip()
+    if not auth_member_id:
+        return auth_json_error("Member session required", 403)
+    if requested_id and requested_id != auth_member_id:
+        return auth_json_error("Cannot view another member's change requests", 403)
+    return jsonify({"requests": member_change_requests(auth_member_id), "member_id": auth_member_id, "generated_at": now_iso()})
+
+
+@app.route("/api/member/request-coverage", methods=["POST"])
+def request_member_coverage():
+    auth = current_auth()
+    if not auth.get("authenticated"):
+        return auth_json_error("Authentication required", 401)
+    actor_member_id = str(auth.get("member_id") or "").strip()
+    if not actor_member_id:
+        return auth_json_error("Member session required for coverage requests", 403)
+    payload = request.get_json(silent=True) or {}
+    requested_member_id = str(payload.get("member_id") or payload.get("original_member_id") or actor_member_id).strip()
+    if requested_member_id != actor_member_id:
+        return auth_json_error("Members may only request coverage for their own assigned shifts", 403)
+    date_iso = str(payload.get("date") or "")[:10]
+    period = normalize_shift_label(payload.get("period") or payload.get("label"))
+    seat_role = str(payload.get("seat_role") or payload.get("role") or "").strip().upper()
+    seat_id = str(payload.get("seat_id") or payload.get("seat_key") or "").strip()
+    if not date_iso or not period:
+        return auth_json_error("date and period are required", 400)
+    shift_day = parse_iso_date(date_iso)
+    if not shift_day:
+        return auth_json_error("Invalid shift date", 400)
+    if shift_day < datetime.now(LOCAL_TZ).date():
+        return auth_json_error("Coverage requests are only available for current or future shifts", 400)
+
+    schedule = load_schedule_payload()
+    shift, seat, index = find_assigned_shift_seat(schedule, actor_member_id, date_iso, period, seat_role, seat_id)
+    if not shift or not seat:
+        return auth_json_error("Assigned seat not found for this member/date/period", 404)
+
+    payload_store = load_shift_change_requests_payload()
+    existing = matching_pending_coverage_request(payload_store["requests"], actor_member_id, date_iso, period, seat_role_value(seat))
+    if existing:
+        return jsonify({
+            "status": "ok",
+            "ok": True,
+            "saved": True,
+            "already_exists": True,
+            "request": existing,
+            "assignment_preserved": True,
+        })
+
+    record = request_record_for_assigned_seat(actor_member_id, shift, seat, index or 0, payload.get("comment") or payload.get("reason"))
+    review = review_shift_change_request(schedule, load_members(), load_availability_payload(), record)
+    if review.get("decision") == "denied":
+        return jsonify({"error": "Coverage request failed validation", "validation": review}), 400
+    record["validation"] = review
+    payload_store["requests"].append(record)
+    save_shift_change_requests_payload(payload_store)
+    return jsonify({
+        "status": "ok",
+        "ok": True,
+        "saved": True,
+        "request": record,
+        "assignment_preserved": True,
+        "responsibility_remains_with_member": True,
+    })
 
 
 @app.route("/api/member/timecard", methods=["GET"])
@@ -2865,14 +3161,17 @@ def request_now_param():
 
 
 def load_change_requests_for_queue():
+    combined = list(active_shift_change_requests())
     payload = load_json(SWAP_REQUESTS_FILE, {})
     if isinstance(payload, list):
-        return payload
+        combined.extend(row for row in payload if isinstance(row, dict))
+        return combined
     if isinstance(payload, dict):
         for key in ("requests", "change_requests", "items"):
             if isinstance(payload.get(key), list):
-                return payload[key]
-    return []
+                combined.extend(row for row in payload[key] if isinstance(row, dict))
+                return combined
+    return combined
 
 
 @app.route("/api/schedule/lifecycle", methods=["GET"])
