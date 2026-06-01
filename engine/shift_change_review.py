@@ -32,6 +32,7 @@ from engine.open_shift_bid_review import (
 VALID_REQUEST_TYPES = {"drop_coverage_request", "named_replacement", "two_way_swap"}
 VALID_STATUSES = {
     "draft",
+    "pending",
     "pending_acceptance",
     "pending_bids",
     "pending_supervisor_review",
