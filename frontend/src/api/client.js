@@ -1,5 +1,6 @@
 const DEFAULT_API_BASE = "";
 const DEFAULT_TIMEOUT_MS = 30000;
+const BETA_SESSION_STORAGE_KEY = "sc_beta_session_token";
 
 export function getApiBase() {
   if (typeof window !== "undefined") {
@@ -65,6 +66,9 @@ function buildAvailabilityWritePayload(memberId, entries) {
 
 export async function apiFetch(path, options = {}) {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, signal, ...fetchOptions } = options;
+  const betaSessionToken = typeof window !== "undefined"
+    ? window.sessionStorage?.getItem(BETA_SESSION_STORAGE_KEY)
+    : null;
   const controller = new AbortController();
   const timeout = timeoutMs > 0
     ? setTimeout(() => controller.abort(abortError(timeoutMs)), timeoutMs)
@@ -85,6 +89,7 @@ export async function apiFetch(path, options = {}) {
     headers: {
       Accept: "application/json",
       ...(fetchOptions.body ? { "Content-Type": "application/json" } : {}),
+      ...(betaSessionToken ? { "X-ShiftCommander-Beta-Session": betaSessionToken } : {}),
       ...(fetchOptions.headers || {})
     }
   }).catch((error) => {
