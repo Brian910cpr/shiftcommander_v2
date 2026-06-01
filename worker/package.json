@@ -1,0 +1,21 @@
+{
+  "name": "shiftcommander-worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787",
+    "start": "wrangler dev --local --port 8787",
+    "smoke": "node scripts/smoke-routes.mjs",
+    "d1:migrate:local": "wrangler d1 migrations apply shiftcommander-local-dev --local",
+    "d1:execute:local": "wrangler d1 execute shiftcommander-local-dev --local",
+    "d1:list": "wrangler d1 migrations list shiftcommander-local-dev --local",
+    "d1:schema:check": "node scripts/check-d1-schema.mjs",
+    "preflight:deploy": "node scripts/preflight-deploy.mjs",
+    "check": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "npm run preflight:deploy && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.18.0"
+  }
+}

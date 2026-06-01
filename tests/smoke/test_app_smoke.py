@@ -408,6 +408,38 @@ class AppSmokeTests(unittest.TestCase):
             self.server.SC_QUICK_TEST_MODE = original_quick
             self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
 
+    def test_supervisor_can_read_selected_member_availability(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = False
+            self.login_supervisor()
+
+            response = self.client.get("/api/member/availability?member_id=188")
+            self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+            payload = response.get_json()
+            self.assertEqual(payload["entries"][0]["member_id"], "188")
+            response.close()
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
+    def test_member_cannot_read_another_members_availability(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = False
+            self.login_member("180")
+
+            response = self.client.get("/api/member/availability?member_id=188")
+            self.assertEqual(response.status_code, 403, response.get_data(as_text=True))
+            response.close()
+        finally:
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
     def test_timecard_period_is_thursday_to_wednesday(self):
         period = self.server.get_current_timecard_period(date(2026, 5, 19))
         self.assertEqual(period["period_start"], "2026-05-14")

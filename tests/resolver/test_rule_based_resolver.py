@@ -141,6 +141,26 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         self.assertEqual(first_seat(result, "ATTENDANT")["resolver_phase"], "PHASE_2")
         self.assertEqual(first_seat(result, "DRIVER")["resolver_phase"], "PHASE_4")
 
+    def test_ncld_interest_does_not_make_member_clinical_attendant(self):
+        data = base_payload(seats=[{"role": "ATTENDANT", "hours": 12}, {"role": "DRIVER", "hours": 12}])
+        ncld = member("ncld_support", "NCLD", "PT")
+        ncld.update({
+            "ncld_status": True,
+            "ncld_interest_level": "active_support",
+            "ncld_notes": "Interested in support/driver work.",
+        })
+        data["members"] = [ncld]
+        set_availability(data, "ncld_support", FAR, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+
+        attendant = first_seat(result, "ATTENDANT")
+        driver = first_seat(result, "DRIVER")
+        self.assertFalse(attendant.get("assigned"))
+        self.assertEqual(driver["assigned"], "ncld_support")
+        self.assertTrue(any(row["member_id"] == "ncld_support" and row["reason"] == "outside_bucket_rules" for row in attendant["rejected_candidates"]))
+        self.assertEqual(driver["resolver_phase"], "PHASE_4")
+
     def test_emt_plus_emt_basic_crew_assigns_anchor_and_driver_when_no_als_available(self):
         data = base_payload(seats=[{"role": "DRIVER", "hours": 12}, {"role": "ATTENDANT", "hours": 12}])
         data["members"] = [member("emt_anchor", "EMT", "PT"), member("emt_driver", "EMT", "PT"), member("aemt_unset", "AEMT", "PT")]
