@@ -125,12 +125,78 @@ function PreviewRows({ rows = [] }) {
   );
 }
 
-function QueueGroup({ label, value }) {
+function formatWarnings(warnings = []) {
+  if (!Array.isArray(warnings) || warnings.length === 0) return 'Clean';
+  return warnings.map(warning => String(warning).replaceAll('_', ' ')).join(', ');
+}
+
+function memberLabel(member) {
+  if (!member) return '-';
+  if (typeof member === 'string') return member;
+  const name = member.name || member.member_name || member.assigned_name;
+  const id = member.member_id ? ` #${member.member_id}` : '';
+  return name ? `${name}${id}` : member.member_id || '-';
+}
+
+function CoverageRequestItem({ item }) {
+  const candidates = Array.isArray(item.candidates) ? item.candidates : [];
+  return (
+    <div className="rounded-md border border-border/50 bg-card/60 p-2 space-y-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold text-foreground">
+            {shortDate(item.date)} {item.period || '-'} / {item.seat_role || 'Seat'}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Original: {memberLabel(item.original_member)} / Current: {memberLabel(item.current_assigned_member)}
+          </p>
+        </div>
+        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+          {item.recommendation_label || 'Supervisor review'}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
+        <span className="rounded-full bg-muted px-2 py-0.5">{item.status || 'pending'}</span>
+        <span className="rounded-full bg-muted px-2 py-0.5">{item.prefer_count || 0} Prefer</span>
+        <span className="rounded-full bg-muted px-2 py-0.5">{item.available_count || 0} Available</span>
+        <span className="rounded-full bg-muted px-2 py-0.5">{item.candidate_count || 0} candidates</span>
+      </div>
+      {candidates.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground">No candidates yet</p>
+      ) : (
+        <div className="space-y-1">
+          {candidates.map(candidate => {
+            const warnings = Array.isArray(candidate.warnings) ? candidate.warnings : [];
+            const hasWarnings = warnings.length > 0 || candidate.qualification_match === false;
+            return (
+              <div key={`${item.request_id}:${candidate.member_id}:${candidate.intent}`} className="rounded border border-border/40 bg-background/40 px-2 py-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold text-foreground truncate">{candidate.name || candidate.member_id}</span>
+                  <span className={`text-[10px] font-semibold ${candidate.intent === 'Prefer' ? 'text-emerald-300' : 'text-blue-300'}`}>
+                    {candidate.intent || 'Interest'}
+                  </span>
+                </div>
+                <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+                  <span>{candidate.cert || 'Cert unknown'}</span>
+                  <span className={hasWarnings ? 'text-amber-300' : 'text-emerald-300'}>{formatWarnings(warnings)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QueueGroup({ groupKey, label, value }) {
   const items = Array.isArray(value)
     ? value
     : value?.would_commit
       ? value.would_commit
       : [];
+  const isCoverageGroup = groupKey === 'coverage_requests';
+  const visibleLimit = isCoverageGroup ? 6 : 8;
   return (
     <div className="rounded-lg border border-border/50 bg-background/30 px-3 py-2">
       <div className="flex items-center justify-between gap-2">
@@ -140,18 +206,22 @@ function QueueGroup({ label, value }) {
       {items.length === 0 ? (
         <p className="text-[11px] text-muted-foreground mt-2">None</p>
       ) : (
-        <div className="mt-2 space-y-1.5 max-h-28 overflow-y-auto pr-1">
-          {items.slice(0, 8).map((item, index) => (
-            <div key={item.request_id || `${label}:${index}`} className="text-[11px] text-muted-foreground flex justify-between gap-2">
-              <span className="truncate">
-                {item.reason || item.status || item.type || item.source || 'Queued item'}
-              </span>
-              <span className="text-foreground/80 whitespace-nowrap">
-            {item.shift?.date ? `${shortDate(item.shift.date)} ${item.shift.period || ''}` : item.date ? `${shortDate(item.date)} ${item.period || ''}` : ''}
-              </span>
-            </div>
+        <div className={`${isCoverageGroup ? 'max-h-96' : 'max-h-28'} mt-2 space-y-1.5 overflow-y-auto pr-1`}>
+          {items.slice(0, visibleLimit).map((item, index) => (
+            isCoverageGroup ? (
+              <CoverageRequestItem key={item.request_id || `${label}:${index}`} item={item} />
+            ) : (
+              <div key={item.request_id || `${label}:${index}`} className="text-[11px] text-muted-foreground flex justify-between gap-2">
+                <span className="truncate">
+                  {item.reason || item.status || item.type || item.source || 'Queued item'}
+                </span>
+                <span className="text-foreground/80 whitespace-nowrap">
+                  {item.shift?.date ? `${shortDate(item.shift.date)} ${item.shift.period || ''}` : item.date ? `${shortDate(item.date)} ${item.period || ''}` : ''}
+                </span>
+              </div>
+            )
           ))}
-          {items.length > 8 && <p className="text-[10px] text-muted-foreground">+{items.length - 8} more</p>}
+          {items.length > visibleLimit && <p className="text-[10px] text-muted-foreground">+{items.length - visibleLimit} more</p>}
         </div>
       )}
     </div>
@@ -263,7 +333,7 @@ export default function ScheduleCommandCenter() {
         <h3 className="text-sm font-bold text-foreground mb-2">Supervisor Queue</h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-2">
           {QUEUE_GROUPS.map(([key, label]) => (
-            <QueueGroup key={key} label={label} value={key === 'upcoming_commit_preview' ? queue?.upcoming_commit_preview : queue?.[key]} />
+            <QueueGroup key={key} groupKey={key} label={label} value={key === 'upcoming_commit_preview' ? queue?.upcoming_commit_preview : queue?.[key]} />
           ))}
         </div>
         <p className="text-[10px] text-muted-foreground mt-3">
