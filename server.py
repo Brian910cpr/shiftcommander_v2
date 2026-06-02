@@ -23,10 +23,18 @@ from engine.schedule_lifecycle import (
     classify_shift_lifecycle,
     current_commit_window,
     get_commit_policy,
+    get_bid_due_at,
     get_next_commit_at,
     preview_schedule_commit,
 )
 from engine.shift_change_review import review_shift_change_request
+from engine.open_shift_bid_review import (
+    PREFER,
+    candidate_record,
+    cert_matches_seat,
+    has_schedule_conflict,
+    member_cert,
+)
 from engine.live_state_store import create_live_state_store
 
 SERVER_IMPORT_STARTED = time.perf_counter()
@@ -2766,6 +2774,100 @@ def coverage_queue_item_as_request(queue_row):
     }
 
 
+def active_offered_shift_requests():
+    rows = []
+    for row in active_shift_change_requests():
+        if str(row.get("type") or "") != "offered_shift":
+            continue
+        if str(row.get("status") or "").strip().lower() not in {"offered", "collecting_interest", "pending_bids"}:
+            continue
+        rows.append(row)
+    return rows
+
+
+def offered_shift_key_from_record(row):
+    original = row.get("original_assignment") if isinstance(row.get("original_assignment"), dict) else {}
+    return (
+        str(original.get("date") or row.get("date") or "")[:10],
+        normalize_shift_label(original.get("period") or row.get("period")),
+        str(original.get("role") or row.get("seat_role") or "").strip().upper(),
+    )
+
+
+def matching_active_offered_shift(rows, member_id, date_iso, period, role):
+    wanted = (str(date_iso or "")[:10], normalize_shift_label(period), str(role or "").strip().upper())
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("type") or "") != "offered_shift":
+            continue
+        if str(row.get("status") or "").strip().lower() not in {"offered", "collecting_interest", "pending_bids"}:
+            continue
+        original = row.get("original_assignment") if isinstance(row.get("original_assignment"), dict) else {}
+        original_member_id = str(row.get("original_member_id") or row.get("created_by_member_id") or original.get("member_id") or "").strip()
+        if original_member_id != str(member_id or "").strip():
+            continue
+        if offered_shift_key_from_record(row) == wanted:
+            return row
+    return None
+
+
+def request_record_for_offered_seat(actor_member_id, shift, seat, index, comment=None):
+    date_iso = str(shift.get("date") or shift.get("shift_date") or "")[:10]
+    period = shift_period_value(shift)
+    role = seat_role_value(seat)
+    seat_key = seat_key_for_request(shift, seat, index)
+    member_id = str(actor_member_id or "").strip()
+    member_name = seat.get("assigned_name") or member_display_name(member_record_by_id(member_id) or {})
+    created_at = now_iso()
+    try:
+        offer_due_at = get_bid_due_at(date_iso, created_at, load_settings())
+    except Exception:
+        offer_due_at = None
+    return {
+        "request_id": f"scr_offer_{int(time.time() * 1000)}_{secrets.token_hex(4)}",
+        "request_type": "offered_shift",
+        "type": "offered_shift",
+        "status": "collecting_interest",
+        "original_member_id": member_id,
+        "created_by_member_id": member_id,
+        "replacement_member_id": None,
+        "requested_replacement_member_id": None,
+        "supervisor_review_required": False,
+        "date": date_iso,
+        "period": period,
+        "seat_role": role,
+        "comment": str(comment or "").strip() or None,
+        "created_at": created_at,
+        "updated_at": created_at,
+        "offer_due_at": offer_due_at,
+        "original_assignment": {
+            "seat_key": seat_key,
+            "seat_id": str(seat.get("seat_id") or seat_key),
+            "date": date_iso,
+            "period": period,
+            "role": role,
+            "member_id": member_id,
+            "member_name": member_name,
+            "assignment_status": seat.get("assignment_status") or "ASSIGNED",
+        },
+        "bid_overlay": {
+            "opens_for_bidding": True,
+            "seat_key": seat_key,
+            "opportunity_type": "offered_shift",
+            "bid_due_at": offer_due_at,
+        },
+        "audit": [
+            {
+                "event": "shift_offered",
+                "at": created_at,
+                "actor_member_id": member_id,
+                "note": "Original assignment preserved; offered seat collects member interest before supervisor escalation.",
+            }
+        ],
+    }
+
+
 def find_shift_change_request(payload, request_id):
     request_id = str(request_id or "").strip()
     if not request_id:
@@ -2923,6 +3025,126 @@ def matching_pending_coverage_request(rows, member_id, date_iso, period, role):
     return None
 
 
+def member_opportunity_payload(schedule, member, shift, seat, seat_index, opportunity_type="open_seat", offer_record=None):
+    if not isinstance(member, dict) or not isinstance(shift, dict) or not isinstance(seat, dict):
+        return None
+    member_id_value = member_id_from_record(member)
+    if not member_id_value or member.get("active") is False:
+        return None
+    role = seat_role_value(seat)
+    if not role:
+        return None
+    assigned_id = assigned_member_id_for_seat(seat)
+    if opportunity_type == "offered_shift" and assigned_id == member_id_value:
+        return None
+    if seat.get("structural_driver_coverage") is True:
+        return None
+    qualification_match = cert_matches_seat(member, seat)
+    if not qualification_match:
+        return None
+    warnings = []
+    candidate = candidate_record(schedule, shift, seat, member, PREFER)
+    if isinstance(candidate.get("warnings"), list):
+        warnings = list(candidate["warnings"])
+    if has_schedule_conflict(schedule, shift, member):
+        if "schedule_conflict" not in warnings:
+            warnings.append("schedule_conflict")
+    actionable = "schedule_conflict" not in warnings
+    seat_key = seat_key_for_request(shift, seat, seat_index)
+    record = {
+        "opportunity_type": opportunity_type,
+        "indicator": "offered" if opportunity_type == "offered_shift" else "open",
+        "indicator_label": "Offered" if opportunity_type == "offered_shift" else "Open seat",
+        "indicator_tone": "amber" if opportunity_type == "offered_shift" else "gray",
+        "date": str(shift.get("date") or shift.get("shift_date") or "")[:10],
+        "period": shift_period_value(shift),
+        "seat_role": role,
+        "seat_id": str(seat.get("seat_id") or seat_key),
+        "seat_key": seat_key,
+        "unit": shift.get("unit"),
+        "member_id": member_id_value,
+        "cert": member_cert(member),
+        "qualification_match": qualification_match,
+        "warnings": warnings,
+        "actionable": actionable,
+        "action": "set_prefer" if actionable else None,
+    }
+    if opportunity_type == "offered_shift":
+        original = offer_record.get("original_assignment") if isinstance(offer_record, dict) else {}
+        record.update({
+            "offer_request_id": offer_record.get("request_id") if isinstance(offer_record, dict) else None,
+            "offer_due_at": offer_record.get("offer_due_at") if isinstance(offer_record, dict) else None,
+            "responsible_member": {
+                "member_id": assigned_id or original.get("member_id"),
+                "name": seat.get("assigned_name") or original.get("member_name"),
+            },
+            "copy": "Offered shift; original member remains responsible until replacement approval.",
+        })
+    else:
+        record.update({
+            "responsible_member": None,
+            "copy": "Open seat",
+        })
+    return record
+
+
+def build_member_opportunities(member_id_value):
+    member_id_value = str(member_id_value or "").strip()
+    members = load_members()
+    member = next((row for row in members if member_id_from_record(row) == member_id_value), None)
+    if not member:
+        return None
+    schedule = load_schedule_payload()
+    today = datetime.now(LOCAL_TZ).date().isoformat()
+    opportunities = []
+    active_offers = active_offered_shift_requests()
+    offers_by_key = {
+        offered_shift_key_from_record(row): row
+        for row in active_offers
+    }
+
+    for shift in schedule.get("shifts", []) if isinstance(schedule, dict) else []:
+        date_iso = str(shift.get("date") or shift.get("shift_date") or "")[:10]
+        if not date_iso or date_iso < today:
+            continue
+        period = shift_period_value(shift)
+        for index, seat in enumerate(shift.get("seats", []) if isinstance(shift.get("seats"), list) else []):
+            role = seat_role_value(seat)
+            if not role:
+                continue
+            offer = offers_by_key.get((date_iso, period, role))
+            if offer:
+                offered = member_opportunity_payload(schedule, member, shift, seat, index, "offered_shift", offer)
+                if offered:
+                    opportunities.append(offered)
+                continue
+            if not is_open_seat_for_request(seat):
+                continue
+            open_payload = member_opportunity_payload(schedule, member, shift, seat, index, "open_seat")
+            if open_payload:
+                opportunities.append(open_payload)
+
+    opportunities.sort(key=lambda row: (row.get("date") or "", row.get("period") or "", 0 if row.get("opportunity_type") == "offered_shift" else 1, row.get("seat_role") or ""))
+    return {
+        "status": "ok",
+        "member_id": member_id_value,
+        "opportunities": opportunities,
+        "counts": {
+            "total": len(opportunities),
+            "open": sum(1 for row in opportunities if row.get("opportunity_type") == "open_seat"),
+            "offered": sum(1 for row in opportunities if row.get("opportunity_type") == "offered_shift"),
+        },
+        "generated_at": now_iso(),
+    }
+
+
+def is_open_seat_for_request(seat):
+    assigned = assigned_member_id_for_seat(seat)
+    status = str(seat.get("assignment_status") or "").strip().upper()
+    name = str(seat.get("assigned_name") or seat.get("member_name") or "").strip().upper()
+    return not assigned and (status in {"", "OPEN", "SUPERVISOR_REVIEW"} or not name or name.startswith("OPEN") or name == "UNFILLED")
+
+
 @app.route("/api/member/change-requests", methods=["GET"])
 def get_member_change_requests():
     auth = current_auth()
@@ -2939,6 +3161,71 @@ def get_member_change_requests():
     if requested_id and requested_id != auth_member_id:
         return auth_json_error("Cannot view another member's change requests", 403)
     return jsonify({"requests": member_change_requests(auth_member_id), "member_id": auth_member_id, "generated_at": now_iso()})
+
+
+@app.route("/api/member/opportunities", methods=["GET"])
+def get_member_opportunities():
+    member_id, _, error = resolve_member_read_target()
+    if error:
+        return error
+    payload = build_member_opportunities(member_id)
+    if payload is None:
+        return auth_json_error("Member record not found", 404)
+    return jsonify(payload)
+
+
+@app.route("/api/member/offer-shift", methods=["POST"])
+def offer_member_shift():
+    auth = current_auth()
+    if not auth.get("authenticated"):
+        return auth_json_error("Authentication required", 401)
+    actor_member_id = str(auth.get("member_id") or "").strip()
+    if not actor_member_id:
+        return auth_json_error("Member session required for shift offers", 403)
+    payload = request.get_json(silent=True) or {}
+    requested_member_id = str(payload.get("member_id") or payload.get("original_member_id") or actor_member_id).strip()
+    if requested_member_id != actor_member_id:
+        return auth_json_error("Members may only offer their own assigned shifts", 403)
+    date_iso = str(payload.get("date") or "")[:10]
+    period = normalize_shift_label(payload.get("period") or payload.get("label"))
+    seat_role = str(payload.get("seat_role") or payload.get("role") or "").strip().upper()
+    seat_id = str(payload.get("seat_id") or payload.get("seat_key") or "").strip()
+    if not date_iso or not period:
+        return auth_json_error("date and period are required", 400)
+    shift_day = parse_iso_date(date_iso)
+    if not shift_day:
+        return auth_json_error("Invalid shift date", 400)
+    if shift_day < datetime.now(LOCAL_TZ).date():
+        return auth_json_error("Shift offers are only available for current or future shifts", 400)
+
+    schedule = load_base_schedule_payload()
+    shift, seat, index = find_assigned_shift_seat(schedule, actor_member_id, date_iso, period, seat_role, seat_id)
+    if not shift or not seat:
+        return auth_json_error("Assigned seat not found for this member/date/period", 404)
+
+    payload_store = load_shift_change_requests_payload()
+    existing = matching_active_offered_shift(payload_store["requests"], actor_member_id, date_iso, period, seat_role_value(seat))
+    if existing:
+        return jsonify({
+            "status": "ok",
+            "ok": True,
+            "saved": True,
+            "already_exists": True,
+            "offer": existing,
+            "assignment_preserved": True,
+        })
+
+    record = request_record_for_offered_seat(actor_member_id, shift, seat, index or 0, payload.get("comment") or payload.get("reason"))
+    payload_store["requests"].append(record)
+    save_shift_change_requests_payload(payload_store)
+    return jsonify({
+        "status": "ok",
+        "ok": True,
+        "saved": True,
+        "offer": record,
+        "assignment_preserved": True,
+        "responsibility_remains_with_member": True,
+    })
 
 
 @app.route("/api/member/request-coverage", methods=["POST"])
@@ -3525,6 +3812,31 @@ def get_supervisor_schedule_queue():
         else row
         for row in raw_queue.get("coverage_requests", [])
     ]
+    now_day = datetime.now(LOCAL_TZ)
+    for offer in active_offered_shift_requests():
+        offer_due_at = parse_iso_date(offer.get("offer_due_at"))
+        if not offer_due_at or offer_due_at > now_day.date():
+            continue
+        candidate_probe = deepcopy(offer)
+        candidate_probe["type"] = "drop_coverage_request"
+        summary = coverage_request_candidate_summary(candidate_probe, schedule, members, availability)
+        if summary.get("candidate_count", 0) > 0:
+            continue
+        original = offer.get("original_assignment") if isinstance(offer.get("original_assignment"), dict) else {}
+        raw_queue["conflicts_or_ot_review"].append({
+            "type": "offered_shift_escalation",
+            "request_id": offer.get("request_id"),
+            "reason": "offered_shift_expired_without_candidate",
+            "date": str(offer.get("date") or original.get("date") or "")[:10],
+            "period": normalize_shift_label(offer.get("period") or original.get("period")),
+            "seat_role": str(offer.get("seat_role") or original.get("role") or "").strip().upper(),
+            "original_member": {
+                "member_id": offer.get("original_member_id") or original.get("member_id"),
+                "name": original.get("member_name"),
+            },
+            "offer_due_at": offer.get("offer_due_at"),
+            "supervisor_review_required": True,
+        })
     return jsonify(raw_queue)
 
 

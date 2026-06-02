@@ -983,6 +983,108 @@ class AppSmokeTests(unittest.TestCase):
         finally:
             self.server.SC_QUICK_TEST_MODE = original
 
+    def test_member_can_offer_shift_without_changing_assignment_or_alerting_coverage_queue(self):
+        fixture_paths = [
+            self.server.SCHEDULE_FILE,
+            self.server.PUBLIC_SCHEDULE_FILE,
+            self.server.AVAILABILITY_FILE,
+            self.server.SHIFT_CHANGE_REQUESTS_FILE,
+        ]
+        original_files = {}
+        for path in fixture_paths:
+            path_obj = Path(path)
+            original_files[path] = path_obj.read_bytes() if path_obj.exists() else None
+        schedule = {
+            "shifts": [
+                {
+                    "date": "2026-06-10",
+                    "label": "AM",
+                    "unit": "120",
+                    "seats": [
+                        {
+                            "seat_id": "2026-06-10:AM:DRIVER:1",
+                            "role": "DRIVER",
+                            "assigned": "188",
+                            "assigned_name": "Brian Ennis",
+                            "assignment_status": "ASSIGNED",
+                            "hours": 12,
+                        }
+                    ],
+                }
+            ]
+        }
+        try:
+            self.server.save_json(self.server.SCHEDULE_FILE, schedule)
+            self.server.save_json(self.server.PUBLIC_SCHEDULE_FILE, schedule)
+            self.server.save_json(self.server.AVAILABILITY_FILE, {"months": {}})
+            self.server.save_json(self.server.SHIFT_CHANGE_REQUESTS_FILE, {"requests": []})
+            schedule_before = json.dumps(self.server.load_json(self.server.SCHEDULE_FILE, {}), sort_keys=True)
+
+            with self.client.session_transaction() as session:
+                session.clear()
+            response = self.client.post(
+                "/api/member/offer-shift",
+                json={"member_id": "188", "date": "2026-06-10", "period": "AM", "seat_role": "DRIVER"},
+            )
+            self.assertEqual(response.status_code, 401)
+            response.close()
+
+            self.login_member("145")
+            response = self.client.post(
+                "/api/member/offer-shift",
+                json={"member_id": "188", "date": "2026-06-10", "period": "AM", "seat_role": "DRIVER"},
+            )
+            self.assertEqual(response.status_code, 403)
+            response.close()
+
+            self.login_member("188")
+            response = self.client.post(
+                "/api/member/offer-shift",
+                json={"member_id": "188", "date": "2026-06-10", "period": "AM", "seat_role": "DRIVER"},
+            )
+            self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+            payload = response.get_json()
+            self.assertTrue(payload["saved"])
+            self.assertTrue(payload["assignment_preserved"])
+            offer = payload["offer"]
+            self.assertEqual(offer["type"], "offered_shift")
+            self.assertEqual(offer["status"], "collecting_interest")
+            self.assertFalse(offer["supervisor_review_required"])
+            response.close()
+
+            schedule_after = json.dumps(self.server.load_json(self.server.SCHEDULE_FILE, {}), sort_keys=True)
+            self.assertEqual(schedule_after, schedule_before)
+            self.assertEqual(self.server.load_json(self.server.SCHEDULE_FILE, {})["shifts"][0]["seats"][0]["assigned"], "188")
+
+            self.login_member("145")
+            response = self.client.get("/api/member/opportunities?member_id=145")
+            self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+            opportunities = response.get_json()["opportunities"]
+            offered = [row for row in opportunities if row["opportunity_type"] == "offered_shift"]
+            self.assertEqual(len(offered), 1)
+            self.assertEqual(offered[0]["indicator"], "offered")
+            self.assertEqual(offered[0]["indicator_tone"], "amber")
+            self.assertEqual(offered[0]["responsible_member"]["member_id"], "188")
+            self.assertTrue(offered[0]["actionable"])
+            response.close()
+
+            self.login_supervisor()
+            response = self.client.get("/api/supervisor/schedule-queue")
+            self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+            queue = response.get_json()
+            self.assertFalse(any(row.get("type") == "offered_shift" for row in queue["coverage_requests"]))
+            self.assertFalse(any(row.get("type") == "offered_shift_escalation" for row in queue["conflicts_or_ot_review"]))
+            response.close()
+        finally:
+            for path, content in original_files.items():
+                path_obj = Path(path)
+                if content is None:
+                    if path_obj.exists():
+                        path_obj.unlink()
+                else:
+                    path_obj.parent.mkdir(parents=True, exist_ok=True)
+                    path_obj.write_bytes(content)
+
     def test_debug_endpoints_serve_after_generation(self):
         self.login_supervisor()
         self.client.post("/api/generate")
