@@ -27,6 +27,7 @@ from engine.schedule_lifecycle import (
     preview_schedule_commit,
 )
 from engine.shift_change_review import review_shift_change_request
+from engine.live_state_store import create_live_state_store
 
 SERVER_IMPORT_STARTED = time.perf_counter()
 
@@ -67,6 +68,15 @@ LIVE_BETA_TRANSACTIONS_FILE = os.path.join(DATA_DIR, "live_beta_transactions.jso
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
 CALENDAR_MARKERS_FILE = os.path.join(DATA_DIR, "calendar_markers.json")
 PUBLIC_CALENDAR_MARKERS_FILE = os.path.join(DOCS_DIR, "data", "calendar_markers.json")
+
+LIVE_STATE_STORE = create_live_state_store(BASE_DIR, DATA_DIR, DOCS_DIR)
+AVAILABILITY_FILE = LIVE_STATE_STORE.availability_file
+SHIFT_CHANGE_REQUESTS_FILE = LIVE_STATE_STORE.change_requests_file
+LIVE_BETA_TRANSACTIONS_FILE = LIVE_STATE_STORE.beta_transactions_file
+SUPERVISOR_STATE_FILE = LIVE_STATE_STORE.supervisor_state_file
+SCHEDULE_LOCKED_FILE = LIVE_STATE_STORE.schedule_locked_file
+SCHEDULE_FILE = LIVE_STATE_STORE.schedule_file
+PUBLIC_SCHEDULE_FILE = LIVE_STATE_STORE.public_schedule_file
 DEFAULT_CAREER_FIRE_DRIVER_RULES = {
     "enabled": True,
     "label": "Career Fire Driver",
@@ -212,12 +222,7 @@ def save_json(path, data):
 
 
 def load_live_beta_transactions():
-    payload = load_json(LIVE_BETA_TRANSACTIONS_FILE, {"transactions": []})
-    if not isinstance(payload, dict):
-        payload = {"transactions": []}
-    if not isinstance(payload.get("transactions"), list):
-        payload["transactions"] = []
-    return payload
+    return LIVE_STATE_STORE.load_beta_transactions()
 
 
 def rollout_status_payload():
@@ -271,29 +276,16 @@ def record_live_beta_transaction(action_type, actor_member_id=None, affected=Non
     }
     payload["transactions"].append(transaction)
     payload["updated_at"] = transaction["created_at"]
-    save_json(LIVE_BETA_TRANSACTIONS_FILE, payload)
+    LIVE_STATE_STORE.save_beta_transactions(payload)
     return transaction
 
 
 def load_shift_change_requests_payload():
-    payload = load_json(SHIFT_CHANGE_REQUESTS_FILE, {"requests": []})
-    if isinstance(payload, list):
-        payload = {"requests": payload}
-    if not isinstance(payload, dict):
-        payload = {"requests": []}
-    if not isinstance(payload.get("requests"), list):
-        payload["requests"] = []
-    return payload
+    return LIVE_STATE_STORE.load_change_requests()
 
 
 def save_shift_change_requests_payload(payload):
-    if not isinstance(payload, dict):
-        payload = {"requests": []}
-    if not isinstance(payload.get("requests"), list):
-        payload["requests"] = []
-    payload["updated_at"] = now_iso()
-    save_json(SHIFT_CHANGE_REQUESTS_FILE, payload)
-    return payload
+    return LIVE_STATE_STORE.save_change_requests(payload)
 
 
 def active_shift_change_requests():
@@ -303,8 +295,7 @@ def active_shift_change_requests():
 
 
 def save_live_schedule(schedule):
-    save_json(SCHEDULE_FILE, schedule)
-    save_json(PUBLIC_SCHEDULE_FILE, schedule)
+    LIVE_STATE_STORE.save_schedule_pair(schedule)
 
 
 def member_id_from_record(member):
@@ -314,7 +305,7 @@ def member_id_from_record(member):
 
 
 def load_live_schedule_shifts():
-    schedule = load_json(SCHEDULE_FILE, {})
+    schedule = LIVE_STATE_STORE.load_schedule()
     shifts = schedule.get("shifts") if isinstance(schedule, dict) else None
     if isinstance(shifts, list) and shifts:
         return shifts
@@ -355,7 +346,7 @@ def schedule_json_response():
 
 
 def load_schedule_payload():
-    schedule = load_json(SCHEDULE_FILE, {})
+    schedule = LIVE_STATE_STORE.load_schedule()
     if isinstance(schedule, dict) and isinstance(schedule.get("shifts"), list) and schedule["shifts"]:
         return schedule
     public_schedule = load_json(PUBLIC_SCHEDULE_FILE, {})
@@ -519,6 +510,7 @@ def compare_schedule_files(active_path=SCHEDULE_FILE, mirror_path=PUBLIC_SCHEDUL
         "missing_from_active": len(missing_from_active),
         "assignment_mismatches": assignment_mismatch_count,
         "sample_mismatches": sample_mismatches,
+        "live_state_store": LIVE_STATE_STORE.integrity_summary(),
         "generated_at": now_iso(),
     }
 
@@ -1085,25 +1077,11 @@ def seat_identity_from_shift(shift, seat, index):
 
 
 def load_supervisor_state():
-    data = load_json(SUPERVISOR_STATE_FILE, {"entries": [], "updated_at": None})
-    if not isinstance(data, dict):
-        data = {"entries": [], "updated_at": None}
-    entries = data.get("entries", [])
-    if not isinstance(entries, list):
-        entries = []
-    data["entries"] = entries
-    return data
+    return LIVE_STATE_STORE.load_supervisor_state()
 
 
 def save_supervisor_state(payload):
-    if not isinstance(payload, dict):
-        payload = {"entries": [], "updated_at": now_iso()}
-    entries = payload.get("entries", [])
-    if not isinstance(entries, list):
-        entries = []
-    payload["entries"] = entries
-    payload["updated_at"] = now_iso()
-    save_json(SUPERVISOR_STATE_FILE, payload)
+    LIVE_STATE_STORE.save_supervisor_state(payload)
 
 
 def index_supervisor_entries(state):
@@ -1215,7 +1193,7 @@ def build_schedule_locked_from_state(schedule_payload, state):
 
 
 def persist_schedule_locked_from_state(schedule_payload, state):
-    save_json(SCHEDULE_LOCKED_FILE, build_schedule_locked_from_state(schedule_payload, state))
+    LIVE_STATE_STORE.save_schedule_locked(build_schedule_locked_from_state(schedule_payload, state))
 
 
 # =========================
@@ -1550,22 +1528,11 @@ def normalize_member_accommodations(raw):
 
 
 def load_availability_payload():
-    data = load_json(AVAILABILITY_FILE, {"months": {}})
-    if not isinstance(data, dict):
-        return {"months": {}}
-    months = data.get("months", {})
-    if not isinstance(months, dict):
-        data["months"] = {}
-    return data
+    return LIVE_STATE_STORE.load_availability()
 
 
 def save_availability_payload(payload):
-    if not isinstance(payload, dict):
-        payload = {"months": {}}
-    months = payload.get("months", {})
-    if not isinstance(months, dict):
-        payload["months"] = {}
-    save_json(AVAILABILITY_FILE, payload)
+    LIVE_STATE_STORE.save_availability(payload)
 
 
 def iso_today():
@@ -1644,7 +1611,7 @@ def build_member_timecard(member_id, today=None, schedule_payload=None, period_s
     period = build_timecard_period(period_start, period_end) if period_start else get_current_timecard_period(today)
     period_start = date.fromisoformat(period["period_start"])
     period_end = date.fromisoformat(period["period_end"])
-    schedule = schedule_payload if isinstance(schedule_payload, dict) else load_json(SCHEDULE_FILE, {})
+    schedule = schedule_payload if isinstance(schedule_payload, dict) else LIVE_STATE_STORE.load_schedule()
     settings = load_settings()
     rows = []
     for shift in schedule.get("shifts", []) if isinstance(schedule.get("shifts"), list) else []:
@@ -3432,7 +3399,7 @@ def run_resolver(shifts_override=None):
     shifts = shifts_override if isinstance(shifts_override, list) else load_live_schedule_shifts()
     settings = load_settings()
     availability = load_availability_payload()
-    schedule_locked = load_json(SCHEDULE_LOCKED_FILE, {})
+    schedule_locked = LIVE_STATE_STORE.load_schedule_locked()
     rollout_import = load_json(ROLLOUT_IMPORT_FILE, {})
     rotation_templates = load_json(ROTATION_TEMPLATES_FILE, {})
 
@@ -3463,7 +3430,7 @@ def preview_resolver(shifts_override=None):
         "shifts": shifts,
         "settings": load_settings(),
         "availability": load_availability_payload(),
-        "schedule_locked": load_json(SCHEDULE_LOCKED_FILE, {}),
+        "schedule_locked": LIVE_STATE_STORE.load_schedule_locked(),
         "rollout_import": load_json(ROLLOUT_IMPORT_FILE, {}),
         "rotation_templates": load_json(ROTATION_TEMPLATES_FILE, {}),
         "build": {
@@ -3767,7 +3734,7 @@ def build_shifts_only():
     built_shifts = run_shift_builder()
     shift_count = len(built_shifts) if isinstance(built_shifts, list) else 0
     schedule = build_open_schedule_from_shifts(built_shifts)
-    save_json(SCHEDULE_FILE, schedule)
+    save_live_schedule(schedule)
     return jsonify({
         "status": "ok",
         "shift_count": shift_count,
@@ -3779,7 +3746,7 @@ def build_shifts_only():
 @app.route("/api/schedule_locked", methods=["GET"])
 @require_role("supervisor")
 def get_schedule_locked():
-    return jsonify(load_json(SCHEDULE_LOCKED_FILE, {}))
+    return jsonify(LIVE_STATE_STORE.load_schedule_locked())
 
 
 @app.route("/api/schedule_locked", methods=["POST"])
@@ -3788,7 +3755,7 @@ def save_schedule_locked():
     incoming = request.get_json(silent=True)
     if not isinstance(incoming, dict):
         return jsonify({"error": "schedule_locked payload must be an object"}), 400
-    save_json(SCHEDULE_LOCKED_FILE, incoming)
+    LIVE_STATE_STORE.save_schedule_locked(incoming)
     return jsonify({"status": "ok"})
 
 
@@ -3805,7 +3772,7 @@ def save_supervisor_state_route():
     if not isinstance(incoming, dict):
         return jsonify({"error": "Supervisor state payload must be an object"}), 400
     save_supervisor_state(incoming)
-    schedule_payload = load_json(SCHEDULE_FILE, {})
+    schedule_payload = LIVE_STATE_STORE.load_schedule()
     if isinstance(schedule_payload, dict):
         persist_schedule_locked_from_state(schedule_payload, incoming)
     return jsonify({"status": "ok"})
@@ -3819,7 +3786,7 @@ def supervisor_publish_week():
     if not week_start:
         return jsonify({"error": "week_start is required"}), 400
 
-    schedule_payload = load_json(SCHEDULE_FILE, {})
+    schedule_payload = LIVE_STATE_STORE.load_schedule()
     state = load_supervisor_state()
     changes = 0
 
@@ -3870,7 +3837,7 @@ def supervisor_drop_seat():
     if not seat_key:
         return jsonify({"error": "seat_key is required"}), 400
 
-    schedule_payload = load_json(SCHEDULE_FILE, {})
+    schedule_payload = LIVE_STATE_STORE.load_schedule()
     seat_info = find_schedule_seat(schedule_payload, seat_key)
     if seat_info is None:
         return jsonify({"error": "seat_key not found in current schedule"}), 404
@@ -3901,7 +3868,7 @@ def supervisor_open_seat():
     if not seat_key:
         return jsonify({"error": "seat_key is required"}), 400
 
-    schedule_payload = load_json(SCHEDULE_FILE, {})
+    schedule_payload = LIVE_STATE_STORE.load_schedule()
     seat_info = find_schedule_seat(schedule_payload, seat_key)
     if seat_info is None:
         return jsonify({"error": "seat_key not found in current schedule"}), 404
@@ -3932,7 +3899,7 @@ def supervisor_lock_seat():
     if not seat_key:
         return jsonify({"error": "seat_key is required"}), 400
 
-    schedule_payload = load_json(SCHEDULE_FILE, {})
+    schedule_payload = LIVE_STATE_STORE.load_schedule()
     seat_info = find_schedule_seat(schedule_payload, seat_key)
     if seat_info is None:
         return jsonify({"error": "seat_key not found in current schedule"}), 404
@@ -4084,6 +4051,7 @@ def health_payload():
         "build_code": BUILD_CODE,
         "quick_test_mode": SC_QUICK_TEST_MODE,
         "demo_supervisor_bypass": demo_supervisor_bypass_enabled(),
+        **LIVE_STATE_STORE.store_diagnostics(),
     }
 
 
