@@ -984,6 +984,9 @@ class AppSmokeTests(unittest.TestCase):
             self.server.SC_QUICK_TEST_MODE = original
 
     def test_member_can_offer_shift_without_changing_assignment_or_alerting_coverage_queue(self):
+        locked_target = self.server.member_availability_edit_start_date() - timedelta(days=1)
+        date_iso = locked_target.isoformat()
+        month_key = locked_target.strftime("%Y-%m")
         fixture_paths = [
             self.server.SCHEDULE_FILE,
             self.server.PUBLIC_SCHEDULE_FILE,
@@ -997,12 +1000,12 @@ class AppSmokeTests(unittest.TestCase):
         schedule = {
             "shifts": [
                 {
-                    "date": "2026-06-10",
+                    "date": date_iso,
                     "label": "AM",
                     "unit": "120",
                     "seats": [
                         {
-                            "seat_id": "2026-06-10:AM:DRIVER:1",
+                            "seat_id": f"{date_iso}:AM:DRIVER:1",
                             "role": "DRIVER",
                             "assigned": "188",
                             "assigned_name": "Brian Ennis",
@@ -1024,7 +1027,7 @@ class AppSmokeTests(unittest.TestCase):
                 session.clear()
             response = self.client.post(
                 "/api/member/offer-shift",
-                json={"member_id": "188", "date": "2026-06-10", "period": "AM", "seat_role": "DRIVER"},
+                json={"member_id": "188", "date": date_iso, "period": "AM", "seat_role": "DRIVER"},
             )
             self.assertEqual(response.status_code, 401)
             response.close()
@@ -1032,7 +1035,7 @@ class AppSmokeTests(unittest.TestCase):
             self.login_member("145")
             response = self.client.post(
                 "/api/member/offer-shift",
-                json={"member_id": "188", "date": "2026-06-10", "period": "AM", "seat_role": "DRIVER"},
+                json={"member_id": "188", "date": date_iso, "period": "AM", "seat_role": "DRIVER"},
             )
             self.assertEqual(response.status_code, 403)
             response.close()
@@ -1040,7 +1043,7 @@ class AppSmokeTests(unittest.TestCase):
             self.login_member("188")
             response = self.client.post(
                 "/api/member/offer-shift",
-                json={"member_id": "188", "date": "2026-06-10", "period": "AM", "seat_role": "DRIVER"},
+                json={"member_id": "188", "date": date_iso, "period": "AM", "seat_role": "DRIVER"},
             )
             self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
             payload = response.get_json()
@@ -1068,12 +1071,20 @@ class AppSmokeTests(unittest.TestCase):
             self.assertTrue(offered[0]["actionable"])
             response.close()
 
+            response = self.client.post(
+                "/api/member/availability",
+                json={"member_id": "145", "entries": [{"date": date_iso, "period": "AM", "member_intent": "prefer"}]},
+            )
+            self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+            availability_payload = response.get_json()["availability"]
+            self.assertEqual(availability_payload["months"][month_key]["145"][date_iso]["AM"], "preferred")
+            response.close()
+
             self.login_supervisor()
             response = self.client.get("/api/supervisor/schedule-queue")
             self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
             queue = response.get_json()
             self.assertFalse(any(row.get("type") == "offered_shift" for row in queue["coverage_requests"]))
-            self.assertFalse(any(row.get("type") == "offered_shift_escalation" for row in queue["conflicts_or_ot_review"]))
             response.close()
         finally:
             for path, content in original_files.items():

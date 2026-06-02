@@ -1981,6 +1981,25 @@ def validate_availability_entry(member_id, entry):
     }
 
 
+def member_locked_opportunity_interest_allowed(member_id, entry):
+    intent = str(entry.get("member_intent") or "").strip()
+    if intent not in {"prefer", "available", "blank"}:
+        return False
+    opportunities = build_member_opportunities(member_id)
+    if not isinstance(opportunities, dict):
+        return False
+    for row in opportunities.get("opportunities", []):
+        if not isinstance(row, dict) or not row.get("actionable"):
+            continue
+        if str(row.get("date") or "")[:10] != entry["date"]:
+            continue
+        if normalize_shift_label(row.get("period")) != entry["period"]:
+            continue
+        if row.get("opportunity_type") in {"open_seat", "offered_shift"}:
+            return True
+    return False
+
+
 def save_member_availability_entries(member_id, entries, actor_member_id=None):
     if not isinstance(entries, list):
         raise ValueError("Availability payload entries must be a list")
@@ -1996,7 +2015,7 @@ def save_member_availability_entries(member_id, entries, actor_member_id=None):
 
     for raw_entry in entries:
         entry = validate_availability_entry(member_id, raw_entry)
-        if entry["date_obj"] < edit_start_date:
+        if entry["date_obj"] < edit_start_date and not member_locked_opportunity_interest_allowed(member_id, entry):
             raise ValueError("Availability in the current Thursday cycle is locked for member editing")
         month_key = entry["date"][:7]
         value = availability_value_for_intent(entry["member_intent"])
@@ -2162,7 +2181,19 @@ def apply_member_availability_update(member_id, payload):
                 date_obj = datetime.fromisoformat(str(date_iso)[:10]).date()
             except ValueError:
                 continue
-            if date_obj < edit_start_date:
+            locked_entries = []
+            if isinstance(day_entry, dict):
+                for period, value in day_entry.items():
+                    period_label = str(period or "").strip().upper()
+                    if period_label not in {"AM", "PM"}:
+                        continue
+                    locked_entries.append({
+                        "date": str(date_iso)[:10],
+                        "period": period_label,
+                        "member_intent": canonical_member_intent(value),
+                    })
+            locked_allowed = bool(locked_entries) and all(member_locked_opportunity_interest_allowed(member_id, entry) for entry in locked_entries)
+            if date_obj < edit_start_date and not locked_allowed:
                 raise ValueError("Availability in the current Thursday cycle is locked for member editing")
             full_payload.setdefault("months", {}).setdefault(month_key, {}).setdefault(member_id, {})
             if isinstance(day_entry, dict):
