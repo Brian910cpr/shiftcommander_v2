@@ -23,6 +23,7 @@ import {
   normalizeTransactionWrite,
   validationError,
 } from "./contracts.js";
+import { handleLiveStateBridge as handleD1LiveStateBridge } from "./liveStateBridge.js";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
@@ -996,6 +997,12 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";
     const send = (payload, init = {}) => jsonResponse(payload, init, request);
+    const liveStateMatch = path.match(/^\/api\/live-state\/([^/]+)\/([^/]+)$/);
+
+    if (request.method === "POST" && liveStateMatch) {
+      const [, resource, operation] = liveStateMatch;
+      return handleD1LiveStateBridge(request, env, resource, operation);
+    }
 
     if (request.method === "GET" && path === "/api/health") {
       return send({

@@ -64,6 +64,91 @@ npm run d1:list
 npm run d1:execute:local -- --command "SELECT name FROM sqlite_master WHERE type = 'table';"
 ```
 
+## D1 Live-State Bridge
+
+The Flask backend can use this Worker as a durable live-state bridge when it is
+configured with:
+
+```text
+SC_STATE_BACKEND=d1
+SC_D1_BRIDGE_URL=https://<worker-host>
+SC_D1_BRIDGE_TOKEN=<shared secret>
+```
+
+The Worker validates every live-state bridge request with:
+
+```text
+Authorization: Bearer <SC_D1_BRIDGE_TOKEN>
+```
+
+Worker secret required:
+
+```powershell
+cd E:\GitHub\shiftcommander_v2\worker
+npx wrangler secret put SC_D1_BRIDGE_TOKEN
+```
+
+Expected D1 binding:
+
+```text
+DB
+```
+
+The bridge stores current Flask payload shapes as JSON documents first, without
+changing frontend or Flask API contracts. It also records appended beta
+transactions in `live_beta_transactions` for auditability.
+
+Bridge routes:
+
+- `POST /api/live-state/availability/read`
+- `POST /api/live-state/availability/write`
+- `POST /api/live-state/change_requests/read`
+- `POST /api/live-state/change_requests/write`
+- `POST /api/live-state/supervisor_state/read`
+- `POST /api/live-state/supervisor_state/write`
+- `POST /api/live-state/schedule_locked/read`
+- `POST /api/live-state/schedule_locked/write`
+- `POST /api/live-state/assignment_overlays/read`
+- `POST /api/live-state/assignment_overlays/write`
+- `POST /api/live-state/transactions/append`
+
+The bridge schema lives at:
+
+```text
+worker/d1/schema.sql
+```
+
+Apply it only to the intended dev/prod D1 database:
+
+```powershell
+cd E:\GitHub\shiftcommander_v2\worker
+npx wrangler d1 execute adr_fr_scheduler --file .\d1\schema.sql
+```
+
+For local mock validation without Cloudflare auth or a real D1 database:
+
+```powershell
+cd E:\GitHub\shiftcommander_v2\worker
+npm run live-state:bridge:test
+```
+
+Local dev and dry-run checks:
+
+```powershell
+cd E:\GitHub\shiftcommander_v2\worker
+npm run d1:schema:check
+npm run check
+npm run dev
+```
+
+Deployment remains manual and should happen only after the D1 database, binding,
+and `SC_D1_BRIDGE_TOKEN` secret are intentionally configured:
+
+```powershell
+cd E:\GitHub\shiftcommander_v2\worker
+npm run deploy
+```
+
 The `database_id` in `wrangler.jsonc` is a placeholder and must be replaced
 with a real Cloudflare D1 database id before any remote deploy. Do not run
 remote D1 migrations until a dev Cloudflare database has been created and wired

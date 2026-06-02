@@ -7,6 +7,7 @@
     "dev": "wrangler dev --local --port 8787",
     "start": "wrangler dev --local --port 8787",
     "smoke": "node scripts/smoke-routes.mjs",
+    "live-state:bridge:test": "node scripts/test-live-state-bridge.mjs",
     "d1:migrate:local": "wrangler d1 migrations apply shiftcommander-local-dev --local",
     "d1:execute:local": "wrangler d1 execute shiftcommander-local-dev --local",
     "d1:list": "wrangler d1 migrations list shiftcommander-local-dev --local",
