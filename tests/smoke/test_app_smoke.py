@@ -1085,6 +1085,10 @@ class AppSmokeTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
             queue = response.get_json()
             self.assertFalse(any(row.get("type") == "offered_shift" for row in queue["coverage_requests"]))
+            self.assertFalse(any(
+                row.get("type") == "offered_shift_escalation" and row.get("request_id") == offer["request_id"]
+                for row in queue["conflicts_or_ot_review"]
+            ))
             response.close()
         finally:
             for path, content in original_files.items():

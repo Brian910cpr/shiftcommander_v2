@@ -29,7 +29,9 @@ from engine.schedule_lifecycle import (
 )
 from engine.shift_change_review import review_shift_change_request
 from engine.open_shift_bid_review import (
+    AVAILABLE,
     PREFER,
+    availability_for,
     candidate_record,
     cert_matches_seat,
     has_schedule_conflict,
@@ -3169,6 +3171,31 @@ def build_member_opportunities(member_id_value):
     }
 
 
+def offered_shift_has_interested_candidate(schedule, members, availability, offer):
+    original = offer.get("original_assignment") if isinstance(offer, dict) else {}
+    seat_key = str(original.get("seat_key") or original.get("seat_id") or "").strip()
+    seat_info = find_schedule_seat(schedule, seat_key) if seat_key else None
+    if seat_info is None:
+        return False
+    shift = seat_info["shift"]
+    seat = seat_info["seat"]
+    original_member_id = str(offer.get("original_member_id") or original.get("member_id") or "").strip()
+    for member in members:
+        if not isinstance(member, dict) or member.get("active") is False:
+            continue
+        mid = member_id_from_record(member)
+        if not mid or mid == original_member_id:
+            continue
+        if availability_for(availability, shift, member) not in {PREFER, AVAILABLE}:
+            continue
+        if not cert_matches_seat(member, seat):
+            continue
+        if has_schedule_conflict(schedule, shift, member):
+            continue
+        return True
+    return False
+
+
 def is_open_seat_for_request(seat):
     assigned = assigned_member_id_for_seat(seat)
     status = str(seat.get("assignment_status") or "").strip().upper()
@@ -3848,10 +3875,7 @@ def get_supervisor_schedule_queue():
         offer_due_at = parse_iso_date(offer.get("offer_due_at"))
         if not offer_due_at or offer_due_at > now_day.date():
             continue
-        candidate_probe = deepcopy(offer)
-        candidate_probe["type"] = "drop_coverage_request"
-        summary = coverage_request_candidate_summary(candidate_probe, schedule, members, availability)
-        if summary.get("candidate_count", 0) > 0:
+        if offered_shift_has_interested_candidate(schedule, members, availability, offer):
             continue
         original = offer.get("original_assignment") if isinstance(offer.get("original_assignment"), dict) else {}
         raw_queue["conflicts_or_ot_review"].append({
