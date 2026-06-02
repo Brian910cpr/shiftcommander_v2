@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { format, addDays, parseISO } from 'date-fns';
 import { Copy, Trash2, ChevronDown } from 'lucide-react';
+import { getDefaultMemberAvailabilityWeeks, MEMBER_AVAILABILITY_MONTHS_AHEAD } from '@/lib/availabilityRange';
 
-const DISPLAY_WEEK_OPTIONS = [2, 4, 8, 12];
+const DEFAULT_MEMBER_AVAILABILITY_WEEKS = getDefaultMemberAvailabilityWeeks();
+const DISPLAY_WEEK_OPTIONS = [2, 4, 8, 12, DEFAULT_MEMBER_AVAILABILITY_WEEKS].filter((value, index, list) => list.indexOf(value) === index);
 
 const COPY_WHAT_OPTIONS = [
   'Whole displayed week',
@@ -78,6 +80,9 @@ export default function AvailabilityTools({ displayWeeks, onDisplayWeeksChange, 
             onChange={v => onDisplayWeeksChange(Number(v))}
             options={DISPLAY_WEEK_OPTIONS}
           />
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Member availability can extend {MEMBER_AVAILABILITY_MONTHS_AHEAD} months ahead and is separate from the Wallboard horizon.
+          </p>
         </div>
 
         {/* Divider */}

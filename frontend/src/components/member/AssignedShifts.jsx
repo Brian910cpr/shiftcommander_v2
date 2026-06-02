@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { CalendarCheck, Clock, Loader2, ShieldQuestion, Star } from 'lucide-react';
+import { CalendarCheck, Clock, Loader2, Share2, ShieldQuestion, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { getMemberChangeRequests, requestCoverage } from '@/api/client';
+import { getMemberChangeRequests, offerShift, requestCoverage } from '@/api/client';
 import { toast } from 'sonner';
 
 function normalizeName(value) {
@@ -29,6 +29,7 @@ export default function AssignedShifts({ memberId, memberName, currentMemberId, 
   const nextShiftRef = useRef(null);
   const [changeRequests, setChangeRequests] = useState([]);
   const [submitting, setSubmitting] = useState({});
+  const [offering, setOffering] = useState({});
 
   const canRequestCoverage = String(memberId || '') === String(currentMemberId || '');
 
@@ -70,6 +71,17 @@ export default function AssignedShifts({ memberId, memberName, currentMemberId, 
       if (String(record?.type || '') !== 'drop_coverage_request') return;
       const status = String(record?.status || '').toLowerCase();
       if (!['pending', 'pending_supervisor_review', 'pending_bids'].includes(status)) return;
+      keys.add(requestKeyFromRecord(record));
+    });
+    return keys;
+  }, [changeRequests]);
+
+  const offeredKeys = useMemo(() => {
+    const keys = new Set();
+    changeRequests.forEach((record) => {
+      if (String(record?.type || '') !== 'offered_shift') return;
+      const status = String(record?.status || '').toLowerCase();
+      if (!['offered', 'collecting_interest', 'pending_bids'].includes(status)) return;
       keys.add(requestKeyFromRecord(record));
     });
     return keys;
@@ -119,6 +131,34 @@ export default function AssignedShifts({ memberId, memberName, currentMemberId, 
     }
   }, [loadChangeRequests, memberId]);
 
+  const handleOfferShift = useCallback(async (shift, role, seat) => {
+    const key = requestKey(shift.date, shift.label, role);
+    setOffering(prev => ({ ...prev, [key]: true }));
+    try {
+      const result = await offerShift({
+        member_id: String(memberId),
+        date: shift.date,
+        period: shift.label,
+        seat_role: role.toUpperCase(),
+        seat_id: seat?.seat_id || null,
+      });
+      const offer = result?.offer;
+      if (offer) {
+        setChangeRequests(prev => {
+          const existing = prev.filter(row => row.request_id !== offer.request_id);
+          return [...existing, offer];
+        });
+      } else {
+        await loadChangeRequests();
+      }
+      toast.success(result?.already_exists ? 'Shift already offered.' : 'Shift offered.');
+    } catch (error) {
+      toast.error(error.message || 'Could not offer this shift.');
+    } finally {
+      setOffering(prev => ({ ...prev, [key]: false }));
+    }
+  }, [loadChangeRequests, memberId]);
+
   if (assignedShifts.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -141,10 +181,12 @@ export default function AssignedShifts({ memberId, memberName, currentMemberId, 
         const roleKey     = isAttendant ? 'ATTENDANT' : 'DRIVER';
         const coverageKey = requestKey(shift.date, shift.label, roleKey);
         const hasCoverageRequest = requestKeys.has(coverageKey);
+        const isOffered = offeredKeys.has(coverageKey);
         const isPastShift = shift.date < today;
         const isNext      = idx === nextIdx && !isPastShift;
         const showRequest = canRequestCoverage && !isPastShift;
         const isSubmitting = Boolean(submitting[coverageKey]);
+        const isOffering = Boolean(offering[coverageKey]);
 
         return (
           <div
@@ -194,6 +236,21 @@ export default function AssignedShifts({ memberId, memberName, currentMemberId, 
                 >
                   {role}
                 </Badge>
+                {showRequest && (
+                  <button
+                    type="button"
+                    onClick={() => handleOfferShift(shift, roleKey, seat)}
+                    disabled={isOffering || isOffered || hasCoverageRequest}
+                    className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold transition-colors disabled:opacity-80 ${
+                      isOffered
+                        ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                        : 'border-muted bg-muted/40 text-muted-foreground hover:bg-muted/70'
+                    }`}
+                  >
+                    {isOffering ? <Loader2 className="w-3 h-3 animate-spin" /> : <Share2 className="w-3 h-3" />}
+                    {isOffered ? 'Offered' : 'Offer'}
+                  </button>
+                )}
                 {showRequest && (
                   <button
                     type="button"

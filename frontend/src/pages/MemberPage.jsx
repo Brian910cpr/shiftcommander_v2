@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useScheduleData } from '@/lib/useScheduleData';
 import { useSCAuth } from '@/lib/SCIdentityContext';
 import { SC_ROLES } from '@/lib/useSCIdentity';
@@ -15,66 +15,54 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Radio, CalendarCheck, CalendarDays, Info, Settings, Zap, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
-import { saveMemberAvailability } from '@/api/client';
+import { getMemberOpportunities, saveMemberAvailability } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
-import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
-import { getAvailabilityVisibleRange } from '@/lib/availabilityRange';
+import { getAvailabilityVisibleRange, getDefaultMemberAvailabilityWeeks } from '@/lib/availabilityRange';
 import { getMemberAvailabilityMap } from '@/lib/availabilityAdapter';
 
 // ── Desktop Open Shifts ───────────────────────────────────────────────────────
 import { format as fmtDate, parseISO } from 'date-fns';
-import { AlertTriangle, Truck, Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const ALS_CERTS_D = ['ALS', 'AEMT', 'Paramedic'];
-const FIRE_LABELS_D = ['career fire', 'vol fire', 'volunteer fire', 'fire driver'];
-const LIVE_BETA_MEMBER_MESSAGE = 'ShiftCommander is live. The current May/June board reflects the known schedule, but availability, swaps, drops, and pickup requests submitted here are real and will be reported for supervisor review. Please focus especially on entering availability for August and beyond.';
+const LIVE_BETA_MEMBER_MESSAGE = 'ShiftCommander is live for beta testing.\n\nJune was imported from the current working schedule, so some June assignments are already locked in. Those shifts can still be corrected through coverage requests, swaps, or supervisor updates.\n\nPlease focus on entering your availability for July and forward. Use Prefer for shifts you want, Available for shifts you can work if needed, and Do Not for shifts you do not want.';
 
-function isFireSeat(seat) {
-  if (!seat) return false;
-  const label = (seat.label || seat.name || '').toLowerCase();
-  return seat.status === 'STRUCTURAL' && FIRE_LABELS_D.some(f => label.includes(f));
-}
-
-function DesktopOpenShifts({ member, shifts = [], availability = {} }) {
+function DesktopOpenShifts({ member, availability = {} }) {
   const [intents, setIntents]       = useState({});
   const [submitting, setSubmitting] = useState({});
-  const today = fmtDate(new Date(), 'yyyy-MM-dd');
+  const [opportunities, setOpportunities] = useState([]);
+  const [loadingOpportunities, setLoadingOpportunities] = useState(false);
 
-  const canAttend = ALS_CERTS_D.includes(member.cert);
-  const canDrive  = member.canDrive;
+  const loadOpportunities = useCallback(async () => {
+    if (!member?.id) return;
+    setLoadingOpportunities(true);
+    try {
+      const payload = await getMemberOpportunities(member.id);
+      setOpportunities(Array.isArray(payload?.opportunities) ? payload.opportunities : []);
+    } catch (error) {
+      console.warn('[ShiftCommander] Failed to load member opportunities:', error.message);
+      setOpportunities([]);
+    } finally {
+      setLoadingOpportunities(false);
+    }
+  }, [member?.id]);
 
-  const openSlots = useMemo(() => {
-    const all   = shifts || [];
-    const slots = [];
-    all.forEach(shift => {
-      if (shift.date < today) return;
-      if (!isShiftInOperationalVisibleRange(shift)) return;
-      if (shift.attendant?.status === 'OPEN' && canAttend)
-        slots.push({ date: shift.date, label: shift.label, role: 'ALS' });
-      if (shift.driver?.status === 'OPEN' && canDrive && !isFireSeat(shift.driver))
-        slots.push({ date: shift.date, label: shift.label, role: 'DRIVER' });
-    });
-    const seen = new Set();
-    return slots.filter(s => {
-      const k = `${s.date}:${s.label}:${s.role}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    }).sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label));
-  }, [canAttend, canDrive, shifts, today]);
+  useEffect(() => {
+    setIntents({});
+    loadOpportunities();
+  }, [loadOpportunities]);
 
   const getIntent = (date, label) => intents[`${date}:${label}`] || availability[`${date}:${label}`] || 'blank';
 
   const handleRequest = useCallback(async (slot) => {
-    const key       = `${slot.date}:${slot.label}`;
-    const intent    = getIntent(slot.date, slot.label);
+    const key       = `${slot.date}:${slot.period}`;
+    const intent    = getIntent(slot.date, slot.period);
     const isSubmit  = intent === 'prefer' || intent === 'available';
     const newIntent = isSubmit ? 'blank' : 'prefer';
 
     setSubmitting(prev => ({ ...prev, [key]: true }));
     try {
-      await saveMemberAvailability(member.id, [{ date: slot.date, period: slot.label, member_intent: newIntent }]);
+      await saveMemberAvailability(member.id, [{ date: slot.date, period: slot.period, member_intent: newIntent }]);
       setIntents(prev => ({ ...prev, [key]: newIntent }));
       toast.success(newIntent === 'prefer' ? 'Interest submitted.' : 'Interest withdrawn.');
     } catch (err) {
@@ -82,55 +70,68 @@ function DesktopOpenShifts({ member, shifts = [], availability = {} }) {
     } finally {
       setSubmitting(prev => ({ ...prev, [key]: false }));
     }
-  }, [member, intents]);
+  }, [member, intents, availability]);
 
-  if (openSlots.length === 0) {
+  if (loadingOpportunities) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin opacity-60" />
+        <p className="text-sm">Loading opportunities…</p>
+      </div>
+    );
+  }
+
+  if (opportunities.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <Zap className="w-8 h-8 mx-auto mb-2 opacity-30" />
-        <p className="text-sm">No open slots right now</p>
+        <p className="text-sm">No open or offered seats right now</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      {openSlots.map((slot, i) => {
+      {opportunities.map((slot, i) => {
         const d      = parseISO(slot.date);
-        const isALS  = slot.role === 'ALS';
-        const Icon   = isALS ? AlertTriangle : Truck;
-        const intent = getIntent(slot.date, slot.label);
+        const isOffered = slot.opportunity_type === 'offered_shift';
+        const intent = getIntent(slot.date, slot.period);
         const isSubm = intent === 'prefer' || intent === 'available';
-        const isBusy = submitting[`${slot.date}:${slot.label}`];
+        const isBusy = submitting[`${slot.date}:${slot.period}`];
 
         return (
           <div key={i} className={`flex items-center justify-between p-3 rounded-lg border ${
-            isALS ? 'border-red-500/25 bg-red-500/4' : 'border-amber-500/20 bg-amber-500/4'
+            isOffered ? 'border-amber-500/25 bg-amber-500/5' : 'border-border/50 bg-muted/20'
           }`}>
             <div className="flex items-center gap-3">
-              <Icon className={`w-4 h-4 ${isALS ? 'text-red-400' : 'text-amber-400'}`} />
+              <Zap className={`w-4 h-4 ${isOffered ? 'text-amber-400' : 'text-muted-foreground'}`} />
               <div>
                 <p className="text-sm font-semibold text-foreground">
-                  {fmtDate(d, 'EEE MMM d')} · {slot.label}
+                  {fmtDate(d, 'EEE MMM d')} · {slot.period}
                 </p>
-                <p className={`text-xs font-bold ${isALS ? 'text-red-400' : 'text-amber-400'}`}>
-                  {isALS ? 'OPEN ALS' : 'OPEN DRIVER'}
+                <p className={`text-xs font-bold ${isOffered ? 'text-amber-400' : 'text-muted-foreground'}`}>
+                  {isOffered ? `OFFERED ${slot.seat_role}` : `OPEN ${slot.seat_role}`}
                 </p>
+                {isOffered && slot.responsible_member?.name && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {slot.responsible_member.name} remains responsible
+                  </p>
+                )}
               </div>
             </div>
             <button
               onClick={() => handleRequest(slot)}
-              disabled={isBusy}
+              disabled={isBusy || !slot.actionable}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 disabled:opacity-60 ${
                 isSubm
                   ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300'
-                  : isALS
-                    ? 'bg-red-500/15 border border-red-500/25 text-red-600 dark:text-red-300'
-                    : 'bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-300'
+                  : isOffered
+                    ? 'bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-300'
+                    : 'bg-muted border border-border text-muted-foreground'
               }`}
             >
               {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isSubm ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
-              {isSubm ? 'Interest Submitted' : 'Request This Seat'}
+              {!slot.actionable ? 'Not eligible' : isSubm ? 'Interest Submitted' : 'Request This Seat'}
             </button>
           </div>
         );
@@ -154,7 +155,7 @@ export default function MemberPage() {
   const { status, currentMember, scRole, isSupervisorOrAdmin, navigateToLogin } = useSCAuth();
   const { members, shifts, availability } = useScheduleData();
 
-  const [displayWeeks, setDisplayWeeks] = useState(8);
+  const [displayWeeks, setDisplayWeeks] = useState(() => getDefaultMemberAvailabilityWeeks());
   const sourceWeeks = useMemo(() => buildSourceWeeks(displayWeeks), [displayWeeks]);
 
   // Supervisors/admins may switch to view any member; regular members are locked.
@@ -264,7 +265,7 @@ function MemberPageContent({
 
           <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-950">
             <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <p className="text-xs leading-relaxed">{LIVE_BETA_MEMBER_MESSAGE}</p>
+            <p className="text-xs leading-relaxed whitespace-pre-line">{LIVE_BETA_MEMBER_MESSAGE}</p>
           </div>
 
           {/* Supervisor: "View as member" switcher */}
@@ -329,10 +330,10 @@ function MemberPageContent({
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Open Shifts</CardTitle>
-                  <p className="text-xs text-muted-foreground">Request open seats. Saves your intent to the schedule system.</p>
+              <p className="text-xs text-muted-foreground">Request open or offered seats. Offered shifts remain assigned until an approved replacement is applied.</p>
                 </CardHeader>
                 <CardContent>
-              <DesktopOpenShifts member={activeMember} shifts={shifts} availability={activeAvailability || {}} />
+              <DesktopOpenShifts member={activeMember} availability={activeAvailability || {}} />
                 </CardContent>
               </Card>
             </TabsContent>

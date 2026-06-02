@@ -261,6 +261,14 @@ export function getMemberChangeRequests(memberId) {
   return apiGet(`/member/change-requests?member_id=${encodeURIComponent(memberId)}`);
 }
 
+export function getMemberOpportunities(memberId) {
+  return apiGet(`/member/opportunities?member_id=${encodeURIComponent(memberId)}`);
+}
+
+export function offerShift(payload) {
+  return apiPost("/member/offer-shift", payload);
+}
+
 export function requestCoverage(payload) {
   return apiPost("/member/request-coverage", payload);
 }

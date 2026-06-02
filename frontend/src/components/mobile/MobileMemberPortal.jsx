@@ -1,15 +1,14 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { format, parseISO, addDays } from 'date-fns';
-import { CalendarCheck, Zap, CalendarDays, User, ArrowLeftRight, ArrowDownUp, Share2, AlertTriangle, Truck, UserCheck, Loader2, Star, CheckCircle2 } from 'lucide-react';
+import { CalendarCheck, Zap, CalendarDays, User, ArrowLeftRight, ArrowDownUp, Share2, AlertTriangle, UserCheck, Loader2, Star, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AvailabilityTools from '@/components/member/AvailabilityTools';
 import GeneralPreferences from '@/components/member/GeneralPreferences';
-import { isShiftInOperationalVisibleRange } from '@/lib/operationalRange';
 import { getAvailabilityVisibleRange } from '@/lib/availabilityRange';
-import { getMemberAvailability, saveMemberAvailability } from '@/api/client';
+import { getMemberAvailability, getMemberChangeRequests, getMemberOpportunities, offerShift, saveMemberAvailability } from '@/api/client';
 import { entriesToAvailabilityMap } from '@/lib/availabilityAdapter';
 
-const LIVE_BETA_MEMBER_MESSAGE = 'ShiftCommander is live. The current May/June board reflects the known schedule, but availability, swaps, drops, and pickup requests submitted here are real and will be reported for supervisor review. Please focus especially on entering availability for August and beyond.';
+const LIVE_BETA_MEMBER_MESSAGE = 'ShiftCommander is live for beta testing.\n\nJune was imported from the current working schedule, so some June assignments are already locked in. Those shifts can still be corrected through coverage requests, swaps, or supervisor updates.\n\nPlease focus on entering your availability for July and forward. Use Prefer for shifts you want, Available for shifts you can work if needed, and Do Not for shifts you do not want.';
 
 const ALS_CERTS = ['ALS', 'AEMT', 'Paramedic'];
 // Fire-covered structural labels — these seats must not appear as requestable open driver slots
@@ -21,10 +20,25 @@ function isFireStructural(seat) {
   return seat.status === 'STRUCTURAL' && FIRE_STRUCTURAL_LABELS.some(f => label.includes(f));
 }
 
+function mobileRequestKey(date, period, role) {
+  return `${date}:${String(period || '').toUpperCase()}:${String(role || '').toUpperCase()}`;
+}
+
+function mobileRequestKeyFromRecord(record) {
+  const original = record?.original_assignment || {};
+  return mobileRequestKey(
+    original.date || record?.date,
+    original.period || record?.period,
+    original.role || record?.seat_role,
+  );
+}
+
 // ─── MY SHIFTS ────────────────────────────────────────────────────────────────
 
 function MyShiftsTab({ memberId, memberName, shifts = [] }) {
   const nextShiftRef = useRef(null);
+  const [offering, setOffering] = useState({});
+  const [offeredKeys, setOfferedKeys] = useState(new Set());
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const allShifts = useMemo(() => shifts || [], [shifts]);
@@ -40,6 +54,47 @@ function MyShiftsTab({ memberId, memberName, shifts = [] }) {
         return a.label.localeCompare(b.label);
       });
   }, [allShifts, memberId, memberName]);
+
+  const loadOfferedKeys = useCallback(async () => {
+    if (!memberId) return;
+    try {
+      const payload = await getMemberChangeRequests(memberId);
+      const keys = new Set();
+      (Array.isArray(payload?.requests) ? payload.requests : []).forEach(record => {
+        if (String(record?.type || '') !== 'offered_shift') return;
+        const status = String(record?.status || '').toLowerCase();
+        if (!['offered', 'collecting_interest', 'pending_bids'].includes(status)) return;
+        keys.add(mobileRequestKeyFromRecord(record));
+      });
+      setOfferedKeys(keys);
+    } catch (error) {
+      console.warn('[ShiftCommander] Failed to load mobile offered shifts:', error.message);
+    }
+  }, [memberId]);
+
+  useEffect(() => {
+    loadOfferedKeys();
+  }, [loadOfferedKeys]);
+
+  const handleOffer = useCallback(async (shift, role, seat) => {
+    const key = mobileRequestKey(shift.date, shift.label, role);
+    setOffering(prev => ({ ...prev, [key]: true }));
+    try {
+      const result = await offerShift({
+        member_id: String(memberId),
+        date: shift.date,
+        period: shift.label,
+        seat_role: role,
+        seat_id: seat?.seat_id || null,
+      });
+      setOfferedKeys(prev => new Set([...prev, key]));
+      toast.success(result?.already_exists ? 'Shift already offered.' : 'Shift offered.');
+    } catch (error) {
+      toast.error(error?.message || 'Could not offer this shift.');
+    } finally {
+      setOffering(prev => ({ ...prev, [key]: false }));
+    }
+  }, [memberId]);
 
   // Next upcoming shift index
   const nextIdx = useMemo(() => {
@@ -76,8 +131,12 @@ function MyShiftsTab({ memberId, memberName, shifts = [] }) {
         const isAttendant = shift.attendant?.name === memberName;
         const role        = isAttendant ? 'ATTENDANT' : 'DRIVER';
         const cert        = isAttendant ? shift.attendant?.cert : shift.driver?.cert;
+        const seat        = isAttendant ? shift.attendant : shift.driver;
         const isPastShift = shift.date < today;
         const isNext      = idx === nextIdx && !isPastShift;
+        const offerKey    = mobileRequestKey(shift.date, shift.label, role);
+        const isOffered   = offeredKeys.has(offerKey);
+        const isOffering  = Boolean(offering[offerKey]);
 
         return (
           <div key={`${shift.date}:${shift.label}`} ref={isNext ? nextShiftRef : null}>
@@ -144,11 +203,16 @@ function MyShiftsTab({ memberId, memberName, shifts = [] }) {
                     Drop
                   </button>
                   <button
-                    onClick={() => toast.info('Offer to crew — not yet implemented')}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-muted border border-border text-xs font-bold text-muted-foreground active:scale-95 transition-transform"
+                    onClick={() => handleOffer(shift, role, seat)}
+                    disabled={isOffering || isOffered}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-bold active:scale-95 transition-transform disabled:opacity-80 ${
+                      isOffered
+                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                        : 'bg-muted border-border text-muted-foreground'
+                    }`}
                   >
-                    <Share2 className="w-3.5 h-3.5" />
-                    Offer
+                    {isOffering ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
+                    {isOffered ? 'Offered' : 'Offer'}
                   </button>
                 </div>
               )}
@@ -162,49 +226,41 @@ function MyShiftsTab({ memberId, memberName, shifts = [] }) {
 
 // ─── OPEN SHIFTS ──────────────────────────────────────────────────────────────
 
-function OpenShiftsTab({ member, availability, onAvailabilityChange, shifts = [] }) {
+function OpenShiftsTab({ member, availability, onAvailabilityChange }) {
   const [submitting, setSubmitting] = useState({});
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const [opportunities, setOpportunities] = useState([]);
+  const [loadingOpportunities, setLoadingOpportunities] = useState(false);
 
-  const allShifts = useMemo(() => shifts || [], [shifts]);
+  const loadOpportunities = useCallback(async () => {
+    if (!member?.id) return;
+    setLoadingOpportunities(true);
+    try {
+      const payload = await getMemberOpportunities(member.id);
+      setOpportunities(Array.isArray(payload?.opportunities) ? payload.opportunities : []);
+    } catch (error) {
+      console.warn('[ShiftCommander] Failed to load member opportunities:', error.message);
+      setOpportunities([]);
+    } finally {
+      setLoadingOpportunities(false);
+    }
+  }, [member?.id]);
 
-  const canAttend = ALS_CERTS.includes(member.cert);
-  const canDrive  = member.canDrive;
-
-  // Build open slots — filter out Fire-structural driver seats
-  const openSlots = useMemo(() => {
-    const slots = [];
-    allShifts.forEach(shift => {
-      if (shift.date < today) return; // only future/today
-      if (!isShiftInOperationalVisibleRange(shift)) return;
-      if (shift.attendant?.status === 'OPEN' && canAttend) {
-        slots.push({ date: shift.date, label: shift.label, role: 'ALS', key: `${shift.date}:${shift.label}` });
-      }
-      if (shift.driver?.status === 'OPEN' && canDrive && !isFireStructural(shift.driver)) {
-        slots.push({ date: shift.date, label: shift.label, role: 'DRIVER', key: `${shift.date}:${shift.label}` });
-      }
-    });
-    // Deduplicate by date+period (one entry per shift period if member could fill either)
-    const seen = new Set();
-    return slots.filter(s => {
-      if (seen.has(s.key + s.role)) return false;
-      seen.add(s.key + s.role);
-      return true;
-    }).sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label));
-  }, [allShifts, canAttend, canDrive, today]);
+  useEffect(() => {
+    loadOpportunities();
+  }, [loadOpportunities]);
 
   const getIntent = (date, period) => availability[`${date}:${period}`] || 'blank';
 
   const handleRequest = async (slot) => {
-    const key    = `${slot.date}:${slot.label}`;
-    const intent = getIntent(slot.date, slot.label);
+    const key    = `${slot.date}:${slot.period}`;
+    const intent = getIntent(slot.date, slot.period);
     const isSubmitted = intent === 'prefer' || intent === 'available';
     const newIntent   = isSubmitted ? 'blank' : 'prefer';
 
     setSubmitting(prev => ({ ...prev, [key]: true }));
     try {
-      await saveMemberAvailability(member.id, [{ date: slot.date, period: slot.label, member_intent: newIntent }]);
-      onAvailabilityChange(slot.date, slot.label, newIntent);
+      await saveMemberAvailability(member.id, [{ date: slot.date, period: slot.period, member_intent: newIntent }]);
+      onAvailabilityChange(slot.date, slot.period, newIntent);
       toast.success(newIntent === 'prefer' ? 'Interest submitted.' : 'Interest withdrawn.');
     } catch (err) {
       if (err?.status === 401 || err?.status === 403) {
@@ -217,11 +273,20 @@ function OpenShiftsTab({ member, availability, onAvailabilityChange, shifts = []
     }
   };
 
-  if (openSlots.length === 0) {
+  if (loadingOpportunities) {
+    return (
+      <div className="text-center py-16 space-y-2">
+        <Loader2 className="w-12 h-12 mx-auto text-muted-foreground/40 animate-spin" />
+        <p className="text-sm text-muted-foreground">Loading opportunities…</p>
+      </div>
+    );
+  }
+
+  if (opportunities.length === 0) {
     return (
       <div className="text-center py-16 space-y-2">
         <Zap className="w-12 h-12 mx-auto text-muted-foreground/30" />
-        <p className="text-sm text-muted-foreground">No open slots right now</p>
+        <p className="text-sm text-muted-foreground">No open or offered seats right now</p>
       </div>
     );
   }
@@ -231,47 +296,49 @@ function OpenShiftsTab({ member, availability, onAvailabilityChange, shifts = []
       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest px-1">
         {openSlots.length} open slot{openSlots.length !== 1 ? 's' : ''}
       </p>
-      {openSlots.map((slot, i) => {
+        {opportunities.map((slot, i) => {
         const date        = parseISO(slot.date);
-        const isALS       = slot.role === 'ALS';
-        const Icon        = isALS ? AlertTriangle : Truck;
-        const intent      = getIntent(slot.date, slot.label);
+        const isOffered   = slot.opportunity_type === 'offered_shift';
+        const intent      = getIntent(slot.date, slot.period);
         const isSubmitted = intent === 'prefer' || intent === 'available';
-        const isBusy      = submitting[slot.key];
+        const isBusy      = submitting[`${slot.date}:${slot.period}`];
 
         return (
           <div key={i} className={`rounded-2xl border overflow-hidden ${
-            isALS ? 'border-red-500/30 bg-red-500/5' : 'border-amber-500/25 bg-amber-500/5'
+            isOffered ? 'border-amber-500/30 bg-amber-500/5' : 'border-border/50 bg-muted/20'
           }`}>
             <div className="flex items-center gap-4 px-4 py-4">
               <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${
                 isALS ? 'bg-red-500/20' : 'bg-amber-500/15'
               }`}>
-                <span className={`text-lg font-black tabular-nums ${isALS ? 'text-red-300' : 'text-amber-300'}`}>
+                <span className={`text-lg font-black tabular-nums ${isOffered ? 'text-amber-300' : 'text-muted-foreground'}`}>
                   {format(date, 'd')}
                 </span>
-                <span className={`text-[9px] font-bold ${isALS ? 'text-red-400' : 'text-amber-400'}`}>
+                <span className={`text-[9px] font-bold ${isOffered ? 'text-amber-400' : 'text-muted-foreground'}`}>
                   {format(date, 'MMM').toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${isALS ? 'text-red-400' : 'text-amber-400'}`} />
-                  <span className={`text-xs font-bold tracking-wide ${isALS ? 'text-red-300' : 'text-amber-300'}`}>
-                    {isALS ? 'OPEN ALS' : 'OPEN DRIVER'}
+                  <Zap className={`w-4 h-4 flex-shrink-0 ${isOffered ? 'text-amber-400' : 'text-muted-foreground'}`} />
+                  <span className={`text-xs font-bold tracking-wide ${isOffered ? 'text-amber-300' : 'text-muted-foreground'}`}>
+                    {isOffered ? `OFFERED ${slot.seat_role}` : `OPEN ${slot.seat_role}`}
                   </span>
                 </div>
-                <p className="text-sm font-semibold text-foreground">{format(date, 'EEEE')} · {slot.label}</p>
+                <p className="text-sm font-semibold text-foreground">{format(date, 'EEEE')} · {slot.period}</p>
+                {isOffered && slot.responsible_member?.name && (
+                  <p className="text-[11px] text-muted-foreground">{slot.responsible_member.name} remains responsible</p>
+                )}
               </div>
               <button
                 onClick={() => handleRequest(slot)}
-                disabled={isBusy}
+                disabled={isBusy || !slot.actionable}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition-all disabled:opacity-60 ${
                   isSubmitted
                     ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
-                    : isALS
-                      ? 'bg-red-500/20 border border-red-500/30 text-red-300'
-                      : 'bg-amber-500/15 border border-amber-500/25 text-amber-300'
+                    : isOffered
+                      ? 'bg-amber-500/15 border border-amber-500/25 text-amber-300'
+                      : 'bg-muted border border-border text-muted-foreground'
                 }`}
               >
                 {isBusy
@@ -280,7 +347,7 @@ function OpenShiftsTab({ member, availability, onAvailabilityChange, shifts = []
                     ? <CheckCircle2 className="w-3.5 h-3.5" />
                     : null
                 }
-                {isSubmitted ? 'Interest Submitted' : 'Request This Seat'}
+                {!slot.actionable ? 'Not eligible' : isSubmitted ? 'Interest Submitted' : 'Request This Seat'}
               </button>
             </div>
           </div>
@@ -687,7 +754,7 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
       <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 text-amber-950 flex-shrink-0">
         <div className="flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <p className="text-[11px] leading-relaxed">{LIVE_BETA_MEMBER_MESSAGE}</p>
+          <p className="text-[11px] leading-relaxed whitespace-pre-line">{LIVE_BETA_MEMBER_MESSAGE}</p>
         </div>
       </div>
 
@@ -723,7 +790,6 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
             member={member}
             availability={availability}
             onAvailabilityChange={handleOpenShiftIntentChange}
-            shifts={shifts}
           />
         )}
         {activeTab === 'availability' && (
