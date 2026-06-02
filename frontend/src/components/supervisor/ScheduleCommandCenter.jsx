@@ -14,6 +14,20 @@ const QUEUE_GROUPS = [
   ['conflicts_or_ot_review', 'Conflicts / OT review'],
 ];
 
+const HARD_BLOCKING_WARNINGS = new Set([
+  'schedule_conflict',
+  'wrong_cert',
+  'not_driver_qualified',
+  'invalid_attendant_assignment',
+  'missing_member',
+  'missing_shift',
+]);
+
+const SOFT_OVERRIDE_WARNINGS = new Set([
+  'overtime',
+  'rest_or_back_to_back',
+]);
+
 function formatDateTime(value) {
   if (!value) return '-';
   try {
@@ -130,6 +144,63 @@ function formatWarnings(warnings = []) {
   return warnings.map(warning => String(warning).replaceAll('_', ' ')).join(', ');
 }
 
+function formatWarning(value) {
+  return String(value || '').replaceAll('_', ' ');
+}
+
+function classifyCandidate(candidate = {}) {
+  const warnings = Array.isArray(candidate.warnings) ? candidate.warnings.map(warning => String(warning)) : [];
+  const hard = warnings.filter(warning => HARD_BLOCKING_WARNINGS.has(warning));
+  const soft = warnings.filter(warning => SOFT_OVERRIDE_WARNINGS.has(warning));
+  const otherWarnings = warnings.filter(warning => !HARD_BLOCKING_WARNINGS.has(warning) && !SOFT_OVERRIDE_WARNINGS.has(warning));
+  if (candidate.qualification_match === false && !hard.includes('wrong_cert')) {
+    hard.push('wrong_cert');
+  }
+
+  if (hard.length > 0) {
+    return {
+      status: 'hard_blocked',
+      label: 'Hard blocked',
+      tone: 'text-red-300',
+      badge: 'border-red-500/30 bg-red-500/10 text-red-200',
+      hard,
+      soft,
+      otherWarnings,
+      warnings,
+      canApprove: false,
+      requiresOverride: false,
+    };
+  }
+
+  if (soft.length > 0 || otherWarnings.length > 0) {
+    return {
+      status: 'requires_override',
+      label: 'Requires supervisor override',
+      tone: 'text-amber-300',
+      badge: 'border-amber-500/30 bg-amber-500/10 text-amber-200',
+      hard,
+      soft,
+      otherWarnings,
+      warnings,
+      canApprove: true,
+      requiresOverride: true,
+    };
+  }
+
+  return {
+    status: 'clean',
+    label: 'Clean',
+    tone: 'text-emerald-300',
+    badge: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
+    hard,
+    soft,
+    otherWarnings,
+    warnings,
+    canApprove: true,
+    requiresOverride: false,
+  };
+}
+
 function memberLabel(member) {
   if (!member) return '-';
   if (typeof member === 'string') return member;
@@ -138,18 +209,36 @@ function memberLabel(member) {
   return name ? `${name}${id}` : member.member_id || '-';
 }
 
+function shiftLabel(item) {
+  const dateText = shortDate(item.date);
+  let weekday = '';
+  if (item.date) {
+    try {
+      weekday = new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(new Date(`${item.date}T00:00:00`));
+    } catch {
+      weekday = '';
+    }
+  }
+  return [dateText, weekday, item.period, item.seat_role].filter(Boolean).join(' / ');
+}
+
 function CoverageRequestItem({ item, onApprove, approvingKey }) {
   const candidates = Array.isArray(item.candidates) ? item.candidates : [];
   const isPending = String(item.status || 'pending').toLowerCase() === 'pending';
+  const originalMember = memberLabel(item.original_member);
+  const currentMember = memberLabel(item.current_assigned_member);
   return (
-    <div className="rounded-md border border-border/50 bg-card/60 p-2 space-y-2">
+    <div className="rounded-md border border-border/50 bg-card/60 p-3 space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold text-foreground">
-            {shortDate(item.date)} {item.period || '-'} / {item.seat_role || 'Seat'}
+          <p className="text-xs font-bold text-foreground">
+            {originalMember} requests coverage
           </p>
           <p className="text-[11px] text-muted-foreground">
-            Original: {memberLabel(item.original_member)} / Current: {memberLabel(item.current_assigned_member)}
+            Shift: {shiftLabel(item)}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Current assignment: {currentMember}
           </p>
         </div>
         <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
@@ -168,22 +257,50 @@ function CoverageRequestItem({ item, onApprove, approvingKey }) {
         <div className="space-y-1">
           {candidates.map(candidate => {
             const warnings = Array.isArray(candidate.warnings) ? candidate.warnings : [];
-            const hasWarnings = warnings.length > 0 || candidate.qualification_match === false;
+            const classification = classifyCandidate(candidate);
             const actionKey = `${item.request_id}:${candidate.member_id}`;
-            const actionLabel = hasWarnings ? 'Review Required' : 'Approve Replacement';
+            const actionLabel = classification.requiresOverride ? 'Approve with Override' : 'Approve';
             return (
-              <div key={`${item.request_id}:${candidate.member_id}:${candidate.intent}`} className="rounded border border-border/40 bg-background/40 px-2 py-1.5">
+              <div key={`${item.request_id}:${candidate.member_id}:${candidate.intent}`} className="rounded border border-border/40 bg-background/40 px-2 py-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-semibold text-foreground truncate">{candidate.name || candidate.member_id}</span>
-                  <span className={`text-[10px] font-semibold ${candidate.intent === 'Prefer' ? 'text-emerald-300' : 'text-blue-300'}`}>
-                    {candidate.intent || 'Interest'}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span className={`text-[10px] font-semibold ${candidate.intent === 'Prefer' ? 'text-emerald-300' : 'text-blue-300'}`}>
+                      {candidate.intent || candidate.bid_strength || 'Interest'}
+                    </span>
+                    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${classification.badge}`}>
+                      {classification.label}
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
-                  <span>{candidate.cert || 'Cert unknown'}</span>
-                  <span className={hasWarnings ? 'text-amber-300' : 'text-emerald-300'}>{formatWarnings(warnings)}</span>
+                <div className="mt-1 grid gap-1 text-[10px] text-muted-foreground">
+                  <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                    <span>Cert: {candidate.cert || candidate.qualification || 'unknown'}</span>
+                    <span>Intent: {candidate.intent || candidate.bid_strength || 'Interest'}</span>
+                    <span>Recommendation: {item.recommendation_label || 'Supervisor review'}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {classification.hard.length > 0 && (
+                      <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-200">
+                        Hard: {classification.hard.map(formatWarning).join(', ')}
+                      </span>
+                    )}
+                    {classification.soft.length > 0 && (
+                      <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-amber-200">
+                        Soft: {classification.soft.map(formatWarning).join(', ')}
+                      </span>
+                    )}
+                    {classification.otherWarnings.length > 0 && (
+                      <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-amber-200">
+                        Review: {classification.otherWarnings.map(formatWarning).join(', ')}
+                      </span>
+                    )}
+                    {warnings.length === 0 && classification.hard.length === 0 && (
+                      <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">No warnings</span>
+                    )}
+                  </div>
                 </div>
-                {isPending && (
+                {isPending && classification.canApprove && (
                   <Button
                     type="button"
                     size="sm"
@@ -195,6 +312,11 @@ function CoverageRequestItem({ item, onApprove, approvingKey }) {
                     {approvingKey === actionKey ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : null}
                     {actionLabel}
                   </Button>
+                )}
+                {isPending && !classification.canApprove && (
+                  <p className="mt-2 rounded border border-red-500/20 bg-red-500/10 px-2 py-1 text-[10px] font-semibold text-red-200">
+                    Approval blocked until hard warnings are resolved.
+                  </p>
                 )}
               </div>
             );
@@ -278,17 +400,22 @@ export default function ScheduleCommandCenter() {
   }, [load]);
 
   const handleApproveCoverage = useCallback(async (item, candidate) => {
-    const warnings = Array.isArray(candidate?.warnings) ? candidate.warnings : [];
+    const classification = classifyCandidate(candidate);
+    if (!classification.canApprove) {
+      setApprovalMessage({ type: 'error', text: `Approval blocked: ${classification.hard.map(formatWarning).join(', ')}` });
+      return;
+    }
+    const warnings = classification.warnings;
     const summary = [
       `Approve ${candidate?.name || candidate?.member_id} for ${shortDate(item.date)} ${item.period || ''} ${item.seat_role || ''}?`,
       `Original assignment: ${memberLabel(item.current_assigned_member)}`,
-      warnings.length ? `Warnings: ${formatWarnings(warnings)}` : 'Warnings: none',
+      classification.requiresOverride ? `Override warnings: ${formatWarnings(warnings)}` : 'Warnings: none',
     ].join('\n');
     if (!window.confirm(summary)) return;
 
     let overrideReason = null;
-    if (warnings.length || candidate?.qualification_match === false) {
-      overrideReason = window.prompt('Warnings are present. Enter supervisor override reason to continue:');
+    if (classification.requiresOverride) {
+      overrideReason = window.prompt('Supervisor override is required. Enter a reason to continue:');
       if (!overrideReason || !overrideReason.trim()) {
         setApprovalMessage({ type: 'warn', text: 'Approval cancelled: override reason is required for warnings.' });
         return;
@@ -370,7 +497,7 @@ export default function ScheduleCommandCenter() {
             <span className="text-[10px] rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-300 font-semibold">Read only</span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Draft intent, commit preview, and supervisor queue visibility. No schedule writes are available here.
+            Draft intent, commit preview, and supervisor queue visibility. Coverage approvals are candidate-level and supervisor-confirmed.
           </p>
         </div>
         <Button size="sm" variant="outline" className="h-8 text-xs" onClick={load} disabled={loading}>
