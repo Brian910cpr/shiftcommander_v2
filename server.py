@@ -3165,7 +3165,7 @@ def get_member_change_requests():
 
 @app.route("/api/member/opportunities", methods=["GET"])
 def get_member_opportunities():
-    member_id, _, error = resolve_member_read_target()
+    member_id, _, error = resolve_member_request_member()
     if error:
         return error
     payload = build_member_opportunities(member_id)
@@ -3198,7 +3198,7 @@ def offer_member_shift():
     if shift_day < datetime.now(LOCAL_TZ).date():
         return auth_json_error("Shift offers are only available for current or future shifts", 400)
 
-    schedule = load_base_schedule_payload()
+    schedule = load_schedule_payload()
     shift, seat, index = find_assigned_shift_seat(schedule, actor_member_id, date_iso, period, seat_role, seat_id)
     if not shift or not seat:
         return auth_json_error("Assigned seat not found for this member/date/period", 404)
