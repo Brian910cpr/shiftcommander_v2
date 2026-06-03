@@ -1,27 +1,26 @@
 import React from 'react';
 import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
-import { getCrewStatusType } from '@/lib/shiftDisplayRules';
 import { AlertTriangle, CheckCircle2, Truck, Clock, AlertCircle, ChevronLeft, ChevronRight, CalendarDays, ZapOff } from 'lucide-react';
 
 const STATUS_CONFIG = {
-  'complete':          { border: 'border-l-emerald-500', bg: 'bg-emerald-500/5',  badge: 'bg-emerald-500/20 text-emerald-300',  label: 'PREFERRED / GOLD',   icon: CheckCircle2 },
-  'degraded':          { border: 'border-l-yellow-500',  bg: 'bg-yellow-500/5',   badge: 'bg-yellow-500/20 text-yellow-300',    label: 'COVERED / DEGRADED', icon: AlertTriangle },
-  'driver-covered':    { border: 'border-l-sky-500',     bg: 'bg-sky-500/5',      badge: 'bg-sky-500/20 text-sky-300',          label: 'COVERED',            icon: CheckCircle2 },
-  'review':            { border: 'border-l-violet-500',  bg: 'bg-violet-500/5',   badge: 'bg-violet-500/20 text-violet-300',    label: 'NEEDS REVIEW',       icon: AlertTriangle },
-  'attendant-needed':  { border: 'border-l-red-500',     bg: 'bg-red-500/8',      badge: 'bg-red-500/25 text-red-300',          label: 'ATTENDANT NEEDED',   icon: AlertCircle },
-  'driver-needed':     { border: 'border-l-amber-500',   bg: 'bg-amber-500/5',    badge: 'bg-amber-500/20 text-amber-300',      label: 'DRIVER NEEDED',      icon: Truck },
-  'invalid':           { border: 'border-l-rose-600',    bg: 'bg-rose-600/8',     badge: 'bg-rose-600/20 text-rose-300',        label: 'INVALID',            icon: ZapOff },
-  'unknown':           { border: 'border-l-border',      bg: 'bg-muted/30',       badge: 'bg-muted text-muted-foreground',      label: 'UNKNOWN',            icon: Clock },
+  'complete':          { border: 'border-l-emerald-500', bg: 'bg-emerald-500/5',  badge: 'bg-emerald-500/20 text-emerald-300',  label: 'Covered',          icon: CheckCircle2 },
+  'degraded':          { border: 'border-l-yellow-500',  bg: 'bg-yellow-500/5',   badge: 'bg-yellow-500/20 text-yellow-300',    label: 'Review',           icon: AlertTriangle },
+  'driver-covered':    { border: 'border-l-sky-500',     bg: 'bg-sky-500/5',      badge: 'bg-sky-500/20 text-sky-300',          label: 'Covered',          icon: CheckCircle2 },
+  'review':            { border: 'border-l-violet-500',  bg: 'bg-violet-500/5',   badge: 'bg-violet-500/20 text-violet-300',    label: 'Review',           icon: AlertTriangle },
+  'attendant-needed':  { border: 'border-l-red-500',     bg: 'bg-red-500/8',      badge: 'bg-red-500/25 text-red-300',          label: 'Open seat',        icon: AlertCircle },
+  'driver-needed':     { border: 'border-l-amber-500',   bg: 'bg-amber-500/5',    badge: 'bg-amber-500/20 text-amber-300',      label: 'Open seat',        icon: Truck },
+  'invalid':           { border: 'border-l-rose-600',    bg: 'bg-rose-600/8',     badge: 'bg-rose-600/20 text-rose-300',        label: 'Review',           icon: ZapOff },
+  'unknown':           { border: 'border-l-border',      bg: 'bg-muted/30',       badge: 'bg-muted text-muted-foreground',      label: 'Schedule',         icon: Clock },
 };
 
-function mobileOpenBg(cert) {
-  const c = (cert || '').toUpperCase();
-  if (['ALS', 'AEMT', 'PARAMEDIC'].includes(c)) return { bg: 'bg-emerald-500/15 border-emerald-500/40', text: 'text-emerald-300' };
-  if (c === 'EMT')  return { bg: 'bg-blue-500/15 border-blue-500/40',    text: 'text-blue-300' };
-  if (c === 'EMR')  return { bg: 'bg-pink-500/15 border-pink-500/40',    text: 'text-pink-300' };
-  if (c === 'NCLD') return { bg: 'bg-red-600/15 border-red-600/40',      text: 'text-red-300' };
-  return { bg: 'bg-rose-500/15 border-rose-500/40', text: 'text-rose-300' };
-}
+const MEMBER_COLOR = {
+  green: 'text-emerald-300',
+  blue: 'text-blue-300',
+  pink: 'text-pink-300',
+  red: 'text-rose-300',
+  white: 'text-white',
+  sky: 'text-sky-300',
+};
 
 function mobileMemberColor(cert) {
   const c = (cert || '').toUpperCase();
@@ -32,44 +31,109 @@ function mobileMemberColor(cert) {
   return 'text-foreground';
 }
 
-function MobileSeatPill({ seat, isAttendant }) {
+function statusFromShift(shift, attendantSlot, driverSlot) {
+  const s = String(shift?.crew_status || '').trim().toLowerCase();
+  if (attendantSlot?.isOpen) return 'attendant-needed';
+  if (driverSlot?.isOpen) return 'driver-needed';
+  if (s === 'review') return 'review';
+  if (s === 'degraded') return 'degraded';
+  if (s === 'invalid') return 'invalid';
+  if (s === 'driver_covered' || s === 'driver-covered') return 'driver-covered';
+  if (s === 'preferred' || s === 'complete') return 'complete';
+  return 'unknown';
+}
+
+function legacyToSlot(seat) {
   if (!seat) return null;
-
+  const certColorMap = { ALS: 'green', AEMT: 'green', PARAMEDIC: 'green', EMT: 'blue', EMR: 'pink', NCLD: 'red' };
   if (seat.status === 'OPEN') {
-    const { bg, text } = mobileOpenBg(seat.cert);
-    return (
-      <div className={`flex items-center px-4 py-3 rounded-xl border border-dashed ${bg}`}>
-        <span className={`text-base font-bold tracking-wide ${text}`}>OPEN</span>
-      </div>
-    );
+    return { label: 'OPEN', color: null, cert: seat.cert, isOpen: true, kind: 'open' };
   }
-
   if (seat.status === 'STRUCTURAL') {
+    return {
+      label: seat.name,
+      color: 'white',
+      cert: seat.cert,
+      isOpen: false,
+      kind: 'structural_driver',
+      structural_time: seat.structural_time,
+    };
+  }
+  return {
+    label: seat.name,
+    color: certColorMap[String(seat.cert || '').toUpperCase()] || 'white',
+    cert: seat.cert,
+    isOpen: false,
+    kind: 'member',
+  };
+}
+
+function firstName(label) {
+  const value = String(label || '').trim();
+  if (!value) return '';
+  if (!value.includes(' ')) return value;
+  if (/^[A-Z]\.\s/.test(value)) return value;
+  return value.split(/\s+/)[0];
+}
+
+function slotText(slot) {
+  if (!slot) return 'Open';
+  if (slot.isOpen) return 'Open';
+  if (slot.kind === 'structural_driver') {
+    const label = String(slot.label || '').replace(/\s*(driver|coverage)\s*/gi, '').trim();
+    return label || slot.label || 'Covered';
+  }
+  return firstName(slot.label) || 'Assigned';
+}
+
+function slotNameClass(slot, role) {
+  if (!slot || slot.isOpen) return role === 'attendant' ? 'text-emerald-300' : 'text-blue-300';
+  return MEMBER_COLOR[slot.color] || mobileMemberColor(slot.cert);
+}
+
+function MobileSeatPill({ slot, role }) {
+  const isOpen = !slot || slot.isOpen;
+  const isAttendant = role === 'attendant';
+  const roleLabel = isAttendant ? 'Attendant' : 'Driver';
+  const openStyle = isAttendant
+    ? 'bg-emerald-500/10 border-emerald-500/35'
+    : 'bg-blue-500/10 border-blue-500/35';
+  const filledStyle = slot?.kind === 'structural_driver'
+    ? 'bg-sky-900/40 border-sky-700/50'
+    : 'bg-card border-border';
+
+  if (isOpen) {
+    const text = isAttendant ? 'text-emerald-300' : 'text-blue-300';
     return (
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sky-900/40 border border-sky-700/50">
-        <span className="text-base font-semibold text-sky-100 flex-1">{seat.name}</span>
-        {seat.structural_time && (
-          <span className="text-xs font-mono text-sky-500">{seat.structural_time}</span>
-        )}
+      <div className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-dashed ${openStyle}`}>
+        <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{roleLabel}</span>
+        <span className={`text-base font-black tracking-wide ${text}`}>Open</span>
       </div>
     );
   }
 
-  const isInvalid = isAttendant && seat.cert && ['EMR', 'NCLD'].includes((seat.cert || '').toUpperCase());
-  const nameColor = isInvalid ? 'text-rose-400' : mobileMemberColor(seat.cert);
+  const isInvalid = isAttendant && slot.cert && ['EMR', 'NCLD'].includes((slot.cert || '').toUpperCase());
   return (
-    <div className={`flex items-center px-4 py-3 rounded-xl border ${
-      isInvalid ? 'bg-rose-600/15 border-rose-600/40' : 'bg-card border-border'
+    <div className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border ${
+      isInvalid ? 'bg-rose-600/15 border-rose-600/40' : filledStyle
     }`}>
-      <span className={`text-base font-bold ${nameColor}`}>{seat.name}</span>
+      <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{roleLabel}</span>
+      <span className={`min-w-0 truncate text-base font-bold ${slotNameClass(slot, role)}`}>
+        {slotText(slot)}
+      </span>
       {isInvalid && <span className="ml-2 text-[10px] text-rose-500">⚠ invalid</span>}
+      {slot?.structural_time && (
+        <span className="text-xs font-mono text-sky-500">{slot.structural_time}</span>
+      )}
     </div>
   );
 }
 
 function MobileShiftCard({ shift }) {
   if (!shift) return null;
-  const statusType = getCrewStatusType(shift.crew_status);
+  const attendantSlot = shift.attendantSlot || (shift.attendant ? legacyToSlot(shift.attendant) : null);
+  const driverSlot = shift.driverSlot || (shift.driver ? legacyToSlot(shift.driver) : null);
+  const statusType = statusFromShift(shift, attendantSlot, driverSlot);
   const config = STATUS_CONFIG[statusType] || STATUS_CONFIG['unknown'];
   const Icon = config.icon;
 
@@ -80,7 +144,7 @@ function MobileShiftCard({ shift }) {
         <span className="text-xl font-black tracking-widest text-foreground">
           {shift.label === 'AM' ? '🌅 AM' : '🌆 PM'}
         </span>
-        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${config.badge}`}>
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${config.badge}`}>
           <Icon className="w-3.5 h-3.5" />
           <span>{config.label}</span>
         </div>
@@ -88,8 +152,8 @@ function MobileShiftCard({ shift }) {
 
       {/* Seats */}
       <div className="space-y-2">
-        <MobileSeatPill seat={shift.attendant} isAttendant={true} />
-        <MobileSeatPill seat={shift.driver} isAttendant={false} />
+        <MobileSeatPill slot={attendantSlot} role="attendant" />
+        <MobileSeatPill slot={driverSlot} role="driver" />
       </div>
 
 
