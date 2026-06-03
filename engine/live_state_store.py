@@ -2,6 +2,7 @@ import json
 import os
 import urllib.error
 import urllib.request
+import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
@@ -42,6 +43,13 @@ def _looks_like_render_ephemeral_path(path: str) -> bool:
 
 def _missing_credentials(names: list[str]) -> list[str]:
     return [name for name in names if not _env_value(name)]
+
+
+def _secret_fingerprint(value: str) -> Optional[str]:
+    value = str(value or "")
+    if not value:
+        return None
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:8]
 
 
 class FileLiveStateStore:
@@ -538,6 +546,9 @@ class D1BridgeLiveStateStore(FileLiveStateStore):
             "state_backend_detail": self.state_backend_detail,
             "d1_bridge_configured": self.state_backend_ready,
             "d1_bridge_url_present": bool(self.bridge_url),
+            "d1_bridge_token_present": bool(self.bridge_token),
+            "d1_bridge_token_length": len(self.bridge_token),
+            "d1_bridge_token_sha256_first8": _secret_fingerprint(self.bridge_token),
             "fallback_active": self.fallback_active,
         })
         warning = self.state_backend_warning

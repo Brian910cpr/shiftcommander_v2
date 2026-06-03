@@ -381,6 +381,10 @@ class LiveStateStoreSmokeTests(unittest.TestCase):
         self.assertEqual(diagnostics["state_backend"], "d1")
         self.assertTrue(diagnostics["state_backend_ready"])
         self.assertTrue(diagnostics["d1_bridge_configured"])
+        self.assertIn("d1_bridge_token_present", diagnostics)
+        self.assertIn("d1_bridge_token_length", diagnostics)
+        self.assertIn("d1_bridge_token_sha256_first8", diagnostics)
+        self.assertNotEqual(diagnostics["d1_bridge_token_sha256_first8"], "bridge-secret")
         self.assertFalse(diagnostics["fallback_active"])
 
         availability = {"months": {"2026-08": {"188": {"2026-08-10": {"AM": "available"}}}}}
