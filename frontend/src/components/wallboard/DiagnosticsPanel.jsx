@@ -28,18 +28,18 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
       <button
         onClick={() => setOpen(o => !o)}
         className="px-2 py-1 rounded bg-muted/80 border border-border text-muted-foreground hover:text-foreground transition-colors"
-        title="Toggle diagnostics"
+        title="Toggle system details"
       >
-        {open ? '✕ diag' : '⚙ diag'}
+        {open ? '✕ details' : '⚙ details'}
       </button>
 
       {open && (
         <div className="absolute bottom-7 right-0 w-80 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-card/98 backdrop-blur-sm shadow-xl p-3 space-y-2">
-          <div className="font-bold text-foreground text-[11px]">ShiftCommander Diagnostics</div>
+          <div className="font-bold text-foreground text-[11px]">System Details</div>
 
           {/* API status */}
-          <Section label="Endpoint Health">
-            <Row label="API base"           value={diag?.api_base || apiBase} />
+          <Section label="Connection">
+            <Row label="Service URL"        value={diag?.api_base || apiBase} />
             <Row label="Wake endpoint"      value={wakeStatus?.endpoint || '—'} />
             <Row label="Wake attempt"       value={wakeStatus?.attempt ? `${wakeStatus.attempt}${wakeStatus.maxAttempts ? `/${wakeStatus.maxAttempts}` : ''}` : '—'} />
             <Row label="GET /api/health"           value={diag?.health_status    ?? '—'} cls={statusCls(diag?.health_status)} />
@@ -62,9 +62,9 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
             )}
           </Section>
 
-          {/* Response shape debug */}
+          {/* Response shape details */}
           {diag?.wallboard_shape && (
-            <Section label="Wallboard Response Shape">
+            <Section label="Wallboard Data Details">
               <Row label="Top-level keys"   value={(diag.wallboard_shape.top_level_keys || []).join(', ') || '—'} />
               <Row label="wallboard_shifts" value={diag.wallboard_shape.wallboard_shifts_count != null ? String(diag.wallboard_shape.wallboard_shifts_count) : 'key missing'} cls={diag.wallboard_shape.wallboard_shifts_count > 0 ? 'text-emerald-400' : 'text-red-400'} />
               <Row label=".shifts"          value={diag.wallboard_shape.shifts_count != null ? String(diag.wallboard_shape.shifts_count) : 'key missing'} />
@@ -76,7 +76,7 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
           )}
 
           {diag?.schedule_shape && (
-            <Section label="Schedule Response Shape">
+            <Section label="Schedule Data Details">
               <Row label="Top-level keys" value={(diag.schedule_shape.top_level_keys || []).join(', ') || '—'} />
               <Row label=".shifts"        value={diag.schedule_shape.shifts_count != null ? String(diag.schedule_shape.shifts_count) : 'key missing'} cls={diag.schedule_shape.shifts_count > 0 ? 'text-emerald-400' : 'text-red-400'} />
               {diag.schedule_shape.first_shift && (
@@ -104,7 +104,7 @@ export default function DiagnosticsPanel({ shifts, integrity, meta, isLive, erro
               <div className="text-amber-300 font-semibold">{BACKEND_WAKEUP_TITLE}</div>
               <div className="text-muted-foreground mt-1">{BACKEND_WAKEUP_MESSAGE}</div>
               <div className="text-muted-foreground mt-1">
-                Backend: <span className="font-mono break-all">{backendDiagnosticsUrl() || 'same origin'}</span>
+                Service: <span className="font-mono break-all">{backendDiagnosticsUrl() || 'same origin'}</span>
                 <span className="font-mono break-all"> · {error}</span>
                 {wakeStatus?.lastError && <span className="font-mono break-all"> · {wakeStatus.lastError}</span>}
               </div>

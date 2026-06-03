@@ -104,12 +104,12 @@ export default function AvailabilityGrid({ memberId, memberName, memberCert, mem
       const confirmedSaved = result?.saved === true || result?.persisted === true;
       if (!confirmedSaved) {
         setSaveStatus('failed');
-        setSaveDetail(result?.note || 'Worker accepted the request but did not confirm D1 persistence.');
-        toast.error('Availability was not saved to D1.');
+        setSaveDetail(result?.note || 'Save confirmation was not returned.');
+        toast.error('Availability was not saved. Please try again.');
         return;
       }
       setSaveStatus('saved');
-      setSaveDetail('Saved to D1');
+      setSaveDetail('Saved live');
       toast.success('Availability saved.');
       setTimeout(() => setSaveStatus(''), 3000);
       setTimeout(() => setSaveDetail(''), 5000);

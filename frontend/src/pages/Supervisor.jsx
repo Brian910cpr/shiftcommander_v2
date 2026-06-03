@@ -107,7 +107,7 @@ export default function Supervisor() {
                 <User className="w-3.5 h-3.5" /> Member
               </Link>
               <Link to="/supervisor/adr-calendar-diagnostics" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                <CalendarSearch className="w-3.5 h-3.5" /> ADR Diagnostics
+                <CalendarSearch className="w-3.5 h-3.5" /> Calendar Review
               </Link>
               <button
                 onClick={() => logout()}

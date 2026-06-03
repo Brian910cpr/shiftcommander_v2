@@ -16,7 +16,7 @@ export default function BootstrapStatus({ loading, error, isLive, shifts, member
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <Server className="w-4 h-4 text-muted-foreground" />
-            API / Backend Status
+            Connection Status
           </CardTitle>
           {loading ? (
             <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/20 bg-amber-500/10">
@@ -32,7 +32,7 @@ export default function BootstrapStatus({ loading, error, isLive, shifts, member
             </Badge>
           ) : (
             <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/20 bg-amber-500/10">
-              Static Fallback
+              Local copy
             </Badge>
           )}
         </div>
@@ -41,16 +41,16 @@ export default function BootstrapStatus({ loading, error, isLive, shifts, member
         {/* Row: API Base */}
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5" /> API Base
+            <Activity className="w-3.5 h-3.5" /> Service URL
           </span>
           <code className="font-mono text-[11px] text-foreground bg-muted px-2 py-0.5 rounded">{apiBase}</code>
         </div>
 
         {/* Row: Bootstrap Loaded */}
         <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Bootstrap Loaded</span>
+          <span className="text-muted-foreground">Live schedule loaded</span>
           <span className={`font-semibold ${isLive ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {loading ? '…' : isLive ? 'Yes' : 'No (fallback)'}
+            {loading ? '…' : isLive ? 'Yes' : 'No (local copy)'}
           </span>
         </div>
 
@@ -58,7 +58,7 @@ export default function BootstrapStatus({ loading, error, isLive, shifts, member
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">Source</span>
           <span className="text-foreground font-medium">
-            {loading ? '…' : isLive ? 'bootstrap' : 'static-fallback'}
+            {loading ? '…' : isLive ? 'Live service' : 'Local copy'}
           </span>
         </div>
 

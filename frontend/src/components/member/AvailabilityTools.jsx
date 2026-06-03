@@ -144,7 +144,7 @@ export default function AvailabilityTools({ displayWeeks, onDisplayWeeksChange, 
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-muted border border-border/60 text-xs font-semibold text-muted-foreground cursor-not-allowed opacity-60"
           >
             <Copy className="w-3.5 h-3.5" />
-            Copy Forward (pre-beta)
+            Copy Forward (coming soon)
           </button>
         </div>
       </div>

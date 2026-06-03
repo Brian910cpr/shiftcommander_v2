@@ -29,7 +29,7 @@ export default function GeneralPreferences() {
   const mark = setter => val => { setter(val); setDirty(true); };
 
   const handleSave = () => {
-    toast.warning('General Preferences are not saved yet. Backend preference persistence is not wired.', { duration: 5000 });
+    toast.warning('General Preferences are not saved yet. Preference saving is not available yet.', { duration: 5000 });
   };
 
   const Row = ({ label, value, onChange, options }) => (
@@ -49,7 +49,7 @@ export default function GeneralPreferences() {
     <div className="rounded-xl border border-border bg-card">
       <div className="px-4 py-3 border-b border-border/50">
         <h3 className="text-sm font-bold text-foreground">General Preferences</h3>
-        <p className="text-[10px] text-muted-foreground mt-0.5">Pre-beta — controls visible, backend write not yet available.</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">Display only for now. Preference saving will be added later.</p>
       </div>
       <div className="px-4">
         <Row label="Desired Hours / Week" value={desiredHours} onChange={mark(setDesiredHours)} options={HOURS_OPTIONS} />
@@ -66,7 +66,7 @@ export default function GeneralPreferences() {
               ? 'bg-muted text-muted-foreground cursor-not-allowed'
               : 'bg-muted text-muted-foreground cursor-default'
           }`}
-          title="General Preferences are display-only until a backend preference endpoint is added."
+          title="General Preferences are display-only for now."
         >
           <Save className="w-3.5 h-3.5" />
           Preferences not saved yet

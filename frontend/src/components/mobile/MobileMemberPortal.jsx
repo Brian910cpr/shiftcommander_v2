@@ -669,7 +669,7 @@ export default function MobileMemberPortal({ member, displayWeeks = 8, onDisplay
       const confirmedSaved = result?.saved === true || result?.persisted === true;
       if (!confirmedSaved) {
         setSaveStatus('failed');
-        toast.error('Availability was not saved to D1.');
+        toast.error('Availability was not saved. Please try again.');
         return;
       }
       setSaveStatus('saved');

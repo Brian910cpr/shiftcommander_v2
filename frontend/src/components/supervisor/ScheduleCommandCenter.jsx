@@ -10,7 +10,7 @@ const QUEUE_GROUPS = [
   ['swap_requests', 'Swap requests'],
   ['named_replacement_requests', 'Named replacement requests'],
   ['stale_open_seats', 'Stale open seats'],
-  ['urgent_within_fallback_window', 'Urgent fallback window'],
+  ['urgent_within_fallback_window', 'Urgent supervisor window'],
   ['conflicts_or_ot_review', 'Conflicts / OT review'],
 ];
 

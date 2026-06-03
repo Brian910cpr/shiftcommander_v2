@@ -131,7 +131,7 @@ export function AuthProvider({ children }) {
       }
       if (nextSession?.authenticated && !allowSession(nextSession)) {
         setSession(null);
-        setAuthError({ type: 'auth_required', error: new Error('Quick Test Mode is disabled for this frontend build.') });
+        setAuthError({ type: 'auth_required', error: new Error('Test access is disabled for this app.') });
         return null;
       }
       setSession(nextSession);

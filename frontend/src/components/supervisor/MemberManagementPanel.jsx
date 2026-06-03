@@ -207,11 +207,11 @@ export default function MemberManagementPanel({ members = [], loading = false })
               Member Management
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Persist supported member overlays to D1. Unsupported fields remain read-only.
+              Save supported member updates live. Unsupported fields remain read-only.
             </p>
           </div>
           <Badge variant="outline" className="w-fit text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-            D1 member overlays
+            Member updates live
           </Badge>
         </div>
       </CardHeader>

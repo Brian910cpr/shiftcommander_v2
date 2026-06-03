@@ -37,17 +37,17 @@ export default function SCIdentityGate({ status, children, onLogin }) {
             <p className="text-sm text-muted-foreground mt-1">ADR-FR Member Portal</p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Continue through the ShiftCommander beta login to access your schedule and availability.
+            Continue to sign in and access your schedule and availability.
           </p>
           <button
             onClick={onLogin}
             className="w-full flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:scale-95 transition-all"
           >
             <LogIn className="w-4 h-4" />
-            Continue to Beta Login
+            Continue to Sign In
           </button>
           <p className="text-[10px] text-muted-foreground/60">
-            Beta login bridge · Production Google OAuth is not enabled yet
+            Current beta access screen
           </p>
         </div>
       </div>

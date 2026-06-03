@@ -89,7 +89,7 @@ export default function AdrCalendarDiagnostics() {
     try {
       setData(await getAdrCalendarComparisonPreview());
     } catch (err) {
-      setError(err.message || 'Unable to load ADR calendar diagnostics');
+      setError(err.message || 'Unable to load ADR calendar review');
     } finally {
       setLoading(false);
     }
@@ -113,8 +113,8 @@ export default function AdrCalendarDiagnostics() {
               <CalendarSearch className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">ADR Google Calendar Preview</h1>
-              <p className="text-xs text-muted-foreground">Read-only calendar matching diagnostics</p>
+              <h1 className="text-lg font-bold text-foreground">ADR Google Calendar Review</h1>
+              <p className="text-xs text-muted-foreground">Read-only schedule comparison</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -145,7 +145,7 @@ export default function AdrCalendarDiagnostics() {
 
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            {loading ? 'Loading diagnostics...' : `Source: ${data?.source || '-'} · schedule_source: ${data?.schedule_source || '-'}`}
+            {loading ? 'Loading calendar review...' : 'Read-only comparison loaded'}
           </div>
           <button
             type="button"
