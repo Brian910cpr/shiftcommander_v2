@@ -465,6 +465,7 @@ class D1BridgeLiveStateStore(FileLiveStateStore):
                 "Authorization": f"Bearer {self.bridge_token}",
                 "Content-Type": "application/json",
                 "Accept": "application/json",
+                "User-Agent": "ShiftCommander-Render-D1-Bridge/1.0",
             },
         )
         try:
