@@ -410,6 +410,31 @@ class LiveStateStoreSmokeTests(unittest.TestCase):
         self.assertTrue(any(call[:2] == ("availability", "write") for call in calls))
         self.assertTrue(any(call[:2] == ("transactions", "append") for call in calls))
 
+    def test_d1_bridge_integrity_summary_tolerates_missing_optional_stores(self):
+        def fake_bridge(resource, operation, payload=None):
+            if resource == "change_requests":
+                raise RuntimeError("D1 bridge request failed for change_requests/read: HTTP Error 403: Forbidden")
+            if resource == "transactions":
+                return {"ok": True, "payload": {"transactions": None}}
+            return {"ok": True, "payload": {}}
+
+        store = D1BridgeLiveStateStore(
+            base_dir=str(self.state_dir / "base"),
+            data_dir=str(self.state_dir / "data"),
+            docs_dir=str(self.state_dir / "docs"),
+            bridge_client=fake_bridge,
+        )
+
+        summary = store.integrity_summary()
+
+        self.assertEqual(summary["state_store_type"], "d1_bridge")
+        self.assertEqual(summary["state_backend"], "d1")
+        self.assertEqual(summary["pending_coverage_request_count"], 0)
+        self.assertEqual(summary["approved_coverage_request_count"], 0)
+        self.assertEqual(summary["transaction_count"], 0)
+        self.assertIn("live_state_store_read_errors", summary)
+        self.assertIn("change_requests", summary["live_state_store_read_errors"][0])
+
     def test_live_beta_mutable_files_do_not_bypass_store_adapter(self):
         server_source = (ROOT / "server.py").read_text(encoding="utf-8")
         forbidden_direct_writes = [

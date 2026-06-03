@@ -268,11 +268,35 @@ class FileLiveStateStore:
         return diagnostics
 
     def integrity_summary(self) -> Dict[str, Any]:
-        requests_payload = self.load_change_requests()
-        transactions_payload = self.load_beta_transactions()
-        requests = [row for row in requests_payload.get("requests", []) if isinstance(row, dict)]
-        transactions = [row for row in transactions_payload.get("transactions", []) if isinstance(row, dict)]
-        return {
+        read_errors = []
+
+        try:
+            requests_payload = self.load_change_requests()
+        except Exception as exc:
+            requests_payload = {"requests": []}
+            read_errors.append(f"change_requests: {exc}")
+
+        try:
+            transactions_payload = self.load_beta_transactions()
+        except Exception as exc:
+            transactions_payload = {"transactions": []}
+            read_errors.append(f"transactions: {exc}")
+
+        if not isinstance(requests_payload, dict):
+            requests_payload = {"requests": []}
+        if not isinstance(transactions_payload, dict):
+            transactions_payload = {"transactions": []}
+
+        request_rows = requests_payload.get("requests", [])
+        transaction_rows = transactions_payload.get("transactions", [])
+        if not isinstance(request_rows, list):
+            request_rows = []
+        if not isinstance(transaction_rows, list):
+            transaction_rows = []
+
+        requests = [row for row in request_rows if isinstance(row, dict)]
+        transactions = [row for row in transaction_rows if isinstance(row, dict)]
+        summary = {
             **self.store_diagnostics(),
             "assignment_overlay_store_present": os.path.exists(self.assignment_overlays_file),
             "supervisor_state_store_present": os.path.exists(self.supervisor_state_file),
@@ -295,6 +319,9 @@ class FileLiveStateStore:
             ),
             "transaction_count": len(transactions),
         }
+        if read_errors:
+            summary["live_state_store_read_errors"] = read_errors
+        return summary
 
 
 class CandidateDurableLiveStateStore(FileLiveStateStore):
