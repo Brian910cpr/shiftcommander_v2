@@ -470,6 +470,15 @@ class D1BridgeLiveStateStore(FileLiveStateStore):
         try:
             with urllib.request.urlopen(request, timeout=15) as response:
                 raw = response.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            try:
+                detail = exc.read().decode("utf-8")
+            except Exception:
+                detail = ""
+            message = f"HTTP {exc.code}: {exc.reason}"
+            if detail:
+                message = f"{message}: {detail[:500]}"
+            raise RuntimeError(f"D1 bridge request failed for {resource}/{operation}: {message}") from exc
         except (urllib.error.URLError, OSError) as exc:
             raise RuntimeError(f"D1 bridge request failed for {resource}/{operation}: {exc}") from exc
         try:
@@ -545,6 +554,7 @@ class D1BridgeLiveStateStore(FileLiveStateStore):
             "state_backend_ready": self.state_backend_ready,
             "state_backend_detail": self.state_backend_detail,
             "d1_bridge_configured": self.state_backend_ready,
+            "d1_bridge_url": self.bridge_url,
             "d1_bridge_url_present": bool(self.bridge_url),
             "d1_bridge_token_present": bool(self.bridge_token),
             "d1_bridge_token_length": len(self.bridge_token),
