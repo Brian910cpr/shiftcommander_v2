@@ -3,7 +3,7 @@
     "source": "google_calendar_mirror",
     "calendar_id": "2fbc3612e56a0a2ce28fe826443e20a88c500e1c5b3c56b126cb4afb88fd233e@group.calendar.google.com",
     "calendar_name": "ADR Employee Schedule",
-    "generated_at": "2026-05-30T02:42:30.131005Z",
+    "generated_at": "2026-06-03T00:35:12.478217Z",
     "month": "2026-06",
     "shift_count": 60,
     "feed_status": "ok"
@@ -90,18 +90,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Brian",
-          "uid": "16rpnfnd6n43v1n50bfii772jk@google.com",
-          "role": "DRIVER",
-          "assigned": "188",
-          "assigned_name": "Brian Ennis"
-        },
-        {
           "summary": "Nikki",
           "uid": "6nm960h5fihb88ktj6u6m0sdab@google.com",
           "role": "ATTENDANT",
           "assigned": "182",
           "assigned_name": "Nikki Meeks"
+        },
+        {
+          "summary": "Brian",
+          "uid": "16rpnfnd6n43v1n50bfii772jk@google.com",
+          "role": "DRIVER",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis"
         }
       ]
     },
@@ -296,18 +296,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "AJ",
-          "uid": "2f1q8t0dg85iporvhppj93hhhj@google.com",
-          "role": "DRIVER",
-          "assigned": "163",
-          "assigned_name": "AJ Smith"
-        },
-        {
           "summary": "Barbara",
           "uid": "284lop3uab421snksd9mkrl6ls@google.com",
           "role": "ATTENDANT",
           "assigned": "190",
           "assigned_name": "Barbara"
+        },
+        {
+          "summary": "AJ",
+          "uid": "2f1q8t0dg85iporvhppj93hhhj@google.com",
+          "role": "DRIVER",
+          "assigned": "163",
+          "assigned_name": "AJ Smith"
         }
       ]
     },
@@ -337,18 +337,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sophie",
-          "uid": "63v40qaeqoa0i3le7721qnd1kq@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
-        },
-        {
           "summary": "Gracie",
           "uid": "79t0caujrmasvmjhobu1lqjcf3@google.com",
           "role": "ATTENDANT",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "Sophie",
+          "uid": "63v40qaeqoa0i3le7721qnd1kq@google.com",
+          "role": "ATTENDANT",
+          "assigned": "180",
+          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -434,18 +434,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
-          "uid": "6anvg753109u500mjc2dh24pll@google.com",
-          "role": "DRIVER",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER"
-        },
-        {
           "summary": "Elizabeth",
           "uid": "17emcru3tl8l47d978r6dc9939@google.com",
           "role": "DRIVER",
           "assigned": null,
           "assigned_name": "Elizabeth"
+        },
+        {
+          "summary": "OPEN",
+          "uid": "6anvg753109u500mjc2dh24pll@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "OPEN DRIVER"
         }
       ]
     },
@@ -461,32 +461,32 @@
         {
           "role": "DRIVER",
           "hours": 12.0,
-          "assigned": null,
-          "assigned_name": "Elizabeth",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
-          "calendar_uid": "0mqeddqn0ld8f8c6bje4gi58p5@google.com",
-          "calendar_summary": "Elizabeth",
+          "calendar_uid": "3beqk51us1trv2isd1ivm1khbo@google.com",
+          "calendar_summary": "Brian",
           "calendar_start": "2026-06-05T18:00:00-04:00",
           "seat_id": "2026-06-05:PM:DRIVER:0"
         }
       ],
       "calendar_events": [
         {
-          "summary": "Elizabeth",
-          "uid": "0mqeddqn0ld8f8c6bje4gi58p5@google.com",
-          "role": "DRIVER",
-          "assigned": null,
-          "assigned_name": "Elizabeth"
-        },
-        {
           "summary": "Brian",
           "uid": "3beqk51us1trv2isd1ivm1khbo@google.com",
           "role": "DRIVER",
           "assigned": "188",
           "assigned_name": "Brian Ennis"
+        },
+        {
+          "summary": "Elizabeth",
+          "uid": "0mqeddqn0ld8f8c6bje4gi58p5@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "Elizabeth"
         }
       ]
     },
@@ -633,18 +633,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Barbara",
-          "uid": "7lhdvc395flm45d1qpe7lsedb4@google.com",
-          "role": "ATTENDANT",
-          "assigned": "190",
-          "assigned_name": "Barbara"
-        },
-        {
           "summary": "Brian",
           "uid": "52l88208n5n2frjabnhfin2rk5@google.com",
           "role": "DRIVER",
           "assigned": "188",
           "assigned_name": "Brian Ennis"
+        },
+        {
+          "summary": "Barbara",
+          "uid": "7lhdvc395flm45d1qpe7lsedb4@google.com",
+          "role": "ATTENDANT",
+          "assigned": "190",
+          "assigned_name": "Barbara"
         }
       ]
     },
@@ -674,18 +674,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sophie",
-          "uid": "67qh632ski6r0pnakqasf4ftj8@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
-        },
-        {
           "summary": "Gracie",
           "uid": "5i5hako3rskplmg7965pfijsdh@google.com",
           "role": "ATTENDANT",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "Sophie",
+          "uid": "67qh632ski6r0pnakqasf4ftj8@google.com",
+          "role": "ATTENDANT",
+          "assigned": "180",
+          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -729,18 +729,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sophie",
-          "uid": "6ml4qg1u5iv3vgpgeamn61mrrn@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
-        },
-        {
           "summary": "Sidney",
           "uid": "173b7n77g02tn5t76csrugegi3@google.com",
           "role": "DRIVER",
           "assigned": "185",
           "assigned_name": "Sidney DuBois"
+        },
+        {
+          "summary": "Sophie",
+          "uid": "6ml4qg1u5iv3vgpgeamn61mrrn@google.com",
+          "role": "ATTENDANT",
+          "assigned": "180",
+          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -825,18 +825,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Lynnsey",
-          "uid": "2iiv0k9bd3535r7a67nvqismeo@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
-        {
           "summary": "Collin",
           "uid": "51oj022sa37qvf32615qtqdeuc@google.com",
           "role": "DRIVER",
           "assigned": "189",
           "assigned_name": "Collin Harrison"
+        },
+        {
+          "summary": "Lynnsey",
+          "uid": "2iiv0k9bd3535r7a67nvqismeo@google.com",
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         }
       ]
     },
@@ -962,18 +962,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Gracie",
-          "uid": "4jqjdo9j378mnj3lm3t0b0g74a@google.com",
-          "role": "ATTENDANT",
-          "assigned": "107",
-          "assigned_name": "Gracie Toney"
-        },
-        {
           "summary": "Barbara",
           "uid": "478vt98frc3pbt2d55vsa25g3q@google.com",
           "role": "ATTENDANT",
           "assigned": "190",
           "assigned_name": "Barbara"
+        },
+        {
+          "summary": "Gracie",
+          "uid": "4jqjdo9j378mnj3lm3t0b0g74a@google.com",
+          "role": "ATTENDANT",
+          "assigned": "107",
+          "assigned_name": "Gracie Toney"
         }
       ]
     },
@@ -1044,32 +1044,32 @@
         {
           "role": "DRIVER",
           "hours": 12.0,
-          "assigned": "188",
-          "assigned_name": "Brian Ennis",
+          "assigned": null,
+          "assigned_name": "Elizabeth",
           "assignment_status": "ASSIGNED",
           "display_on_board": true,
           "source": "google_calendar_mirror",
           "logic_mode": "mirror_only",
-          "calendar_uid": "32ldo52brrvvl8no5ejdvski9p@google.com",
-          "calendar_summary": "Brian",
+          "calendar_uid": "2pcc5kemdlckkf1khlvu333rdm@google.com",
+          "calendar_summary": "Elizabeth",
           "calendar_start": "2026-06-12T06:00:00-04:00",
           "seat_id": "2026-06-12:AM:DRIVER:0"
         }
       ],
       "calendar_events": [
         {
-          "summary": "Brian",
-          "uid": "32ldo52brrvvl8no5ejdvski9p@google.com",
-          "role": "DRIVER",
-          "assigned": "188",
-          "assigned_name": "Brian Ennis"
-        },
-        {
           "summary": "Elizabeth",
           "uid": "2pcc5kemdlckkf1khlvu333rdm@google.com",
           "role": "DRIVER",
           "assigned": null,
           "assigned_name": "Elizabeth"
+        },
+        {
+          "summary": "Brian",
+          "uid": "32ldo52brrvvl8no5ejdvski9p@google.com",
+          "role": "DRIVER",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis"
         }
       ]
     },
@@ -1353,18 +1353,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sidney",
-          "uid": "5d5covp8heo1i9ql7rap5v6001@google.com",
-          "role": "DRIVER",
-          "assigned": "185",
-          "assigned_name": "Sidney DuBois"
-        },
-        {
           "summary": "Barbara",
           "uid": "2mksesop2c4vdt4bf288i8ohsv@google.com",
           "role": "ATTENDANT",
           "assigned": "190",
           "assigned_name": "Barbara"
+        },
+        {
+          "summary": "Sidney",
+          "uid": "5d5covp8heo1i9ql7rap5v6001@google.com",
+          "role": "DRIVER",
+          "assigned": "185",
+          "assigned_name": "Sidney DuBois"
         }
       ]
     },
@@ -1450,18 +1450,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
-          "uid": "0h11kpcbmakoo62mdjhukl9ssd@google.com",
-          "role": "DRIVER",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER"
-        },
-        {
           "summary": "Collin",
           "uid": "3c9oqk86u3vcqole03srkculuu@google.com",
           "role": "DRIVER",
           "assigned": "189",
           "assigned_name": "Collin Harrison"
+        },
+        {
+          "summary": "OPEN",
+          "uid": "0h11kpcbmakoo62mdjhukl9ssd@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "OPEN DRIVER"
         }
       ]
     },
@@ -1506,18 +1506,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
-          "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
-          "role": "DRIVER",
-          "assigned": null,
-          "assigned_name": "OPEN DRIVER"
-        },
-        {
           "summary": "Lynnsey",
           "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
           "role": "ATTENDANT",
           "assigned": "186",
           "assigned_name": "Lynnsey Benson"
+        },
+        {
+          "summary": "OPEN",
+          "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+          "role": "DRIVER",
+          "assigned": null,
+          "assigned_name": "OPEN DRIVER"
         }
       ]
     },
@@ -1561,18 +1561,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Lynnsey",
-          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
-        {
           "summary": "AJ",
           "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
           "role": "DRIVER",
           "assigned": "163",
           "assigned_name": "AJ Smith"
+        },
+        {
+          "summary": "Lynnsey",
+          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         }
       ]
     },
@@ -1616,18 +1616,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Biscuit",
-          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
-          "role": "ATTENDANT",
-          "assigned": null,
-          "assigned_name": "Biscuit"
-        },
-        {
           "summary": "Gracie",
           "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
           "role": "DRIVER",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "Biscuit",
+          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+          "role": "ATTENDANT",
+          "assigned": null,
+          "assigned_name": "Biscuit"
         }
       ]
     },
@@ -2050,18 +2050,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "OPEN",
-          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "role": "ATTENDANT",
-          "assigned": null,
-          "assigned_name": "OPEN ATTENDANT"
-        },
-        {
           "summary": "Collin",
           "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
           "role": "DRIVER",
           "assigned": "189",
           "assigned_name": "Collin Harrison"
+        },
+        {
+          "summary": "OPEN",
+          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+          "role": "ATTENDANT",
+          "assigned": null,
+          "assigned_name": "OPEN ATTENDANT"
         }
       ]
     },
@@ -2160,18 +2160,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Barbara",
-          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "role": "ATTENDANT",
-          "assigned": "190",
-          "assigned_name": "Barbara"
-        },
-        {
           "summary": "Collin",
           "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
           "role": "DRIVER",
           "assigned": "189",
           "assigned_name": "Collin Harrison"
+        },
+        {
+          "summary": "Barbara",
+          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+          "role": "ATTENDANT",
+          "assigned": "190",
+          "assigned_name": "Barbara"
         }
       ]
     },
@@ -2216,18 +2216,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Brian",
-          "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
-          "role": "DRIVER",
-          "assigned": "188",
-          "assigned_name": "Brian Ennis"
-        },
-        {
           "summary": "OPEN",
           "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
           "role": "ATTENDANT",
           "assigned": null,
           "assigned_name": "OPEN ATTENDANT"
+        },
+        {
+          "summary": "Brian",
+          "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
+          "role": "DRIVER",
+          "assigned": "188",
+          "assigned_name": "Brian Ennis"
         }
       ]
     },
@@ -2326,18 +2326,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Lynnsey",
-          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
-        {
           "summary": "Gracie",
           "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
           "role": "DRIVER",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "Lynnsey",
+          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         }
       ]
     },
@@ -2381,18 +2381,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sidney",
-          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
-          "role": "DRIVER",
-          "assigned": "185",
-          "assigned_name": "Sidney DuBois"
-        },
-        {
           "summary": "Lynnsey",
           "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
           "role": "ATTENDANT",
           "assigned": "186",
           "assigned_name": "Lynnsey Benson"
+        },
+        {
+          "summary": "Sidney",
+          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+          "role": "DRIVER",
+          "assigned": "185",
+          "assigned_name": "Sidney DuBois"
         }
       ]
     },
@@ -2436,18 +2436,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Sophie",
-          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
-          "role": "ATTENDANT",
-          "assigned": "180",
-          "assigned_name": "Sophia Williams"
-        },
-        {
           "summary": "Collin",
           "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
           "role": "DRIVER",
           "assigned": "189",
           "assigned_name": "Collin Harrison"
+        },
+        {
+          "summary": "Sophie",
+          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+          "role": "ATTENDANT",
+          "assigned": "180",
+          "assigned_name": "Sophia Williams"
         }
       ]
     },
@@ -2648,18 +2648,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Collin",
-          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
-          "role": "DRIVER",
-          "assigned": "189",
-          "assigned_name": "Collin Harrison"
-        },
-        {
           "summary": "Sophie",
           "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
           "role": "ATTENDANT",
           "assigned": "180",
           "assigned_name": "Sophia Williams"
+        },
+        {
+          "summary": "Collin",
+          "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
+          "role": "DRIVER",
+          "assigned": "189",
+          "assigned_name": "Collin Harrison"
         }
       ]
     },
@@ -2703,18 +2703,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Lynnsey",
-          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
-        {
           "summary": "Gracie",
           "uid": "1ij3eg78e1smrd6c7ne27fim5u@google.com",
           "role": "DRIVER",
           "assigned": "107",
           "assigned_name": "Gracie Toney"
+        },
+        {
+          "summary": "Lynnsey",
+          "uid": "4copgv8rt9fr23o64g1nda8qpu@google.com",
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         }
       ]
     },
@@ -2758,18 +2758,18 @@
       ],
       "calendar_events": [
         {
-          "summary": "Lynnsey",
-          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
-          "role": "ATTENDANT",
-          "assigned": "186",
-          "assigned_name": "Lynnsey Benson"
-        },
-        {
           "summary": "Brian",
           "uid": "61b1ftdargolu9o4kb6otp5q7t@google.com",
           "role": "DRIVER",
           "assigned": "188",
           "assigned_name": "Brian Ennis"
+        },
+        {
+          "summary": "Lynnsey",
+          "uid": "0d75lqc331jv3g3qcv2ibq0p73@google.com",
+          "role": "ATTENDANT",
+          "assigned": "186",
+          "assigned_name": "Lynnsey Benson"
         }
       ]
     },

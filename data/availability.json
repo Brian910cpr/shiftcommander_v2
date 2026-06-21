@@ -14050,7 +14050,7 @@
           "PM": "blank"
         },
         "2026-06-03": {
-          "AM": "do_not_schedule",
+          "AM": "preferred",
           "PM": "do_not_schedule"
         },
         "2026-06-04": {
@@ -105441,11 +105441,22 @@
           "member_id": "145",
           "date": "2026-06-03",
           "period": "AM",
-          "member_intent": "do_not",
-          "updated_at": "2026-05-23T22:41:18.844361Z",
-          "updated_by": "system_forced_seed",
-          "source": "forced_whiteboard_seating_seed",
-          "seed_reason": "forced_non_assigned_members_do_not"
+          "member_intent": "prefer",
+          "updated_at": "2026-06-01T20:37:17.836458Z",
+          "updated_by": "supervisor",
+          "changed_by_supervisor_id": null,
+          "changed_by_auth_email": null,
+          "changed_by_role": "supervisor",
+          "source": "supervisor_locked_cycle_override",
+          "logic_mode": "supervisor_override",
+          "reason": "Supervisor beta coverage workflow test; Roger confirmed willing to cover Brian's driver seat.",
+          "availability_seeded": false,
+          "seed_type": null,
+          "member_submitted": false,
+          "supervisor_submitted": true,
+          "live_beta": true,
+          "transactions_live": true,
+          "requires_supervisor_review": false
         },
         "PM": {
           "member_id": "145",
