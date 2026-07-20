@@ -140,10 +140,10 @@
   },
   "display_horizon": {
     "mode": "temporary_fixed_until_date",
-    "temporary_fixed_end_date": "2026-06-30",
-    "resume_rolling_after_date": "2026-06-30",
-    "rolling_weeks_default": 5,
-    "admin_rolling_weeks": 5,
+    "temporary_fixed_end_date": "2026-08-31",
+    "resume_rolling_after_date": "2026-08-31",
+    "rolling_weeks_default": 8,
+    "admin_rolling_weeks": 8,
     "enabled": true
   },
   "security": {

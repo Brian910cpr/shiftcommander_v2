@@ -590,6 +590,14 @@ def next_operational_cycle_start(today: date, rules: Dict[str, Any]) -> date:
     return today + timedelta(days=days_until)
 
 
+def operational_week_start(day: Optional[date]) -> Optional[str]:
+    """Return the Thursday starting the operational workweek for a date."""
+    if day is None:
+        return None
+    thursday_index = WEEKDAY_INDEX["THU"]
+    return (day - timedelta(days=(day.weekday() - thursday_index) % 7)).isoformat()
+
+
 class RuleBasedResolver:
     def __init__(self, data: Dict[str, Any]):
         self.data = deepcopy(data)
@@ -609,6 +617,10 @@ class RuleBasedResolver:
         self.locks = normalize_locks(self.data)
         self.hour_totals = normalize_hour_totals(self.data)
         self.assigned_hours = dict(self.hour_totals)
+        shift_days = [shift_date(row) for row in self.data.get("shifts", []) if isinstance(row, dict)]
+        shift_days = [day for day in shift_days if day is not None]
+        self.initial_hours_week = operational_week_start(min(shift_days)) if shift_days else None
+        self.assigned_hours_by_week: Dict[str, Dict[str, float]] = {}
         self.audit: List[Dict[str, Any]] = []
         self.open_seats: List[Dict[str, Any]] = []
         self.supervisor_review_flags: List[Dict[str, Any]] = []
@@ -1065,7 +1077,9 @@ class RuleBasedResolver:
                         reason = self._ft_emt_baseline_reject_reason(member, shift, avail)
                     self._reject(seat, mid, reason, phase, bucket_name)
                     continue
-                allow_unset = bucket_name == "ft_emt_baseline"
+                # Blank means no scheduling consent. FT baseline targets may
+                # prioritize an available member, but never invent availability.
+                allow_unset = False
                 valid, reason = self._candidate_valid_for_seat(member, shift, seat, allow_unset=allow_unset, allow_additional_ot=allow_additional_ot, phase=phase, bucket=bucket_name)
                 if valid:
                     self._assign(shift, seat, member, phase, bucket_name, ot_class)
@@ -1082,7 +1096,7 @@ class RuleBasedResolver:
             interest_rank = 0 if interest_first and response in {PREFER, AVAILABLE} else 1
             avail = self._effective_availability(shift, seat, member, interest_first)
             avail_rank = {PREFER: 0, AVAILABLE: 1, UNSET: 2, DO_NOT: 3}.get(avail, 4)
-            return (interest_rank, avail_rank, self.assigned_hours.get(mid, 0.0), mid)
+            return (interest_rank, avail_rank, self._weekly_hours(mid, shift), mid)
         return sorted(self.members, key=sort_key)
 
     def _candidate_valid_for_seat(
@@ -1144,7 +1158,7 @@ class RuleBasedResolver:
         rollout_sticky: bool = False,
     ) -> None:
         mid = member_id(member)
-        hours_before = self.assigned_hours.get(mid, 0.0)
+        hours_before = self._weekly_hours(mid, shift)
         seat_hours = hours_for(shift, seat)
         base_hours = ft_emt_base_hours(member, float(self.rules.get("ft_emt_base_hours_per_week", 36.0))) if employment(member) == "FT" and cert(member) == "EMT" else None
         resolved_assignment_reason = assignment_reason
@@ -1179,6 +1193,9 @@ class RuleBasedResolver:
             if "ft_emt_baseline" not in seat["selection_factors"]:
                 seat["selection_factors"].append("ft_emt_baseline")
         self.assigned_hours[mid] = hours_before + seat_hours
+        week_key = operational_week_start(shift_date(shift))
+        if week_key:
+            self.assigned_hours_by_week.setdefault(week_key, {})[mid] = hours_before + seat_hours
         self.audit.append(self._seat_audit(shift, seat))
         self.trace.append(f"{seat['seat_id']} assigned {mid} in {phase}/{bucket}")
 
@@ -1312,9 +1329,18 @@ class RuleBasedResolver:
     def _non_ot(self, member: Dict[str, Any], shift: Dict[str, Any]) -> bool:
         return self._additional_ot(member, shift) <= 0
 
+    def _weekly_hours(self, mid: str, shift: Dict[str, Any]) -> float:
+        week_key = operational_week_start(shift_date(shift))
+        if not week_key:
+            return float(self.assigned_hours.get(mid, 0.0))
+        week = self.assigned_hours_by_week.setdefault(week_key, {})
+        if mid not in week:
+            week[mid] = float(self.hour_totals.get(mid, 0.0)) if week_key == self.initial_hours_week else 0.0
+        return week[mid]
+
     def _additional_ot(self, member: Dict[str, Any], shift: Dict[str, Any]) -> float:
         mid = member_id(member)
-        base = self.assigned_hours.get(mid, 0.0)
+        base = self._weekly_hours(mid, shift)
         threshold = 40.0 if employment(member) == "FT" else 0.0
         if employment(member) == "FT" and cert(member) == "EMT":
             threshold = ft_emt_base_hours(member, float(self.rules.get("ft_emt_base_hours_per_week", 36.0)))
@@ -1329,7 +1355,7 @@ class RuleBasedResolver:
         if avail == DO_NOT:
             return False
         base_hours = ft_emt_base_hours(member, float(self.rules.get("ft_emt_base_hours_per_week", 36.0)))
-        return self.assigned_hours.get(member_id(member), 0.0) + hours_for(shift, {"hours": 12}) <= base_hours
+        return self._weekly_hours(member_id(member), shift) + hours_for(shift, {"hours": 12}) <= base_hours
 
     def _ft_emt_baseline_reject_reason(self, member: Dict[str, Any], shift: Dict[str, Any], avail: str) -> str:
         if employment(member) != "FT" or cert(member) != "EMT":
@@ -1337,7 +1363,7 @@ class RuleBasedResolver:
         if avail == DO_NOT:
             return "availability_do_not"
         base_hours = ft_emt_base_hours(member, float(self.rules.get("ft_emt_base_hours_per_week", 36.0)))
-        before = self.assigned_hours.get(member_id(member), 0.0)
+        before = self._weekly_hours(member_id(member), shift)
         after = before + 12.0
         if after > base_hours:
             return "ft_emt_base_hours_satisfied"

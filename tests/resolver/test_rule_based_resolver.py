@@ -639,7 +639,7 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         self.assertEqual(first_seat(result, "ATTENDANT")["assigned"], "emt_bridge")
         self.assertEqual(first_seat(result, "DRIVER")["assigned"], "emr_driver")
 
-    def test_ft_emt_under_36_wins_driver_before_casual_prefer(self):
+    def test_ft_emt_under_36_is_not_assigned_when_availability_is_blank(self):
         data = base_payload(seats=[{"role": "DRIVER", "hours": 12}])
         data["members"] = [brian_ft_emt(), member("casual_emt", "EMT", "PT")]
         data["hour_totals"] = {"brian": 24, "casual_emt": 0}
@@ -648,13 +648,12 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         result = resolve_rule_based(copy.deepcopy(data))
 
         driver = first_seat(result, "DRIVER")
-        self.assertEqual(driver["assigned"], "brian")
-        self.assertEqual(driver["resolver_bucket"], "ft_emt_baseline")
-        self.assertTrue(driver["ft_emt_baseline_applied"])
-        self.assertEqual(driver["ft_emt_hours_before"], 24)
-        self.assertEqual(driver["ft_emt_hours_after"], 36)
-        self.assertEqual(driver["ft_emt_base_hours"], 36)
-        self.assertIn("FT EMT baseline hours before casual staffing", driver["assignment_reason"])
+        self.assertEqual(driver["assigned"], "casual_emt")
+        self.assertEqual(driver["resolver_bucket"], "emt_prefer_no_ot")
+        self.assertTrue(any(
+            row["member_id"] == "brian" and row["reason"] == "availability_unset"
+            for row in driver["rejected_candidates"]
+        ))
 
     def test_ft_emt_reaches_exactly_36_as_baseline(self):
         data = base_payload(seats=[{"role": "DRIVER", "hours": 12}])
@@ -712,7 +711,7 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
 
         driver = first_seat(result, "DRIVER")
         self.assertEqual(driver["assigned"], "casual_emt")
-        self.assertTrue(any(row["member_id"] == "brian" and row["reason"] == "duplicate_same_shift" for row in driver["rejected_candidates"]))
+        self.assertTrue(any(row["member_id"] == "brian" and row["reason"] == "availability_unset" for row in driver["rejected_candidates"]))
 
     def test_ft_emt_would_exceed_36_routes_to_extra_or_review_not_baseline(self):
         data = base_payload(date_iso=NEAR, seats=[{"role": "DRIVER", "hours": 12}])
@@ -758,6 +757,28 @@ class RuleBasedResolverDoctrineTests(unittest.TestCase):
         attendant = first_seat(result, "ATTENDANT")
         self.assertFalse(attendant.get("assigned"))
         self.assertTrue(any(row["reason"] in {"additional_ot_blocked", "outside_bucket_rules"} for row in attendant["rejected_candidates"]))
+
+    def test_weekly_hours_reset_each_thursday_instead_of_accumulating_across_horizon(self):
+        dates = ["2026-06-25", "2026-06-26", "2026-06-27", "2026-07-02"]
+        data = base_payload(date_iso=dates[0], seats=[{"role": "ATTENDANT", "hours": 12}])
+        data["members"] = [member("pt_aemt", "AEMT", "PT")]
+        data["shifts"] = [
+            {"date": day, "label": "AM", "unit": "120", "seats": [{"role": "ATTENDANT", "hours": 12}]}
+            for day in dates
+        ]
+        for day in dates:
+            set_availability(data, "pt_aemt", day, "AM", "PREFER")
+
+        result = resolve_rule_based(copy.deepcopy(data))
+        assigned_by_date = {
+            shift["date"]: shift["seats"][0].get("assigned")
+            for shift in result["shifts"]
+        }
+
+        self.assertEqual(assigned_by_date["2026-06-25"], "pt_aemt")
+        self.assertEqual(assigned_by_date["2026-06-26"], "pt_aemt")
+        self.assertIsNone(assigned_by_date["2026-06-27"])
+        self.assertEqual(assigned_by_date["2026-07-02"], "pt_aemt")
 
 
 if __name__ == "__main__":

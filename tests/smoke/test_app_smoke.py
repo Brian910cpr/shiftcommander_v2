@@ -28,6 +28,10 @@ def load_server_module():
     return module
 
 
+def future_availability_date():
+    return (date.today() + timedelta(days=30)).isoformat()
+
+
 @unittest.skipUnless(FLASK_AVAILABLE, "Flask is not installed in this runtime; run this test in the real app environment.")
 class AppSmokeTests(unittest.TestCase):
     @classmethod
@@ -156,6 +160,22 @@ class AppSmokeTests(unittest.TestCase):
             if public_temp_path.exists():
                 shutil.move(str(public_temp_path), str(public_schedule_path))
 
+    def test_resolver_input_falls_back_to_published_schedule(self):
+        live_schedule_path = Path(self.server.LIVE_STATE_STORE.schedule_file)
+        shifts_path = Path(self.server.SHIFTS_FILE)
+        public_schedule_path = Path(self.server.PUBLIC_SCHEDULE_FILE)
+
+        for path in (live_schedule_path, shifts_path):
+            if path.exists():
+                path.unlink()
+        self.server.save_json(public_schedule_path, {
+            "shifts": [{"date": "2026-08-01", "label": "AM", "seats": []}],
+        })
+
+        self.assertEqual(self.server.load_live_schedule_shifts(), [
+            {"date": "2026-08-01", "label": "AM", "seats": []},
+        ])
+
     def test_calendar_markers_api_loads_and_missing_file_is_safe(self):
         response = self.client.get("/api/calendar_markers")
         self.assertEqual(response.status_code, 200)
@@ -223,7 +243,7 @@ class AppSmokeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         context = response.get_json()
         self.assertIn("display_horizon", context["member_page_settings"])
-        self.assertEqual(context["member_page_settings"]["display_horizon"]["temporary_fixed_end_date"], "2026-06-30")
+        self.assertEqual(context["member_page_settings"]["display_horizon"]["temporary_fixed_end_date"], "2026-08-31")
         self.assertTrue(any(str(shift.get("date", "")).startswith("2026-07-") for shift in context["schedule"].get("shifts", [])))
         response.close()
 
@@ -298,7 +318,7 @@ class AppSmokeTests(unittest.TestCase):
 
             response = self.client.post(
                 "/api/member/availability",
-                json={"member_id": "188", "entries": [{"date": "2026-06-30", "period": "AM", "member_intent": "prefer"}]},
+                json={"member_id": "188", "entries": [{"date": future_availability_date(), "period": "AM", "member_intent": "prefer"}]},
             )
             self.assertEqual(response.status_code, 401)
             response.close()
@@ -318,7 +338,7 @@ class AppSmokeTests(unittest.TestCase):
 
             response = self.client.post(
                 "/api/member/availability",
-                json={"member_id": "189", "entries": [{"date": "2026-06-30", "period": "AM", "member_intent": "prefer"}]},
+                json={"member_id": "189", "entries": [{"date": future_availability_date(), "period": "AM", "member_intent": "prefer"}]},
             )
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.get_json().get("member_id"), "189")
@@ -326,7 +346,7 @@ class AppSmokeTests(unittest.TestCase):
 
             response = self.client.post(
                 "/api/member/availability",
-                json={"member_id": "186", "entries": [{"date": "2026-06-30", "period": "PM", "member_intent": "available"}]},
+                json={"member_id": "186", "entries": [{"date": future_availability_date(), "period": "PM", "member_intent": "available"}]},
             )
             self.assertEqual(response.status_code, 403)
             self.assertIn("own availability", response.get_json().get("error", ""))
@@ -362,7 +382,7 @@ class AppSmokeTests(unittest.TestCase):
 
                 response = self.client.post(
                     "/api/member/availability",
-                    json={"member_id": "186", "entries": [{"date": "2026-06-30", "period": "PM", "member_intent": "available"}]},
+                    json={"member_id": "186", "entries": [{"date": future_availability_date(), "period": "PM", "member_intent": "available"}]},
                 )
                 self.assertEqual(response.status_code, 200, name)
                 self.assertEqual(response.get_json().get("member_id"), "186")
@@ -405,7 +425,7 @@ class AppSmokeTests(unittest.TestCase):
 
             response = self.client.post(
                 "/api/member/availability",
-                json={"member_id": "186", "entries": [{"date": "2026-06-30", "period": "PM", "member_intent": "available"}]},
+                json={"member_id": "186", "entries": [{"date": future_availability_date(), "period": "PM", "member_intent": "available"}]},
             )
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.get_json().get("member_id"), "186")
@@ -413,6 +433,45 @@ class AppSmokeTests(unittest.TestCase):
         finally:
             self.server.SC_QUICK_TEST_MODE = original_quick
             self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
+    def test_member_availability_has_no_far_future_submission_cutoff(self):
+        original_quick = self.server.SC_QUICK_TEST_MODE
+        original_bypass = self.server.SC_DEMO_SUPERVISOR_BYPASS
+        try:
+            self.server.SC_QUICK_TEST_MODE = False
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = False
+            self.login_google_member("collinharrison10@gmail.com")
+
+            response = self.client.post(
+                "/api/member/availability",
+                json={"member_id": "189", "entries": [{"date": "2031-01-15", "period": "AM", "member_intent": "available"}]},
+            )
+            self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+            response.close()
+        finally:
+            with self.client.session_transaction() as session:
+                session.clear()
+            self.server.SC_QUICK_TEST_MODE = original_quick
+            self.server.SC_DEMO_SUPERVISOR_BYPASS = original_bypass
+
+    def test_future_availability_reset_handles_member_and_date_major_shapes(self):
+        payload = {
+            "months": {
+                "2026-08": {
+                    "189": {"2026-08-01": {"AM": "preferred"}},
+                    "2026-08-02": {"PM": {"189": "available", "188": "do_not_schedule"}},
+                }
+            },
+            "patterns_by_member": {"189": {"statuses": {"SAT_AM": "preferred"}}},
+        }
+
+        cleared, summary = self.server.clear_future_availability_intent(payload, today=date(2026, 7, 19))
+
+        self.assertEqual(cleared["months"]["2026-08"]["189"]["2026-08-01"]["AM"], "blank")
+        self.assertEqual(cleared["months"]["2026-08"]["2026-08-02"]["PM"]["189"], "blank")
+        self.assertEqual(cleared["months"]["2026-08"]["2026-08-02"]["PM"]["188"], "blank")
+        self.assertEqual(cleared["patterns_by_member"]["189"]["statuses"]["SAT_AM"], "blank")
+        self.assertEqual(summary["remaining"]["future_month_entries_with_declared_intent"], 0)
 
     def test_supervisor_can_read_selected_member_availability(self):
         original_quick = self.server.SC_QUICK_TEST_MODE
@@ -756,7 +815,9 @@ class AppSmokeTests(unittest.TestCase):
             for seat in shift.get("seats", [])
             if seat.get("active") is not False
         ]
-        self.assertGreater(sum(1 for seat in active_seats if seat.get("assigned")), 0)
+        self.assertGreater(len(shifts), 0)
+        self.assertGreater(sum(1 for seat in active_seats if not seat.get("assigned")), 0)
+        self.assertTrue(any(shift.get("availability_submitted") is False for shift in shifts))
         self.assertTrue(
             all(
                 [seat.get("role") for seat in shift.get("seats", []) if seat.get("active") is not False]

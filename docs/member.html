@@ -629,20 +629,20 @@
     function displayHorizonRules(){
       return {
         mode: "temporary_fixed_until_date",
-        temporary_fixed_end_date: "2026-06-30",
-        resume_rolling_after_date: "2026-06-30",
-        rolling_weeks_default: 5,
-        admin_rolling_weeks: 5,
+        temporary_fixed_end_date: "2026-08-31",
+        resume_rolling_after_date: "2026-08-31",
+        rolling_weeks_default: 8,
+        admin_rolling_weeks: 8,
         enabled: true,
         ...(appState.displayHorizon || {})
       };
     }
     function visibleEndDateIso(todayValue = todayIso()){
       const rules = displayHorizonRules();
-      if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0,10)){
-        return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
+      if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-08-31").slice(0,10)){
+        return String(rules.temporary_fixed_end_date || "2026-08-31").slice(0,10);
       }
-      const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5));
+      const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 8));
       return formatDate(addDays(parseIsoLocalDate(todayValue), (weeks * DAYS_PER_OPERATIONAL_CYCLE) - 1));
     }
     function displayWeekStart(){

@@ -51,7 +51,7 @@ class OperationalStabilizationTests(unittest.TestCase):
         ]
         self.assertGreaterEqual(len(available_or_better), 8)
 
-    def test_shift_builder_uses_12_week_horizon_and_pattern_fallback(self):
+    def test_shift_builder_uses_12_week_horizon_and_builds_required_demand_without_availability(self):
         members = [{"member_id": "m1", "active": True}]
         settings = {
             "default_unit": "120",
@@ -66,7 +66,10 @@ class OperationalStabilizationTests(unittest.TestCase):
         shifts = build_shift_skeletons(members, settings, availability)
         self.assertLessEqual(PLANNING_HORIZON_DAYS, 84)
         self.assertTrue(shifts)
-        self.assertTrue(all(shift["label"] == "AM" for shift in shifts))
+        self.assertEqual(len(shifts), (PLANNING_HORIZON_DAYS + 1) * 2)
+        self.assertTrue(any(shift["label"] == "AM" for shift in shifts))
+        self.assertTrue(any(shift["label"] == "PM" for shift in shifts))
+        self.assertTrue(any(shift["availability_submitted"] is False for shift in shifts))
 
     def test_saturday_am_als_seat_stays_open_without_als(self):
         target_date = future_weekday_iso("Sat")

@@ -4,7 +4,9 @@ import { Copy, Trash2, ChevronDown } from 'lucide-react';
 import { getDefaultMemberAvailabilityWeeks, MEMBER_AVAILABILITY_MONTHS_AHEAD } from '@/lib/availabilityRange';
 
 const DEFAULT_MEMBER_AVAILABILITY_WEEKS = getDefaultMemberAvailabilityWeeks();
-const DISPLAY_WEEK_OPTIONS = [2, 4, 8, 12, DEFAULT_MEMBER_AVAILABILITY_WEEKS].filter((value, index, list) => list.indexOf(value) === index);
+const DISPLAY_WEEK_OPTIONS = [2, 4, 8, 12, DEFAULT_MEMBER_AVAILABILITY_WEEKS, 52, 104, 260]
+  .filter((value, index, list) => list.indexOf(value) === index)
+  .sort((a, b) => a - b);
 
 const COPY_WHAT_OPTIONS = [
   'Whole displayed week',
@@ -81,7 +83,7 @@ export default function AvailabilityTools({ displayWeeks, onDisplayWeeksChange, 
             options={DISPLAY_WEEK_OPTIONS}
           />
           <p className="text-[10px] text-muted-foreground mt-1">
-            Member availability can extend {MEMBER_AVAILABILITY_MONTHS_AHEAD} months ahead and is separate from the Wallboard horizon.
+            Availability is separate from the displayed schedule horizon. You may submit it years ahead; earlier information helps expose coverage problems sooner.
           </p>
         </div>
 

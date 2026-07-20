@@ -30,8 +30,8 @@ export default function Supervisor() {
 
   const [settings, setSettings] = useState({
     horizon_mode: 'frozen',
-    horizon_frozen_date: '2026-06-30',
-    horizon_rolling_weeks: 5,
+    horizon_frozen_date: '2026-08-31',
+    horizon_rolling_weeks: 8,
     career_fire_days: ['Mon', 'Tue', 'Thu'],
     career_fire_start_time: '0800',
     career_fire_end_time: '1800',

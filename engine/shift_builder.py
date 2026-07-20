@@ -155,9 +155,12 @@ def any_member_available_for_shift(active_member_ids, availability_payload, day_
 
 def build_shift_skeletons(members, settings, availability_payload):
     """
-    Build shifts out 10-12 weeks, but only for dates/shift-blocks where at least
-    one ACTIVE member is marked Preferred or Available by exact date or suggested
-    historical pattern.
+    Build every required AM/PM shift through the planning horizon.
+
+    Availability controls who may fill a seat; it must never control whether
+    required shift demand exists. Building open shifts even when nobody has
+    submitted availability is what makes future shortages and pickup
+    opportunities visible early.
     """
     today = date.today()
     horizon_end = today + timedelta(days=PLANNING_HORIZON_DAYS)
@@ -173,14 +176,6 @@ def build_shift_skeletons(members, settings, availability_payload):
         day_name = get_day_name_short(cursor)
 
         for shift_label in SHIFT_LABELS:
-            if not any_member_available_for_shift(
-                active_member_ids=active_member_ids,
-                availability_payload=availability_payload,
-                day_iso=day_iso,
-                shift_label=shift_label,
-            ):
-                continue
-
             pattern = get_day_rule(settings, day_name, shift_label)
             seats = seats_for_pattern(pattern, shift_label, settings, cursor)
 
@@ -189,6 +184,12 @@ def build_shift_skeletons(members, settings, availability_payload):
                 "label": shift_label,
                 "unit": default_unit,
                 "seats": seats,
+                "availability_submitted": any_member_available_for_shift(
+                    active_member_ids=active_member_ids,
+                    availability_payload=availability_payload,
+                    day_iso=day_iso,
+                    shift_label=shift_label,
+                ),
             })
 
         cursor += timedelta(days=1)

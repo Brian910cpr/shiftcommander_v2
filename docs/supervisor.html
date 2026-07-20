@@ -277,7 +277,7 @@
           </div>
           <label class="toggle-line"><span>Freeze visible calendar</span><input type="checkbox" id="displayHorizonEnabled"></label>
           <div class="compact-fields">
-            <label class="field-mini">Show through <input id="displayHorizonEndDate" type="date" value="2026-06-30"></label>
+            <label class="field-mini">Show through <input id="displayHorizonEndDate" type="date" value="2026-08-31"></label>
             <label class="field-mini">Rolling weeks <input id="displayHorizonRollingWeeks" type="number" min="1" max="52" value="5"></label>
           </div>
           <div class="control-actions">
@@ -363,10 +363,10 @@
     };
     const DEFAULT_DISPLAY_HORIZON = {
       mode: "temporary_fixed_until_date",
-      temporary_fixed_end_date: "2026-06-30",
-      resume_rolling_after_date: "2026-06-30",
-      rolling_weeks_default: 5,
-      admin_rolling_weeks: 5,
+      temporary_fixed_end_date: "2026-08-31",
+      resume_rolling_after_date: "2026-08-31",
+      rolling_weeks_default: 8,
+      admin_rolling_weeks: 8,
       enabled: true
     };
 
@@ -768,16 +768,16 @@
       const weeks = document.getElementById("displayHorizonRollingWeeks");
       const status = document.getElementById("horizonStatus");
       if(enabled) enabled.checked = !!rules.enabled && rules.mode === "temporary_fixed_until_date";
-      if(endDate) endDate.value = String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
-      if(weeks) weeks.value = Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5);
+      if(endDate) endDate.value = String(rules.temporary_fixed_end_date || "2026-08-31").slice(0,10);
+      if(weeks) weeks.value = Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 8);
       if(status) status.textContent = rules.enabled && rules.mode === "temporary_fixed_until_date"
-        ? `Visible through ${shortDateLabel(String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10))}`
-        : `Rolling horizon: ${Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5)} weeks`;
+        ? `Visible through ${shortDateLabel(String(rules.temporary_fixed_end_date || "2026-08-31").slice(0,10))}`
+        : `Rolling horizon: ${Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 8)} weeks`;
     }
 
     function displayHorizonPayload(){
       const enabled = document.getElementById("displayHorizonEnabled")?.checked;
-      const endDate = document.getElementById("displayHorizonEndDate")?.value || "2026-06-30";
+      const endDate = document.getElementById("displayHorizonEndDate")?.value || "2026-08-31";
       const weeks = Number(document.getElementById("displayHorizonRollingWeeks")?.value || 5);
       return {
         ...displayHorizonRules(),
@@ -785,8 +785,8 @@
         mode: enabled ? "temporary_fixed_until_date" : "rolling",
         temporary_fixed_end_date: endDate,
         resume_rolling_after_date: endDate,
-        rolling_weeks_default: 5,
-        admin_rolling_weeks: Math.max(1, weeks || 5),
+        rolling_weeks_default: 8,
+        admin_rolling_weeks: Math.max(1, weeks || 8),
       };
     }
 
@@ -859,10 +859,10 @@
         .sort()
         .pop();
       const configuredEnd = (() => {
-        if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0,10)){
-          return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
+        if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-08-31").slice(0,10)){
+          return String(rules.temporary_fixed_end_date || "2026-08-31").slice(0,10);
         }
-        const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5));
+        const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 8));
         return formatDate(addDays(isoToDate(todayValue), (weeks * 7) - 1));
       })();
       if(latestLoadedShiftDate && latestLoadedShiftDate > configuredEnd) return latestLoadedShiftDate;
@@ -871,10 +871,10 @@
 
     function configuredVisibleEndDateIso(todayValue = todayIso()){
       const rules = displayHorizonRules();
-      if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-06-30").slice(0,10)){
-        return String(rules.temporary_fixed_end_date || "2026-06-30").slice(0,10);
+      if(rules.enabled && rules.mode === "temporary_fixed_until_date" && todayValue <= String(rules.resume_rolling_after_date || "2026-08-31").slice(0,10)){
+        return String(rules.temporary_fixed_end_date || "2026-08-31").slice(0,10);
       }
-      const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 5));
+      const weeks = Math.max(1, Number(rules.admin_rolling_weeks || rules.rolling_weeks_default || 8));
       return formatDate(addDays(isoToDate(todayValue), (weeks * 7) - 1));
     }
 
@@ -1441,13 +1441,13 @@
       document.getElementById("careerSaveBtn").addEventListener("click", saveCareerFireDriverSettings);
       document.getElementById("horizonFreezeBtn").addEventListener("click", () => {
         document.getElementById("displayHorizonEnabled").checked = true;
-        document.getElementById("displayHorizonEndDate").value = "2026-06-30";
+        document.getElementById("displayHorizonEndDate").value = "2026-08-31";
         document.getElementById("displayHorizonRollingWeeks").value = "5";
         document.getElementById("horizonStatus").textContent = "Visible through Jun 30, 2026";
       });
       document.getElementById("horizonRollingBtn").addEventListener("click", () => {
         document.getElementById("displayHorizonEnabled").checked = false;
-        document.getElementById("horizonStatus").textContent = `Rolling horizon: ${Number(document.getElementById("displayHorizonRollingWeeks").value || 5)} weeks`;
+        document.getElementById("horizonStatus").textContent = `Rolling horizon: ${Number(document.getElementById("displayHorizonRollingWeeks").value || 8)} weeks`;
       });
       document.getElementById("horizonSaveBtn").addEventListener("click", saveDisplayHorizonSettings);
       document.body.addEventListener("click", async (event) => {

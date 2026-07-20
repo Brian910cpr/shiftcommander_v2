@@ -131,10 +131,10 @@ DEFAULT_MEMBER_ACCOMMODATIONS = {
 }
 DEFAULT_DISPLAY_HORIZON = {
     "mode": "temporary_fixed_until_date",
-    "temporary_fixed_end_date": "2026-06-30",
-    "resume_rolling_after_date": "2026-06-30",
-    "rolling_weeks_default": 5,
-    "admin_rolling_weeks": 5,
+    "temporary_fixed_end_date": "2026-08-31",
+    "resume_rolling_after_date": "2026-08-31",
+    "rolling_weeks_default": 8,
+    "admin_rolling_weeks": 8,
     "enabled": True,
 }
 TEST_MEMBER_LOGIN = {
@@ -331,7 +331,12 @@ def load_live_schedule_shifts():
     shifts = schedule.get("shifts") if isinstance(schedule, dict) else None
     if isinstance(shifts, list) and shifts:
         return shifts
-    return load_shifts()
+    shifts = load_shifts()
+    if isinstance(shifts, list) and shifts:
+        return shifts
+    public_schedule = load_json(PUBLIC_SCHEDULE_FILE, {})
+    public_shifts = public_schedule.get("shifts") if isinstance(public_schedule, dict) else None
+    return public_shifts if isinstance(public_shifts, list) else []
 
 
 def fast_json_file_response(path, empty_payload=EMPTY_SCHEDULE_BYTES):
@@ -1933,6 +1938,25 @@ def clear_future_availability_intent(payload, today=None):
         for member_id, member_bucket in month_bucket.items():
             if not isinstance(member_bucket, dict):
                 continue
+            # Historical generated files also use date -> AM/PM -> member.
+            date_major = parse_iso_date(member_id)
+            if date_major:
+                if date_major <= today:
+                    continue
+                date_changed = False
+                for label in ("AM", "PM"):
+                    per_member = member_bucket.get(label)
+                    if not isinstance(per_member, dict):
+                        continue
+                    for nested_member_id, raw_status in list(per_member.items()):
+                        if is_declared_availability_intent(raw_status):
+                            per_member[nested_member_id] = "blank"
+                            summary["future_month_entries_cleared"] += 1
+                            affected_members.add(str(nested_member_id))
+                            date_changed = True
+                if date_changed:
+                    summary["future_dates_cleared"] += 1
+                continue
             member_changed = False
             for date_iso, day_entry in member_bucket.items():
                 date_obj = parse_iso_date(date_iso)
@@ -1985,9 +2009,9 @@ def clear_future_availability_intent(payload, today=None):
     summary["members_affected"] = len(affected_members)
     summary["remaining"] = summarize_future_availability_intent(payload, today=today)
     summary["resolver_fallback"] = {
-        "shift_builder_uses": "explicit months date entries only",
+        "shift_builder_uses": "all required shifts are built regardless of availability",
         "resolver_uses": "exact months entries first, then patterns_by_member fallback",
-        "fallback_source": "availability.json patterns_by_member and derived statuses",
+        "fallback_source": "patterns remain blank after rollout reset; new member submissions become authoritative",
     }
     return payload, summary
 

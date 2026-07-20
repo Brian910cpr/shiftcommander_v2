@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 
 export default function HorizonControl({ settings, onSave }) {
   const [mode, setMode] = useState(settings?.horizon_mode || 'frozen');
-  const [frozenDate, setFrozenDate] = useState(settings?.horizon_frozen_date || '2026-06-30');
-  const [rollingWeeks, setRollingWeeks] = useState(settings?.horizon_rolling_weeks || 5);
+  const [frozenDate, setFrozenDate] = useState(settings?.horizon_frozen_date || '2026-08-31');
+  const [rollingWeeks, setRollingWeeks] = useState(settings?.horizon_rolling_weeks || 8);
 
   const handleSave = () => {
     onSave({ horizon_mode: mode, horizon_frozen_date: frozenDate, horizon_rolling_weeks: rollingWeeks });

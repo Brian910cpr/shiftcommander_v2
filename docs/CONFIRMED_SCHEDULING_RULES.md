@@ -121,6 +121,9 @@ These windows and meanings must be editable in Supervisor settings.
 - Partial availability is allowed.
 - Minimum partial block: 6 hours.
 - Repeating availability patterns should be supported eventually.
+- Members may submit availability as far into the future as they choose; the availability horizon is independent of the displayed schedule horizon.
+- Historical or inferred availability is suggestion data only and must not be treated as current scheduling consent.
+- Blank availability remains Do Not / not eligible for automatic assignment, including FT baseline assignments.
 - Members may freely change availability until lock horizon.
 - After lock horizon, changes become request / release / swap workflows, not automatic removals.
 
@@ -132,6 +135,14 @@ These windows and meanings must be editable in Supervisor settings.
 - Inside lock horizon, assigned members remain responsible unless swap/drop is accepted and reassigned.
 - Supervisor overrides must be locked from future resolver changes.
 - Supervisor may reopen a published shift, with logging.
+- Rollout transition: keep the displayed schedule fixed through August 31, 2026, then resume an 8-week rolling display horizon.
+
+### Future demand visibility
+
+- Required shift demand must be built even when no member has submitted availability.
+- An unfillable future shift remains visible as an open coverage opportunity; it must not disappear from the schedule builder.
+- Unresolved shifts after the displayed rollout horizon do not invalidate the currently displayed schedule.
+- Open seats and coverage opportunities should be exposed to qualified members as soon as they are known so shortages can be solved weeks ahead.
 
 ## 10. Weekly Publish
 
