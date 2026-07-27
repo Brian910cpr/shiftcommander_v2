@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ShiftCommander Staffing Workbench</title>
+  <style>
+    :root{--bg:#07111f;--panel:#101d31;--panel2:#172844;--line:#29405f;--text:#f0f5ff;--muted:#9fb2d1;--blue:#63b3ff;--green:#57e389;--amber:#ffd166;--red:#ff7b7b}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top left,#14274a 0,transparent 38%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+    button,select,input{font:inherit}.shell{max-width:1500px;margin:auto;padding:20px}.hero,.panel,.resource,.member,.result{background:rgba(16,29,49,.96);border:1px solid var(--line);border-radius:18px}
+    .hero{padding:20px;display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.hero h1{margin:0;font-size:30px}.hero p,.muted{color:var(--muted)}.badge{display:inline-flex;padding:6px 10px;border:1px solid var(--line);border-radius:999px;color:var(--green);font-size:12px;font-weight:800}
+    .layout{display:grid;grid-template-columns:340px 1fr;gap:16px;margin-top:16px}.panel{padding:16px}.panel h2,.panel h3{margin:0 0 12px}.field{display:grid;gap:6px;margin-bottom:14px}.field label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:800}
+    select,input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text)}button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2);color:var(--text);cursor:pointer;font-weight:750}button:hover{border-color:var(--blue)}button.primary{background:#2467a4;border-color:#4da5ee}button.danger{color:#ffd2d2}
+    .stack{display:grid;gap:12px}.quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.metric{padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}.metric span{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:25px;margin-top:3px}
+    .resource{overflow:hidden}.resource-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;background:rgba(255,255,255,.035);border-bottom:1px solid var(--line)}.resource-head h3{margin:0}.resource-body{padding:12px}.seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px}.seat{border:1px solid var(--line);border-radius:12px;padding:11px;background:rgba(0,0,0,.13)}.seat strong{display:block}.seat small{color:var(--muted)}.seat button{float:right;padding:3px 7px;margin-top:-3px}
+    .members{display:grid;gap:8px}.member{padding:10px;display:grid;grid-template-columns:1fr 140px;align-items:center;gap:10px}.member strong{display:block}.member small{color:var(--muted)}.results{display:grid;gap:8px}.result{padding:12px;display:grid;grid-template-columns:minmax(170px,.8fr) 1fr;gap:12px}.result.open{border-color:rgba(255,123,123,.55)}.assignment{font-size:18px;font-weight:850;color:var(--green)}.result.open .assignment{color:var(--red)}.reason{color:var(--muted);font-size:13px;line-height:1.45}.notice{padding:11px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:13px}.row{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.hero{display:grid}.result{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <h1>Staffing Workbench</h1>
+        <p>Build the operational need, provide availability, then test how ShiftCommander seats the company.</p>
+      </div>
+      <span class="badge">LOCAL DRY RUN · NO LIVE WRITES</span>
+    </section>
+
+    <div class="layout">
+      <aside class="stack">
+        <section class="panel">
+          <h2>1. Define the day</h2>
+          <div class="field"><label for="preset">Staffing preset</label><select id="preset"></select></div>
+          <button class="primary" id="applyPreset">Apply preset</button>
+          <div class="notice" style="margin-top:12px">Applying a preset replaces this mock day's resource list. It does not affect the live schedule.</div>
+        </section>
+
+        <section class="panel">
+          <h2>2. Add a resource</h2>
+          <div class="field"><label for="resourceType">Resource type</label>
+            <select id="resourceType"><option>ALS/BLS Ambulance</option><option>BLS/BLS Ambulance</option><option>ALS QRV</option><option>ALS Engine</option><option>BLS Boat</option><option>Command</option></select>
+          </div>
+          <div class="field"><label for="resourceName">Display name</label><input id="resourceName" placeholder="Example: Medic 3"></div>
+          <button id="addResource">Activate resource</button>
+        </section>
+
+        <section class="panel">
+          <h2>3. Member availability</h2>
+          <div class="members" id="members"></div>
+        </section>
+      </aside>
+
+      <section class="stack">
+        <section class="panel">
+          <div class="summary">
+            <div class="metric"><span>Active resources</span><strong id="resourceCount">0</strong></div>
+            <div class="metric"><span>Required seats</span><strong id="seatCount">0</strong></div>
+            <div class="metric"><span>Available members</span><strong id="availableCount">0</strong></div>
+            <div class="metric"><span>Unresolved seats</span><strong id="openCount">—</strong></div>
+          </div>
+          <div class="row">
+            <button class="primary" id="runResolver">Run mock seating pass</button>
+            <button id="reset">Reset normal day</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Active operational resources</h2>
+          <div class="stack" id="resources"></div>
+        </section>
+
+        <section class="panel hidden" id="resultsPanel">
+          <h2>Mock resolver result</h2>
+          <p class="muted">This deterministic preview checks availability and required qualifications, avoids assigning one person twice, and explains unresolved seats.</p>
+          <div class="results" id="results"></div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const seatRules={
+      "ALS Attendant":["ALS"],"BLS Attendant":["EMT"],"Driver":["DRIVER"],
+      "ALS Clinician / Driver":["ALS","DRIVER"],"ALS Clinician":["ALS"],
+      "Boat Operator":["BOAT"],"BLS Clinician":["EMT"],"Supervisor":["SUPERVISOR"],
+      "Detail Member":[],"Third Rider":[]
+    };
+    const resourceTemplates={
+      "ALS/BLS Ambulance":["ALS Attendant","Driver"],
+      "BLS/BLS Ambulance":["BLS Attendant","Driver"],
+      "ALS QRV":["ALS Clinician / Driver"],
+      "ALS Engine":["ALS Clinician","Driver"],
+      "BLS Boat":["Boat Operator","BLS Clinician"],
+      "Command":["Supervisor"]
+    };
+    const presets={
+      "Normal shift":[["Medic 1","ALS/BLS Ambulance"],["Medic 2","BLS/BLS Ambulance"]],
+      "Parade coverage":[["Parade Ambulance","ALS/BLS Ambulance"],["Walking Team","BLS/BLS Ambulance"],["QRV 1","ALS QRV"],["Event Command","Command"]],
+      "Hurricane staffing":[["Medic 1","ALS/BLS Ambulance"],["Medic 2","BLS/BLS Ambulance"],["Engine 1","ALS Engine"],["QRV 1","ALS QRV"],["Boat 1","BLS Boat"],["Boat 2","BLS Boat"],["Storm Command","Command"]],
+      "Funeral detail":[["Station Coverage","ALS/BLS Ambulance"],["Procession Unit","BLS/BLS Ambulance"],["Detail Command","Command"]]
+    };
+    const members=[
+      {name:"Alex Smith",quals:["ALS","EMT","DRIVER"],status:"PREFER"},
+      {name:"Jordan Carter",quals:["EMT","DRIVER"],status:"AVAILABLE"},
+      {name:"Leslie Green",quals:["EMT"],status:"AVAILABLE"},
+      {name:"Dana Hayes",quals:["DRIVER"],status:"AVAILABLE"},
+      {name:"Morgan Jones",quals:["ALS","EMT","DRIVER","SUPERVISOR"],status:"AVAILABLE"},
+      {name:"Riley Brown",quals:["EMT","DRIVER","BOAT"],status:"UNAVAILABLE"},
+      {name:"Taylor Wilson",quals:["EMT","BOAT"],status:"AVAILABLE"},
+      {name:"Casey Hall",quals:["SUPERVISOR","DRIVER"],status:"DO_NOT"}
+    ];
+    let resources=[];
+    const $=id=>document.getElementById(id);
+    const esc=value=>String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const makeResource=(name,type)=>({id:crypto.randomUUID(),name,type,seats:(resourceTemplates[type]||[]).map(role=>({id:crypto.randomUUID(),role}))});
+
+    function loadPreset(name){
+      resources=presets[name].map(([label,type])=>makeResource(label,type));
+      $("resultsPanel").classList.add("hidden"); $("openCount").textContent="—"; render();
+    }
+    function renderMembers(){
+      $("members").innerHTML=members.map((member,index)=>`<label class="member"><span><strong>${esc(member.name)}</strong><small>${esc(member.quals.join(" · ")||"No qualifications")}</small></span><select data-member="${index}">${["PREFER","AVAILABLE","DO_NOT","UNAVAILABLE"].map(v=>`<option ${v===member.status?"selected":""}>${v}</option>`).join("")}</select></label>`).join("");
+    }
+    function renderResources(){
+      $("resources").innerHTML=resources.length?resources.map(resource=>`
+        <article class="resource">
+          <div class="resource-head"><div><h3>${esc(resource.name)}</h3><span class="muted">${esc(resource.type)}</span></div><button class="danger" data-remove-resource="${resource.id}">Deactivate</button></div>
+          <div class="resource-body">
+            <div class="seats">${resource.seats.map(seat=>`<div class="seat"><button title="Remove seat" data-remove-seat="${resource.id}|${seat.id}">×</button><strong>${esc(seat.role)}</strong><small>${esc((seatRules[seat.role]||[]).join(" + ")||"No qualification gate")}</small></div>`).join("")}</div>
+            <div class="quick" style="margin-top:10px"><select id="seat-${resource.id}">${Object.keys(seatRules).map(role=>`<option>${esc(role)}</option>`).join("")}</select><button data-add-seat="${resource.id}">Add seat</button></div>
+          </div>
+        </article>`).join(""):`<div class="notice">No resources are active. Select a preset or activate one.</div>`;
+    }
+    function render(){
+      renderMembers(); renderResources();
+      $("resourceCount").textContent=resources.length;
+      $("seatCount").textContent=resources.reduce((n,r)=>n+r.seats.length,0);
+      $("availableCount").textContent=members.filter(m=>m.status==="AVAILABLE"||m.status==="PREFER").length;
+    }
+    function runResolver(){
+      const used=new Set(),output=[];
+      const candidates=[...members].sort((a,b)=>(a.status==="PREFER"?-1:0)-(b.status==="PREFER"?-1:0));
+      for(const resource of resources){
+        for(const seat of resource.seats){
+          const required=seatRules[seat.role]||[];
+          const qualified=candidates.filter(m=>!used.has(m.name)&&(m.status==="AVAILABLE"||m.status==="PREFER")&&required.every(q=>m.quals.includes(q)));
+          const picked=qualified[0];
+          if(picked) used.add(picked.name);
+          const availableQualified=members.filter(m=>required.every(q=>m.quals.includes(q)));
+          let reason=picked?`${picked.status==="PREFER"?"Preferred this coverage; ":""}qualified for ${required.join(" + ")||"the open role"} and was not assigned elsewhere.`:
+            availableQualified.length?`${availableQualified.length} qualified member(s) exist, but each is unavailable, marked DO_NOT, or already seated.`:`No sample member holds every required qualification: ${required.join(" + ")||"none"}.`;
+          output.push({resource:resource.name,role:seat.role,picked,reason});
+        }
+      }
+      $("results").innerHTML=output.map(item=>`<div class="result ${item.picked?"":"open"}"><div><strong>${esc(item.resource)}</strong><div class="muted">${esc(item.role)}</div></div><div><div class="assignment">${esc(item.picked?.name||"OPEN")}</div><div class="reason">${esc(item.reason)}</div></div></div>`).join("");
+      $("openCount").textContent=output.filter(x=>!x.picked).length;
+      $("resultsPanel").classList.remove("hidden");
+      $("resultsPanel").scrollIntoView({behavior:"smooth",block:"start"});
+    }
+
+    $("preset").innerHTML=Object.keys(presets).map(name=>`<option>${esc(name)}</option>`).join("");
+    $("applyPreset").onclick=()=>loadPreset($("preset").value);
+    $("reset").onclick=()=>{members.forEach((m,i)=>m.status=["PREFER","AVAILABLE","AVAILABLE","AVAILABLE","AVAILABLE","UNAVAILABLE","AVAILABLE","DO_NOT"][i]);$("preset").value="Normal shift";loadPreset("Normal shift")};
+    $("addResource").onclick=()=>{const type=$("resourceType").value;const name=$("resourceName").value.trim()||`${type} ${resources.length+1}`;resources.push(makeResource(name,type));$("resourceName").value="";$("resultsPanel").classList.add("hidden");render()};
+    $("runResolver").onclick=runResolver;
+    document.body.addEventListener("change",event=>{const index=event.target.dataset.member;if(index!==undefined){members[Number(index)].status=event.target.value;$("resultsPanel").classList.add("hidden");render()}});
+    document.body.addEventListener("click",event=>{
+      const removeResource=event.target.dataset.removeResource;
+      if(removeResource){resources=resources.filter(r=>r.id!==removeResource);$("resultsPanel").classList.add("hidden");render();return}
+      const removeSeat=event.target.dataset.removeSeat;
+      if(removeSeat){const [resourceId,seatId]=removeSeat.split("|");const resource=resources.find(r=>r.id===resourceId);resource.seats=resource.seats.filter(s=>s.id!==seatId);$("resultsPanel").classList.add("hidden");render();return}
+      const addSeat=event.target.dataset.addSeat;
+      if(addSeat){const resource=resources.find(r=>r.id===addSeat);resource.seats.push({id:crypto.randomUUID(),role:$(`seat-${addSeat}`).value});$("resultsPanel").classList.add("hidden");render()}
+    });
+    loadPreset("Normal shift");
+  </script>
+</body>
+</html>
