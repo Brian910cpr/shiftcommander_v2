@@ -259,6 +259,27 @@ def validate_auth_json_body():
 
 
 @app.before_request
+def require_durable_authentication():
+    if not AUTH_STORE or request.method == "OPTIONS" or request.endpoint is None:
+        return None
+    if request.endpoint in {"api_login", "testing_members", "testing_login_as_member"}:
+        return auth_json_error("Testing login is unavailable with durable authentication", 404)
+    # Public entry points are explicit. New application routes require a session
+    # even when a handler has no role decorator. Role/ownership checks still run.
+    if request.endpoint in {
+        "auth_login", "auth_session", "auth_beta_session", "auth_logout",
+        "login_html_page", "login_member_page", "login_supervisor_page", "login_shortcut",
+        "health", "health_malformed_render_path",
+    }:
+        return None
+    if not current_auth()["authenticated"]:
+        if request.path.startswith("/api/") or request.method not in {"GET", "HEAD"}:
+            return jsonify({"error": "Authentication required", "code": "authentication_required"}), 401
+        # Do not reflect tokens or other request query values into login URLs.
+        return redirect("/login.html?" + urlencode({"next": request.path}))
+
+
+@app.before_request
 def restrict_temporary_password_session():
     if not AUTH_STORE or request.method == "OPTIONS":
         return None
@@ -268,6 +289,7 @@ def restrict_temporary_password_session():
         "auth_login", "auth_session", "auth_beta_session", "auth_logout",
         "auth_change_password", "auth_change_password_alias", "password_change_page",
         "login_html_page", "login_member_page", "login_supervisor_page", "login_shortcut",
+        "health", "health_malformed_render_path",
     }:
         return None
     if password_change_required(current_auth()):
@@ -280,6 +302,14 @@ def restrict_temporary_password_session():
         return redirect("/change-password")
 
 
+@app.before_request
+def disable_durable_static_directory():
+    # Durable clients use the reviewed /docs UI and protected APIs. Flask's
+    # generic static directory must not become a second raw-data serving path.
+    if AUTH_STORE and request.endpoint == "static":
+        return ("Not found", 404)
+
+
 @app.errorhandler(AuthStoreError)
 def auth_store_unavailable(error):
     # No paths, credentials, or database internals enter the public response.
@@ -290,15 +320,16 @@ def auth_store_unavailable(error):
 @app.after_request
 def apply_cors_headers(response):
     origin = allowed_request_origin()
-    if AUTH_STORE and (request.path.startswith("/api/auth/") or request.endpoint in {
-        "auth_change_password_alias", "password_change_page", "login_html_page",
-        "login_member_page", "login_supervisor_page",
-    } or response.status_code in {401, 403} or response.headers.get("Location") == "/change-password"):
+    if AUTH_STORE:
+        # Private JSON, HTML, file responses and failures must not outlive logout
+        # in a shared HTTP cache. This is not browser history/storage erasure.
         response.headers["Cache-Control"] = "no-store"
         response.headers["Referrer-Policy"] = "no-referrer"
     if request.path.startswith("/api/"):
         response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-ShiftCommander-Beta-Session"
+        if AUTH_STORE:
+            response.headers["Access-Control-Allow-Headers"] += ", Authorization"
         response.headers["Access-Control-Allow-Credentials"] = "true"
         if origin:
             response.headers["Access-Control-Allow-Origin"] = origin
@@ -2429,6 +2460,18 @@ def docs_root():
 @app.route("/docs/<path:path>")
 def serve_docs(path):
     lowered = str(path or "").lower()
+    if AUTH_STORE:
+        if lowered == "login.html":
+            return redirect("/login.html")
+        supervisor_pages = {"supervisor.html", "admin.html", "admin_members.html"}
+        member_files = {"index.html", "member.html", "wallboard.html", "shared.js", "styles.css"}
+        if lowered not in member_files | supervisor_pages:
+            # Static snapshots, internal reports and legacy copies cannot bypass
+            # current API authorization or masquerade as current runtime data.
+            return ("Not found", 404)
+        if lowered in supervisor_pages and current_auth()["role"] != "supervisor":
+            return ("Supervisor access required", 403)
+        return send_from_directory(DOCS_DIR, path)
     # Rescue pass: let the Supervisor shell open without a Flask session.
     # Protected write APIs still enforce supervisor auth.
     if lowered in {"admin.html", "admin_members.html"} and current_auth()["role"] != "supervisor":
@@ -2440,6 +2483,8 @@ def serve_docs(path):
 
 @app.route("/debug/<path:path>")
 def serve_debug(path):
+    if AUTH_STORE and current_auth()["role"] != "supervisor":
+        return ("Supervisor access required", 403)
     return send_from_directory(DEBUG_DIR, path)
 
 
@@ -4615,6 +4660,8 @@ def get_schedule_api():
 
 @app.route("/api/bootstrap", methods=["GET"])
 def get_bootstrap():
+    if AUTH_STORE and current_auth()["role"] != "supervisor":
+        return auth_json_error("Supervisor access required", 403)
     schedule = load_schedule_payload()
     members = load_members_payload()
     settings = load_settings()
@@ -4640,6 +4687,8 @@ def get_wallboard_display():
 
 @app.route("/api/schedule_integrity", methods=["GET"])
 def get_schedule_integrity():
+    if AUTH_STORE and current_auth()["role"] != "supervisor":
+        return auth_json_error("Supervisor access required", 403)
     return jsonify(compare_schedule_files())
 
 
@@ -4681,6 +4730,8 @@ SC_UPSTREAM_API_BASE = os.environ.get("SC_UPSTREAM_API_BASE", "https://sc-api.ad
 
 @app.route("/api/sc_proxy", methods=["GET"])
 def sc_proxy_get():
+    if AUTH_STORE and current_auth()["role"] != "supervisor":
+        return auth_json_error("Supervisor access required", 403)
     path = str(request.args.get("path") or "").strip()
     if path not in {"/api/bootstrap", "/api/schedule"}:
         return jsonify({"error": "Unsupported proxy path"}), 400
@@ -4722,15 +4773,27 @@ def health_payload():
     }
 
 
+def public_health_payload():
+    payload = health_payload()  # Retain storage-read validation and 503 failures.
+    if not AUTH_STORE:
+        return payload
+    # Hosting probes do not need filesystem paths, source URLs or member data.
+    # Full store diagnostics remain in the authenticated bootstrap workflow.
+    return {key: payload[key] for key in (
+        "status", "time", "build_code", "quick_test_mode", "demo_supervisor_bypass",
+        "auth_backend", "auth_storage_readable", "state_backend", "state_backend_ready",
+    ) if key in payload}
+
+
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify(health_payload())
+    return jsonify(public_health_payload())
 
 
 @app.route("/ api / health", methods=["GET"])
 def health_malformed_render_path():
     response = jsonify({
-        **health_payload(),
+        **public_health_payload(),
         "warning": "Render health check path contains spaces. Set Health Check Path to /api/health.",
     })
     response.headers["X-ShiftCommander-Health-Path-Warning"] = "Set Render Health Check Path to /api/health"
