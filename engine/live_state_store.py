@@ -447,17 +447,35 @@ class D1BridgeLiveStateStore(FileLiveStateStore):
         if self.fallback_active:
             return fallback()
         result = self._bridge_call(resource, "read")
-        payload = result.get("payload", result.get(resource, result.get("data")))
-        if payload is None:
-            payload = self.RESOURCE_DEFAULTS.get(resource, {})
-        return payload if isinstance(payload, dict) else self.RESOURCE_DEFAULTS.get(resource, {})
+        return self._require_bridge_payload(resource, "read", result)
+
+    def _require_bridge_payload(self, resource: str, operation: str, result: Any) -> Dict[str, Any]:
+        """Do not turn a failed/malformed acknowledgement into empty or saved state."""
+        if not isinstance(result, dict) or result.get("ok") is not True:
+            raise RuntimeError(f"D1 bridge did not confirm success for {resource}/{operation}")
+        field = "transaction" if operation == "append" else "payload"
+        payload = result.get(field)
+        if not isinstance(payload, dict):
+            raise RuntimeError(f"D1 bridge returned invalid {field} for {resource}/{operation}")
+        if operation != "append":
+            collection = {
+                "availability": ("months", dict),
+                "change_requests": ("requests", list),
+                "transactions": ("transactions", list),
+                "supervisor_state": ("entries", list),
+                "assignment_overlays": ("overlays", list),
+            }.get(resource)
+            if collection and not isinstance(payload.get(collection[0]), collection[1]):
+                raise RuntimeError(f"D1 bridge returned invalid payload shape for {resource}/{operation}")
+            if resource == "schedule_locked" and "shifts" in payload and not isinstance(payload["shifts"], list):
+                raise RuntimeError(f"D1 bridge returned invalid payload shape for {resource}/{operation}")
+        return payload
 
     def _bridge_write(self, resource: str, payload: Dict[str, Any], fallback: Callable[[], Any]) -> Dict[str, Any]:
         if self.fallback_active:
             return fallback()
         result = self._bridge_call(resource, "write", {"payload": payload})
-        saved = result.get("payload", result.get(resource, result.get("data", payload)))
-        return saved if isinstance(saved, dict) else payload
+        return self._require_bridge_payload(resource, "write", result)
 
     def load_availability(self) -> Dict[str, Any]:
         return self._bridge_read("availability", super().load_availability)
@@ -481,8 +499,7 @@ class D1BridgeLiveStateStore(FileLiveStateStore):
         if self.fallback_active:
             return super().append_transaction(transaction)
         result = self._bridge_call("transactions", "append", {"transaction": transaction})
-        saved = result.get("transaction", transaction)
-        return saved if isinstance(saved, dict) else transaction
+        return self._require_bridge_payload("transactions", "append", result)
 
     def load_supervisor_state(self) -> Dict[str, Any]:
         return self._bridge_read("supervisor_state", super().load_supervisor_state)

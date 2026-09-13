@@ -1,6 +1,8 @@
 import { handleLiveStateBridge } from "../src/liveStateBridge.js";
 
+let assertions = 0;
 function assert(condition, message) {
+  assertions += 1;
   if (!condition) {
     throw new Error(message);
   }
@@ -24,7 +26,7 @@ function makeFakeD1() {
           if (sql.includes("FROM live_state_documents")) {
             const [documentKey] = this.values;
             const payload = documents.get(documentKey);
-            return payload ? { payload_json: payload } : null;
+            return documents.has(documentKey) ? { payload_json: payload } : null;
           }
           return null;
         },
@@ -163,4 +165,58 @@ response = await post("/api/live-state/transactions/read", {}, "bridge-secret", 
 payload = await readJson(response);
 assert(payload.payload.transactions[0].id === "tx_1", "transaction document readback mismatch");
 
-console.log("Live-state bridge smoke test passed.");
+const resourceCases = [
+  ["availability", availability, { months: {} }, [{}, { months: null }, { months: [] }, { months: "bad" }]],
+  ["change_requests", changeRequests, { requests: [] }, [{}, { requests: null }, { requests: {} }]],
+  ["supervisor_state", supervisorState, { entries: [] }, [{}, { entries: null }, { entries: {} }]],
+  ["schedule_locked", scheduleLocked, {}, [{ shifts: null }, { shifts: {} }]],
+  ["assignment_overlays", overlays, { overlays: [] }, [{}, { overlays: null }, { overlays: {} }]],
+  ["transactions", { transactions: [transaction] }, { transactions: [] }, [{}, { transactions: null }, { transactions: {} }]],
+];
+
+for (const [resource, valid, empty, invalidShapes] of resourceCases) {
+  const testDb = makeFakeD1();
+  const testEnv = { ...env, DB: testDb };
+  response = await post(`/api/live-state/${resource}/read`, {}, "bridge-secret", testEnv);
+  payload = await readJson(response);
+  assert(response.status === 200 && payload.ok, `${resource}: absent document must initialize successfully`);
+  assert(testDb.documents.size === 0, `${resource}: read must not persist an initialization`);
+
+  const withMetadata = { ...valid, provenance: { source: "synthetic-regression" } };
+  response = await post(`/api/live-state/${resource}/write`, { payload: withMetadata }, "bridge-secret", testEnv);
+  assert(response.status === 200, `${resource}: valid payload rejected`);
+  const before = testDb.documents.get(resource);
+  assert(before === JSON.stringify(withMetadata), `${resource}: supported data or extra metadata changed`);
+
+  for (const invalid of [null, [], "invalid", ...invalidShapes]) {
+    response = await post(`/api/live-state/${resource}/write`, { payload: invalid }, "bridge-secret", testEnv);
+    assert(response.status === 400, `${resource}: malformed write must return 400`);
+    assert(testDb.documents.get(resource) === before, `${resource}: rejected write changed stored data`);
+  }
+
+  for (const corrupt of ["not-json-private-sentinel", "", "null", "[]", ...invalidShapes.map(JSON.stringify)]) {
+    testDb.documents.set(resource, corrupt);
+    response = await post(`/api/live-state/${resource}/read`, {}, "bridge-secret", testEnv);
+    payload = await readJson(response);
+    assert(response.status === 500 && payload.ok === false, `${resource}: corruption must fail visibly`);
+    assert(!("payload" in payload), `${resource}: corruption must not return an empty success payload`);
+    assert(!JSON.stringify(payload).includes("private-sentinel"), `${resource}: error leaked stored data`);
+    assert(testDb.documents.get(resource) === corrupt, `${resource}: read overwrote corrupt evidence`);
+  }
+
+  // Explicit empty collections remain legal; valid recovery is still possible.
+  response = await post(`/api/live-state/${resource}/write`, { payload: empty }, "bridge-secret", testEnv);
+  assert(response.status === 200, `${resource}: explicit empty payload rejected`);
+  response = await post(`/api/live-state/${resource}/read`, {}, "bridge-secret", testEnv);
+  payload = await readJson(response);
+  assert(JSON.stringify(payload.payload) === JSON.stringify(empty), `${resource}: empty recovery readback mismatch`);
+}
+
+db.documents.set("transactions", "corrupt-audit-private-sentinel");
+const rowsBeforeAppend = db.transactions.size;
+response = await post("/api/live-state/transactions/append", { transaction: { ...transaction, id: "tx_blocked" } }, "bridge-secret", env);
+assert(response.status === 500, "append over corrupt audit history must fail");
+assert(db.transactions.size === rowsBeforeAppend, "failed append inserted a transaction row");
+assert(db.documents.get("transactions") === "corrupt-audit-private-sentinel", "failed append erased audit evidence");
+
+console.log(`Live-state bridge smoke test passed (${assertions} assertions).`);
