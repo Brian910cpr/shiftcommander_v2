@@ -258,6 +258,28 @@ def validate_auth_json_body():
                 return auth_json_error("Password fields must be strings", 400)
 
 
+@app.before_request
+def restrict_temporary_password_session():
+    if not AUTH_STORE or request.method == "OPTIONS":
+        return None
+    # Apply to every application route, including ones without role decorators.
+    # The recovery surface stays usable; no staffing authority is granted here.
+    if request.endpoint in {
+        "auth_login", "auth_session", "auth_beta_session", "auth_logout",
+        "auth_change_password", "auth_change_password_alias", "password_change_page",
+        "login_html_page", "login_member_page", "login_supervisor_page", "login_shortcut",
+    }:
+        return None
+    if password_change_required(current_auth()):
+        if request.path.startswith("/api/") or request.method not in {"GET", "HEAD"}:
+            return jsonify({
+                "error": "Change your temporary password before continuing",
+                "code": "password_change_required", "must_change_password": True,
+                "auth_scope": "password_change", "redirect": "/change-password",
+            }), 403
+        return redirect("/change-password")
+
+
 @app.errorhandler(AuthStoreError)
 def auth_store_unavailable(error):
     # No paths, credentials, or database internals enter the public response.
@@ -268,6 +290,12 @@ def auth_store_unavailable(error):
 @app.after_request
 def apply_cors_headers(response):
     origin = allowed_request_origin()
+    if AUTH_STORE and (request.path.startswith("/api/auth/") or request.endpoint in {
+        "auth_change_password_alias", "password_change_page", "login_html_page",
+        "login_member_page", "login_supervisor_page",
+    } or response.status_code in {401, 403} or response.headers.get("Location") == "/change-password"):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Referrer-Policy"] = "no-referrer"
     if request.path.startswith("/api/"):
         response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-ShiftCommander-Beta-Session"
@@ -727,6 +755,22 @@ def auth_json_error(message, status_code=401):
     return jsonify({"error": message}), status_code
 
 
+def password_change_required(auth):
+    if not AUTH_STORE or not auth.get("authenticated"):
+        return False
+    subject = "member:" + auth["member_id"] if auth.get("member_id") else "supervisor"
+    # Read current durable authority, never a client claim or token snapshot.
+    entry = AUTH_STORE.entry(AUTH_STORE.load_users(), subject)
+    if not entry:
+        raise AuthStoreError("Credential subject is no longer available")
+    return bool(entry.get("must_change_password", False))
+
+
+def password_session_fields(auth):
+    required = password_change_required(auth)
+    return {"must_change_password": required, "auth_scope": "password_change" if required else "full"}
+
+
 def quick_test_mode_enabled():
     return SC_QUICK_TEST_MODE
 
@@ -1058,7 +1102,7 @@ def append_beta_token_to_redirect(redirect_to, token):
 def member_login_success_payload(member_id, redirect_to="/member"):
     member = member_record_by_id(member_id)
     token = create_beta_session_token(member_id)
-    return {
+    payload = {
         "status": "ok",
         "authenticated": True,
         "role": beta_role_for_member(member),
@@ -1072,6 +1116,12 @@ def member_login_success_payload(member_id, redirect_to="/member"):
         "session_token": token,
         "beta_auth_bridge": True,
     }
+    if AUTH_STORE:
+        payload.update(password_session_fields(payload))
+        if payload["must_change_password"]:
+            # Do not put a restricted bearer credential in a redirect URL.
+            payload["redirect"] = "/change-password"
+    return payload
 
 
 def default_quick_test_member_id():
@@ -2432,6 +2482,8 @@ def login_shortcut():
 
 @app.route("/login.html")
 def login_html_page():
+    if AUTH_STORE:
+        return login_page_html("member", request.args.get("next", "/member"))
     return send_from_directory(DOCS_DIR, "login.html")
 
 
@@ -2444,6 +2496,48 @@ def login_supervisor_page():
 def login_member_page():
     next_url = request.args.get("next", "/member")
     return redirect(f"/login.html?next={next_url}")
+
+
+def password_change_page_html(error=""):
+    return render_template_string("""
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Change password | ShiftCommander</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;padding:24px;min-height:100vh;display:grid;place-items:center;background:#08111f;color:#eef4ff;font-family:Arial,Helvetica,sans-serif}
+    main{width:100%;max-width:440px;padding:24px;border:1px solid #243754;border-radius:16px;background:#0f1b2d}
+    h1{margin-top:0}p{line-height:1.5;color:#bdcbe2}form{display:grid;gap:12px}input,button{font:inherit;min-height:44px;border-radius:8px;padding:10px;border:1px solid #556b8b}
+    input{width:100%;background:#16243a;color:#fff}button{background:#345d96;color:#fff;cursor:pointer}.error{color:#ffb6b6}a{color:#b5d7ff}
+  </style>
+</head>
+<body><main>
+  <h1>Change your password</h1>
+  <p>Choose a new password of at least 8 characters. After saving, sign in again with your new password to continue.</p>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="/api/auth/change_password">
+    <label for="current_password">Current password</label>
+    <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+    <label for="new_password">New password</label>
+    <input id="new_password" name="new_password" type="password" autocomplete="new-password" minlength="8" required>
+    <label for="confirm_password">Confirm new password</label>
+    <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" minlength="8" required>
+    <button type="submit">Save password</button>
+  </form>
+  <p><a href="/login.html">Sign in with a different account</a></p>
+</main></body></html>
+    """, error=error)
+
+
+@app.route("/change-password", methods=["GET"])
+@require_role("member")
+def password_change_page():
+    if not AUTH_STORE:
+        return auth_json_error("Not found", 404)
+    return password_change_page_html()
 
 
 # =========================
@@ -2469,6 +2563,8 @@ def auth_session():
         member = current_member_record()
         if member:
             payload["member_name"] = member.get("name") or f"Member {auth['member_id']}"
+    if AUTH_STORE and auth["authenticated"]:
+        payload.update(password_session_fields(auth))
     return jsonify(payload)
 
 
@@ -2479,6 +2575,12 @@ def auth_beta_session():
     if not session_payload:
         return auth_json_error("Invalid or expired beta session", 401)
     session_payload.pop("_session_id", None)
+    if AUTH_STORE:
+        session_payload.update(password_session_fields(session_payload))
+        if session_payload["must_change_password"]:
+            # Clients receive a restricted identity, not a full member profile.
+            session_payload.pop("member", None)
+            session_payload["redirect"] = "/change-password"
     return jsonify(session_payload)
 
 
@@ -2576,8 +2678,14 @@ def auth_login():
                 return auth_json_error("Invalid supervisor password", 401)
             return redirect("/login/supervisor?error=Invalid+password")
         start_supervisor_session(stored_hash)
+        fields = password_session_fields({"authenticated": True, "member_id": None}) if AUTH_STORE else {}
         if request.is_json:
-            return jsonify({"status": "ok", "role": "supervisor"})
+            response = {"status": "ok", "role": "supervisor", **fields}
+            if fields.get("must_change_password"):
+                response["redirect"] = "/change-password"
+            return jsonify(response)
+        if fields.get("must_change_password"):
+            return redirect("/change-password")
         return redirect(next_url or "/docs/supervisor.html")
 
     if role == "member":
@@ -2604,6 +2712,8 @@ def auth_login():
             response["auth_mode"] = "real_login"
             response["quick_test_mode"] = quick_test_mode_enabled()
             return jsonify(response)
+        if password_change_required({"authenticated": True, "member_id": member_id}):
+            return redirect("/change-password")
         return redirect(next_url or "/docs/member.html")
 
     return auth_json_error("Unsupported login role", 400) if request.is_json else redirect("/login/member?error=Unsupported+role")
@@ -2621,16 +2731,30 @@ def auth_logout():
 @app.route("/api/auth/change_password", methods=["POST"])
 @require_role("member")
 def auth_change_password():
-    payload = request.get_json(silent=True) or {}
+    payload = (request.form if AUTH_STORE and not request.is_json else request.get_json(silent=True)) or {}
+    def invalid(message):
+        if AUTH_STORE and not request.is_json:
+            return password_change_page_html(message), 400
+        return auth_json_error(message, 400)
+
+    def changed():
+        if AUTH_STORE:
+            session.clear()
+            target = "/login/supervisor" if auth["role"] == "supervisor" and not auth.get("member_id") else "/login.html"
+            if not request.is_json:
+                return redirect(target, code=303)
+            return jsonify({"status": "ok", "reauthentication_required": True, "redirect": target})
+        return jsonify({"status": "ok"})
+
     current_password = str(payload.get("current_password") or "")
     new_password = str(payload.get("new_password") or "")
     confirm_password = str(payload.get("confirm_password") or "")
     if not current_password or not new_password or not confirm_password:
-        return auth_json_error("All password fields are required", 400)
+        return invalid("All password fields are required")
     if new_password != confirm_password:
-        return auth_json_error("New password and confirmation do not match", 400)
+        return invalid("New password and confirmation do not match")
     if len(new_password) < 8:
-        return auth_json_error("New password must be at least 8 characters", 400)
+        return invalid("New password must be at least 8 characters")
 
     auth = current_auth()
     auth_users = load_auth_users()
@@ -2642,27 +2766,29 @@ def auth_change_password():
             or (not AUTH_STORE and env_override_password() and hmac.compare_digest(current_password, env_override_password()))
         )
         if not valid:
-            return auth_json_error("Current password is incorrect", 400)
+            return invalid("Current password is incorrect")
+        if AUTH_STORE and auth_users["supervisor"].get("must_change_password") and new_password == current_password:
+            return invalid("Choose a password different from your temporary password")
         auth_users["supervisor"]["password_hash"] = hash_password(new_password)
+        if AUTH_STORE:
+            auth_users["supervisor"]["must_change_password"] = False
         auth_users["supervisor"]["updated_at"] = now_iso()
         save_auth_users(auth_users, action="password_changed")
-        if AUTH_STORE:
-            session.clear()
-        return jsonify({"status": "ok"})
+        return changed()
 
     member_id = auth["member_id"]
     member_entry = auth_users.get("members", {}).get(member_id, {})
     stored_hash = member_entry.get("password_hash")
     if not stored_hash or not verify_password(current_password, stored_hash):
-        return auth_json_error("Current password is incorrect", 400)
+        return invalid("Current password is incorrect")
+    if AUTH_STORE and member_entry.get("must_change_password") and new_password == current_password:
+        return invalid("Choose a password different from your temporary password")
     member_entry["password_hash"] = hash_password(new_password)
     member_entry["must_change_password"] = False
     member_entry["updated_at"] = now_iso()
     auth_users["members"][member_id] = member_entry
     save_auth_users(auth_users, action="password_changed")
-    if AUTH_STORE:
-        session.clear()
-    return jsonify({"status": "ok"})
+    return changed()
 
 
 @app.route("/api/change-password", methods=["POST"])
