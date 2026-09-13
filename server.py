@@ -14,7 +14,7 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta, UTC
 from functools import wraps
 from zoneinfo import ZoneInfo
-from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
+from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response, g, has_request_context
 from urllib.parse import parse_qsl, unquote, urlencode, urlparse, urlunparse
 from engine.display_normalizer import normalize_wallboard_display
 from engine.member_dashboard import build_member_dashboard
@@ -38,6 +38,7 @@ from engine.open_shift_bid_review import (
     member_cert,
 )
 from engine.live_state_store import create_live_state_store
+from engine.auth_store import AuthStore, AuthStoreError
 
 SERVER_IMPORT_STARTED = time.perf_counter()
 
@@ -76,6 +77,7 @@ SHIFT_CHANGE_REQUESTS_FILE = os.path.join(DATA_DIR, "shift_change_requests.json"
 SUPERVISOR_STATE_FILE = os.path.join(DATA_DIR, "supervisor_state.json")
 LIVE_BETA_TRANSACTIONS_FILE = os.path.join(DATA_DIR, "live_beta_transactions.json")
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
+AUTH_STORE = AuthStore(os.environ["SC_AUTH_DB_PATH"]) if os.environ.get("SC_AUTH_DB_PATH") else None
 CALENDAR_MARKERS_FILE = os.path.join(DATA_DIR, "calendar_markers.json")
 PUBLIC_CALENDAR_MARKERS_FILE = os.path.join(DOCS_DIR, "data", "calendar_markers.json")
 
@@ -157,6 +159,13 @@ def parse_csv_env(name, default_values):
 
 SC_QUICK_TEST_MODE = env_flag("SC_QUICK_TEST_MODE", False)
 SC_DEMO_SUPERVISOR_BYPASS = env_flag("SC_DEMO_SUPERVISOR_BYPASS", SC_QUICK_TEST_MODE)
+if AUTH_STORE:
+    if len(os.environ.get("SECRET_KEY", "")) < 32 or app.secret_key == "shiftcommander-local-dev-secret-key":
+        raise AuthStoreError("Durable authentication requires an explicit signing secret of at least 32 characters")
+    if SC_QUICK_TEST_MODE or SC_DEMO_SUPERVISOR_BYPASS:
+        raise AuthStoreError("Durable authentication cannot run with development authentication bypasses")
+    AUTH_STORE.load_users()  # Refuse missing/uninitialized storage before serving.
+    app.config["SESSION_COOKIE_SECURE"] = True
 SC_ALLOWED_ORIGINS = parse_csv_env(
     "SC_ALLOWED_ORIGINS",
     [
@@ -237,6 +246,13 @@ def validate_auth_json_body():
     if auth_path and request.method == "POST" and request.is_json:
         if not isinstance(request.get_json(silent=True), dict):
             return auth_json_error("JSON object required", 400)
+
+
+@app.errorhandler(AuthStoreError)
+def auth_store_unavailable(error):
+    # No paths, credentials, or database internals enter the public response.
+    app.logger.error("Authentication storage operation failed")
+    return auth_json_error("Authentication temporarily unavailable; retry after recovery", 503)
 
 
 @app.after_request
@@ -600,6 +616,10 @@ def env_override_password():
 
 
 def load_auth_users():
+    if AUTH_STORE:
+        data = AUTH_STORE.load_users()
+        g.auth_users_snapshot = deepcopy(data)
+        return data
     data = load_json(AUTH_USERS_FILE, {"supervisor": {}, "members": {}})
     if not isinstance(data, dict):
         data = {"supervisor": {}, "members": {}}
@@ -611,6 +631,10 @@ def load_auth_users():
 
 
 def save_auth_users(data):
+    if AUTH_STORE:
+        AUTH_STORE.save_users(data, expected=g.auth_users_snapshot)
+        g.auth_users_snapshot = deepcopy(data)
+        return
     if not isinstance(data, dict):
         data = {"supervisor": {}, "members": {}}
     data.setdefault("supervisor", {})
@@ -620,6 +644,9 @@ def save_auth_users(data):
 
 def sync_auth_members():
     auth_users = load_auth_users()
+    if AUTH_STORE:
+        # Provisioning is explicit. A stale roster must not erase credentials.
+        return auth_users
     members = load_members_payload().get("members", [])
     current_ids = {str(member.get("member_id", member.get("id"))) for member in members if member.get("member_id", member.get("id")) not in (None, "")}
     for member_id in current_ids:
@@ -644,6 +671,10 @@ def current_auth():
     if demo_supervisor_bypass_enabled() and quick_test_request_is_local():
         return {"authenticated": True, "role": "supervisor", "member_id": None}
     role = session.get("auth_role")
+    if AUTH_STORE:
+        subject = "member:" + str(session.get("member_id") or "") if role == "member" else "supervisor"
+        if not AUTH_STORE.valid_session(session.get("auth_session_id"), subject, int(time.time())):
+            return anonymous
     if role in {"supervisor", "admin"}:
         return {"authenticated": True, "role": role, "member_id": None, "email": str(session.get("auth_email") or "").strip().lower() or None}
     if role == "member":
@@ -760,6 +791,8 @@ def quick_test_supervisor_allowed():
 
 
 def local_testing_login_allowed():
+    if AUTH_STORE:
+        return False
     if quick_test_mode_enabled():
         return True
     host = str(request.host or "").split(":", 1)[0].strip().lower()
@@ -851,15 +884,21 @@ def member_record_by_email(email):
     )
 
 
-def start_member_session(member_id):
+def start_member_session(member_id, verified_hash=None):
+    session_id = AUTH_STORE.issue_session("member:" + str(member_id), verified_hash, int(time.time())) if AUTH_STORE else None
     session.clear()
     session["auth_role"] = "member"
     session["member_id"] = str(member_id or "").strip()
+    if session_id:
+        session["auth_session_id"] = session_id
 
 
-def start_supervisor_session():
+def start_supervisor_session(verified_hash=None):
+    session_id = AUTH_STORE.issue_session("supervisor", verified_hash, int(time.time())) if AUTH_STORE else None
     session.clear()
     session["auth_role"] = "supervisor"
+    if session_id:
+        session["auth_session_id"] = session_id
 
 
 def beta_session_token_secret():
@@ -900,6 +939,9 @@ def create_beta_session_token(member_id, lifetime_seconds=12 * 60 * 60):
     member = member_record_by_id(member_id)
     if not member or member.get("active") is False:
         return None
+    session_id = session.get("auth_session_id") if has_request_context() else None
+    if AUTH_STORE and not AUTH_STORE.valid_session(session_id, "member:" + str(member_id), int(time.time())):
+        return None
     now = int(time.time())
     payload = {
         "typ": "shiftcommander-beta-session",
@@ -911,6 +953,8 @@ def create_beta_session_token(member_id, lifetime_seconds=12 * 60 * 60):
         "name": member.get("name") or f"Member {member_id}",
         "role": beta_role_for_member(member),
     }
+    if AUTH_STORE:
+        payload["sid"] = session_id
     payload_b64 = base64url_encode(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"))
     sig = hmac.new(beta_session_token_secret(), payload_b64.encode("utf-8"), hashlib.sha256).digest()
     return f"{payload_b64}.{base64url_encode(sig)}"
@@ -946,6 +990,8 @@ def verify_beta_session_token(token):
     member = member_record_by_id(payload.get("member_id"))
     if not member or member.get("active") is False:
         return None
+    if AUTH_STORE and not AUTH_STORE.valid_session(payload.get("sid"), "member:" + str(payload.get("member_id")), int(time.time())):
+        return None
     email = str(payload.get("email") or member_auth_email(member) or "").strip().lower()
     return {
         "authenticated": True,
@@ -958,6 +1004,7 @@ def verify_beta_session_token(token):
         "beta_auth_bridge": True,
         "expires_at": expires_at,
         "build_code": BUILD_CODE,
+        "_session_id": payload.get("sid") if AUTH_STORE else None,
     }
 
 
@@ -2419,6 +2466,7 @@ def auth_beta_session():
     session_payload = verify_beta_session_token(payload.get("token"))
     if not session_payload:
         return auth_json_error("Invalid or expired beta session", 401)
+    session_payload.pop("_session_id", None)
     return jsonify(session_payload)
 
 
@@ -2472,6 +2520,8 @@ def testing_login_as_member():
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
+    if AUTH_STORE:
+        return auth_json_error("Testing login is unavailable with durable authentication", 404)
     payload = request.get_json(silent=True) or request.form or {}
     username = str(payload.get("username") or payload.get("email") or "").strip().lower()
     password = str(payload.get("password") or "").strip()
@@ -2502,14 +2552,14 @@ def auth_login():
         stored_hash = auth_users.get("supervisor", {}).get("password_hash")
         valid = (
             (stored_hash and verify_password(password, stored_hash))
-            or (env_supervisor_password() and hmac.compare_digest(password, env_supervisor_password()))
-            or (env_override_password() and hmac.compare_digest(password, env_override_password()))
+            or (not AUTH_STORE and env_supervisor_password() and hmac.compare_digest(password, env_supervisor_password()))
+            or (not AUTH_STORE and env_override_password() and hmac.compare_digest(password, env_override_password()))
         )
         if not valid:
             if request.is_json:
                 return auth_json_error("Invalid supervisor password", 401)
             return redirect("/login/supervisor?error=Invalid+password")
-        start_supervisor_session()
+        start_supervisor_session(stored_hash)
         if request.is_json:
             return jsonify({"status": "ok", "role": "supervisor"})
         return redirect(next_url or "/docs/supervisor.html")
@@ -2531,7 +2581,7 @@ def auth_login():
             if request.is_json:
                 return auth_json_error("Invalid member password", 401)
             return redirect("/login/member?error=Invalid+credentials")
-        start_member_session(member_id)
+        start_member_session(member_id, stored_hash)
         if request.is_json:
             response = member_login_success_payload(member_id, next_url or "/member")
             response["build_code"] = BUILD_CODE
@@ -2545,6 +2595,9 @@ def auth_login():
 
 @app.route("/api/auth/logout", methods=["POST"])
 def auth_logout():
+    if AUTH_STORE:
+        token_auth = verify_beta_session_token(beta_token_from_request())
+        AUTH_STORE.revoke_sessions([session.get("auth_session_id"), (token_auth or {}).get("_session_id")])
     session.clear()
     return jsonify({"status": "ok"})
 
@@ -2565,18 +2618,20 @@ def auth_change_password():
 
     auth = current_auth()
     auth_users = load_auth_users()
-    if auth["role"] == "supervisor":
+    if auth["role"] == "supervisor" and (not AUTH_STORE or not auth.get("member_id")):
         stored_hash = auth_users.get("supervisor", {}).get("password_hash")
         valid = (
             (stored_hash and verify_password(current_password, stored_hash))
-            or (env_supervisor_password() and hmac.compare_digest(current_password, env_supervisor_password()))
-            or (env_override_password() and hmac.compare_digest(current_password, env_override_password()))
+            or (not AUTH_STORE and env_supervisor_password() and hmac.compare_digest(current_password, env_supervisor_password()))
+            or (not AUTH_STORE and env_override_password() and hmac.compare_digest(current_password, env_override_password()))
         )
         if not valid:
             return auth_json_error("Current password is incorrect", 400)
         auth_users["supervisor"]["password_hash"] = hash_password(new_password)
         auth_users["supervisor"]["updated_at"] = now_iso()
         save_auth_users(auth_users)
+        if AUTH_STORE:
+            session.clear()
         return jsonify({"status": "ok"})
 
     member_id = auth["member_id"]
@@ -2589,6 +2644,8 @@ def auth_change_password():
     member_entry["updated_at"] = now_iso()
     auth_users["members"][member_id] = member_entry
     save_auth_users(auth_users)
+    if AUTH_STORE:
+        session.clear()
     return jsonify({"status": "ok"})
 
 
@@ -4507,12 +4564,16 @@ def sc_proxy_get():
 # =========================
 
 def health_payload():
+    if AUTH_STORE:
+        AUTH_STORE.load_users()
     return {
         "status": "ok",
         "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "build_code": BUILD_CODE,
         "quick_test_mode": SC_QUICK_TEST_MODE,
         "demo_supervisor_bypass": demo_supervisor_bypass_enabled(),
+        "auth_backend": "sqlite" if AUTH_STORE else "legacy_file",
+        "auth_storage_readable": True if AUTH_STORE else None,
         **LIVE_STATE_STORE.store_diagnostics(),
     }
 
