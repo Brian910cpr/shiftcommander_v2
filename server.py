@@ -15,7 +15,7 @@ from datetime import date, datetime, timedelta, UTC
 from functools import wraps
 from zoneinfo import ZoneInfo
 from flask import Flask, request, jsonify, send_from_directory, redirect, session, render_template_string, Response
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qsl, unquote, urlencode, urlparse, urlunparse
 from engine.display_normalizer import normalize_wallboard_display
 from engine.member_dashboard import build_member_dashboard
 from engine.schedule_lifecycle import (
@@ -194,6 +194,49 @@ SC_FLASK_DEBUG = env_flag("FLASK_DEBUG", False)
 def handle_api_options_preflight():
     if request.method == "OPTIONS" and request.path.startswith("/api/"):
         return ("", 204)
+
+
+@app.before_request
+def protect_api_browser_writes():
+    if request.method in {"GET", "HEAD", "OPTIONS"} or not request.path.startswith("/api/"):
+        return None
+    # Credential exchange/logout must remain usable with a stale client token.
+    # These endpoints validate fresh credentials or clear the cookie; they do
+    # not use the previous cookie/token to authorize a staffing write.
+    credential_endpoint = request.endpoint in {
+        "auth_login", "api_login", "testing_login_as_member", "auth_beta_session", "auth_logout",
+    }
+    # Other explicit tokens never fall back to cookie authority. Non-browser
+    # token clients need no CSRF header.
+    if beta_token_from_request() is not None and not credential_endpoint:
+        if not beta_auth_from_request():
+            return auth_json_error("Invalid or expired beta session", 401)
+        return None
+    origin = request.headers.get("Origin")
+    if origin is not None:
+        if not trusted_auth_origin(origin):
+            return auth_json_error("Untrusted request origin", 403)
+        return None
+    referer = request.headers.get("Referer")
+    if referer:
+        if not trusted_auth_origin(referer, allow_path=True):
+            return auth_json_error("Untrusted request origin", 403)
+        return None
+    if request.cookies.get(app.config["SESSION_COOKIE_NAME"]) or request.mimetype in {
+        "application/x-www-form-urlencoded", "multipart/form-data", "text/plain",
+    }:
+        return auth_json_error("Request origin required", 403)
+    return None
+
+
+@app.before_request
+def validate_auth_json_body():
+    auth_path = request.path.startswith("/api/auth/") or request.path in {
+        "/api/login", "/api/change-password", "/api/testing/login_as_member",
+    }
+    if auth_path and request.method == "POST" and request.is_json:
+        if not isinstance(request.get_json(silent=True), dict):
+            return auth_json_error("JSON object required", 400)
 
 
 @app.after_request
@@ -595,6 +638,9 @@ def current_auth():
     beta_auth = beta_auth_from_request()
     if beta_auth:
         return beta_auth
+    anonymous = {"authenticated": False, "role": None, "member_id": None, "email": None}
+    if beta_token_from_request() is not None:
+        return anonymous
     if demo_supervisor_bypass_enabled() and quick_test_request_is_local():
         return {"authenticated": True, "role": "supervisor", "member_id": None}
     role = session.get("auth_role")
@@ -608,7 +654,7 @@ def current_auth():
             # ID tokens server-side before creating this session in production.
             member = member_record_by_email(auth_email)
             if member is None:
-                return {"authenticated": True, "role": "member", "member_id": None, "email": auth_email}
+                return anonymous
             if member_has_supervisor_access(member):
                 return {
                     "authenticated": True,
@@ -622,9 +668,12 @@ def current_auth():
                 "member_id": str(member.get("member_id", member.get("id")) or "").strip() or None,
                 "email": auth_email,
             }
+        member = member_record_by_id(session.get("member_id"))
+        if not member or member.get("active") is False:
+            return anonymous
         return {
             "authenticated": True,
-            "role": "member",
+            "role": beta_role_for_member(member),
             "member_id": str(session.get("member_id") or "").strip() or None,
             "email": None,
         }
@@ -670,6 +719,38 @@ def allowed_request_origin():
     if origin == host_origin or origin in SC_ALLOWED_ORIGINS:
         return origin
     return None
+
+
+def trusted_auth_origin(value, allow_path=False):
+    value = str(value or "")
+    if "\\" in value or any(ord(char) <= 32 or ord(char) == 127 for char in value):
+        return False
+    try:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.username or parsed.password:
+            return False
+        origin = f"{parsed.scheme}://{parsed.netloc}".lower()
+        if not allow_path and (parsed.path not in {"", "/"} or parsed.query or parsed.fragment):
+            return False
+    except ValueError:
+        return False
+    allowed_origins = {item.lower().rstrip("/") for item in SC_ALLOWED_ORIGINS}
+    allowed_origins.add(request.host_url.rstrip("/").lower())
+    return origin in allowed_origins
+
+
+def safe_login_redirect(value, default="/member"):
+    value = str(value or "").strip()
+    decoded = unquote(value)
+    if not value or "\\" in decoded or any(ord(char) <= 32 or ord(char) == 127 for char in decoded):
+        return default
+    try:
+        parsed = urlparse(value)
+    except ValueError:
+        return default
+    if not parsed.scheme and not parsed.netloc:
+        return value if decoded.startswith("/") and not decoded.startswith("//") else default
+    return value if trusted_auth_origin(value, allow_path=True) else default
 
 
 def quick_test_supervisor_allowed():
@@ -817,7 +898,7 @@ def beta_role_for_member(member):
 
 def create_beta_session_token(member_id, lifetime_seconds=12 * 60 * 60):
     member = member_record_by_id(member_id)
-    if not member:
+    if not member or member.get("active") is False:
         return None
     now = int(time.time())
     payload = {
@@ -851,12 +932,19 @@ def verify_beta_session_token(token):
         payload = json.loads(base64url_decode(payload_b64).decode("utf-8"))
     except Exception:
         return None
-    if payload.get("typ") != "shiftcommander-beta-session":
+    if not isinstance(payload, dict) or payload.get("typ") != "shiftcommander-beta-session":
         return None
-    if int(payload.get("exp") or 0) < int(time.time()):
+    expires = payload.get("exp")
+    # Only tokens issued with an integer expiry are part of this contract.
+    # Reject malformed/out-of-range values before building a session response.
+    if type(expires) is not int or expires <= int(time.time()):
+        return None
+    try:
+        expires_at = datetime.fromtimestamp(expires, UTC).isoformat().replace("+00:00", "Z")
+    except (ValueError, OverflowError, OSError):
         return None
     member = member_record_by_id(payload.get("member_id"))
-    if not member:
+    if not member or member.get("active") is False:
         return None
     email = str(payload.get("email") or member_auth_email(member) or "").strip().lower()
     return {
@@ -868,17 +956,23 @@ def verify_beta_session_token(token):
         "member": member,
         "auth_mode": "beta_login_bridge",
         "beta_auth_bridge": True,
-        "expires_at": datetime.fromtimestamp(int(payload.get("exp")), UTC).isoformat().replace("+00:00", "Z"),
+        "expires_at": expires_at,
         "build_code": BUILD_CODE,
     }
 
 
+def beta_token_from_request():
+    token = request.headers.get("X-ShiftCommander-Beta-Session")
+    if token is not None:
+        return token.strip()
+    auth_header = str(request.headers.get("Authorization") or "").strip()
+    if auth_header.lower() == "bearer" or auth_header.lower().startswith("bearer "):
+        return auth_header[6:].strip()
+    return None
+
+
 def beta_auth_from_request():
-    token = str(request.headers.get("X-ShiftCommander-Beta-Session") or "").strip()
-    if not token:
-        auth_header = str(request.headers.get("Authorization") or "").strip()
-        if auth_header.lower().startswith("bearer "):
-            token = auth_header[7:].strip()
+    token = beta_token_from_request()
     payload = verify_beta_session_token(token)
     if not payload:
         return None
@@ -892,7 +986,7 @@ def beta_auth_from_request():
 
 
 def append_beta_token_to_redirect(redirect_to, token):
-    redirect_to = str(redirect_to or "/member").strip() or "/member"
+    redirect_to = safe_login_redirect(redirect_to)
     if not token:
         return redirect_to
     parsed = urlparse(redirect_to)
@@ -957,7 +1051,7 @@ def resolve_member_request_member(payload=None):
         return str(member_id), member, None
     auth = current_auth()
     member_id = str(auth.get("member_id") or "").strip()
-    if auth.get("role") != "member" or not member_id:
+    if auth.get("role") not in {"member", "supervisor"} or not member_id:
         return None, None, auth_json_error("Authentication required", 401)
     member = current_member_record()
     if member is None:
@@ -2353,10 +2447,10 @@ def testing_login_as_member():
         return auth_json_error("Testing login is only available on localhost", 404)
     payload = request.get_json(silent=True) or request.form or {}
     member_id = str(payload.get("member_id") or payload.get("selected_member_id") or "").strip()
-    next_url = str(payload.get("next") or "/member").strip() or "/member"
+    next_url = safe_login_redirect(payload.get("next"))
     requested_role = str(payload.get("role") or "").strip().lower()
     member = member_record_by_id(member_id)
-    if not member:
+    if not member or member.get("active") is False:
         return auth_json_error("Member record not found", 404)
     if requested_role == "supervisor" or next_url.startswith(("/supervisor", "/admin", "/docs/supervisor", "/docs/admin")):
         start_supervisor_session()
@@ -2381,11 +2475,11 @@ def api_login():
     payload = request.get_json(silent=True) or request.form or {}
     username = str(payload.get("username") or payload.get("email") or "").strip().lower()
     password = str(payload.get("password") or "").strip()
-    next_url = str(payload.get("next") or "/member").strip() or "/member"
+    next_url = safe_login_redirect(payload.get("next"))
     if username != TEST_MEMBER_LOGIN["username"] or password != TEST_MEMBER_LOGIN["password"]:
         return auth_json_error("Invalid credentials", 401)
     member = member_record_by_id(TEST_MEMBER_LOGIN["member_id"])
-    if not member:
+    if not member or member.get("active") is False:
         return auth_json_error("Configured test member is missing", 500)
     start_member_session(TEST_MEMBER_LOGIN["member_id"])
     response = member_login_success_payload(TEST_MEMBER_LOGIN["member_id"], next_url)
@@ -2400,7 +2494,7 @@ def auth_login():
     payload = request.get_json(silent=True) if request.is_json else request.form
     role = str(payload.get("role") or "").strip().lower()
     password = str(payload.get("password") or "").strip()
-    next_url = str(payload.get("next") or "").strip()
+    next_url = safe_login_redirect(payload.get("next"), default="")
     sync_auth_members()
     auth_users = load_auth_users()
 
@@ -2427,7 +2521,8 @@ def auth_login():
                 return auth_json_error("member_id and password are required", 400)
             return redirect("/login/member?error=Missing+credentials")
         member_entry = auth_users.get("members", {}).get(member_id)
-        if member_entry is None:
+        member = member_record_by_id(member_id)
+        if member_entry is None or not member or member.get("active") is False:
             if request.is_json:
                 return auth_json_error("Unknown member account", 404)
             return redirect("/login/member?error=Unknown+member")
