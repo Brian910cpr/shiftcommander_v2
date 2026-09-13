@@ -213,6 +213,89 @@ class DurableAuthSafeguards(fixture.ServingAuthSafeguards):
         self.assertEqual(self.login().status_code, 404)
         self.assertEqual(self.server.AUTH_STORE.load_users(), self.users)
 
+    def test_login_logout_audit_uses_identity_without_token_or_password(self):
+        token = self.login().get_json()["session_token"]
+        self.assertEqual(self.post("/api/auth/logout", json={}, headers={
+            "Origin": fixture.ORIGIN, "Authorization": "Bearer " + token,
+        }).status_code, 200)
+        events = self.server.AUTH_STORE.audit_events()
+        self.assertEqual([row["action"] for row in events], ["store_initialized", "session_issued", "session_revoked"])
+        self.assertEqual(events[-1]["actor"], "member:fixture-member")
+        self.assertEqual(events[-1]["revoked_sessions"], 1)
+        for secret in (token, fixture.PASSWORD, "password_hash", "pbkdf2_sha256", "member@example.invalid"):
+            self.assertNotIn(secret, json.dumps(events))
+
+    def test_password_reset_audit_attributes_shared_and_roster_supervisors(self):
+        self.login()
+        self.client = self.server.app.test_client()
+        self.login(role="supervisor")
+        self.assertEqual(self.post("/api/auth/reset_member_password", json={
+            "member_id": "fixture-member", "new_password": "replacement-password",
+        }).status_code, 200)
+        event = self.server.AUTH_STORE.audit_events()[-1]
+        self.assertEqual((event["action"], event["actor"], event["subject"], event["revoked_sessions"]),
+                         ("password_reset", "supervisor", "member:fixture-member", 1))
+        self.client = self.server.app.test_client()
+        self.login("fixture-supervisor")
+        self.assertEqual(self.post("/api/auth/reset_member_password", json={
+            "member_id": "fixture-member", "new_password": "another-password",
+        }).status_code, 200)
+        self.assertEqual(self.server.AUTH_STORE.audit_events()[-1]["actor"], "member:fixture-supervisor")
+
+    def test_password_change_audit_alias_member_and_shared_supervisor(self):
+        for member_id, role, subject in [
+            ("fixture-member", "member", "member:fixture-member"),
+            ("fixture-supervisor", "member", "member:fixture-supervisor"),
+            (None, "supervisor", "supervisor"),
+        ]:
+            with self.subTest(subject=subject):
+                self.client = self.server.app.test_client()
+                self.assertEqual(self.login(member_id, role).status_code, 200)
+                self.assertEqual(self.post("/api/change-password", json={
+                    "current_password": fixture.PASSWORD, "new_password": "replacement-password",
+                    "confirm_password": "replacement-password",
+                }).status_code, 200)
+                event = self.server.AUTH_STORE.audit_events()[-1]
+                self.assertEqual((event["action"], event["actor"], event["subject"], event["revoked_sessions"]),
+                                 ("password_changed", subject, subject, 1))
+
+    def test_rejected_auth_operations_do_not_record_success_events(self):
+        before = self.server.AUTH_STORE.audit_events()
+        self.assertEqual(self.login(password="wrong").status_code, 401)
+        self.assertEqual(self.server.AUTH_STORE.audit_events(), before)
+        self.login()
+        before = self.server.AUTH_STORE.audit_events()
+        self.assertEqual(self.post("/api/auth/reset_member_password", json={
+            "member_id": "fixture-supervisor", "new_password": "replacement-password",
+        }).status_code, 403)
+        self.assertEqual(self.post("/api/auth/change_password", json={
+            "current_password": [], "new_password": "replacement-password", "confirm_password": "replacement-password",
+        }).status_code, 400)
+        self.assertEqual(self.server.AUTH_STORE.audit_events(), before)
+
+    def test_api_audit_write_failure_never_acknowledges_password_change(self):
+        token = self.login().get_json()["session_token"]
+        before = self.server.AUTH_STORE.audit_events()
+        with closing(sqlite3.connect(self.db_path)) as conn, conn:
+            conn.execute("CREATE TRIGGER reject_audit BEFORE INSERT ON auth_audit BEGIN SELECT RAISE(ABORT, 'private-fixture'); END")
+        response = self.post("/api/auth/change_password", json={
+            "current_password": fixture.PASSWORD, "new_password": "replacement-password", "confirm_password": "replacement-password",
+        })
+        self.assertEqual(response.status_code, 503)
+        self.assertNotIn("private-fixture", response.get_data(as_text=True))
+        self.assertEqual(self.server.AUTH_STORE.load_users(), self.users)
+        self.assertEqual(self.server.AUTH_STORE.audit_events(), before)
+        self.assertTrue(self.token_identity(token)["authenticated"])
+
+    def test_missing_audit_table_rejects_startup_and_health_without_auto_creation(self):
+        with closing(sqlite3.connect(self.db_path)) as conn, conn:
+            conn.execute("DROP TABLE auth_audit")
+        self.assertEqual(self.client.get("/api/health", base_url=fixture.ORIGIN).status_code, 503)
+        with self.assertRaises(AuthStoreError):
+            self.load_server()
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            self.assertIsNone(conn.execute("SELECT name FROM sqlite_master WHERE name = 'auth_audit'").fetchone())
+
     def test_password_whitespace_member_change_roundtrip(self):
         current = fixture.PASSWORD
         self.login()
@@ -346,12 +429,15 @@ class DurableAuthSafeguards(fixture.ServingAuthSafeguards):
         status, login = self.http(base, "/api/auth/login", {"role": "member", "member_id": "fixture-member", "password": fixture.PASSWORD})
         self.assertEqual(status, 200)
         token = login["session_token"]
+        audit_before_restart = self.server.AUTH_STORE.audit_events()
+        self.assertEqual(audit_before_restart[-1]["action"], "session_issued")
         self.assertEqual(self.http(base, "/api/member/availability", {"entries": [
             {"date": "2026-10-12", "period": "AM", "member_intent": "prefer"},
         ]}, token)[0], 200)
         process.terminate()
         process.wait(timeout=10)
         process, base = self.start_process()
+        self.assertEqual(self.server.AUTH_STORE.audit_events(), audit_before_restart)
         self.assertTrue(self.http(base, "/api/auth/session", token=token)[1]["authenticated"])
         status, saved = self.http(base, "/api/member/availability", token=token)
         self.assertEqual(status, 200)
@@ -360,6 +446,8 @@ class DurableAuthSafeguards(fixture.ServingAuthSafeguards):
         with closing(sqlite3.connect(self.db_path)) as source, closing(sqlite3.connect(backup)) as target:
             source.backup(target)
         self.assertEqual(self.http(base, "/api/auth/logout", {}, token)[0], 200)
+        self.assertEqual(self.server.AUTH_STORE.audit_events()[-1]["action"], "session_revoked")
+        self.assertEqual(AuthStore(backup).audit_events(), audit_before_restart)
         process.terminate()
         process.wait(timeout=10)
         # Recovery copies credentials into a NEW store, never old sessions.

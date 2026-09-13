@@ -640,9 +640,11 @@ def load_auth_users():
     return data
 
 
-def save_auth_users(data):
+def save_auth_users(data, *, action="credentials_updated"):
     if AUTH_STORE:
-        AUTH_STORE.save_users(data, expected=g.auth_users_snapshot)
+        auth = current_auth()
+        actor = "member:" + auth["member_id"] if auth.get("member_id") else "supervisor" if auth["authenticated"] else "offline"
+        AUTH_STORE.save_users(data, expected=g.auth_users_snapshot, actor=actor, action=action)
         g.auth_users_snapshot = deepcopy(data)
         return
     if not isinstance(data, dict):
@@ -2643,7 +2645,7 @@ def auth_change_password():
             return auth_json_error("Current password is incorrect", 400)
         auth_users["supervisor"]["password_hash"] = hash_password(new_password)
         auth_users["supervisor"]["updated_at"] = now_iso()
-        save_auth_users(auth_users)
+        save_auth_users(auth_users, action="password_changed")
         if AUTH_STORE:
             session.clear()
         return jsonify({"status": "ok"})
@@ -2657,7 +2659,7 @@ def auth_change_password():
     member_entry["must_change_password"] = False
     member_entry["updated_at"] = now_iso()
     auth_users["members"][member_id] = member_entry
-    save_auth_users(auth_users)
+    save_auth_users(auth_users, action="password_changed")
     if AUTH_STORE:
         session.clear()
     return jsonify({"status": "ok"})
@@ -2687,7 +2689,7 @@ def auth_reset_member_password():
     auth_users["members"][member_id]["password_hash"] = hash_password(new_password)
     auth_users["members"][member_id]["must_change_password"] = True
     auth_users["members"][member_id]["updated_at"] = now_iso()
-    save_auth_users(auth_users)
+    save_auth_users(auth_users, action="password_reset")
     return jsonify({"status": "ok", "member_id": member_id})
 
 
