@@ -244,8 +244,18 @@ def validate_auth_json_body():
         "/api/login", "/api/change-password", "/api/testing/login_as_member",
     }
     if auth_path and request.method == "POST" and request.is_json:
-        if not isinstance(request.get_json(silent=True), dict):
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
             return auth_json_error("JSON object required", 400)
+        if AUTH_STORE:
+            password_fields = {
+                "auth_login": ("password",),
+                "auth_change_password": ("current_password", "new_password", "confirm_password"),
+                "auth_change_password_alias": ("current_password", "new_password", "confirm_password"),
+                "auth_reset_member_password": ("new_password",),
+            }.get(request.endpoint, ())
+            if any(key in payload and not isinstance(payload[key], str) for key in password_fields):
+                return auth_json_error("Password fields must be strings", 400)
 
 
 @app.errorhandler(AuthStoreError)
@@ -2543,7 +2553,11 @@ def api_login():
 def auth_login():
     payload = request.get_json(silent=True) if request.is_json else request.form
     role = str(payload.get("role") or "").strip().lower()
-    password = str(payload.get("password") or "").strip()
+    password = str(payload.get("password") or "")
+    if not AUTH_STORE:
+        password = password.strip()
+    # Durable password change hashes the exact input; login must compare the
+    # same value. Keep legacy normalization until its coordinated cutover.
     next_url = safe_login_redirect(payload.get("next"), default="")
     sync_auth_members()
     auth_users = load_auth_users()
@@ -2660,7 +2674,9 @@ def auth_change_password_alias():
 def auth_reset_member_password():
     payload = request.get_json(silent=True) or {}
     member_id = str(payload.get("member_id") or "").strip()
-    new_password = str(payload.get("new_password") or "").strip()
+    new_password = str(payload.get("new_password") or "")
+    if not AUTH_STORE:
+        new_password = new_password.strip()
     if not member_id or not new_password:
         return auth_json_error("member_id and new_password are required", 400)
     if len(new_password) < 8:

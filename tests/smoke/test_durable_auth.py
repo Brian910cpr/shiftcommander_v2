@@ -213,6 +213,88 @@ class DurableAuthSafeguards(fixture.ServingAuthSafeguards):
         self.assertEqual(self.login().status_code, 404)
         self.assertEqual(self.server.AUTH_STORE.load_users(), self.users)
 
+    def test_password_whitespace_member_change_roundtrip(self):
+        current = fixture.PASSWORD
+        self.login()
+        for password in (" replacement-password ", "\treplacement-password\t", "\u00a0replacement-password\u00a0"):
+            with self.subTest(boundary=repr(password[:1])):
+                self.assertEqual(self.post("/api/change-password", json={
+                    "current_password": current, "new_password": password, "confirm_password": password,
+                }).status_code, 200)
+                self.assertFalse(self.identity()["authenticated"])
+                self.server = self.load_server()
+                self.client = self.server.app.test_client()
+                self.assertEqual(self.login(password=password.strip()).status_code, 401)
+                self.assertEqual(self.login(password=password).status_code, 200)
+                current = password
+
+    def test_password_whitespace_shared_supervisor_form_login(self):
+        self.login(role="supervisor")
+        password = " shared-supervisor-password "
+        self.assertEqual(self.post("/api/auth/change_password", json={
+            "current_password": fixture.PASSWORD, "new_password": password, "confirm_password": password,
+        }).status_code, 200)
+        self.assertEqual(self.login(role="supervisor", password=password.strip()).status_code, 401)
+        response = self.post("/api/auth/login", data={"role": "supervisor", "password": password})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/docs/supervisor.html")
+        self.assertEqual(self.identity()["role"], "supervisor")
+
+    def test_password_whitespace_reset_preserves_exact_credential(self):
+        old_token = self.login().get_json()["session_token"]
+        self.login(role="supervisor")
+        password = " reset-password "
+        self.assertEqual(self.post("/api/auth/reset_member_password", json={
+            "member_id": "fixture-member", "new_password": password,
+        }).status_code, 200)
+        saved_hash = self.server.AUTH_STORE.load_users()["members"]["fixture-member"]["password_hash"]
+        self.assertTrue(self.server.verify_password(password, saved_hash))
+        self.assertFalse(self.token_identity(old_token)["authenticated"])
+        self.assertEqual(self.login(password=password.strip()).status_code, 401)
+        self.assertEqual(self.login(password=password).status_code, 200)
+
+    def test_nonstring_password_login_is_rejected_without_session(self):
+        for role in ("member", "supervisor"):
+            for value in (None, True, 12345678, 1.2345678, [], ["private-fixture"], {"secret": "private-fixture"}):
+                with self.subTest(role=role, value_type=type(value).__name__):
+                    response = self.login(role=role, password=value)
+                    self.assertEqual(response.status_code, 400)
+                    self.assertNotIn("private-fixture", response.get_data(as_text=True))
+                    self.assertFalse(self.identity()["authenticated"])
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0], 0)
+
+    def test_nonstring_password_change_is_rejected_without_mutation(self):
+        token = self.login().get_json()["session_token"]
+        for endpoint in ("/api/auth/change_password", "/api/change-password"):
+            for field in ("current_password", "new_password", "confirm_password"):
+                for value in (None, True, 12345678, 1.2345678, [], ["private-fixture"], {"secret": "private-fixture"}):
+                    with self.subTest(endpoint=endpoint, field=field, value_type=type(value).__name__):
+                        payload = {"current_password": fixture.PASSWORD,
+                                   "new_password": "replacement-password", "confirm_password": "replacement-password"}
+                        payload[field] = value
+                        # Two matching non-string inputs must not become a new credential.
+                        if field == "new_password":
+                            payload["confirm_password"] = value
+                        response = self.post(endpoint, json=payload)
+                        self.assertEqual(response.status_code, 400)
+                        self.assertNotIn("private-fixture", response.get_data(as_text=True))
+                        self.assertEqual(self.server.AUTH_STORE.load_users(), self.users)
+                        self.assertTrue(self.token_identity(token)["authenticated"])
+
+    def test_nonstring_password_reset_is_rejected_without_mutation(self):
+        token = self.login().get_json()["session_token"]
+        self.login(role="supervisor")
+        for value in (None, True, 12345678, 1.2345678, [], ["private-fixture"], {"secret": "private-fixture"}):
+            with self.subTest(value_type=type(value).__name__):
+                response = self.post("/api/auth/reset_member_password", json={
+                    "member_id": "fixture-member", "new_password": value,
+                })
+                self.assertEqual(response.status_code, 400)
+                self.assertNotIn("private-fixture", response.get_data(as_text=True))
+                self.assertEqual(self.server.AUTH_STORE.load_users(), self.users)
+                self.assertTrue(self.token_identity(token)["authenticated"])
+
     def start_process(self):
         # Only loopback HTTP is used by the parent. Child source reads cannot
         # reach external services; all operational paths are temporary.
