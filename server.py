@@ -854,7 +854,7 @@ def beta_role_for_member(member):
 
 def create_beta_session_token(member_id, lifetime_seconds=12 * 60 * 60):
     member = member_record_by_id(member_id)
-    if not member:
+    if not member or member.get("active") is False:
         return None
     now = int(time.time())
     payload = {
@@ -888,12 +888,19 @@ def verify_beta_session_token(token):
         payload = json.loads(base64url_decode(payload_b64).decode("utf-8"))
     except Exception:
         return None
-    if payload.get("typ") != "shiftcommander-beta-session":
+    if not isinstance(payload, dict) or payload.get("typ") != "shiftcommander-beta-session":
         return None
-    if int(payload.get("exp") or 0) < int(time.time()):
+    expires = payload.get("exp")
+    # Only tokens issued with an integer expiry are part of this contract.
+    # Reject malformed/out-of-range values before building a session response.
+    if type(expires) is not int or expires <= int(time.time()):
+        return None
+    try:
+        expires_at = datetime.fromtimestamp(expires, UTC).isoformat().replace("+00:00", "Z")
+    except (ValueError, OverflowError, OSError):
         return None
     member = member_record_by_id(payload.get("member_id"))
-    if not member:
+    if not member or member.get("active") is False:
         return None
     email = str(payload.get("email") or member_auth_email(member) or "").strip().lower()
     return {
@@ -905,7 +912,7 @@ def verify_beta_session_token(token):
         "member": member,
         "auth_mode": "beta_login_bridge",
         "beta_auth_bridge": True,
-        "expires_at": datetime.fromtimestamp(int(payload.get("exp")), UTC).isoformat().replace("+00:00", "Z"),
+        "expires_at": expires_at,
         "build_code": BUILD_CODE,
     }
 

@@ -19,9 +19,38 @@ function resultLine(ok, message) {
   return `${ok ? "PASS" : "FAIL"} ${message}`;
 }
 
-const checks = [];
+// Match getD1() in the Worker: SC_DB takes precedence over the legacy DB name.
+export function deploymentConfigChecks(config, migrationExists) {
+  const bindings = Array.isArray(config?.d1_databases) ? config.d1_databases : [];
+  const d1Binding = bindings.find((binding) => binding?.binding === "SC_DB")
+    || bindings.find((binding) => binding?.binding === "DB");
+  const checks = [{
+    ok: Boolean(d1Binding),
+    message: d1Binding
+      ? `${d1Binding.binding} D1 binding is present`
+      : "D1 binding is missing (expected SC_DB or DB)",
+  }];
+
+  if (d1Binding) {
+    const databaseId = String(d1Binding.database_id || "").trim();
+    const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(databaseId);
+    checks.push({
+      ok: validId && databaseId !== PLACEHOLDER_DATABASE_ID,
+      message: validId && databaseId !== PLACEHOLDER_DATABASE_ID
+        ? `${d1Binding.binding} database_id has a non-placeholder UUID format`
+        : `${d1Binding.binding} database_id is missing, malformed, or a placeholder`,
+    });
+  }
+
+  checks.push({
+    ok: migrationExists,
+    message: migrationExists ? "migrations/0001_init.sql exists" : "migrations/0001_init.sql is missing",
+  });
+  return checks;
+}
 
 async function main() {
+  const checks = [];
   let config = null;
 
   try {
@@ -32,26 +61,7 @@ async function main() {
     checks.push({ ok: false, message: `wrangler.jsonc could not be parsed: ${error.message}` });
   }
 
-  const d1Binding = (config?.d1_databases || []).find((binding) => binding?.binding === "SC_DB");
-  checks.push({
-    ok: Boolean(d1Binding),
-    message: d1Binding ? "SC_DB D1 binding is present" : "SC_DB D1 binding is missing",
-  });
-
-  if (d1Binding) {
-    checks.push({
-      ok: d1Binding.database_id !== PLACEHOLDER_DATABASE_ID,
-      message:
-        d1Binding.database_id === PLACEHOLDER_DATABASE_ID
-          ? `SC_DB database_id is still the placeholder ${PLACEHOLDER_DATABASE_ID}`
-          : "SC_DB database_id is not the placeholder",
-    });
-  }
-
-  checks.push({
-    ok: existsSync(migrationPath),
-    message: existsSync(migrationPath) ? "migrations/0001_init.sql exists" : "migrations/0001_init.sql is missing",
-  });
+  checks.push(...deploymentConfigChecks(config, existsSync(migrationPath)));
 
   const failed = checks.filter((check) => !check.ok);
   console.log("ShiftCommander Worker deploy preflight");
@@ -63,7 +73,9 @@ async function main() {
     return;
   }
 
-  console.log("Preflight PASSED: Worker config is ready for deploy.");
+  console.log("Preflight PASSED: local configuration checks only. Remote database access, schema, authentication, and release readiness are not verified.");
 }
 
-await main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main();
+}

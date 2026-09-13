@@ -1,0 +1,264 @@
+{
+  "dispatch_id": "SHIFTCOMMANDER_ASTRA_20260913_R2",
+  "runtime": {
+    "model": "gpt-6-astra",
+    "record_type": "turn_context",
+    "record_timestamp": "2026-09-13T12:07:10.499Z",
+    "codex_cli_version": "0.153.4",
+    "scope": "current active worker; no second model launch",
+    "limits": "Sanitized selected runtime fields; raw session transcript and identifiers remain private. Launcher CheckOnly does not itself prove a model launch."
+  },
+  "read_only_checks": [
+    {
+      "observed_at": "2026-09-13T12:13:05.384004+00:00",
+      "method": "anonymous GET only; no login or writes",
+      "observations": [
+        {
+          "url": "https://adr-fr.org/",
+          "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'adr-fr.org'. (_ssl.c:1010)>"
+        },
+        {
+          "url": "https://adr-fr.org/supervisor.html",
+          "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'adr-fr.org'. (_ssl.c:1010)>"
+        },
+        {
+          "url": "https://adr-fr.org/member.html",
+          "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'adr-fr.org'. (_ssl.c:1010)>"
+        },
+        {
+          "url": "https://adr-fr.org/wallboard.html",
+          "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'adr-fr.org'. (_ssl.c:1010)>"
+        },
+        {
+          "url": "https://sc.adr-fr.org/",
+          "status": 200,
+          "final_url": "https://sc.adr-fr.org/",
+          "content_type": "text/html; charset=utf-8",
+          "sha256": "d6fe8ffa3c3ef18383fb2bcc9a50c1b76ac265ccabf49c3b522c686e62b3d80f",
+          "assets": [
+            "/assets/index-B0OhhaWu.js",
+            "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495"
+          ],
+          "api_hosts": [],
+          "redirects": []
+        },
+        {
+          "url": "https://shiftcommander.pages.dev/",
+          "status": 200,
+          "final_url": "https://shiftcommander.pages.dev/",
+          "content_type": "text/html; charset=utf-8",
+          "sha256": "58cfdf37cd9b86cf0c2897e65e4e774809cf8c85918acae37227ee57688a52ea",
+          "assets": [
+            "/assets/index-B0OhhaWu.js"
+          ],
+          "api_hosts": [],
+          "redirects": []
+        },
+        {
+          "url": "https://sc-api.adr-fr.org/api/health",
+          "status": 530
+        },
+        {
+          "url": "https://sc-api.adr-fr.org/api/auth/session",
+          "status": 530
+        },
+        {
+          "url": "https://shiftcommander-v2.onrender.com/api/health",
+          "error": "TimeoutError: The read operation timed out"
+        },
+        {
+          "url": "https://shiftcommander-v2.onrender.com/api/auth/session",
+          "error": "TimeoutError: The read operation timed out"
+        },
+        {
+          "url": "https://shiftcommander-backend.onrender.com/api/health",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "observed_at": "2026-09-13T12:14:36.772448+00:00",
+      "observations": [
+        {
+          "url": "https://sc.adr-fr.org/assets/index-B0OhhaWu.js",
+          "status": 403
+        },
+        {
+          "url": "https://sc.adr-fr.org/api/health",
+          "status": 403
+        },
+        {
+          "url": "https://sc.adr-fr.org/api/auth/session",
+          "status": 403
+        },
+        {
+          "url": "https://shiftcommander-v2.onrender.com/api/health",
+          "status": 200,
+          "content_type": "application/json",
+          "sha256": "7e716261ca9bac8fc1231974bd5c1a55cb41cc5db4c9f4466e20018db18c1127",
+          "fields": {
+            "status": "ok",
+            "build_code": "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001",
+            "quick_test_mode": true,
+            "demo_supervisor_bypass": true,
+            "state_backend": "d1",
+            "state_backend_ready": true,
+            "d1_bridge_configured": true,
+            "fallback_active": false
+          }
+        }
+      ]
+    },
+    {
+      "observed_at": "2026-09-13T12:15:44.892925+00:00",
+      "observations": [
+        {
+          "url": "https://shiftcommander.pages.dev/assets/index-B0OhhaWu.js",
+          "status": 200,
+          "sha256": "d2709e9487ac787a4d6c7a5ccf98236a252cfde9d675fa0b87b9f2f0aef1abaf",
+          "content_type": "application/javascript",
+          "api_hosts": [
+            "https://shiftcommander-v2.onrender.com"
+          ],
+          "sc_api_base_url_context": "_API_BASE_URL;const n=(e=window.localStorage)==null?void 0:e.getItem(\"sc_api_base_url\");if(n)return n}return\"https://shiftcommander-v2.onrender.com\"}function AE(e){const n=e.startsWith(\"/\")?e:`/${e}`;return n.startsWith(\"/api/\")?n:`/api${n}`}function ME(e){return`${Ti().replace(/\\/+$/,\"\")}${AE(e)}`}",
+          "SC_API_BASE_URL_context": "ta_session_token\";function Ti(){var e;if(typeof window<\"u\"){if(window.SC_API_BASE_URL)return window.SC_API_BASE_URL;const n=(e=window.localStorage)==null?void 0:e.getItem(\"sc_api_base_url\");if(n)return n}return\"https://shiftcommander-v2.onrender.com\"}function AE(e){const n=e.startsWith(\"/\")?e:`/${e}"
+        },
+        {
+          "url": "https://shiftcommander-v2.onrender.com/api/auth/session",
+          "status": 200,
+          "sha256": "933bd5e990f3c1e58177e2c7fa4fc5415180718a78a20a209e0af9b9023828c2",
+          "content_type": "application/json",
+          "fields": {
+            "build_code": "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001",
+            "auth_mode": "quick_test",
+            "authenticated": false,
+            "role": null,
+            "quick_test_mode": true,
+            "demo_supervisor_bypass": true
+          }
+        },
+        {
+          "url": "https://shiftcommander-v2.onrender.com/api/schedule",
+          "status": 200,
+          "sha256": "01e3a8571d443bcc72ac388fd481ead0ecd64f3b042363e07996187d66cc9f9e",
+          "content_type": "application/json",
+          "fields": {},
+          "schedule": {
+            "shift_count": 170,
+            "min_date": "2026-05-18",
+            "max_date": "2026-08-10"
+          }
+        }
+      ]
+    },
+    {
+      "observed_at": "2026-09-13T12:16:19.004957+00:00",
+      "method": "Public ADR calendar GET, in-memory aggregate only; no calendar or mirror writes",
+      "status": 200,
+      "sha256": "dfcdfe7808a6494a9a20894013059a0a0c80f0f9932dfa70aded9b29808f6f30",
+      "event_count": 629,
+      "recurrence_rule_count": 6,
+      "raw_dtstart_max": "20260731T180000",
+      "last_modified_max": "20260706T171713Z",
+      "limitation": "Aggregate event count and raw latest DTSTART only; recurring instances and current staffing legality were not expanded or validated. No member names, descriptions, source ICS, or operational rows retained."
+    },
+    {
+      "observed_at": "2026-09-13T12:19:20.656580+00:00",
+      "method": "Authenticated provider metadata GET only; secret values never serialized",
+      "render_services": [
+        {
+          "id": "srv-d7s2fkegkk3c738v56mg",
+          "name": "shiftcommander_v2",
+          "repo": "https://github.com/Brian910cpr/shiftcommander_v2",
+          "branch": "main",
+          "autoDeploy": "yes",
+          "suspended": "not_suspended",
+          "updatedAt": "2026-06-03T01:19:50.39057Z",
+          "url": "https://shiftcommander-v2.onrender.com",
+          "runtime": "python",
+          "deploys": [
+            {
+              "id": "dep-d8fo21tckfvc738db97g",
+              "status": "live",
+              "createdAt": "2026-06-03T01:19:03.150402Z",
+              "finishedAt": "2026-06-03T01:19:50.389256Z",
+              "commit": "67a3f88f1b54fa2ffbd285df7df969cea7837616"
+            },
+            {
+              "id": "dep-d8fnu9m7r5hc73aafo1g",
+              "status": "deactivated",
+              "createdAt": "2026-06-03T01:11:02.801891Z",
+              "finishedAt": "2026-06-03T01:12:03.558973Z",
+              "commit": "db66c904be09ad60d291690473c52b81b0a142d1"
+            },
+            {
+              "id": "dep-d8fns0647okc73flle3g",
+              "status": "deactivated",
+              "createdAt": "2026-06-03T01:06:09.158782Z",
+              "finishedAt": "2026-06-03T01:06:56.724031Z",
+              "commit": "db66c904be09ad60d291690473c52b81b0a142d1"
+            },
+            {
+              "id": "dep-d8fnr3u8bjmc73cg9s80",
+              "status": "deactivated",
+              "createdAt": "2026-06-03T01:04:15.927655Z",
+              "finishedAt": "2026-06-03T01:05:03.25821Z",
+              "commit": "1d28ed1e37e5786b815adc9fb0e3ccea3b4cf730"
+            },
+            {
+              "id": "dep-d8fnpscvikkc73btbi60",
+              "status": "deactivated",
+              "createdAt": "2026-06-03T01:01:37.915327Z",
+              "finishedAt": "2026-06-03T01:02:30.52843Z",
+              "commit": "3657e7a62f4c5b45e69af74e626f5d60263995a8"
+            }
+          ],
+          "config": {
+            "SC_STATE_BACKEND": "d1",
+            "SC_D1_BRIDGE_URL": "https://shiftcommander-api.brian-9ac.workers.dev",
+            "SC_PUBLIC_BASE_URL": "https://shiftcommander-v2.onrender.com",
+            "SC_QUICK_TEST_MODE": "true"
+          },
+          "variable_names": [
+            "SC_ALLOWED_ORIGINS",
+            "SC_D1_BRIDGE_TOKEN",
+            "SC_D1_BRIDGE_URL",
+            "SC_PUBLIC_BASE_URL",
+            "SC_QUICK_TEST_MODE",
+            "SC_STATE_BACKEND"
+          ]
+        }
+      ],
+      "pages_error_status": 401
+    },
+    {
+      "observed_at": "2026-09-13T12:19:53.820711+00:00",
+      "method": "Anonymous Worker metadata GET only",
+      "observations": [
+        {
+          "url": "https://shiftcommander-api.brian-9ac.workers.dev/api/health",
+          "status": 200,
+          "fields": {
+            "status": "ok",
+            "backend": "cloudflare_worker",
+            "build_code": "worker-local-seed-001",
+            "data_mode": "local_json_seed",
+            "source": "worker-data-seed"
+          }
+        },
+        {
+          "url": "https://shiftcommander-api.brian-9ac.workers.dev/api/auth/session",
+          "status": 200,
+          "fields": {
+            "build_code": "worker-local-seed-001",
+            "data_mode": "local_json_seed",
+            "source": "worker-data-seed",
+            "authenticated": true,
+            "role": "admin",
+            "local_worker_session": true
+          }
+        }
+      ]
+    }
+  ]
+}

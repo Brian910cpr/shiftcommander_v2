@@ -1,8 +1,8 @@
 # ShiftCommander release assessment — issue 214, checkpoint R1
 
-Dispatch: `SHIFTCOMMANDER_ASTRA_20260913_R1`  
-Assessment date: 2026-09-13, America/New_York (UTC-04:00)  
-Status: IN_PROGRESS; targeted persistence repair locally validated; overall release BLOCKED.  
+Dispatch: `SHIFTCOMMANDER_ASTRA_20260913_R1`
+Assessment date: 2026-09-13, America/New_York (UTC-04:00)
+Status: IN_PROGRESS; targeted persistence repair locally validated; overall release BLOCKED.
 Evidence state: BUILT. No staging, production deployment, complete workflow proof, or monitored health claim.
 
 ## Runtime and repository evidence

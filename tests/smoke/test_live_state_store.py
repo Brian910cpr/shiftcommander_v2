@@ -4,7 +4,9 @@ import os
 import sys
 import tempfile
 import unittest
+from datetime import UTC, datetime
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,6 +22,15 @@ else:
     FLASK_AVAILABLE = True
 
 from engine.live_state_store import D1BridgeLiveStateStore
+
+
+class FixtureDateTime(datetime):
+    """Keep August fixtures future-facing regardless of the machine clock."""
+
+    @classmethod
+    def now(cls, tz=None):
+        instant = cls(2026, 8, 1, 12, tzinfo=UTC)
+        return instant.astimezone(tz) if tz else instant.replace(tzinfo=None)
 
 
 def load_server_with_state_dir(state_dir: Path):
@@ -88,14 +99,26 @@ def seed_schedule(server, state_dir: Path):
 class LiveStateStoreSmokeTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
         self.state_dir = Path(self.temp.name)
+        # A missed calendar mock must fail the test even if the app catches the
+        # connection error and falls back to cached data.
+        self.network = self.enterContext(patch(
+            "urllib.request.urlopen", side_effect=AssertionError("Network disabled in live-state smoke tests")
+        ))
+        self.addCleanup(self.network.assert_not_called)
         self.server, self.previous_env = load_server_with_state_dir(self.state_dir)
+        self.addCleanup(restore_env, self.previous_env)
+        self.enterContext(patch.object(self.server, "datetime", FixtureDateTime))
+        self.enterContext(patch("engine.resolver.datetime", FixtureDateTime))
+        self.enterContext(patch("engine.schedule_lifecycle.datetime", FixtureDateTime))
+        self.enterContext(patch.object(self.server, "GOOGLE_CALENDAR_JUNE_MIRROR_FILE", str(self.state_dir / "calendar_mirror.json")))
+        self.calendar = self.enterContext(patch.object(
+            self.server, "load_google_calendar_june_mirror_payload",
+            return_value={"build": {"feed_status": "fixture"}, "shifts": []},
+        ))
         self.client = self.server.app.test_client()
         seed_schedule(self.server, self.state_dir)
-
-    def tearDown(self):
-        restore_env(self.previous_env)
-        self.temp.cleanup()
 
     def login_member(self, member_id="188"):
         with self.client.session_transaction() as session:
@@ -267,6 +290,25 @@ class LiveStateStoreSmokeTests(unittest.TestCase):
         response = self.client.get("/api/schedule_integrity")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["status"], "ok")
+
+    def test_past_coverage_request_is_rejected_without_mutation(self):
+        self.login_member("188")
+        before_schedule = self.schedule_bytes()
+        before_requests = self.server.LIVE_STATE_STORE.read_change_requests()
+        response = self.client.post(
+            "/api/member/request-coverage",
+            json={"date": "2026-07-31", "period": "AM", "seat_role": "DRIVER"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("current or future", response.get_json()["error"])
+        self.assertEqual(self.schedule_bytes(), before_schedule)
+        self.assertEqual(self.server.LIVE_STATE_STORE.read_change_requests(), before_requests)
+
+    def test_schedule_reads_use_mocked_calendar_without_creating_mirror(self):
+        response = self.client.get("/api/bootstrap")
+        self.assertEqual(response.status_code, 200)
+        self.calendar.assert_called()
+        self.assertFalse((self.state_dir / "calendar_mirror.json").exists())
 
     def test_file_store_reports_render_ephemeral_warning(self):
         store = self.server.LIVE_STATE_STORE
