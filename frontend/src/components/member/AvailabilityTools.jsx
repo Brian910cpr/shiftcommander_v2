@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format, addDays, parseISO } from 'date-fns';
 import { Copy, Trash2, ChevronDown } from 'lucide-react';
-import { getDefaultMemberAvailabilityWeeks, MEMBER_AVAILABILITY_MONTHS_AHEAD } from '@/lib/availabilityRange';
+import { getDefaultMemberAvailabilityWeeks } from '@/lib/availabilityRange';
 
 const DEFAULT_MEMBER_AVAILABILITY_WEEKS = getDefaultMemberAvailabilityWeeks();
 const DISPLAY_WEEK_OPTIONS = [2, 4, 8, 12, DEFAULT_MEMBER_AVAILABILITY_WEEKS, 52, 104, 260]

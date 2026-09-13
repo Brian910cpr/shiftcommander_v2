@@ -13,6 +13,7 @@
     "d1:list": "wrangler d1 migrations list shiftcommander-local-dev --local",
     "d1:schema:check": "node scripts/check-d1-schema.mjs",
     "preflight:deploy": "node scripts/preflight-deploy.mjs",
+    "preflight:test": "node --test scripts/test-preflight-deploy.mjs",
     "check": "wrangler deploy --dry-run --outdir dist",
     "deploy": "npm run preflight:deploy && wrangler deploy"
   },
