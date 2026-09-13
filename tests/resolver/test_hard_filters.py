@@ -340,7 +340,7 @@ class ResolverHardFilterTests(unittest.TestCase):
 
     def test_permissive_missing_day_rule_is_now_logged_as_explicit_assumption(self) -> None:
         data = load_fixture("resolver_base.json")
-        target_date = "2026-06-05"
+        target_date = future_weekday_iso("Fri")
         apply_shift_date(data, target_date)
         apply_availability(data, {})
         data["settings"]["day_rules"].pop("Fri", None)
