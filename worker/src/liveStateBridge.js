@@ -107,25 +107,23 @@ function defaultLiveStatePayload(resource) {
   return structuredClone(LIVE_STATE_DOCUMENT_DEFAULTS[resource] || {});
 }
 
-function normalizeLiveStatePayload(resource, payload) {
-  const fallback = defaultLiveStatePayload(resource);
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return fallback;
-  if (resource === "availability") {
-    if (!payload.months || typeof payload.months !== "object" || Array.isArray(payload.months)) payload.months = {};
+function liveStatePayloadError(resource, payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return "payload object is required";
+  if (resource === "availability" && (!payload.months || typeof payload.months !== "object" || Array.isArray(payload.months))) {
+    return "payload.months object is required";
   }
-  if (resource === "change_requests") {
-    if (!Array.isArray(payload.requests)) payload.requests = [];
+  const arrayField = {
+    change_requests: "requests",
+    transactions: "transactions",
+    supervisor_state: "entries",
+    assignment_overlays: "overlays",
+  }[resource];
+  if (arrayField && !Array.isArray(payload[arrayField])) return `payload.${arrayField} array is required`;
+  // An empty locked schedule is the existing initialization contract.
+  if (resource === "schedule_locked" && "shifts" in payload && !Array.isArray(payload.shifts)) {
+    return "payload.shifts must be an array when present";
   }
-  if (resource === "transactions") {
-    if (!Array.isArray(payload.transactions)) payload.transactions = [];
-  }
-  if (resource === "supervisor_state") {
-    if (!Array.isArray(payload.entries)) payload.entries = [];
-  }
-  if (resource === "assignment_overlays") {
-    if (!Array.isArray(payload.overlays)) payload.overlays = [];
-  }
-  return payload;
+  return null;
 }
 
 async function readLiveStateDocument(db, resource) {
@@ -137,16 +135,20 @@ async function readLiveStateDocument(db, resource) {
     LIMIT 1
     `,
   ).bind(resource).first();
-  if (!row?.payload_json) return defaultLiveStatePayload(resource);
+  if (!row) return defaultLiveStatePayload(resource);
+  let payload;
   try {
-    return normalizeLiveStatePayload(resource, JSON.parse(row.payload_json));
+    payload = JSON.parse(row.payload_json);
   } catch {
-    return defaultLiveStatePayload(resource);
+    throw new Error(`Stored ${resource} document is not valid JSON; recovery required`);
   }
+  if (liveStatePayloadError(resource, payload)) {
+    throw new Error(`Stored ${resource} document has an invalid shape; recovery required`);
+  }
+  return payload;
 }
 
 async function writeLiveStateDocument(db, resource, payload, updatedBy = null) {
-  const normalized = normalizeLiveStatePayload(resource, payload);
   const now = new Date().toISOString();
   await db.prepare(
     `
@@ -165,10 +167,10 @@ async function writeLiveStateDocument(db, resource, payload, updatedBy = null) {
       updated_by = excluded.updated_by
     `,
   )
-    .bind(resource, JSON.stringify(normalized), now, updatedBy)
+    .bind(resource, JSON.stringify(payload), now, updatedBy)
     .run();
   return {
-    payload: normalized,
+    payload,
     updated_at: now,
   };
 }
@@ -244,8 +246,9 @@ export async function handleLiveStateBridge(request, env, resource, operation) {
 
     if (operation === "write") {
       const payload = body?.payload;
-      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-        return jsonResponse({ ok: false, error: "payload object is required" }, { status: 400 }, request);
+      const validationError = liveStatePayloadError(resource, payload);
+      if (validationError) {
+        return jsonResponse({ ok: false, error: validationError }, { status: 400 }, request);
       }
       const saved = await writeLiveStateDocument(db, resource, payload, body?.updated_by || null);
       return jsonResponse({ ok: true, resource, operation, ...saved }, { status: 200 }, request);
