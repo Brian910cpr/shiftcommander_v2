@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "assignment": "Brian910cpr/910cpr-class-landers#214",
+  "round": "R43",
+  "dispatch_id": "SHIFTCOMMANDER_ASTRA_20260913_R1",
+  "scope": "Read-only provider metadata through connected Cloudflare API; allowlisted fields only. No application credentials or database rows requested.",
+  "candidate_commit": "ba0365a250d18297a262b96ab7f15cf3fe6f1780",
+  "access_finding": "Connected Cloudflare API metadata access succeeds; R2 local-token HTTP 401 is not the current blocker for this read-only route.",
+  "initial_error": {
+    "method": "GET Pages project list",
+    "query": {
+      "page": 1,
+      "per_page": 100
+    },
+    "code": 8000024,
+    "message": "Invalid list options provided. Review the page or per_page parameter.",
+    "resolution": "Used the known exact project GET endpoint; no credential change or failing-auth retry."
+  },
+  "observations": [
+    {
+      "key": "pages_project",
+      "checked_at": "2026-09-14T06:54:45.201Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": {
+        "name": "shiftcommander",
+        "subdomain": "shiftcommander.pages.dev",
+        "domains": [
+          "shiftcommander.pages.dev"
+        ],
+        "production_branch": "codex/base44-worker-consolidation",
+        "source": null,
+        "build_config": {},
+        "canonical_deployment": {
+          "id": "3e7c40e1-e950-4301-83fa-5c85a98b9db9",
+          "url": "https://3e7c40e1.shiftcommander.pages.dev",
+          "environment": "production",
+          "created_on": "2026-06-03T01:31:43.549743Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": null,
+            "ended_on": "2026-06-03T01:31:47.992165Z",
+            "status": "success"
+          },
+          "trigger": {
+            "type": "ad_hoc",
+            "commit_hash": "9d949049bc7f5bf6acf937ef79ea90ef9987d0b9",
+            "branch": "codex/base44-worker-consolidation"
+          }
+        },
+        "config_binding_names": {
+          "preview": {
+            "env_variable_names": []
+          },
+          "production": {
+            "env_variable_names": []
+          }
+        }
+      }
+    },
+    {
+      "key": "worker_settings",
+      "checked_at": "2026-09-14T06:55:57.969Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": {
+        "compatibility_date": "2026-05-25",
+        "compatibility_flags": [],
+        "bindings": [
+          {
+            "type": "d1",
+            "name": "DB",
+            "id": "b8c79e7e-7513-453c-a73b-3cd6871bd146"
+          },
+          {
+            "type": "plain_text",
+            "name": "SC_BUILD_CODE"
+          },
+          {
+            "type": "secret_text",
+            "name": "SC_D1_BRIDGE_TOKEN"
+          },
+          {
+            "type": "plain_text",
+            "name": "SC_DATA_MODE"
+          }
+        ]
+      }
+    },
+    {
+      "key": "worker_deployments",
+      "checked_at": "2026-09-14T06:55:57.883Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": [
+        {
+          "id": "5635f3af-07a2-4c4b-b9cd-cd3d649278b5",
+          "created_on": "2026-06-03T00:22:28.580283Z",
+          "source": "wrangler",
+          "strategy": "percentage",
+          "versions": [
+            {
+              "version_id": "e5319cf0-ab39-467e-8b9c-3ac89d68eac7",
+              "percentage": 100
+            }
+          ]
+        },
+        {
+          "id": "8782d833-51e4-4956-ba84-14a5250e0870",
+          "created_on": "2026-06-02T19:28:35.158746Z",
+          "source": "wrangler",
+          "strategy": "percentage",
+          "versions": [
+            {
+              "version_id": "ace285dc-60d0-403c-8a0a-c6dcc40d666d",
+              "percentage": 100
+            }
+          ]
+        },
+        {
+          "id": "49f0f2fd-ae4b-4edd-b5ce-3a88cb6c7a32",
+          "created_on": "2026-06-02T19:27:59.951625Z",
+          "source": "wrangler",
+          "strategy": "percentage",
+          "versions": [
+            {
+              "version_id": "cfc23ecb-7385-43be-b9f6-feb4fc03faf0",
+              "percentage": 100
+            }
+          ]
+        },
+        {
+          "id": "fd4ec025-47dd-4325-88b3-57ad5de717d2",
+          "created_on": "2026-06-02T19:27:59.430563Z",
+          "source": "wrangler",
+          "strategy": "percentage",
+          "versions": [
+            {
+              "version_id": "53d6391f-cac0-4d95-b06f-544851cfdebe",
+              "percentage": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "worker_subdomain",
+      "checked_at": "2026-09-14T06:55:57.959Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": {
+        "enabled": true,
+        "previews_enabled": true
+      }
+    },
+    {
+      "key": "worker_domains",
+      "checked_at": "2026-09-14T06:55:57.991Z",
+      "status": 200,
+      "success": true,
+      "errors": null,
+      "data": []
+    },
+    {
+      "key": "adr_zone",
+      "checked_at": "2026-09-14T06:55:57.888Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": [
+        {
+          "id": "434689a6702318ff3cc4959fad1d1286",
+          "name": "adr-fr.org",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "key": "pages_domains",
+      "checked_at": "2026-09-14T06:55:57.876Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": []
+    },
+    {
+      "key": "d1_database",
+      "checked_at": "2026-09-14T06:56:23.936Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": {
+        "uuid": "b8c79e7e-7513-453c-a73b-3cd6871bd146",
+        "name": "adr_fr_scheduler",
+        "created_at": "2025-10-20T23:23:15.005Z",
+        "version": "production",
+        "num_tables": 15
+      }
+    },
+    {
+      "key": "adr_worker_routes",
+      "checked_at": "2026-09-14T06:56:23.546Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": []
+    },
+    {
+      "key": "sc.adr-fr.org",
+      "checked_at": "2026-09-14T06:56:47.952Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": [
+        {
+          "name": "sc.adr-fr.org",
+          "type": "CNAME",
+          "content": "shiftcommander.pages.dev",
+          "proxied": true
+        }
+      ]
+    },
+    {
+      "key": "sc-api.adr-fr.org",
+      "checked_at": "2026-09-14T06:56:47.983Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": [
+        {
+          "name": "sc-api.adr-fr.org",
+          "type": "CNAME",
+          "content": "97f9d564-034a-44d6-9b1b-15836286d43a.cfargotunnel.com",
+          "proxied": true
+        }
+      ]
+    },
+    {
+      "key": "worker_version",
+      "checked_at": "2026-09-14T06:56:48.005Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": {
+        "id": "e5319cf0-ab39-467e-8b9c-3ac89d68eac7",
+        "number": 4,
+        "metadata": {
+          "created_on": "2026-06-03T00:22:28.580283Z",
+          "source": "wrangler"
+        },
+        "annotations": {},
+        "bindings": [
+          {
+            "type": "d1",
+            "name": "DB",
+            "id": "b8c79e7e-7513-453c-a73b-3cd6871bd146"
+          },
+          {
+            "type": "plain_text",
+            "name": "SC_BUILD_CODE"
+          },
+          {
+            "type": "secret_text",
+            "name": "SC_D1_BRIDGE_TOKEN"
+          },
+          {
+            "type": "plain_text",
+            "name": "SC_DATA_MODE"
+          }
+        ]
+      }
+    },
+    {
+      "key": "sc_api_tunnel",
+      "checked_at": "2026-09-14T06:57:48.147Z",
+      "status": 200,
+      "success": true,
+      "errors": [],
+      "data": {
+        "id": "97f9d564-034a-44d6-9b1b-15836286d43a",
+        "status": "down",
+        "created_at": "2026-05-22T21:11:44.814331Z",
+        "deleted_at": null,
+        "conns_active_at": null,
+        "conns_inactive_at": "2026-05-25T19:43:38.060436Z",
+        "remote_config": false,
+        "connection_count": 0
+      }
+    }
+  ]
+}

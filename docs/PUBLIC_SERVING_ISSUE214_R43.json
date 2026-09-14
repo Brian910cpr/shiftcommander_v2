@@ -1,0 +1,129 @@
+[
+  {
+    "url": "https://shiftcommander.pages.dev/",
+    "checked_at": "2026-09-14T06:59:40.023621+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 200,
+    "final_url": "https://shiftcommander.pages.dev/",
+    "content_type": "text/html; charset=utf-8",
+    "sha256": "58cfdf37cd9b86cf0c2897e65e4e774809cf8c85918acae37227ee57688a52ea",
+    "assets": [
+      "/assets/index-B0OhhaWu.js",
+      "/assets/index-CsavDUu3.css"
+    ],
+    "api_hosts": []
+  },
+  {
+    "url": "https://sc.adr-fr.org/",
+    "checked_at": "2026-09-14T06:59:40.024633+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 200,
+    "final_url": "https://sc.adr-fr.org/",
+    "content_type": "text/html; charset=utf-8",
+    "sha256": "d6fe8ffa3c3ef18383fb2bcc9a50c1b76ac265ccabf49c3b522c686e62b3d80f",
+    "assets": [
+      "/assets/index-B0OhhaWu.js",
+      "/assets/index-CsavDUu3.css"
+    ],
+    "api_hosts": []
+  },
+  {
+    "url": "https://sc-api.adr-fr.org/api/health",
+    "checked_at": "2026-09-14T06:59:40.024633+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 530
+  },
+  {
+    "url": "https://shiftcommander-v2.onrender.com/api/health",
+    "checked_at": "2026-09-14T06:59:40.275016+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 200,
+    "final_url": "https://shiftcommander-v2.onrender.com/api/health",
+    "content_type": "application/json",
+    "sha256": "3fac7d84d199c37ee090aff53fd6083892b22b23606145d9a506cf39dc7c9af7",
+    "fields": {
+      "build_code": "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001",
+      "d1_bridge_configured": true,
+      "demo_supervisor_bypass": true,
+      "fallback_active": false,
+      "quick_test_mode": true,
+      "state_backend": "d1",
+      "state_backend_ready": true,
+      "status": "ok"
+    }
+  },
+  {
+    "url": "https://shiftcommander-v2.onrender.com/api/auth/session",
+    "checked_at": "2026-09-14T06:59:40.294436+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 200,
+    "final_url": "https://shiftcommander-v2.onrender.com/api/auth/session",
+    "content_type": "application/json",
+    "sha256": "933bd5e990f3c1e58177e2c7fa4fc5415180718a78a20a209e0af9b9023828c2",
+    "fields": {
+      "auth_mode": "quick_test",
+      "authenticated": false,
+      "build_code": "SC-BUILD-2026-05-04-ONLINE-AUTH-QT-001",
+      "demo_supervisor_bypass": true,
+      "quick_test_mode": true,
+      "role": null
+    }
+  },
+  {
+    "url": "https://shiftcommander-api.brian-9ac.workers.dev/api/health",
+    "checked_at": "2026-09-14T06:59:40.328987+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 200,
+    "final_url": "https://shiftcommander-api.brian-9ac.workers.dev/api/health",
+    "content_type": "application/json; charset=utf-8",
+    "sha256": "dbc7a8a7b0e227d3eb218ef74bcfe0637556b0f299ad3fc7b171a375454f9b56",
+    "fields": {
+      "source": "worker-data-seed",
+      "build_code": "worker-local-seed-001",
+      "data_mode": "local_json_seed",
+      "status": "ok",
+      "backend": "cloudflare_worker"
+    }
+  },
+  {
+    "url": "https://shiftcommander-api.brian-9ac.workers.dev/api/auth/session",
+    "checked_at": "2026-09-14T06:59:40.407221+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 200,
+    "final_url": "https://shiftcommander-api.brian-9ac.workers.dev/api/auth/session",
+    "content_type": "application/json; charset=utf-8",
+    "sha256": "b9c7bd5fa2c1212e0ac57640b48d6b0fbf546c2dc1e10f1449ab0300c75979a1",
+    "fields": {
+      "authenticated": true,
+      "role": "admin",
+      "local_worker_session": true,
+      "source": "worker-data-seed",
+      "build_code": "worker-local-seed-001",
+      "data_mode": "local_json_seed"
+    }
+  },
+  {
+    "url": "https://shiftcommander.pages.dev/assets/index-B0OhhaWu.js",
+    "checked_at": "2026-09-14T06:59:40.615268+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 200,
+    "final_url": "https://shiftcommander.pages.dev/assets/index-B0OhhaWu.js",
+    "content_type": "application/javascript",
+    "sha256": "d2709e9487ac787a4d6c7a5ccf98236a252cfde9d675fa0b87b9f2f0aef1abaf",
+    "assets": [],
+    "api_hosts": [
+      "https://shiftcommander-v2.onrender.com"
+    ]
+  },
+  {
+    "url": "https://shiftcommander.pages.dev/assets/index-CsavDUu3.css",
+    "checked_at": "2026-09-14T06:59:40.728981+00:00",
+    "method": "anonymous GET; no login, credentials or operational rows",
+    "status": 200,
+    "final_url": "https://shiftcommander.pages.dev/assets/index-CsavDUu3.css",
+    "content_type": "text/css; charset=utf-8",
+    "sha256": "735726605676a4bf831fbdd304c055be77ca69f1a82dd7935d16a798bf37941c",
+    "assets": [],
+    "api_hosts": []
+  }
+]
