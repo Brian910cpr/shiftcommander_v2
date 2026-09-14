@@ -2119,6 +2119,9 @@
       "last_name": "Benson",
       "member_id": "186",
       "name": "Lynnsey Benson",
+      "access": {
+        "supervisor": true
+      },
       "ops_cert": "ALS",
       "phone": "910-512-2859",
       "preferences": {
