@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "issue": 214,
+  "owner_decision_date": "2026-09-14",
+  "source": {
+    "sha256": "978ef060e2c965eb3f5ca4e4e5f7bdb35621f1f7c26871a38a37babe3c47008b",
+    "bytes": 17592,
+    "embedded_updated_at": "2026-02-09T02:44:22Z",
+    "drive_copy_already_present_and_verified": true,
+    "location": "Owner-provided private Drive reference retained in local ignored intake manifest"
+  },
+  "owner_approval": {
+    "starter_roster_accepted_for_initial_work": true,
+    "missing_members_may_be_added_later": true,
+    "supervisors": [
+      {
+        "name": "Brett Toney",
+        "application_member_id": "159",
+        "approved_role": "supervisor"
+      },
+      {
+        "name": "Lynnsey Benson",
+        "application_member_id": "186",
+        "approved_role": "supervisor"
+      },
+      {
+        "name": "Brian Ennis",
+        "application_member_id": "188",
+        "approved_role": "supervisor"
+      }
+    ],
+    "credential_rotation_status": "owner_does_not_know"
+  },
+  "counts": {
+    "starter_members": 22,
+    "existing_members": 41,
+    "exact_name_and_number_matches": 15,
+    "name_number_review_rows": 7,
+    "active_status_conflicts": 6,
+    "drive_files": 54,
+    "files_downloaded_and_inspected": 13,
+    "duplicate_drive_names": 7
+  },
+  "policy_conflict": {
+    "historical_drive_shift_starts": [
+      "07:00",
+      "19:00"
+    ],
+    "confirmed_repo_shift_starts": [
+      "06:00",
+      "18:00"
+    ],
+    "action": "retain_confirmed_rules_do_not_import_historical_policy"
+  },
+  "credential_repair": {
+    "credential_name": "SC_D1_BRIDGE_TOKEN",
+    "purpose": "service authentication between Flask and the D1 live-state Worker",
+    "consumer_source": "engine/live_state_store.py",
+    "validator_source": "worker/src/liveStateBridge.js on consolidation lineage",
+    "status": "unresolved_no_value_read_or_changed",
+    "next": "inventory actual hosted consumer/validator names and staging route without exposing values; prepare coordinated replacement and old-token rejection proof"
+  },
+  "checks": {
+    "json_valid": true,
+    "source_member_ids_unique": true,
+    "source_adr_numbers_unique": true,
+    "drive_copy_byte_identical": true,
+    "csv_id_map_matches_all_22": true,
+    "effective_supervisors_exactly_owner_three": true,
+    "only_lynnsey_supervisor_field_changed": true
+  },
+  "deployment": "not_deployed_no_accounts_provisioned"
+}
