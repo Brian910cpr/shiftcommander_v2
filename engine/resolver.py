@@ -2371,7 +2371,8 @@ def sanitize_shift_for_live_output(shift: Dict[str, Any], ctx: Dict[str, Any]) -
 
 def write_debug_outputs(ctx: Dict[str, Any], output: Dict[str, Any]) -> None:
     try:
-        debug_dir = Path(__file__).resolve().parent.parent / "debug"
+        from engine.runtime_paths import runtime_paths
+        debug_dir = runtime_paths()["debug"]
         debug_dir.mkdir(parents=True, exist_ok=True)
 
         seat_records = []
