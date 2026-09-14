@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from datetime import UTC, date, datetime, timedelta
-from pathlib import Path
+from engine.runtime_paths import runtime_paths
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 
@@ -1574,7 +1574,7 @@ class RuleBasedResolver:
 
     def _write_debug(self, output: Dict[str, Any]) -> None:
         try:
-            debug_dir = Path(__file__).resolve().parent.parent / "debug"
+            debug_dir = runtime_paths()["debug"]
             debug_dir.mkdir(parents=True, exist_ok=True)
             seat_records = output["audit_trace"]
             summary = {

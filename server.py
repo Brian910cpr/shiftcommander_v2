@@ -39,6 +39,7 @@ from engine.open_shift_bid_review import (
 )
 from engine.live_state_store import create_live_state_store
 from engine.auth_store import AuthStore, AuthStoreError
+from engine.runtime_paths import runtime_paths, validate_pilot_environment
 
 SERVER_IMPORT_STARTED = time.perf_counter()
 
@@ -56,17 +57,21 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
+RUNTIME_PATHS = runtime_paths()
+PRIVATE_PILOT_ROOT = RUNTIME_PATHS["pilot_root"]
+validate_pilot_environment(PRIVATE_PILOT_ROOT)
+DATA_DIR = str(RUNTIME_PATHS["data"])
 DOCS_DIR = os.path.join(BASE_DIR, "docs")
-DEBUG_DIR = os.path.join(BASE_DIR, "debug")
+PUBLIC_DOCS_DIR = str(RUNTIME_PATHS["public"])
+DEBUG_DIR = str(RUNTIME_PATHS["debug"])
 LOCAL_TZ = ZoneInfo("America/New_York")
 
 MEMBERS_FILE = os.path.join(DATA_DIR, "members.json")
 SHIFTS_FILE = os.path.join(DATA_DIR, "shifts.json")
 SCHEDULE_FILE = os.path.join(DATA_DIR, "schedule.json")
-PUBLIC_SCHEDULE_FILE = os.path.join(DOCS_DIR, "data", "schedule.json")
+PUBLIC_SCHEDULE_FILE = os.path.join(PUBLIC_DOCS_DIR, "data", "schedule.json")
 SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
-PUBLIC_SETTINGS_FILE = os.path.join(DOCS_DIR, "data", "settings.json")
+PUBLIC_SETTINGS_FILE = os.path.join(PUBLIC_DOCS_DIR, "data", "settings.json")
 AVAILABILITY_FILE = os.path.join(DATA_DIR, "availability.json")
 INFERRED_PREFERENCES_FILE = os.path.join(DATA_DIR, "inferred_preferences.json")
 SCHEDULE_LOCKED_FILE = os.path.join(DATA_DIR, "schedule_locked.json")
@@ -79,9 +84,9 @@ LIVE_BETA_TRANSACTIONS_FILE = os.path.join(DATA_DIR, "live_beta_transactions.jso
 AUTH_USERS_FILE = os.path.join(DATA_DIR, "auth_users.json")
 AUTH_STORE = AuthStore(os.environ["SC_AUTH_DB_PATH"]) if os.environ.get("SC_AUTH_DB_PATH") else None
 CALENDAR_MARKERS_FILE = os.path.join(DATA_DIR, "calendar_markers.json")
-PUBLIC_CALENDAR_MARKERS_FILE = os.path.join(DOCS_DIR, "data", "calendar_markers.json")
+PUBLIC_CALENDAR_MARKERS_FILE = os.path.join(PUBLIC_DOCS_DIR, "data", "calendar_markers.json")
 
-LIVE_STATE_STORE = create_live_state_store(BASE_DIR, DATA_DIR, DOCS_DIR)
+LIVE_STATE_STORE = create_live_state_store(BASE_DIR, DATA_DIR, PUBLIC_DOCS_DIR)
 AVAILABILITY_FILE = LIVE_STATE_STORE.availability_file
 SHIFT_CHANGE_REQUESTS_FILE = LIVE_STATE_STORE.change_requests_file
 LIVE_BETA_TRANSACTIONS_FILE = LIVE_STATE_STORE.beta_transactions_file
@@ -197,6 +202,22 @@ for required_origin in [
 SC_ALLOWED_ORIGIN_SUFFIXES = tuple(parse_csv_env("SC_ALLOWED_ORIGIN_SUFFIXES", [".base44.app", ".base44.com"]))
 SC_PUBLIC_BASE_URL = str(os.environ.get("SC_PUBLIC_BASE_URL") or "").strip().rstrip("/")
 SC_FLASK_DEBUG = env_flag("FLASK_DEBUG", False)
+
+
+@app.before_request
+def private_pilot_boundary():
+    if PRIVATE_PILOT_ROOT:
+        if request.remote_addr != "127.0.0.1":
+            return jsonify({"error": "Private pilot requires loopback access"}), 403
+        # Same-origin pilot only. No external proxy or publication, including
+        # for a named supervisor. Local draft resolution remains available.
+        if request.endpoint in {"sc_proxy_get", "supervisor_publish_week"}:
+            return jsonify({"error": "Unavailable in private pilot"}), 403
+        if request.host_url.rstrip("/") != SC_PUBLIC_BASE_URL:
+            return jsonify({"error": "Private pilot requires its configured origin"}), 403
+        origin = str(request.headers.get("Origin") or "").rstrip("/")
+        if origin and origin != request.host_url.rstrip("/"):
+            return jsonify({"error": "Private pilot requires same origin"}), 403
 
 
 @app.before_request
@@ -4808,5 +4829,7 @@ startup_log("routes registered; startup complete")
 # =========================
 
 if __name__ == "__main__":
+    if PRIVATE_PILOT_ROOT:
+        raise SystemExit("Use scripts/start_private_pilot.py for loopback HTTPS")
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=SC_FLASK_DEBUG)
