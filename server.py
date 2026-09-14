@@ -346,6 +346,15 @@ def apply_cors_headers(response):
         # in a shared HTTP cache. This is not browser history/storage erasure.
         response.headers["Cache-Control"] = "no-store"
         response.headers["Referrer-Policy"] = "no-referrer"
+    if PRIVATE_PILOT_ROOT:
+        # The browser must share the server's isolated origin. Saved client
+        # overrides or future UI changes cannot contact an operational backend.
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+            "connect-src 'self'; object-src 'none'; base-uri 'none'; "
+            "form-action 'self'; frame-ancestors 'none'"
+        )
     if request.path.startswith("/api/"):
         response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-ShiftCommander-Beta-Session"
@@ -2463,6 +2472,22 @@ def apply_member_availability_update(member_id, payload):
 # STATIC FILE ROUTES
 # =========================
 
+def serve_ui_file(path):
+    if PRIVATE_PILOT_ROOT and str(path).lower().endswith(".html"):
+        # Inject before the existing client API selectors. Use a nonempty origin
+        # so their legacy `||` fallbacks cannot pick a saved or hosted backend.
+        # The checked-in hosted UI remains unchanged. Do not return 304/206 for
+        # the original file: the pilot representation contains runtime config.
+        response = send_from_directory(DOCS_DIR, path, conditional=False, etag=False)
+        response.direct_passthrough = False
+        html = response.get_data(as_text=True)
+        config = ('<script id="private-pilot-client">'
+                  'window.SC_API_BASE_URL = window.location.origin;</script>')
+        response.set_data(html.replace("<head>", "<head>\n" + config, 1))
+        return response
+    return send_from_directory(DOCS_DIR, path)
+
+
 @app.route("/")
 def root():
     auth = current_auth()
@@ -2492,14 +2517,14 @@ def serve_docs(path):
             return ("Not found", 404)
         if lowered in supervisor_pages and current_auth()["role"] != "supervisor":
             return ("Supervisor access required", 403)
-        return send_from_directory(DOCS_DIR, path)
+        return serve_ui_file(path)
     # Rescue pass: let the Supervisor shell open without a Flask session.
     # Protected write APIs still enforce supervisor auth.
     if lowered in {"admin.html", "admin_members.html"} and current_auth()["role"] != "supervisor":
         return login_redirect("supervisor")
     if lowered == "member.html" and not quick_test_mode_enabled() and current_auth()["role"] not in {"member", "supervisor"}:
         return login_redirect("member")
-    return send_from_directory(DOCS_DIR, path)
+    return serve_ui_file(path)
 
 
 @app.route("/debug/<path:path>")
@@ -2555,6 +2580,10 @@ def login_html_page():
 
 @app.route("/login/supervisor")
 def login_supervisor_page():
+    if PRIVATE_PILOT_ROOT:
+        # Pilot supervisors authenticate as named members; roster access flags
+        # confer their role. The deliberately unset shared password is unusable.
+        return login_page_html("member", request.args.get("next", "/docs/supervisor.html"))
     return login_page_html("supervisor", request.args.get("next", "/docs/supervisor.html"))
 
 
