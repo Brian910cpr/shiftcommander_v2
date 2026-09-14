@@ -1,6 +1,7 @@
 """Start a pre-provisioned, loopback-only HTTPS pilot. Never provisions accounts."""
 
 import argparse
+from contextlib import ExitStack
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 from engine.runtime_paths import runtime_paths, validate_pilot_environment
 from engine.auth_store import AuthStoreError
+from engine.pilot_lock import PilotLockError, pilot_lock
 from scripts.check_auth_readiness import inspect_auth
 
 
@@ -29,6 +31,12 @@ def pilot_environment(root, port, inherited):
 
 
 def main():
+    # Cover preflight, app import, serving, and socket shutdown with one lifetime.
+    with ExitStack() as lifetime:
+        return run(lifetime)
+
+
+def run(lifetime):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pilot-root", required=True, type=Path)
     parser.add_argument("--port", type=int, default=5443)
@@ -46,6 +54,7 @@ def main():
         root = paths["pilot_root"]
         if (root / ".setup-incomplete").exists():
             raise ValueError("Private pilot setup has not completed")
+        lifetime.enter_context(pilot_lock(root, check_only=args.check_only))
         validate_pilot_environment(root)
         os.environ["SECRET_KEY"] = (root / "signing.key").read_text(encoding="utf-8").strip()
         report = inspect_auth(os.environ, args.member_id)
@@ -71,6 +80,11 @@ def main():
         import server
         from werkzeug.serving import make_server
         httpd = make_server("127.0.0.1", args.port, server.app, ssl_context=context)
+    except PilotLockError as error:
+        print(json.dumps({"pilot_preflight_passed": False, "release_ready": False,
+                          "code": str(error),
+                          "error": "Private pilot storage is in use or cannot be locked; preserve it and stop the existing pilot before retrying"}))
+        return 2
     except (OSError, ValueError, TypeError, AuthStoreError):
         # Private paths/credential errors must not enter logs or the mailbox.
         print(json.dumps({"pilot_preflight_passed": False, "release_ready": False,
