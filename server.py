@@ -37,7 +37,7 @@ from engine.open_shift_bid_review import (
     has_schedule_conflict,
     member_cert,
 )
-from engine.live_state_store import create_live_state_store
+from engine.live_state_store import AvailabilityStoreError, create_live_state_store
 from engine.auth_store import AuthStore, AuthStoreError
 from engine.runtime_paths import runtime_paths, validate_pilot_environment
 
@@ -336,6 +336,15 @@ def auth_store_unavailable(error):
     # No paths, credentials, or database internals enter the public response.
     app.logger.error("Authentication storage operation failed")
     return auth_json_error("Authentication temporarily unavailable; retry after recovery", 503)
+
+
+@app.errorhandler(AvailabilityStoreError)
+def availability_store_unavailable(error):
+    app.logger.error("Private pilot availability storage requires recovery")
+    return jsonify({
+        "error": "Availability could not be read or saved. Contact your supervisor before trying again.",
+        "code": "private_pilot_availability_unavailable",
+    }), 503
 
 
 @app.after_request
@@ -4809,6 +4818,9 @@ def sc_proxy_get():
 # =========================
 
 def health_payload():
+    if PRIVATE_PILOT_ROOT:
+        # A responding process must not report OK with unreadable pilot consent.
+        LIVE_STATE_STORE.load_availability()
     if AUTH_STORE:
         AUTH_STORE.load_users()
     return {

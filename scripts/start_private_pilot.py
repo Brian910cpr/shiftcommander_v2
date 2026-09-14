@@ -13,6 +13,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from engine.runtime_paths import runtime_paths, validate_pilot_environment
 from engine.auth_store import AuthStoreError
 from engine.pilot_lock import PilotLockError, pilot_lock
+from engine.live_state_store import AvailabilityStoreError, read_private_pilot_availability
 from scripts.check_auth_readiness import inspect_auth
 
 
@@ -70,6 +71,7 @@ def run(lifetime):
         if any(not isinstance(row, dict) for row in rows) or any(sum(str(row.get("member_id", row.get("id", ""))) == member
                    and row.get("active") is True for row in rows) != 1 for member in args.member_id):
             raise ValueError("Pilot accounts must match distinct active roster identities")
+        read_private_pilot_availability(paths["data"] / "availability.json")
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.minimum_version = ssl.TLSVersion.TLSv1_2
         context.load_cert_chain(root / "tls.crt", root / "tls.key")
@@ -80,6 +82,11 @@ def run(lifetime):
         import server
         from werkzeug.serving import make_server
         httpd = make_server("127.0.0.1", args.port, server.app, ssl_context=context)
+    except AvailabilityStoreError:
+        print(json.dumps({"pilot_preflight_passed": False, "release_ready": False,
+                          "code": "private_pilot_availability_unavailable",
+                          "error": "Preserve private availability and recover it before starting the pilot"}))
+        return 2
     except PilotLockError as error:
         print(json.dumps({"pilot_preflight_passed": False, "release_ready": False,
                           "code": str(error),
