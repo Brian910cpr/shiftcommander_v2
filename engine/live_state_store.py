@@ -5,6 +5,7 @@ import urllib.request
 import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
+import stat
 from typing import Any, Callable, Dict, Optional
 
 
@@ -13,6 +14,65 @@ RENDER_EPHEMERAL_PREFIXES = (
     "/opt/render/project/src/data",
     "/opt/render/project/src\\data",
 )
+
+
+class AvailabilityStoreError(RuntimeError):
+    """Private-pilot storage failure, with no record contents or paths in logs."""
+
+    def __init__(self):
+        super().__init__("private_pilot_availability_unavailable")
+
+
+def validate_private_pilot_availability(payload):
+    # Validate containers used by member edits before any setdefault/coercion.
+    # Preserve unknown fields and existing intent vocabulary; this is not a
+    # qualification, consent, or scheduling-policy validator.
+    if not isinstance(payload, dict) or not isinstance(payload.get("months"), dict):
+        raise AvailabilityStoreError()
+    for month in payload["months"].values():
+        if not isinstance(month, dict):
+            raise AvailabilityStoreError()
+        for member in month.values():
+            if not isinstance(member, dict) or any(not isinstance(day, dict) for day in member.values()):
+                raise AvailabilityStoreError()
+    for key in ("patterns_by_member", "intent_metadata"):
+        if key in payload:
+            value = payload[key]
+            if not isinstance(value, dict) or any(not isinstance(member, dict) for member in value.values()):
+                raise AvailabilityStoreError()
+    for member in payload.get("intent_metadata", {}).values():
+        for day in member.values():
+            if not isinstance(day, dict) or any(not isinstance(entry, dict) for entry in day.values()):
+                raise AvailabilityStoreError()
+    return payload
+
+
+def read_private_pilot_availability(path):
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise AvailabilityStoreError()
+            result[key] = value
+        return result
+
+    def reject_constant(_value):
+        raise AvailabilityStoreError()
+
+    try:
+        path = Path(path)
+        try:
+            info = path.lstat()
+        except FileNotFoundError:
+            # A newly initialized pilot has no availability until its first save.
+            return {"months": {}}
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or path.is_symlink():
+            raise AvailabilityStoreError()
+        with path.open(encoding="utf-8") as handle:
+            payload = json.load(handle, object_pairs_hook=unique_object, parse_constant=reject_constant)
+        return validate_private_pilot_availability(payload)
+    except (OSError, ValueError, RecursionError):
+        raise AvailabilityStoreError() from None
 
 
 def utc_now_iso() -> str:
@@ -64,6 +124,7 @@ class FileLiveStateStore:
     state_backend_ready = True
 
     def __init__(self, base_dir: str, data_dir: str, docs_dir: str):
+        self.private_pilot = bool(_env_path("SC_PRIVATE_PILOT_ROOT"))
         self.base_dir = _resolve_path(base_dir)
         self.default_data_dir = _resolve_path(data_dir)
         self.default_docs_dir = _resolve_path(docs_dir)
@@ -124,6 +185,8 @@ class FileLiveStateStore:
         return data
 
     def load_availability(self) -> Dict[str, Any]:
+        if self.private_pilot:
+            return read_private_pilot_availability(self.availability_file)
         payload = self.read_json(self.availability_file, {"months": {}})
         if not isinstance(payload, dict):
             payload = {"months": {}}
@@ -132,6 +195,16 @@ class FileLiveStateStore:
         return payload
 
     def save_availability(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if self.private_pilot:
+            validate_private_pilot_availability(payload)
+            # Full supervisor replacement also must not overwrite unreadable
+            # evidence. Recovery is an offline, reviewed operation.
+            self.load_availability()
+            try:
+                json.dumps(payload, allow_nan=False)
+                return self.write_json(self.availability_file, payload)
+            except (OSError, ValueError, TypeError, RecursionError):
+                raise AvailabilityStoreError() from None
         if not isinstance(payload, dict):
             payload = {"months": {}}
         if not isinstance(payload.get("months"), dict):
