@@ -44,6 +44,8 @@ def main():
         os.environ.update(env)
         paths = runtime_paths()
         root = paths["pilot_root"]
+        if (root / ".setup-incomplete").exists():
+            raise ValueError("Private pilot setup has not completed")
         validate_pilot_environment(root)
         os.environ["SECRET_KEY"] = (root / "signing.key").read_text(encoding="utf-8").strip()
         report = inspect_auth(os.environ, args.member_id)
