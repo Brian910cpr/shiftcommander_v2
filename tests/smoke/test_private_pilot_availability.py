@@ -4,12 +4,14 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import test_private_pilot as pilot
 from engine.live_state_store import AvailabilityStoreError, create_live_state_store
+from scripts import recover_private_pilot_availability as recovery
 
 
 class PilotAvailabilityStoreTests(unittest.TestCase):
@@ -21,13 +23,25 @@ class PilotAvailabilityStoreTests(unittest.TestCase):
             self.store = create_live_state_store(str(self.root), str(self.root), str(self.root / 'public'))
         self.path = Path(self.store.availability_file)
 
-    def test_new_pilot_empty_state_is_read_only_until_first_save(self):
+    def test_explicit_empty_state_is_read_without_writes(self):
+        self.path.write_bytes(b'{"months": {}}\n')
         self.assertEqual(self.store.load_availability(), {"months": {}})
-        self.assertFalse(self.path.exists())
+        self.assertEqual(self.path.read_bytes(), b'{"months": {}}\n')
         self.store.save_availability({"months": {}})
         self.assertEqual(json.loads(self.path.read_bytes()), {"months": {}})
 
+    def test_missing_state_is_never_read_as_empty_or_recreated_by_a_save(self):
+        for operation in (self.store.load_availability, self.store.read_availability,
+                          lambda: self.store.save_availability({"months": {}}),
+                          lambda: self.store.write_availability({"months": {}})):
+            with self.assertRaises(AvailabilityStoreError) as failure:
+                operation()
+            self.assertEqual(str(failure.exception), 'private_pilot_availability_unavailable')
+            self.assertFalse(self.path.exists())
+            self.assertFalse(Path(str(self.path) + '.tmp').exists())
+
     def test_valid_richer_record_round_trips_without_changing_intents(self):
+        self.path.write_text('{"months":{}}')
         payload = {"months": {"2030-01": {"synthetic": {"2030-01-01": {
             "AM": "preferred", "PM": "do_not_schedule"}}}},
             "patterns_by_member": {"synthetic": {"MON_AM": "blank"}},
@@ -109,6 +123,10 @@ class PilotAvailabilityStoreTests(unittest.TestCase):
             legacy = create_live_state_store(str(self.root), str(self.root), str(self.root / 'public'))
         self.path.write_bytes(b'{"months": CORRUPT')
         self.assertEqual(legacy.load_availability(), {"months": {}})
+        self.path.unlink()
+        self.assertEqual(legacy.load_availability(), {"months": {}})
+        legacy.save_availability({"months": {}})
+        self.assertTrue(self.path.is_file())
         self.assertFalse(legacy.private_pilot)
 
 
@@ -121,6 +139,82 @@ class PilotAvailabilityProcessTests(unittest.TestCase):
         self.case = pilot.PilotProcessTests()
         self.addCleanup(self.case.doCleanups)
         self.case.setUp()
+
+    def test_https_deletion_blocks_requests_and_restart_until_reviewed_recovery(self):
+        case = self.case
+        (case.root / 'setup.json').write_text('{"schema_version":1,"synthetic_installation":"deletion"}')
+        process = case.start()
+        old_token = case.login('pilot-member')
+        entry = {"date": case.day.isoformat(), "period": "AM", "member_intent": "prefer"}
+        self.assertEqual(case.request('/api/member/availability', {"entries": [entry]}, old_token)[0], 200)
+        process.terminate()
+        process.wait(timeout=10)
+        with tempfile.TemporaryDirectory(dir=pilot.REPO_ROOT.parent) as output:
+            snapshot = Path(output) / 'snapshot'
+            evidence = Path(output) / 'evidence'
+            digest = recovery.snapshot(case.root, snapshot, write=True)['availability_sha256']
+            process = case.start()
+            self.assertEqual(case.request('/api/auth/logout', {}, old_token)[0], 200)
+            token = case.login('pilot-member')
+            supervisor = case.login('pilot-supervisor')
+            path = case.root / 'data/availability.json'
+            path.unlink()  # Delete only synthetic fixture state.
+            def state_bytes():
+                return {p.relative_to(case.root).as_posix(): p.read_bytes()
+                        for folder in ('data', 'public', 'debug')
+                        for p in (case.root / folder).rglob('*') if p.is_file()}
+            before = state_bytes()
+            for endpoint, body, auth in [
+                ('/api/health', None, None),
+                ('/api/member/availability', None, token), ('/api/my-availability', None, token),
+                ('/api/member/availability', {"entries": [entry]}, token),
+                ('/api/availability', None, supervisor), ('/api/availability', {"months": {}}, supervisor),
+                ('/api/admin/availability/clear_future', {}, supervisor),
+                ('/api/supervisor/resolve_week', {}, supervisor),
+                ('/api/supervisor/resolve_week', {"dry_run": True}, supervisor),
+            ]:
+                with self.subTest(endpoint=endpoint, body=body):
+                    status, result = case.request(endpoint, body, auth)
+                    self.assertEqual(status, 503)
+                    self.assertEqual(result['code'], 'private_pilot_availability_unavailable')
+                    self.assertNotIn(str(case.root), json.dumps(result))
+            self.assertEqual(state_bytes(), before)
+            self.assertFalse(path.exists())
+            process.terminate()
+            process.wait(timeout=10)
+            for check_only in (True, False):
+                result = subprocess.run(case.command + (['--check-only'] if check_only else []),
+                    cwd=pilot.REPO_ROOT, env=case.env, capture_output=True, text=True, timeout=20)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(json.loads(result.stdout)['code'], 'private_pilot_availability_unavailable')
+                self.assertNotIn(str(case.root), result.stdout + result.stderr)
+                self.assertNotIn('Traceback', result.stdout + result.stderr)
+                self.assertEqual(state_bytes(), before)
+                self.assertFalse(path.exists())
+            other = {p.relative_to(case.root).as_posix(): p.read_bytes()
+                     for p in case.root.rglob('*') if p.is_file()}
+            command = [sys.executable, '-B', 'scripts/recover_private_pilot_availability.py', 'restore',
+                       '--pilot-root', str(case.root), '--snapshot', str(snapshot),
+                       '--evidence-root', str(evidence), '--expected-sha256', digest]
+            checked = subprocess.run(command, cwd=pilot.REPO_ROOT, env=case.env,
+                                     capture_output=True, text=True, timeout=20)
+            self.assertEqual(checked.returncode, 0)
+            self.assertEqual(json.loads(checked.stdout)['previous_sha256'], 'missing')
+            self.assertFalse(path.exists())
+            self.assertFalse(evidence.exists())
+            restored = subprocess.run(command + ['--write', '--expected-current-sha256', 'missing'],
+                cwd=pilot.REPO_ROOT, env=case.env, capture_output=True, text=True, timeout=20)
+            self.assertEqual(restored.returncode, 0)
+            self.assertEqual(path.read_bytes(), (snapshot / 'availability.json').read_bytes())
+            other_after = {p.relative_to(case.root).as_posix(): p.read_bytes()
+                           for p in case.root.rglob('*') if p.is_file() and p != path}
+            self.assertEqual(other_after, other)  # Includes current credentials and revocations.
+            self.assertFalse((evidence / 'previous.availability.json').exists())
+            case.start()
+            self.assertEqual(case.request('/api/health')[0], 200)
+            self.assertEqual(case.request('/api/member/availability', token=old_token)[0], 401)
+            fresh = case.login('pilot-member')
+            self.assertEqual(case.request('/api/member/availability', token=fresh)[1]['entries'][0]['member_intent'], 'prefer')
 
     def test_https_corruption_blocks_reads_writes_and_resolver_without_mutation(self):
         case = self.case

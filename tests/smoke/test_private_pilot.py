@@ -117,6 +117,7 @@ class PilotProcessTests(unittest.TestCase):
         ]}
         self.write_json("data/members.json", self.members)
         self.write_json("data/settings.json", {})
+        self.write_json("data/availability.json", {"months": {}})
         day = date.today() + timedelta(days=60)
         self.day = day + timedelta(days=(7 - day.weekday()) % 7)
         self.write_json("data/shifts.json", [{"date": self.day.isoformat(), "label": "AM", "unit": "120",

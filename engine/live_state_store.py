@@ -70,11 +70,10 @@ def decode_private_pilot_availability(raw):
 def read_private_pilot_availability(path):
     try:
         path = Path(path)
-        try:
-            info = path.lstat()
-        except FileNotFoundError:
-            # A newly initialized pilot has no availability until its first save.
-            return {"months": {}}
+        # Setup creates an explicit empty record. Missing state may be deleted
+        # member consent, including after restart; only reviewed recovery may
+        # recreate it. Never reinterpret absence as a brand-new pilot.
+        info = path.lstat()
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or path.is_symlink():
             raise AvailabilityStoreError()
         return decode_private_pilot_availability(path.read_bytes())

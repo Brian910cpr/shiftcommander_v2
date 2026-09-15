@@ -70,11 +70,15 @@ class PilotSetupTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)['error'], 'interactive_private_terminal_required')
         self.assertFalse(self.root.exists())
 
-    def test_new_store_preserves_sources_roles_and_creates_no_availability(self):
+    def test_new_store_preserves_sources_roles_and_starts_with_explicit_blank_availability(self):
+        historical = b'{"months":{"2030-01":{"historical":{"2030-01-01":{"AM":"prefer"}}}}}'
+        (self.source / 'data/availability.json').write_bytes(historical)
         self.install()
         for name in ('data/members.json', 'data/settings.json', 'tls.crt', 'tls.key'):
             self.assertEqual((self.root / name).read_bytes(), (self.source / name).read_bytes())
-        self.assertFalse((self.root / 'data/availability.json').exists())
+        self.assertEqual(json.loads((self.root / 'data/availability.json').read_bytes()), {'months': {}})
+        self.assertEqual((self.source / 'data/availability.json').read_bytes(), historical)
+        self.assertFalse(json.loads((self.root / 'setup.json').read_bytes())['availability_imported'])
         self.assertFalse((self.root / 'data/shifts.json').exists())
         self.assertFalse((self.root / '.setup-incomplete').exists())
         self.assertGreaterEqual(len((self.root / 'signing.key').read_text()), 32)
@@ -235,7 +239,7 @@ foreach ($item in $items) {
                                 input=json.dumps({'root': str(self.root)}), capture_output=True, text=True,
                                 timeout=15, env=self.case.env)
         self.assertEqual(result.returncode, 0, 'Independent ACL read failed')
-        self.assertEqual(json.loads(result.stdout), {'valid': True, 'checked': 9})
+        self.assertEqual(json.loads(result.stdout), {'valid': True, 'checked': 10})
 
     def test_installed_accounts_change_password_save_restart_and_revoke_over_https(self):
         self.install()
@@ -274,7 +278,7 @@ foreach ($item in $items) {
         supervisor = self.case.login('pilot-supervisor')
         self.assertEqual(self.case.request('/docs/supervisor.html', token=supervisor)[0], 200)
         self.assertEqual(self.case.request('/api/supervisor/publish_week', {}, supervisor)[0], 403)
-        self.assertFalse((self.source / 'data/availability.json').exists())
+        self.assertEqual(json.loads((self.source / 'data/availability.json').read_bytes()), {'months': {}})
 
 
 if __name__ == '__main__':

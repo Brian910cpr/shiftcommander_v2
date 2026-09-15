@@ -156,7 +156,8 @@ def initialize(plan, password_reader=temporary_password):
     marker = root / '.setup-incomplete'
     marker.touch(exist_ok=False)
     (root / 'data').mkdir()
-    for name, data in {**files, 'signing.key': secrets.token_urlsafe(48).encode('ascii')}.items():
+    for name, data in {**files, 'signing.key': secrets.token_urlsafe(48).encode('ascii'),
+                       'data/availability.json': b'{"months": {}}\n'}.items():
         with (root / name).open('xb') as stream:
             stream.write(data)
     initialize_auth_store(root / 'auth.sqlite3', users)
