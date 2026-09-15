@@ -47,7 +47,8 @@ def validate_private_pilot_availability(payload):
     return payload
 
 
-def read_private_pilot_availability(path):
+def decode_private_pilot_availability(raw):
+    """Validate the exact bytes used by runtime reads and offline recovery."""
     def unique_object(pairs):
         result = {}
         for key, value in pairs:
@@ -60,6 +61,14 @@ def read_private_pilot_availability(path):
         raise AvailabilityStoreError()
 
     try:
+        payload = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object, parse_constant=reject_constant)
+        return validate_private_pilot_availability(payload)
+    except (ValueError, RecursionError):
+        raise AvailabilityStoreError() from None
+
+
+def read_private_pilot_availability(path):
+    try:
         path = Path(path)
         try:
             info = path.lstat()
@@ -68,9 +77,7 @@ def read_private_pilot_availability(path):
             return {"months": {}}
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or path.is_symlink():
             raise AvailabilityStoreError()
-        with path.open(encoding="utf-8") as handle:
-            payload = json.load(handle, object_pairs_hook=unique_object, parse_constant=reject_constant)
-        return validate_private_pilot_availability(payload)
+        return decode_private_pilot_availability(path.read_bytes())
     except (OSError, ValueError, RecursionError):
         raise AvailabilityStoreError() from None
 
